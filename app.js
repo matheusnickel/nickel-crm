@@ -160,10 +160,14 @@ function buildDocDetailsHTML(count, prefill) {
         </div>
         <div class="form-group">
           <label>Bairro</label>
-          <select class="doc-bairro" data-idx="${i}" required>
+          <select class="doc-bairro-sel" data-idx="${i}" required>
             <option value="">Selecione</option>
             ${BAIRROS.map(b=>`<option value="${b}" ${pre.bairro===b?'selected':''}>${b}</option>`).join('')}
+            <option value="__outro__" ${pre.bairro&&!BAIRROS.includes(pre.bairro)?'selected':''}>Outro...</option>
           </select>
+          <input type="text" class="doc-bairro doc-bairro-outro" data-idx="${i}" placeholder="Digite o bairro"
+            value="${pre.bairro&&!BAIRROS.includes(pre.bairro)?pre.bairro:''}"
+            style="margin-top:6px;display:${pre.bairro&&!BAIRROS.includes(pre.bairro)?'block':'none'}" required>
         </div>
         <div class="form-group">
           <label>Tipo</label>
@@ -185,10 +189,13 @@ function buildDocDetailsHTML(count, prefill) {
 function collectDocDetails(count) {
   const details = [];
   for (let i=0; i<count; i++) {
+    const sel    = document.querySelector(`.doc-bairro-sel[data-idx="${i}"]`);
+    const outro  = document.querySelector(`.doc-bairro-outro[data-idx="${i}"]`);
+    const bairro = sel?.value === '__outro__' ? (outro?.value.trim()||'') : (sel?.value||'');
     details.push({
       nome:   document.querySelector(`.doc-nome[data-idx="${i}"]`)?.value.trim() ||'',
       valor:  parseFloat(document.querySelector(`.doc-valor[data-idx="${i}"]`)?.value)||0,
-      bairro: document.querySelector(`.doc-bairro[data-idx="${i}"]`)?.value ||'',
+      bairro,
       tipo:   document.querySelector(`.doc-tipo[data-idx="${i}"]`)?.value   ||'',
       nota:   document.querySelector(`.doc-nota[data-idx="${i}"]`)?.value.trim() ||'',
     });
@@ -214,6 +221,18 @@ async function initLogin() {
     if (!user || user.password !== password) { errEl.textContent = 'Usuário ou senha incorretos.'; return; }
     setSession({ username, name: user.name, role: user.role });
     window.location.href = user.role==='gestor' ? 'dashboard-gestor.html' : 'dashboard-agente.html';
+  });
+}
+
+function bindBairroSelects() {
+  document.querySelectorAll('.doc-bairro-sel').forEach(sel => {
+    sel.addEventListener('change', function() {
+      const idx   = this.dataset.idx;
+      const outro = document.querySelector(`.doc-bairro-outro[data-idx="${idx}"]`);
+      if (!outro) return;
+      outro.style.display = this.value === '__outro__' ? 'block' : 'none';
+      outro.required = this.value === '__outro__';
+    });
   });
 }
 
@@ -243,7 +262,7 @@ function renderAgentDashboard(session, editing) {
   const weekDoc    = entries.filter(e => inRange(e.date,wStart,wEnd)).reduce((s,e)=>s+e.doc,0);
   const sentToday  = entries.find(e => e.date===t);
   const editCount  = getEditCount(session.name, t);
-  const canEdit    = editCount < 1;
+  const canEdit    = editCount < 2;
 
   document.getElementById('doc-week-num').textContent   = weekDoc;
   document.getElementById('doc-week-meta').textContent  = `Meta: ${META_DOC} DOC`;
@@ -299,7 +318,9 @@ function renderAgentDashboard(session, editing) {
       </form>`;
     document.getElementById('f-doc').addEventListener('input', function() {
       document.getElementById('doc-details-area').innerHTML = buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0), []);
+      bindBairroSelects();
     });
+    bindBairroSelects();
     document.getElementById('daily-form').addEventListener('submit', async ev => {
       ev.preventDefault();
       const docVal    = parseInt(document.getElementById('f-doc').value)||0;
