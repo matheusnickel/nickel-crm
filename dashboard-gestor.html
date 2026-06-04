@@ -46,10 +46,17 @@
     <div class="card">
       <div class="card-title">Ranking — ordenado por DOC · CPD · PROSP</div>
       <div style="overflow-x:auto">
-        <table class="data-table">
+        <table class="data-table rank-table">
+          <colgroup>
+            <col class="col-pos">
+            <col class="col-name">
+            <col class="col-doc">
+            <col class="col-cpd">
+            <col class="col-prosp">
+          </colgroup>
           <thead>
             <tr>
-              <th style="width:40px">#</th>
+              <th>#</th>
               <th>Angariador</th>
               <th class="num-cell doc-th">DOC</th>
               <th class="num-cell">CPD</th>
@@ -89,6 +96,16 @@
         <button class="conv-mode-btn" data-mode="cpd-doc">CPD → DOC</button>
       </div>
       <div id="conv-list"></div>
+    </div>
+
+    <!-- Consulta por dia -->
+    <div class="card">
+      <div class="card-title">Consulta por dia</div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Selecione o dia</label>
+        <input type="date" id="day-input">
+      </div>
+      <div id="day-view-wrap"></div>
     </div>
 
   </main>

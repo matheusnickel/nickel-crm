@@ -58,6 +58,29 @@ function upsertEntry(entry) {
   saveEntries(entries);
 }
 
+// ── EDIT COUNT (limit agents to 1 edit per day) ──────────
+function getEditCounts() {
+  return JSON.parse(localStorage.getItem('nickel_edit_count') || '{}');
+}
+
+function getEditCount(agentName, date) {
+  return getEditCounts()[agentName + '_' + date] || 0;
+}
+
+function incrementEditCount(agentName, date) {
+  const counts = getEditCounts();
+  const key = agentName + '_' + date;
+  counts[key] = (counts[key] || 0) + 1;
+  localStorage.setItem('nickel_edit_count', JSON.stringify(counts));
+}
+
+// manager override: set count back to 0 so agent can re-edit after manager fix
+function resetEditCount(agentName, date) {
+  const counts = getEditCounts();
+  delete counts[agentName + '_' + date];
+  localStorage.setItem('nickel_edit_count', JSON.stringify(counts));
+}
+
 // ── SESSION ──────────────────────────────────────────────
 function getSession() {
   return JSON.parse(localStorage.getItem('nickel_session') || 'null');
@@ -194,7 +217,15 @@ function renderAgentDashboard(session, editing) {
   const sentToday = entries.find(e => e.date === t);
   const formWrap = document.getElementById('form-wrap');
 
+  const editCount = getEditCount(session.name, t);
+  const canEdit = editCount < 1; // 1 edição permitida após o envio inicial
+
   if (sentToday && !editing) {
+    const editBtn = canEdit
+      ? `<button class="btn btn-outline" id="edit-today-btn" style="margin-top:14px;font-size:13px;padding:9px">Corrigir lançamento de hoje</button>`
+      : `<div style="margin-top:14px;padding:10px 14px;background:rgba(224,62,62,.08);border:1px solid rgba(224,62,62,.25);border-radius:8px;font-size:12px;color:#ff6b6b;text-align:center">
+           Correção já utilizada. Para nova alteração, fale com o gestor.
+         </div>`;
     formWrap.innerHTML = `
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
@@ -204,13 +235,13 @@ function renderAgentDashboard(session, editing) {
           &nbsp;·&nbsp; CPD <strong style="color:#f0f0f0">${sentToday.cpd}</strong>
           &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong>
         </div>
-        <button class="btn btn-outline" id="edit-today-btn" style="margin-top:14px;font-size:13px;padding:9px">
-          Corrigir lançamento de hoje
-        </button>
+        ${editBtn}
       </div>`;
-    document.getElementById('edit-today-btn').addEventListener('click', () => {
-      renderAgentDashboard(session, true);
-    });
+    if (canEdit) {
+      document.getElementById('edit-today-btn').addEventListener('click', () => {
+        renderAgentDashboard(session, true);
+      });
+    }
   } else {
     const pre = sentToday || { prosp: 0, cpd: 0, doc: 0 };
     formWrap.innerHTML = `
@@ -235,6 +266,7 @@ function renderAgentDashboard(session, editing) {
       </form>`;
     document.getElementById('daily-form').addEventListener('submit', (ev) => {
       ev.preventDefault();
+      const isEdit = !!sentToday;
       upsertEntry({
         date:  t,
         agent: session.name,
@@ -242,6 +274,7 @@ function renderAgentDashboard(session, editing) {
         cpd:   parseInt(document.getElementById('f-cpd').value)   || 0,
         doc:   parseInt(document.getElementById('f-doc').value)   || 0,
       });
+      if (isEdit) incrementEditCount(session.name, t);
       renderAgentDashboard(session);
     });
     const cancelBtn = document.getElementById('cancel-edit-btn');
@@ -286,6 +319,7 @@ function initGestorDashboard() {
     });
   });
   renderGestorDashboard();
+  initDayView();
 }
 
 const PODIUM = ['', 'gold', 'silver', 'bronze'];
@@ -405,6 +439,81 @@ function renderGestorDashboard() {
   convBtns.forEach(b => {
     if (b.dataset.mode === activeConvMode) b.classList.add('active');
     else b.classList.remove('active');
+  });
+}
+
+// ── GESTOR: CONSULTA POR DIA ─────────────────────────────
+function initDayView() {
+  const input = document.getElementById('day-input');
+  input.value = today();
+  input.addEventListener('change', () => renderDayView(input.value));
+  renderDayView(input.value);
+}
+
+function renderDayView(dateStr) {
+  if (!dateStr) return;
+  const agentNames = Object.keys(USERS).filter(k => USERS[k].role === 'agent').map(k => USERS[k].name);
+  const entries = getEntries();
+  const wrap = document.getElementById('day-view-wrap');
+
+  const rows = agentNames.map(name => {
+    const e = entries.find(x => x.date === dateStr && x.agent === name);
+    const prosp = e ? e.prosp : '—';
+    const cpd   = e ? e.cpd   : '—';
+    const doc   = e ? e.doc   : '—';
+    const hasEntry = !!e;
+    return `
+      <tr data-agent="${name}" data-has="${hasEntry}">
+        <td>${name}</td>
+        <td class="num-cell">
+          ${hasEntry ? `<input class="inline-edit-input" data-field="prosp" type="number" min="0" value="${prosp}">` : '<span style="color:var(--text-muted)">—</span>'}
+        </td>
+        <td class="num-cell">
+          ${hasEntry ? `<input class="inline-edit-input" data-field="cpd" type="number" min="0" value="${cpd}">` : '<span style="color:var(--text-muted)">—</span>'}
+        </td>
+        <td class="num-cell">
+          ${hasEntry ? `<input class="inline-edit-input" data-field="doc" type="number" min="0" value="${doc}">` : '<span style="color:var(--text-muted)">—</span>'}
+        </td>
+      </tr>`;
+  });
+
+  wrap.innerHTML = `
+    <table class="data-table rank-table" style="table-layout:fixed">
+      <colgroup>
+        <col style="width:auto">
+        <col style="width:70px">
+        <col style="width:70px">
+        <col style="width:70px">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Angariador</th>
+          <th class="num-cell">PROSP</th>
+          <th class="num-cell">CPD</th>
+          <th class="num-cell doc-th">DOC</th>
+        </tr>
+      </thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>
+    <button class="save-day-btn" id="save-day-btn">Salvar alterações do dia</button>`;
+
+  document.getElementById('save-day-btn').addEventListener('click', () => {
+    const trs = wrap.querySelectorAll('tbody tr');
+    trs.forEach(tr => {
+      if (tr.dataset.has !== 'true') return;
+      const name = tr.dataset.agent;
+      const prosp = parseInt(tr.querySelector('[data-field="prosp"]').value) || 0;
+      const cpd   = parseInt(tr.querySelector('[data-field="cpd"]').value)   || 0;
+      const doc   = parseInt(tr.querySelector('[data-field="doc"]').value)   || 0;
+      upsertEntry({ date: dateStr, agent: name, prosp, cpd, doc });
+      // manager edit resets the agent's edit counter so they don't feel punished
+      resetEditCount(name, dateStr);
+    });
+    const btn = document.getElementById('save-day-btn');
+    btn.textContent = 'Salvo ✓';
+    btn.style.background = '#2ecc71';
+    setTimeout(() => { btn.textContent = 'Salvar alterações do dia'; btn.style.background = ''; }, 2000);
+    renderGestorDashboard();
   });
 }
 
