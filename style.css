@@ -625,6 +625,58 @@ tr.podium-3 td { background: rgba(180,100,40,.04); }
 .doc-summary-item:last-child { border-bottom: none; }
 .doc-summary-item strong { color: var(--text); }
 
+/* ── EXPORT BUTTONS ── */
+.export-row {
+  display: flex;
+  gap: 8px;
+}
+.export-btn {
+  flex: 1;
+  padding: 10px 4px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+.export-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,.08); }
+
+/* ── NOTA INLINE EDIT ── */
+.nota-wrap {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.nota-input {
+  flex: 1;
+  min-width: 80px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  padding: 4px 6px;
+  outline: none;
+}
+.nota-input:focus { border-color: var(--gold); }
+.nota-save-btn {
+  background: none;
+  border: 1px solid rgba(46,204,113,.4);
+  color: #2ecc71;
+  font-size: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nota-save-btn:hover { background: rgba(46,204,113,.1); }
+
 /* ── ANALYTICS MODE BUTTONS ── */
 .analytics-row {
   display: flex;

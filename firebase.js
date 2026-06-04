@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, getDoc, writeBatch, onSnapshot
+  getFirestore, collection, doc, setDoc, getDoc, getDocs,
+  writeBatch, deleteDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -15,29 +16,32 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db    = getFirestore(fbApp);
 
-// doc ID: "2026-06-04_Karen" — remove accents, replace spaces
-function entryId(date, agent) {
-  const clean = agent.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '_');
-  return `${date}_${clean}`;
+// doc ID normalised — "2026-06-04_Karen"
+export function entryId(date, agent) {
+  return `${date}_${agent.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'_')}`;
 }
 
-// Write or overwrite one entry
 export async function fbUpsertEntry(entry) {
   await setDoc(doc(db, 'entries', entryId(entry.date, entry.agent)), entry);
 }
 
-// Seed Firestore once (sentinel doc prevents re-seeding)
-export async function fbSeedIfEmpty(seedData) {
-  const sentinelRef = doc(db, '_meta', 'seeded');
-  const snap = await getDoc(sentinelRef);
-  if (snap.exists()) return;
+// Full reset + reseed when SEED_VERSION changes
+export async function fbReseedIfNeeded(seedData, version) {
+  const verRef = doc(db, '_meta', 'seed_version');
+  const verSnap = await getDoc(verRef);
+  if (verSnap.exists() && verSnap.data().v === version) return;
+
+  // Delete all existing entries
+  const snap = await getDocs(collection(db, 'entries'));
   const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+
+  // Write fresh seed
   seedData.forEach(e => batch.set(doc(db, 'entries', entryId(e.date, e.agent)), e));
-  batch.set(sentinelRef, { ts: new Date().toISOString() });
+  batch.set(verRef, { v: version, ts: new Date().toISOString() });
   await batch.commit();
 }
 
-// Real-time listener — calls callback(entries[]) on every Firestore change
 export function fbListen(callback) {
   return onSnapshot(collection(db, 'entries'), snap => {
     callback(snap.docs.map(d => d.data()));
