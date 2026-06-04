@@ -44,16 +44,16 @@
 
     <!-- Ranking -->
     <div class="card">
-      <div class="card-title">Ranking da equipe</div>
+      <div class="card-title">Ranking — ordenado por DOC · CPD · PROSP</div>
       <div style="overflow-x:auto">
         <table class="data-table">
           <thead>
             <tr>
-              <th>#</th>
+              <th style="width:40px">#</th>
               <th>Angariador</th>
-              <th class="num-cell">PROSP</th>
+              <th class="num-cell doc-th">DOC</th>
               <th class="num-cell">CPD</th>
-              <th class="num-cell">DOC</th>
+              <th class="num-cell">PROSP</th>
             </tr>
           </thead>
           <tbody id="rank-body"></tbody>
@@ -61,7 +61,7 @@
       </div>
     </div>
 
-    <!-- Gráfico -->
+    <!-- Gráfico desempenho -->
     <div class="card">
       <div class="card-title">Desempenho por angariador</div>
       <div class="chart-wrap">
@@ -69,16 +69,26 @@
       </div>
     </div>
 
-    <!-- Conversão -->
+    <!-- DOC da semana — quem bateu / não bateu -->
     <div class="card">
-      <div class="card-title">Taxas de conversão</div>
-      <div id="conv-list"></div>
+      <div class="card-title">DOC na semana atual — meta: 1</div>
+      <div class="doc-legend-row">
+        <span class="doc-legend green">■ Bateu a meta</span>
+        <span class="doc-legend red">■ Abaixo da meta</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="doc-status-chart"></canvas>
+      </div>
     </div>
 
-    <!-- Alertas -->
+    <!-- Conversão -->
     <div class="card">
-      <div class="card-title">Alertas</div>
-      <div class="alerts-list" id="alerts-list"></div>
+      <div class="card-title">Taxa de conversão</div>
+      <div class="conv-mode-row">
+        <button class="conv-mode-btn active" data-mode="prosp-cpd">PROSP → CPD</button>
+        <button class="conv-mode-btn" data-mode="cpd-doc">CPD → DOC</button>
+      </div>
+      <div id="conv-list"></div>
     </div>
 
   </main>

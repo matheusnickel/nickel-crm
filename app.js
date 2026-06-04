@@ -50,9 +50,11 @@ function saveEntries(entries) {
   localStorage.setItem('nickel_entries', JSON.stringify(entries));
 }
 
-function addEntry(entry) {
+function upsertEntry(entry) {
   const entries = getEntries();
-  entries.push(entry);
+  const idx = entries.findIndex(e => e.date === entry.date && e.agent === entry.agent);
+  if (idx >= 0) entries[idx] = entry;
+  else entries.push(entry);
   saveEntries(entries);
 }
 
@@ -80,7 +82,7 @@ function toDateStr(d) {
 
 function weekRange(ref) {
   const d = new Date(ref + 'T12:00:00');
-  const day = d.getDay(); // 0=Sun
+  const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   const mon = new Date(d);
   mon.setDate(d.getDate() + diff);
@@ -93,8 +95,7 @@ function monthRange(ref) {
   const d = new Date(ref + 'T12:00:00');
   const start = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
   const last = new Date(d.getFullYear(), d.getMonth()+1, 0);
-  const end = toDateStr(last);
-  return { start, end };
+  return { start, end: toDateStr(last) };
 }
 
 function inRange(dateStr, start, end) {
@@ -106,12 +107,12 @@ function formatDate(dateStr) {
   return `${d}/${m}/${y}`;
 }
 
-// ── FILTER ENTRIES ───────────────────────────────────────
+// ── FILTER / AGGREGATE ───────────────────────────────────
 function filterEntries(period, ref) {
   const entries = getEntries();
   const t = ref || today();
   if (period === 'today') return entries.filter(e => e.date === t);
-  if (period === 'week')  { const r = weekRange(t); return entries.filter(e => inRange(e.date, r.start, r.end)); }
+  if (period === 'week')  { const r = weekRange(t);  return entries.filter(e => inRange(e.date, r.start, r.end)); }
   if (period === 'month') { const r = monthRange(t); return entries.filter(e => inRange(e.date, r.start, r.end)); }
   return entries;
 }
@@ -135,13 +136,10 @@ function calcStreak(agentName) {
   let streak = 0;
   let cursor = new Date(today() + 'T12:00:00');
   for (let i = 0; i < days.length; i++) {
-    const expected = toDateStr(cursor);
-    if (days[i] === expected) {
+    if (days[i] === toDateStr(cursor)) {
       streak++;
       cursor.setDate(cursor.getDate() - 1);
-    } else {
-      break;
-    }
+    } else break;
   }
   return streak;
 }
@@ -152,52 +150,36 @@ function handleLogin(e) {
   const username = document.getElementById('username').value.trim().toLowerCase();
   const password = document.getElementById('password').value;
   const errEl = document.getElementById('login-error');
-
   const user = USERS[username];
   if (!user || user.password !== password) {
     errEl.textContent = 'Usuário ou senha incorretos.';
     return;
   }
-
   setSession({ username, name: user.name, role: user.role });
-  if (user.role === 'gestor') {
-    window.location.href = 'dashboard-gestor.html';
-  } else {
-    window.location.href = 'dashboard-agente.html';
-  }
+  window.location.href = user.role === 'gestor' ? 'dashboard-gestor.html' : 'dashboard-agente.html';
 }
 
 // ── AGENT DASHBOARD ──────────────────────────────────────
 function initAgentDashboard() {
   const session = getSession();
-  if (!session || session.role !== 'agent') {
-    window.location.href = 'index.html';
-    return;
-  }
-
+  if (!session || session.role !== 'agent') { window.location.href = 'index.html'; return; }
   document.getElementById('agent-name').textContent = session.name;
   document.getElementById('logout-btn').addEventListener('click', () => {
-    clearSession();
-    window.location.href = 'index.html';
+    clearSession(); window.location.href = 'index.html';
   });
-
   renderAgentDashboard(session);
 }
 
-function renderAgentDashboard(session) {
+function renderAgentDashboard(session, editing) {
   const t = today();
   const { start: wStart, end: wEnd } = weekRange(t);
   const entries = getEntries().filter(e => e.agent === session.name);
-
-  // DOC da semana
   const weekEntries = entries.filter(e => inRange(e.date, wStart, wEnd));
   const weekDoc = weekEntries.reduce((s, e) => s + e.doc, 0);
 
   document.getElementById('doc-week-num').textContent = weekDoc;
-  document.getElementById('doc-week-range').textContent =
-    `${formatDate(wStart)} – ${formatDate(wEnd)}`;
+  document.getElementById('doc-week-range').textContent = `${formatDate(wStart)} – ${formatDate(wEnd)}`;
 
-  // Status meta
   const statusEl = document.getElementById('week-status');
   if (weekDoc >= 1) {
     statusEl.className = 'status-badge green';
@@ -207,50 +189,63 @@ function renderAgentDashboard(session) {
     statusEl.innerHTML = '<span class="status-icon">!</span><span>Você ainda não atingiu sua meta essa semana</span>';
   }
 
-  // Streak
   document.getElementById('streak-num').textContent = calcStreak(session.name);
 
-  // Form / sent today
   const sentToday = entries.find(e => e.date === t);
   const formWrap = document.getElementById('form-wrap');
-  if (sentToday) {
+
+  if (sentToday && !editing) {
     formWrap.innerHTML = `
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
         <div style="font-weight:600;color:#f0f0f0">Relatório enviado hoje</div>
-        <div style="font-size:12px;margin-top:4px">PROSP ${sentToday.prosp} · CPD ${sentToday.cpd} · DOC ${sentToday.doc}</div>
+        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">
+          PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong>
+          &nbsp;·&nbsp; CPD <strong style="color:#f0f0f0">${sentToday.cpd}</strong>
+          &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong>
+        </div>
+        <button class="btn btn-outline" id="edit-today-btn" style="margin-top:14px;font-size:13px;padding:9px">
+          Corrigir lançamento de hoje
+        </button>
       </div>`;
+    document.getElementById('edit-today-btn').addEventListener('click', () => {
+      renderAgentDashboard(session, true);
+    });
   } else {
+    const pre = sentToday || { prosp: 0, cpd: 0, doc: 0 };
     formWrap.innerHTML = `
       <form class="daily-form" id="daily-form">
+        ${sentToday ? '<div style="font-size:12px;color:var(--gold);margin-bottom:12px;text-align:center">Editando lançamento de hoje</div>' : ''}
         <div class="fields-row">
           <div class="field-box">
             <label>PROSP</label>
-            <input type="number" id="f-prosp" min="0" value="0" required>
+            <input type="number" id="f-prosp" min="0" value="${pre.prosp}" required>
           </div>
           <div class="field-box">
             <label>CPD</label>
-            <input type="number" id="f-cpd" min="0" value="0" required>
+            <input type="number" id="f-cpd" min="0" value="${pre.cpd}" required>
           </div>
           <div class="field-box">
             <label>DOC</label>
-            <input type="number" id="f-doc" min="0" value="0" required>
+            <input type="number" id="f-doc" min="0" value="${pre.doc}" required>
           </div>
         </div>
-        <button type="submit" class="btn">Enviar relatório</button>
+        <button type="submit" class="btn">${sentToday ? 'Salvar correção' : 'Enviar relatório'}</button>
+        ${sentToday ? '<button type="button" class="btn btn-outline" id="cancel-edit-btn" style="margin-top:8px">Cancelar</button>' : ''}
       </form>`;
     document.getElementById('daily-form').addEventListener('submit', (ev) => {
       ev.preventDefault();
-      const entry = {
-        date:  today(),
+      upsertEntry({
+        date:  t,
         agent: session.name,
         prosp: parseInt(document.getElementById('f-prosp').value) || 0,
         cpd:   parseInt(document.getElementById('f-cpd').value)   || 0,
         doc:   parseInt(document.getElementById('f-doc').value)   || 0,
-      };
-      addEntry(entry);
+      });
       renderAgentDashboard(session);
     });
+    const cancelBtn = document.getElementById('cancel-edit-btn');
+    if (cancelBtn) cancelBtn.addEventListener('click', () => renderAgentDashboard(session));
   }
 
   // Histórico
@@ -271,21 +266,17 @@ function renderAgentDashboard(session) {
 
 // ── GESTOR DASHBOARD ────────────────────────────────────
 let gestorChart = null;
+let docStatusChart = null;
 let activePeriod = 'week';
+let activeConvMode = 'prosp-cpd'; // 'prosp-cpd' | 'cpd-doc'
 
 function initGestorDashboard() {
   const session = getSession();
-  if (!session || session.role !== 'gestor') {
-    window.location.href = 'index.html';
-    return;
-  }
-
+  if (!session || session.role !== 'gestor') { window.location.href = 'index.html'; return; }
   document.getElementById('gestor-name').textContent = session.name;
   document.getElementById('logout-btn').addEventListener('click', () => {
-    clearSession();
-    window.location.href = 'index.html';
+    clearSession(); window.location.href = 'index.html';
   });
-
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       activePeriod = btn.dataset.period;
@@ -294,16 +285,18 @@ function initGestorDashboard() {
       renderGestorDashboard();
     });
   });
-
   renderGestorDashboard();
 }
+
+const PODIUM = ['', 'gold', 'silver', 'bronze'];
+const PODIUM_LABEL = ['', '🥇', '🥈', '🥉'];
 
 function renderGestorDashboard() {
   const entries = filterEntries(activePeriod);
   const byAgent = sumByAgent(entries);
   const agentNames = Object.keys(USERS).filter(k => USERS[k].role === 'agent').map(k => USERS[k].name);
 
-  // totals
+  // ── Totals
   const totProsp = byAgent.reduce((s, a) => s + a.prosp, 0);
   const totCpd   = byAgent.reduce((s, a) => s + a.cpd,   0);
   const totDoc   = byAgent.reduce((s, a) => s + a.doc,   0);
@@ -311,7 +304,7 @@ function renderGestorDashboard() {
   document.getElementById('tot-cpd').textContent   = totCpd;
   document.getElementById('tot-doc').textContent   = totDoc;
 
-  // ranking
+  // ── Ranking — colunas: # | Nome | DOC | CPD | PROSP
   const ranked = [...byAgent].sort((a, b) =>
     b.doc !== a.doc ? b.doc - a.doc :
     b.cpd !== a.cpd ? b.cpd - a.cpd :
@@ -319,19 +312,24 @@ function renderGestorDashboard() {
   );
 
   const rankBody = document.getElementById('rank-body');
-  rankBody.innerHTML = ranked.map((a, i) => `
-    <tr>
-      <td><span class="rank-badge ${i === 0 ? 'gold' : ''}">${i+1}</span></td>
-      <td>${a.agent}</td>
-      <td class="num-cell">${a.prosp}</td>
-      <td class="num-cell">${a.cpd}</td>
-      <td class="num-cell">${a.doc}</td>
-    </tr>`).join('');
+  rankBody.innerHTML = ranked.map((a, i) => {
+    const pos = i + 1;
+    const badgeClass = pos <= 3 ? PODIUM[pos] : '';
+    const medal = pos <= 3 ? PODIUM_LABEL[pos] : pos;
+    return `
+      <tr class="${pos <= 3 ? 'podium-row podium-' + pos : ''}">
+        <td><span class="rank-badge ${badgeClass}">${medal}</span></td>
+        <td class="agent-name-cell">${a.agent}</td>
+        <td class="num-cell doc-cell">${a.doc}</td>
+        <td class="num-cell">${a.cpd}</td>
+        <td class="num-cell dim-cell">${a.prosp}</td>
+      </tr>`;
+  }).join('');
 
-  // chart
-  const labels = agentNames;
+  // ── Gráfico principal (PROSP / CPD / DOC)
   const agentMap = {};
   byAgent.forEach(a => { agentMap[a.agent] = a; });
+  const labels    = agentNames;
   const prospData = labels.map(n => agentMap[n] ? agentMap[n].prosp : 0);
   const cpdData   = labels.map(n => agentMap[n] ? agentMap[n].cpd   : 0);
   const docData   = labels.map(n => agentMap[n] ? agentMap[n].doc   : 0);
@@ -343,15 +341,14 @@ function renderGestorDashboard() {
     data: {
       labels,
       datasets: [
-        { label: 'PROSP', data: prospData, backgroundColor: 'rgba(201,168,76,.5)', borderColor: '#c9a84c', borderWidth: 1 },
-        { label: 'CPD',   data: cpdData,   backgroundColor: 'rgba(100,149,237,.5)', borderColor: '#6495ed', borderWidth: 1 },
-        { label: 'DOC',   data: docData,   backgroundColor: 'rgba(46,204,113,.5)', borderColor: '#2ecc71', borderWidth: 1 },
+        { label: 'PROSP', data: prospData, backgroundColor: 'rgba(201,168,76,.45)', borderColor: '#c9a84c', borderWidth: 1 },
+        { label: 'CPD',   data: cpdData,   backgroundColor: 'rgba(100,149,237,.45)', borderColor: '#6495ed', borderWidth: 1 },
+        { label: 'DOC',   data: docData,   backgroundColor: 'rgba(46,204,113,.7)',  borderColor: '#2ecc71', borderWidth: 1 },
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#888', font: { family: 'DM Sans' } } } },
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#888', font: { family: 'DM Sans', size: 12 } } } },
       scales: {
         x: { ticks: { color: '#888', font: { family: 'DM Sans', size: 11 } }, grid: { color: '#1a1a1a' } },
         y: { ticks: { color: '#888', font: { family: 'DM Sans' } }, grid: { color: '#1a1a1a' }, beginAtZero: true },
@@ -359,49 +356,87 @@ function renderGestorDashboard() {
     }
   });
 
-  // conversions
-  const convWrap = document.getElementById('conv-list');
-  convWrap.innerHTML = ranked.map(a => {
-    const p2d = a.doc > 0 ? (a.prosp / a.doc).toFixed(1) : '—';
-    const c2d = a.doc > 0 ? (a.cpd   / a.doc).toFixed(1) : '—';
-    return `
-      <div class="conversion-row">
-        <span class="conv-name">${a.agent}</span>
-        <span class="conv-vals">
-          <span>PROSP/DOC <span>${p2d}</span></span>
-          <span>CPD/DOC <span>${c2d}</span></span>
-        </span>
-      </div>`;
-  }).join('') || '<div class="empty-state">Sem dados</div>';
-
-  // alerts
-  const t = today();
-  const todayEntries = getEntries().filter(e => e.date === t);
-  const sentToday = new Set(todayEntries.map(e => e.agent));
-  const { start: wStart, end: wEnd } = weekRange(t);
-  const weekAll = getEntries().filter(e => inRange(e.date, wStart, wEnd));
+  // ── Gráfico DOC da semana (quem bateu / não bateu)
+  const { start: wStart, end: wEnd } = weekRange(today());
+  const weekAll  = getEntries().filter(e => inRange(e.date, wStart, wEnd));
   const weekDocMap = {};
   weekAll.forEach(e => { weekDocMap[e.agent] = (weekDocMap[e.agent] || 0) + e.doc; });
 
-  const alertsEl = document.getElementById('alerts-list');
-  let alertsHTML = '';
-
-  agentNames.forEach(name => {
-    if (!sentToday.has(name)) {
-      alertsHTML += `
-        <div class="alert-item red">
-          <span class="a-name">${name}</span>
-          <span class="a-tag">Sem relatório hoje</span>
-        </div>`;
-    }
-    if ((weekDocMap[name] || 0) === 0) {
-      alertsHTML += `
-        <div class="alert-item orange">
-          <span class="a-name">${name}</span>
-          <span class="a-tag">DOC zero na semana</span>
-        </div>`;
+  const docCtx = document.getElementById('doc-status-chart').getContext('2d');
+  if (docStatusChart) docStatusChart.destroy();
+  const docColors = agentNames.map(n => (weekDocMap[n] || 0) >= 1 ? 'rgba(46,204,113,.8)' : 'rgba(224,62,62,.7)');
+  const docBorders = agentNames.map(n => (weekDocMap[n] || 0) >= 1 ? '#2ecc71' : '#e03e3e');
+  docStatusChart = new Chart(docCtx, {
+    type: 'bar',
+    data: {
+      labels: agentNames,
+      datasets: [{
+        label: 'DOC na semana',
+        data: agentNames.map(n => weekDocMap[n] || 0),
+        backgroundColor: docColors,
+        borderColor: docBorders,
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        annotation: {},
+      },
+      scales: {
+        x: { ticks: { color: '#888', font: { family: 'DM Sans', size: 11 } }, grid: { color: '#1a1a1a' } },
+        y: { ticks: { color: '#888', font: { family: 'DM Sans' }, stepSize: 1 }, grid: { color: '#1a1a1a' }, beginAtZero: true },
+      }
     }
   });
 
-  alertsEl.innerHTML = alertsHTML || '<div class="empty-state">Nenhum alerta</div>';
+  // ── Conversão
+  renderConversion(ranked);
+  const convBtns = document.querySelectorAll('.conv-mode-btn');
+  convBtns.forEach(b => {
+    b.onclick = () => {
+      activeConvMode = b.dataset.mode;
+      convBtns.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      renderConversion(ranked);
+    };
+  });
+  convBtns.forEach(b => {
+    if (b.dataset.mode === activeConvMode) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+}
+
+function renderConversion(ranked) {
+  const convList = document.getElementById('conv-list');
+  if (!ranked.length) { convList.innerHTML = '<div class="empty-state">Sem dados</div>'; return; }
+
+  const isProspCpd = activeConvMode === 'prosp-cpd';
+  const rows = ranked.map((a, i) => {
+    let rate, label, num, den;
+    if (isProspCpd) {
+      num = a.cpd; den = a.prosp;
+      label = 'CPD / PROSP';
+    } else {
+      num = a.doc; den = a.cpd;
+      label = 'DOC / CPD';
+    }
+    const pct = den > 0 ? ((num / den) * 100).toFixed(1) + '%' : '—';
+    const ratio = den > 0 ? `${num} de ${den}` : '—';
+    const pos = i + 1;
+    const medal = pos <= 3 ? PODIUM_LABEL[pos] : '';
+    return `
+      <div class="conv-card">
+        <div class="conv-card-header">
+          <span class="conv-agent">${medal} ${a.agent}</span>
+          <span class="conv-pct ${pct === '—' ? 'muted' : ''}">${pct}</span>
+        </div>
+        <div class="conv-bar-wrap">
+          <div class="conv-bar" style="width:${den > 0 ? Math.min((num/den)*100, 100) : 0}%"></div>
+        </div>
+        <div class="conv-detail">${label}: ${ratio}</div>
+      </div>`;
+  });
+  convList.innerHTML = rows.join('');
 }
