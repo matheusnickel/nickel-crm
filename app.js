@@ -1,7 +1,7 @@
 import { fbUpsertEntry, fbReseedIfNeeded, fbListen, entryId } from './firebase.js';
 
 // ── CONSTANTS ────────────────────────────────────────────
-const SEED_VERSION = 'v4';
+const SEED_VERSION = 'v5-clean';
 
 const USERS = {
   bruna:      { name: 'Bruna',      role: 'agent', password: 'nickel123' },
@@ -27,43 +27,8 @@ const TIPO_COLORS = {
 const PODIUM       = ['','gold','silver','bronze'];
 const PODIUM_LABEL = ['','🥇','🥈','🥉'];
 
-// ── SEED DATA (v4 — limpo, sem dados inventados) ─────────
-const SEED = [
-  // 01/06
-  { date:'2026-06-01', agent:'Rian',       prosp:30,  cpd:2, doc:0, docDetails:[] },
-  { date:'2026-06-01', agent:'Luís',       prosp:19,  cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-01', agent:'Jhonnathan', prosp:25,  cpd:1, doc:0, docDetails:[] },
-  { date:'2026-06-01', agent:'Deisy',      prosp:12,  cpd:1, doc:0, docDetails:[] },
-  { date:'2026-06-01', agent:'Karen',      prosp:8,   cpd:4, doc:2, docDetails:[
-    { nome:'', valor:0, bairro:'', tipo:'', nota:'' },
-    { nome:'', valor:0, bairro:'', tipo:'', nota:'' },
-  ]},
-  { date:'2026-06-01', agent:'João',       prosp:0,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-01', agent:'Felipe',     prosp:0,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-01', agent:'Bruna',      prosp:0,   cpd:0, doc:0, docDetails:[] },
-  // 02/06
-  { date:'2026-06-02', agent:'Rian',       prosp:2,   cpd:1, doc:1, docDetails:[
-    { nome:'', valor:0, bairro:'', tipo:'', nota:'' },
-  ]},
-  { date:'2026-06-02', agent:'Luís',       prosp:0,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-02', agent:'Jhonnathan', prosp:9,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-02', agent:'Deisy',      prosp:9,   cpd:3, doc:0, docDetails:[] },
-  { date:'2026-06-02', agent:'Karen',      prosp:12,  cpd:4, doc:2, docDetails:[
-    { nome:'', valor:0, bairro:'', tipo:'', nota:'' },
-    { nome:'', valor:0, bairro:'', tipo:'', nota:'' },
-  ]},
-  { date:'2026-06-02', agent:'João',       prosp:3,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-02', agent:'Felipe',     prosp:112, cpd:3, doc:0, docDetails:[] },
-  { date:'2026-06-02', agent:'Bruna',      prosp:0,   cpd:0, doc:0, docDetails:[] },
-  // 03/06 — Karen não enviou (sem entrada para ela)
-  { date:'2026-06-03', agent:'Rian',       prosp:0,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-03', agent:'Luís',       prosp:0,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-03', agent:'Jhonnathan', prosp:0,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-03', agent:'Deisy',      prosp:0,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-03', agent:'João',       prosp:0,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-03', agent:'Felipe',     prosp:0,   cpd:0, doc:0, docDetails:[] },
-  { date:'2026-06-03', agent:'Bruna',      prosp:0,   cpd:0, doc:0, docDetails:[] },
-];
+// ── SEED DATA (v5 — banco limpo, sem dados pré-carregados)
+const SEED = [];
 
 // ── LOCAL CACHE ──────────────────────────────────────────
 function getEntries()         { return JSON.parse(localStorage.getItem('nickel_entries')||'[]'); }
@@ -269,21 +234,35 @@ function initAgentDashboard() {
   document.getElementById('agent-name').textContent=session.name;
   document.getElementById('logout-btn').addEventListener('click', ()=>{ if(agentUnsubscribe)agentUnsubscribe(); clearSession(); window.location.href='index.html'; });
 
-  agentUnsubscribe=fbListen(entries=>{ saveEntries(entries); renderAgentDashboard(session); });
+  agentUnsubscribe=fbListen(entries=>{
+    saveEntries(entries);
+    const dp=document.getElementById('selected-date');
+    renderAgentDashboard(session, dp?.value||today());
+  });
 }
 
-function renderAgentDashboard(session, editing) {
+function renderAgentDashboard(session, selectedDate, editing) {
   const t=today();
+  const date = selectedDate || t;
   const { start:wStart, end:wEnd }=weekRange(t);
   const entries=getEntries().filter(e=>e.agent===session.name);
   const weekDoc=entries.filter(e=>inRange(e.date,wStart,wEnd)).reduce((s,e)=>s+e.doc,0);
-  const sentToday=entries.find(e=>e.date===t);
-  const editCount=getEditCount(session.name,t);
+  const sentToday=entries.find(e=>e.date===date);
+  const editCount=getEditCount(session.name,date);
   const canEdit=editCount<2;
 
   document.getElementById('doc-week-num').textContent=weekDoc;
   document.getElementById('doc-week-meta').textContent=`Meta: ${META_DOC} DOC`;
   document.getElementById('doc-week-range').textContent=`${formatDate(wStart)} – ${formatDate(wEnd)}`;
+
+  // date picker
+  const datePicker = document.getElementById('selected-date');
+  datePicker.max = t;
+  if (datePicker && datePicker.value !== date) datePicker.value = date;
+  if (!datePicker._bound) {
+    datePicker._bound = true;
+    datePicker.addEventListener('change', () => renderAgentDashboard(session, datePicker.value));
+  }
 
   const statusEl=document.getElementById('week-status');
   if (weekDoc>=META_DOC) {
@@ -314,48 +293,53 @@ function renderAgentDashboard(session, editing) {
       `<div class="doc-summary-item">DOC ${i+1}: <strong>${d.nome||'—'}</strong> · ${d.tipo||'—'} · ${d.bairro||'—'} · ${formatCurrency(d.valor)}</div>`
     ).join('');
     const editBtn=canEdit
-      ?`<button class="btn btn-outline" id="edit-today-btn" style="margin-top:14px;font-size:13px;padding:9px">Corrigir lançamento de hoje</button>`
+      ?`<button class="btn btn-outline" id="edit-today-btn" style="margin-top:14px;font-size:13px;padding:9px">Corrigir lançamento de ${formatDate(date)}</button>`
       :`<div style="margin-top:14px;padding:10px 14px;background:rgba(224,62,62,.08);border:1px solid rgba(224,62,62,.25);border-radius:8px;font-size:12px;color:#ff6b6b;text-align:center">Correções esgotadas. Para nova alteração, fale com o gestor.</div>`;
     formWrap.innerHTML=`
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
-        <div style="font-weight:600;color:#f0f0f0">Relatório enviado hoje</div>
+        <div style="font-weight:600;color:#f0f0f0">Relatório de ${formatDate(date)} enviado</div>
         <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CPD <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong></div>
         ${docSummary?`<div class="doc-summary-list">${docSummary}</div>`:''}
         ${editBtn}
       </div>`;
-    if (canEdit) document.getElementById('edit-today-btn').addEventListener('click',()=>renderAgentDashboard(session,true));
+    if (canEdit) document.getElementById('edit-today-btn').addEventListener('click',()=>renderAgentDashboard(session,date,true));
   } else {
     const pre=sentToday||{prosp:0,cpd:0,doc:0,docDetails:[]};
-    formWrap.innerHTML=`
-      <form class="daily-form" id="daily-form">
-        ${sentToday?'<div style="font-size:12px;color:var(--gold);margin-bottom:12px;text-align:center">Editando lançamento de hoje</div>':''}
-        <div class="fields-row">
-          <div class="field-box"><label>PROSP</label><input type="number" id="f-prosp" min="0" value="${pre.prosp}" required></div>
-          <div class="field-box"><label>CPD</label><input type="number" id="f-cpd" min="0" value="${pre.cpd}" required></div>
-          <div class="field-box"><label>DOC</label><input type="number" id="f-doc" min="0" value="${pre.doc}" required></div>
-        </div>
-        <div id="doc-details-area">${buildDocDetailsHTML(pre.doc||0,pre.docDetails)}</div>
-        <button type="submit" class="btn" style="margin-top:14px">${sentToday?'Salvar correção':'Enviar relatório'}</button>
-        ${sentToday?'<button type="button" class="btn btn-outline" id="cancel-edit-btn" style="margin-top:8px">Cancelar</button>':''}
-      </form>`;
-    document.getElementById('f-doc').addEventListener('input',function(){
-      document.getElementById('doc-details-area').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+    const isFuture = date > t;
+    if (isFuture) {
+      formWrap.innerHTML=`<div class="sent-today" style="color:var(--text-muted);font-size:13px">Não é possível lançar para datas futuras.</div>`;
+    } else {
+      formWrap.innerHTML=`
+        <form class="daily-form" id="daily-form">
+          ${sentToday?`<div style="font-size:12px;color:var(--gold);margin-bottom:12px;text-align:center">Editando lançamento de ${formatDate(date)}</div>`:''}
+          <div class="fields-row">
+            <div class="field-box"><label>PROSP</label><input type="number" id="f-prosp" min="0" value="${pre.prosp}" required></div>
+            <div class="field-box"><label>CPD</label><input type="number" id="f-cpd" min="0" value="${pre.cpd}" required></div>
+            <div class="field-box"><label>DOC</label><input type="number" id="f-doc" min="0" value="${pre.doc}" required></div>
+          </div>
+          <div id="doc-details-area">${buildDocDetailsHTML(pre.doc||0,pre.docDetails)}</div>
+          <button type="submit" class="btn" style="margin-top:14px">${sentToday?'Salvar correção':'Enviar relatório'}</button>
+          ${sentToday?'<button type="button" class="btn btn-outline" id="cancel-edit-btn" style="margin-top:8px">Cancelar</button>':''}
+        </form>`;
+      document.getElementById('f-doc').addEventListener('input',function(){
+        document.getElementById('doc-details-area').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+        bindBairroSelects();
+      });
       bindBairroSelects();
-    });
-    bindBairroSelects();
-    document.getElementById('daily-form').addEventListener('submit',async ev=>{
-      ev.preventDefault();
-      const docVal=parseInt(document.getElementById('f-doc').value)||0;
-      const docDetails=collectDocDetails(docVal);
-      for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
-      const isEdit=!!sentToday;
-      const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
-      await upsertEntry({date:t,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:parseInt(document.getElementById('f-cpd').value)||0,doc:docVal,docDetails});
-      if (isEdit) incrementEditCount(session.name,t);
-    });
-    const cancelBtn=document.getElementById('cancel-edit-btn');
-    if (cancelBtn) cancelBtn.addEventListener('click',()=>renderAgentDashboard(session));
+      document.getElementById('daily-form').addEventListener('submit',async ev=>{
+        ev.preventDefault();
+        const docVal=parseInt(document.getElementById('f-doc').value)||0;
+        const docDetails=collectDocDetails(docVal);
+        for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
+        const isEdit=!!sentToday;
+        const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
+        await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:parseInt(document.getElementById('f-cpd').value)||0,doc:docVal,docDetails});
+        if (isEdit) incrementEditCount(session.name,date);
+      });
+      const cancelBtn=document.getElementById('cancel-edit-btn');
+      if (cancelBtn) cancelBtn.addEventListener('click',()=>renderAgentDashboard(session,date));
+    }
   }
 
   const historyBody=document.getElementById('history-body');
@@ -381,6 +365,40 @@ function initGestorDashboard() {
   gestorUnsubscribe=fbListen(entries=>{ saveEntries(entries); renderGestorDashboard(); renderDayView(document.getElementById('day-input')?.value||today()); });
   initDayView();
   initExport();
+  initGestorLancamento();
+}
+
+function initGestorLancamento() {
+  const agentNames=Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>USERS[k].name);
+  const agentSel=document.getElementById('lanc-agent');
+  agentNames.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; agentSel.appendChild(o); });
+
+  const dateInput=document.getElementById('lanc-date');
+  dateInput.value=today(); dateInput.max=today();
+
+  document.getElementById('lanc-doc').addEventListener('input',function(){
+    document.getElementById('lanc-doc-details').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+    bindBairroSelects();
+  });
+
+  document.getElementById('gestor-lanc-form').addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    const agent=agentSel.value, date=dateInput.value;
+    if (!agent||!date) return;
+    const docVal=parseInt(document.getElementById('lanc-doc').value)||0;
+    const docDetails=collectDocDetails(docVal);
+    for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
+    const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Salvando...';
+    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:parseInt(document.getElementById('lanc-cpd').value)||0,doc:docVal,docDetails});
+    resetEditCount(agent,date);
+    btn.disabled=false; btn.textContent='Salvar lançamento';
+    // reset form
+    document.getElementById('lanc-prosp').value=0;
+    document.getElementById('lanc-cpd').value=0;
+    document.getElementById('lanc-doc').value=0;
+    document.getElementById('lanc-doc-details').innerHTML='';
+    dateInput.value=today();
+  });
 }
 
 function renderGestorDashboard() {

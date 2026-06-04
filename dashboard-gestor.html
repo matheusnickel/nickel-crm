@@ -119,6 +119,32 @@
       <div id="conv-list"></div>
     </div>
 
+    <!-- Novo lançamento (gestor) -->
+    <div class="card">
+      <div class="card-title">Novo lançamento</div>
+      <form id="gestor-lanc-form">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Angariador</label>
+            <select id="lanc-agent" required>
+              <option value="">Selecione</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Data</label>
+            <input type="date" id="lanc-date" required>
+          </div>
+        </div>
+        <div class="fields-row" style="margin-bottom:14px">
+          <div class="field-box"><label>PROSP</label><input type="number" id="lanc-prosp" min="0" value="0"></div>
+          <div class="field-box"><label>CPD</label><input type="number" id="lanc-cpd" min="0" value="0"></div>
+          <div class="field-box"><label>DOC</label><input type="number" id="lanc-doc" min="0" value="0"></div>
+        </div>
+        <div id="lanc-doc-details"></div>
+        <button type="submit" class="btn">Salvar lançamento</button>
+      </form>
+    </div>
+
     <!-- Exportar Relatório PDF -->
     <div class="card">
       <div class="card-title">Exportar relatório</div>
