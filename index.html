@@ -39,14 +39,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
-  <script>
-    initSeed();
-    const s = getSession();
-    if (s) {
-      window.location.href = s.role === 'gestor' ? 'dashboard-gestor.html' : 'dashboard-agente.html';
-    }
-    document.getElementById('login-form').addEventListener('submit', handleLogin);
-  </script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
