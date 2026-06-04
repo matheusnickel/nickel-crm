@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nickel CRM</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <span>NICKEL CRM</span>
+        <p>Gestão de equipe</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label>Usuário</label>
+          <select id="username">
+            <option value="">Selecione...</option>
+            <option value="bruna">Bruna</option>
+            <option value="deisy">Deisy</option>
+            <option value="rian">Rian</option>
+            <option value="luis">Luís</option>
+            <option value="jhonnathan">Jhonnathan</option>
+            <option value="joao">João</option>
+            <option value="felipe">Felipe</option>
+            <option value="karen">Karen</option>
+            <option value="matheus">Matheus (Gestor)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn">Entrar</button>
+        <p class="error-msg" id="login-error"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    initSeed();
+    const s = getSession();
+    if (s) {
+      window.location.href = s.role === 'gestor' ? 'dashboard-gestor.html' : 'dashboard-agente.html';
+    }
+    document.getElementById('login-form').addEventListener('submit', handleLogin);
+  </script>
+</body>
+</html>

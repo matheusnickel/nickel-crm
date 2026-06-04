@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nickel CRM — Angariador</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <span class="logo">NICKEL CRM</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="user-info" id="agent-name"></span>
+      <button class="logout-btn" id="logout-btn">Sair</button>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- DOC Semanal Hero -->
+    <div class="card doc-hero">
+      <div class="card-title">DOC desta semana</div>
+      <div class="doc-number" id="doc-week-num">0</div>
+      <div class="doc-label">Documentações</div>
+      <div class="doc-week" id="doc-week-range"></div>
+    </div>
+
+    <!-- Status meta -->
+    <div class="status-badge red" id="week-status">
+      <span class="status-icon">!</span>
+      <span>Carregando...</span>
+    </div>
+
+    <!-- Streak -->
+    <div class="card">
+      <div class="card-title">Sequência de envios</div>
+      <div class="streak-row">
+        <div>
+          <div class="streak-num" id="streak-num">0</div>
+          <div class="streak-label">dias consecutivos</div>
+        </div>
+        <div style="font-size:36px">🔥</div>
+      </div>
+    </div>
+
+    <!-- Formulário diário -->
+    <div class="card">
+      <div class="card-title">Relatório de hoje</div>
+      <div id="form-wrap"></div>
+    </div>
+
+    <!-- Histórico -->
+    <div class="card">
+      <div class="card-title">Histórico</div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th class="num-cell">PROSP</th>
+              <th class="num-cell">CPD</th>
+              <th class="num-cell">DOC</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+  <script>initAgentDashboard();</script>
+</body>
+</html>

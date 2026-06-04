@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nickel CRM — Gestor</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <header class="app-header">
+    <span class="logo">NICKEL CRM</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="user-info" id="gestor-name"></span>
+      <button class="logout-btn" id="logout-btn">Sair</button>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Filtro -->
+    <div class="filter-row">
+      <button class="filter-btn" data-period="today">Hoje</button>
+      <button class="filter-btn active" data-period="week">Semana</button>
+      <button class="filter-btn" data-period="month">Mês</button>
+    </div>
+
+    <!-- Totais -->
+    <div class="totals-grid">
+      <div class="total-box">
+        <div class="t-val" id="tot-prosp">0</div>
+        <div class="t-lbl">PROSP</div>
+      </div>
+      <div class="total-box">
+        <div class="t-val" id="tot-cpd">0</div>
+        <div class="t-lbl">CPD</div>
+      </div>
+      <div class="total-box">
+        <div class="t-val" id="tot-doc">0</div>
+        <div class="t-lbl">DOC</div>
+      </div>
+    </div>
+
+    <!-- Ranking -->
+    <div class="card">
+      <div class="card-title">Ranking da equipe</div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Angariador</th>
+              <th class="num-cell">PROSP</th>
+              <th class="num-cell">CPD</th>
+              <th class="num-cell">DOC</th>
+            </tr>
+          </thead>
+          <tbody id="rank-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="card">
+      <div class="card-title">Desempenho por angariador</div>
+      <div class="chart-wrap">
+        <canvas id="team-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Conversão -->
+    <div class="card">
+      <div class="card-title">Taxas de conversão</div>
+      <div id="conv-list"></div>
+    </div>
+
+    <!-- Alertas -->
+    <div class="card">
+      <div class="card-title">Alertas</div>
+      <div class="alerts-list" id="alerts-list"></div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+  <script>initGestorDashboard();</script>
+</body>
+</html>
