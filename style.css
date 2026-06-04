@@ -625,6 +625,48 @@ tr.podium-3 td { background: rgba(180,100,40,.04); }
 .doc-summary-item:last-child { border-bottom: none; }
 .doc-summary-item strong { color: var(--text); }
 
+/* ── ANALYTICS MODE BUTTONS ── */
+.analytics-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.analytics-btn {
+  flex: 1;
+  min-width: 70px;
+  padding: 8px 4px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: .2s;
+}
+.analytics-btn.active {
+  background: rgba(201,168,76,.12);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── DELETE DOC BUTTON ── */
+.del-doc-btn {
+  background: none;
+  border: 1px solid rgba(224,62,62,.3);
+  color: #e03e3e;
+  font-size: 11px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+  transition: .2s;
+}
+.del-doc-btn:hover { background: rgba(224,62,62,.12); }
+
 /* ── TIPO TAGS ── */
 .tipo-tag {
   display: inline-block;

@@ -94,12 +94,19 @@
       <div id="doc-list-wrap"></div>
     </div>
 
-    <!-- Gráfico por tipo -->
+    <!-- Gráfico analítico DOCs -->
     <div class="card">
-      <div class="card-title">DOCs por tipo de imóvel</div>
+      <div class="card-title">Análise de DOCs</div>
+      <div class="analytics-row">
+        <button class="analytics-btn active" data-mode="tipo">Tipo</button>
+        <button class="analytics-btn" data-mode="bairro">Bairro</button>
+        <button class="analytics-btn" data-mode="valor">Valor total</button>
+        <button class="analytics-btn" data-mode="ticket">Ticket médio</button>
+      </div>
       <div class="chart-wrap" style="height:260px">
         <canvas id="tipo-chart"></canvas>
       </div>
+      <div id="analytics-empty" class="empty-state" style="display:none">Nenhum DOC com dados registrado</div>
     </div>
 
     <!-- Conversão -->
