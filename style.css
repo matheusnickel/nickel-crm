@@ -677,6 +677,20 @@ tr.podium-3 td { background: rgba(180,100,40,.04); }
 }
 .nota-save-btn:hover { background: rgba(46,204,113,.1); }
 
+.nota-select {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+  cursor: pointer;
+  outline: none;
+}
+.nota-select:focus { border-color: var(--gold); }
+
 /* ── ANALYTICS MODE BUTTONS ── */
 .analytics-row {
   display: flex;

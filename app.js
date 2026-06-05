@@ -484,7 +484,9 @@ function renderAnalyticsChart(allDocs) {
   } else if (mode==='bairro') {
     const c={}; allDocs.forEach(d=>{if(d.bairro)c[d.bairro]=(c[d.bairro]||0)+1;});
     const sorted=Object.entries(c).sort((a,b)=>b[1]-a[1]);
-    analyticsChart=new Chart(ctx,{type:'bar',data:{labels:sorted.map(x=>x[0]),datasets:[{label:'DOCs',data:sorted.map(x=>x[1]),backgroundColor:'rgba(100,149,237,.6)',borderColor:'#6495ed',borderWidth:1}]},options:{...base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{...scalesXY.x,ticks:{...scalesXY.x.ticks,stepSize:1},beginAtZero:true},y:scalesXY.y}}});
+    const palette=['rgba(201,168,76,.7)','rgba(100,149,237,.7)','rgba(46,204,113,.7)','rgba(230,126,34,.7)','rgba(231,76,60,.7)','rgba(155,89,182,.7)','rgba(52,152,219,.7)','rgba(26,188,156,.7)','rgba(241,196,15,.7)','rgba(189,195,199,.7)','rgba(127,140,141,.7)'];
+    const palBorder=['#c9a84c','#6495ed','#2ecc71','#e67e22','#e74c3c','#9b59b6','#3498db','#1abc9c','#f1c40f','#bdc3c7','#7f8c8d'];
+    analyticsChart=new Chart(ctx,{type:'bar',data:{labels:sorted.map(x=>x[0]),datasets:[{label:'DOCs',data:sorted.map(x=>x[1]),backgroundColor:sorted.map((_,i)=>palette[i%palette.length]),borderColor:sorted.map((_,i)=>palBorder[i%palBorder.length]),borderWidth:1}]},options:{...base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{...scalesXY.x,ticks:{...scalesXY.x.ticks,stepSize:1},beginAtZero:true},y:scalesXY.y}}});
   } else if (mode==='valor') {
     const s={}; TIPOS.forEach(t=>s[t]=0); allDocs.forEach(d=>{if(d.tipo&&d.valor)s[d.tipo]=(s[d.tipo]||0)+Number(d.valor);});
     analyticsChart=new Chart(ctx,{type:'bar',data:{labels:TIPOS,datasets:[{data:TIPOS.map(t=>s[t]),backgroundColor:TIPOS.map(t=>TIPO_COLORS[t].bg),borderColor:TIPOS.map(t=>TIPO_COLORS[t].border),borderWidth:1}]},options:{...base,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'R$ '+Number(c.raw).toLocaleString('pt-BR')}}},scales:{...scalesXY,y:{...scalesXY.y,ticks:{...scalesXY.y.ticks,callback:v=>'R$'+(v>=1000?(v/1000).toFixed(0)+'k':v)}}}}});
@@ -512,21 +514,18 @@ function renderDocList(entries) {
       <td>${d.bairro||'—'}</td>
       <td class="num-cell">${formatCurrency(d.valor)}</td>
       <td>
-        <div class="nota-wrap">
-          <input type="text" class="nota-input" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" value="${d.nota||''}" placeholder="—">
-          <button class="nota-save-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">✓</button>
-        </div>
+        <select class="nota-select" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">
+          <option value="" ${!d.nota?'selected':''}>—</option>
+          <option value="SITE" ${d.nota==='SITE'?'selected':''}>SITE</option>
+          <option value="AVI" ${d.nota==='AVI'?'selected':''}>AVI</option>
+        </select>
       </td>
       <td><button class="del-doc-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" title="Excluir">✕</button></td>
     </tr>`).join('')}</tbody></table></div>`;
 
-  wrap.querySelectorAll('.nota-save-btn').forEach(btn=>{
-    btn.addEventListener('click',async()=>{
-      const {date,agent,idx}=btn.dataset;
-      const nota=wrap.querySelector(`.nota-input[data-date="${date}"][data-agent="${agent}"][data-idx="${idx}"]`).value.trim();
-      btn.disabled=true; btn.textContent='...';
-      await updateDocNota(date,agent,parseInt(idx),nota);
-      btn.textContent='✓'; btn.disabled=false;
+  wrap.querySelectorAll('.nota-select').forEach(sel=>{
+    sel.addEventListener('change',async()=>{
+      await updateDocNota(sel.dataset.date, sel.dataset.agent, parseInt(sel.dataset.idx), sel.value);
     });
   });
   wrap.querySelectorAll('.del-doc-btn').forEach(btn=>{
