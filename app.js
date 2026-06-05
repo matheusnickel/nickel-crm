@@ -159,8 +159,8 @@ function buildDocDetailsHTML(count, prefill) {
       </div>
       <div class="doc-detail-row2">
         <div class="form-group">
-          <label>Valor (R$)</label>
-          <input type="number" class="doc-valor" data-idx="${i}" placeholder="0" min="0" value="${pre.valor||''}">
+          <label>Valor — digite completo (ex: 450000)</label>
+          <input type="number" class="doc-valor" data-idx="${i}" placeholder="Ex: 450000" min="0" value="${pre.valor||''}">
         </div>
         <div class="form-group">
           <label>Bairro</label>
@@ -489,7 +489,12 @@ function renderDocList(entries) {
       <td style="font-weight:500">${d.nome||'—'}</td>
       <td>${d.tipo?`<span class="tipo-tag tipo-${d.tipo.toLowerCase()}">${d.tipo}</span>`:'—'}</td>
       <td>${d.bairro||'—'}</td>
-      <td class="num-cell">${formatCurrency(d.valor)}</td>
+      <td class="num-cell">
+        <div class="nota-wrap">
+          <input type="number" class="valor-input" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" value="${d.valor||0}" min="0" style="width:90px">
+          <button class="valor-save-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">✓</button>
+        </div>
+      </td>
       <td>
         <div class="nota-wrap">
           <input type="text" class="nota-input" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" value="${d.nota||''}" placeholder="—">
@@ -498,6 +503,20 @@ function renderDocList(entries) {
       </td>
       <td><button class="del-doc-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" title="Excluir">✕</button></td>
     </tr>`).join('')}</tbody></table></div>`;
+
+  wrap.querySelectorAll('.valor-save-btn').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const {date,agent,idx}=btn.dataset;
+      const valor=parseFloat(wrap.querySelector(`.valor-input[data-date="${date}"][data-agent="${agent}"][data-idx="${idx}"]`).value)||0;
+      const entries=getEntries();
+      const entry=entries.find(e=>e.date===date&&e.agent===agent);
+      if (!entry||!entry.docDetails[parseInt(idx)]) return;
+      entry.docDetails[parseInt(idx)].valor=valor;
+      localUpsert(entry); await fbUpsertEntry(entry);
+      btn.textContent='✓'; btn.style.color='#2ecc71';
+      setTimeout(()=>btn.style.color='',1500);
+    });
+  });
 
   wrap.querySelectorAll('.nota-save-btn').forEach(btn=>{
     btn.addEventListener('click',async()=>{
