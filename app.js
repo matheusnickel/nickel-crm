@@ -137,7 +137,7 @@ function calcStreak(agentName) {
 function renderStreak(agentName, entries) {
   const streak = calcStreak(agentName);
   const sentDates = new Set(entries.map(e => e.date));
-  const t = today();
+  const t = today(); // local scope
 
   // last 7 days dots
   const dots = [];
@@ -303,14 +303,17 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
   // date picker
   const datePicker = document.getElementById('selected-date');
-  datePicker.max = t;
-  if (datePicker && datePicker.value !== date) datePicker.value = date;
-  if (!datePicker._bound) {
-    datePicker._bound = true;
-    datePicker.addEventListener('change', () => renderAgentDashboard(session, datePicker.value));
+  if (datePicker) {
+    datePicker.max = t;
+    if (datePicker.value !== date) datePicker.value = date;
+    if (!datePicker._bound) {
+      datePicker._bound = true;
+      datePicker.addEventListener('change', () => renderAgentDashboard(session, datePicker.value));
+    }
   }
 
   const statusEl=document.getElementById('week-status');
+  statusEl.style.display='flex';
   if (weekDoc>=META_DOC) {
     statusEl.className='status-badge green';
     statusEl.innerHTML=`<span class="status-icon">✓</span><span>Meta da semana atingida — ${META_DOC} DOC</span>`;
