@@ -17,9 +17,13 @@ function getTeamUser(username) {
 }
 
 async function loadTeam() {
-  const remote = await fbGetTeam();
-  if (remote && remote.length > 0) TEAM = remote;
-  else await fbSaveTeam(TEAM); // first time: save defaults
+  try {
+    const remote = await fbGetTeam();
+    if (remote && remote.length > 0) TEAM = remote;
+    else await fbSaveTeam(TEAM);
+  } catch(e) {
+    console.warn('loadTeam error, using defaults', e);
+  }
 }
 
 const SEED_VERSION = 'v7-reset';
@@ -283,8 +287,8 @@ async function initLogin() {
   if (s) { window.location.href=s.role==='gestor'?'dashboard-gestor.html':'dashboard-agente.html'; return; }
 
   document.getElementById('loading-msg').style.display='block';
-  await loadTeam();
-  await fbSeedIfFirstTime(SEED);
+  try { await loadTeam(); } catch(e) {}
+  try { await fbSeedIfFirstTime(SEED); } catch(e) {}
   document.getElementById('loading-msg').style.display='none';
 
   // populate agent select
