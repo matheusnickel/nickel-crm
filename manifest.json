@@ -1,0 +1,14 @@
+{
+  "name": "Nickel CRM",
+  "short_name": "Nickel CRM",
+  "description": "Gestão de equipe de angariadores",
+  "start_url": "/nickel-crm/index.html",
+  "scope": "/nickel-crm/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#080808",
+  "theme_color": "#c9a84c",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
