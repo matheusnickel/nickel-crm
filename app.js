@@ -1,33 +1,6 @@
 import { fbUpsertEntry, fbSeedIfFirstTime, fbListen, entryId, fbGetTeam, fbSaveTeam } from './firebase.js';
 
-// ── CONSTANTS ────────────────────────────────────────────
-// Dynamic team — loaded from Firestore, falls back to USERS
-let TEAM = Object.keys(USERS)
-  .filter(k => USERS[k].role === 'agent')
-  .map(k => ({ name: USERS[k].name, password: USERS[k].password }));
-
-function getAgentNames() { return TEAM.map(a => a.name); }
-
-function getTeamUser(username) {
-  const lower = username.toLowerCase().trim();
-  // check gestor
-  if (USERS[lower] && USERS[lower].role === 'gestor') return USERS[lower];
-  // check dynamic team
-  return TEAM.find(a => a.name.toLowerCase() === lower) || null;
-}
-
-async function loadTeam() {
-  try {
-    const remote = await fbGetTeam();
-    if (remote && remote.length > 0) TEAM = remote;
-    else await fbSaveTeam(TEAM);
-  } catch(e) {
-    console.warn('loadTeam error, using defaults', e);
-  }
-}
-
-const SEED_VERSION = 'v7-reset';
-
+// ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
   bruna:      { name: 'Bruna',      role: 'agent', password: 'nickel123' },
   deisy:      { name: 'Deisy',      role: 'agent', password: 'nickel123' },
@@ -39,6 +12,23 @@ const USERS = {
   karen:      { name: 'Karen',      role: 'agent', password: 'nickel123' },
   matheus:    { name: 'Matheus',    role: 'gestor', password: 'nickel123' },
 };
+
+const SEED_VERSION = 'v7-reset';
+
+// ── TEAM (após USERS) ────────────────────────────────────
+let TEAM = Object.keys(USERS)
+  .filter(k => USERS[k].role === 'agent')
+  .map(k => ({ name: USERS[k].name, password: USERS[k].password }));
+
+function getAgentNames() { return TEAM.map(a => a.name); }
+
+async function loadTeam() {
+  try {
+    const remote = await fbGetTeam();
+    if (remote && remote.length > 0) TEAM = remote;
+    else await fbSaveTeam(TEAM);
+  } catch(e) { console.warn('loadTeam error, using defaults', e); }
+}
 
 const TIPOS   = ['Casa', 'Apto', 'Studio', 'Terreno', 'Comercial'];
 
@@ -455,7 +445,7 @@ let evolucaoChart=null, analyticsChart=null;
 let activePeriod='week', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
 let gestorUnsubscribe=null;
 
-function initGestorDashboard() {
+async function initGestorDashboard() {
   const session=getSession();
   if (!session||session.role!=='gestor') { window.location.href='index.html'; return; }
   document.getElementById('gestor-name').textContent=session.name;
