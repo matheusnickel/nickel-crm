@@ -498,13 +498,31 @@ function renderAnalyticsChart(allDocs) {
 }
 
 // ── DOC LIST (gestor — with inline nota edit) ────────────
+let activeDocAgent = '';
+
 function renderDocList(entries) {
-  const rows=[];
-  entries.forEach(e=>(e.docDetails||[]).forEach((d,i)=>rows.push({date:e.date,agent:e.agent,idx:i,...d})));
-  rows.sort((a,b)=>b.date.localeCompare(a.date));
+  const allRows=[];
+  entries.forEach(e=>(e.docDetails||[]).forEach((d,i)=>allRows.push({date:e.date,agent:e.agent,idx:i,...d})));
+  allRows.sort((a,b)=>b.date.localeCompare(a.date));
+
   const wrap=document.getElementById('doc-list-wrap');
-  if (rows.length===0) { wrap.innerHTML='<div class="empty-state">Nenhum DOC registrado no período</div>'; return; }
-  wrap.innerHTML=`<div style="overflow-x:auto"><table class="data-table" style="table-layout:auto">
+
+  // build/keep filter
+  const agentNames=Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>USERS[k].name);
+  const filterHTML=`<div style="margin-bottom:12px">
+    <select id="doc-agent-filter" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;width:100%">
+      <option value="">Todos os angariadores</option>
+      ${agentNames.map(n=>`<option value="${n}" ${activeDocAgent===n?'selected':''}>${n}</option>`).join('')}
+    </select>
+  </div>`;
+
+  const rows = activeDocAgent ? allRows.filter(r=>r.agent===activeDocAgent) : allRows;
+
+  if (allRows.length===0) { wrap.innerHTML=filterHTML+'<div class="empty-state">Nenhum DOC registrado no período</div>';
+    wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
+    return;
+  }
+  wrap.innerHTML=filterHTML+`<div style="overflow-x:auto"><table class="data-table" style="table-layout:auto">
     <thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>SITE / AVI</th><th></th></tr></thead>
     <tbody>${rows.map(d=>`<tr>
       <td style="white-space:nowrap">${formatDate(d.date)}</td>
@@ -522,6 +540,8 @@ function renderDocList(entries) {
       </td>
       <td><button class="del-doc-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" title="Excluir">✕</button></td>
     </tr>`).join('')}</tbody></table></div>`;
+
+  wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
 
   wrap.querySelectorAll('.nota-select').forEach(sel=>{
     sel.addEventListener('change',async()=>{
