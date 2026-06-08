@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
   getFirestore, collection, doc, setDoc, getDoc, getDocs,
-  writeBatch, deleteDoc, onSnapshot
+  writeBatch, onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -16,7 +16,6 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db    = getFirestore(fbApp);
 
-// doc ID normalised — "2026-06-04_Karen"
 export function entryId(date, agent) {
   return `${date}_${agent.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'_')}`;
 }
@@ -25,10 +24,9 @@ export async function fbUpsertEntry(entry) {
   await setDoc(doc(db, 'entries', entryId(entry.date, entry.agent)), entry);
 }
 
-// Seed only if Firestore is completely empty — NEVER deletes existing data
 export async function fbSeedIfFirstTime(seedData) {
   const snap = await getDocs(collection(db, 'entries'));
-  if (!snap.empty) return; // data exists, do nothing
+  if (!snap.empty) return;
   if (seedData.length === 0) return;
   const batch = writeBatch(db);
   seedData.forEach(e => batch.set(doc(db, 'entries', entryId(e.date, e.agent)), e));
@@ -39,4 +37,14 @@ export function fbListen(callback) {
   return onSnapshot(collection(db, 'entries'), snap => {
     callback(snap.docs.map(d => d.data()));
   });
+}
+
+// ── TEAM MANAGEMENT ─────────────────────────────────────
+export async function fbGetTeam() {
+  const snap = await getDoc(doc(db, '_meta', 'team'));
+  return snap.exists() ? snap.data().agents : null;
+}
+
+export async function fbSaveTeam(agents) {
+  await setDoc(doc(db, '_meta', 'team'), { agents });
 }

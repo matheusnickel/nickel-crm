@@ -74,24 +74,18 @@
       </div>
     </div>
 
-    <!-- Gráfico desempenho -->
+    <!-- Evolução diária de DOC -->
     <div class="card">
-      <div class="card-title">Desempenho por angariador</div>
-      <div class="chart-wrap">
-        <canvas id="team-chart"></canvas>
+      <div class="card-title">Evolução diária de DOC</div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="evolucao-chart"></canvas>
       </div>
     </div>
 
-    <!-- DOC da semana — quem bateu / não bateu -->
+    <!-- Sequência de envios — ranking -->
     <div class="card">
-      <div class="card-title">DOC na semana atual — meta: 1</div>
-      <div class="doc-legend-row">
-        <span class="doc-legend green">■ Bateu a meta</span>
-        <span class="doc-legend red">■ Abaixo da meta</span>
-      </div>
-      <div class="chart-wrap">
-        <canvas id="doc-status-chart"></canvas>
-      </div>
+      <div class="card-title">🔥 Sequência de envios</div>
+      <div id="streak-ranking"></div>
     </div>
 
     <!-- DOCs registrados -->
@@ -162,6 +156,23 @@
       <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Abre uma nova aba — use "Imprimir" do navegador para salvar como PDF.</div>
     </div>
 
+    <!-- Gestão de equipe -->
+    <div class="card" id="team-mgmt">
+      <div class="card-title">Equipe — adicionar / remover</div>
+      <div id="team-list" style="margin-bottom:16px"></div>
+      <form id="add-agent-form" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+        <div class="form-group" style="margin:0">
+          <label>Nome</label>
+          <input type="text" id="new-agent-name" placeholder="Ex: Lucas" required>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Senha</label>
+          <input type="text" id="new-agent-pass" placeholder="nickel123">
+        </div>
+        <button type="submit" class="btn" style="padding:12px 16px;white-space:nowrap">+ Adicionar</button>
+      </form>
+    </div>
+
     <!-- Consulta por dia -->
     <div class="card">
       <div class="card-title">Consulta por dia</div>
@@ -173,15 +184,6 @@
     </div>
 
   </main>
-
-  <!-- Widget flutuante streak -->
-  <div id="streak-widget">
-    <div id="streak-widget-header" onclick="document.getElementById('streak-widget').classList.toggle('collapsed')">
-      🔥 Sequência
-      <span id="streak-widget-arrow">▲</span>
-    </div>
-    <div id="streak-ranking"></div>
-  </div>
 
   <script type="module" src="app.js"></script>
 </body>

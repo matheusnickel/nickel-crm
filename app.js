@@ -1,6 +1,27 @@
-import { fbUpsertEntry, fbSeedIfFirstTime, fbListen, entryId } from './firebase.js';
+import { fbUpsertEntry, fbSeedIfFirstTime, fbListen, entryId, fbGetTeam, fbSaveTeam } from './firebase.js';
 
 // ── CONSTANTS ────────────────────────────────────────────
+// Dynamic team — loaded from Firestore, falls back to USERS
+let TEAM = Object.keys(USERS)
+  .filter(k => USERS[k].role === 'agent')
+  .map(k => ({ name: USERS[k].name, password: USERS[k].password }));
+
+function getAgentNames() { return TEAM.map(a => a.name); }
+
+function getTeamUser(username) {
+  const lower = username.toLowerCase().trim();
+  // check gestor
+  if (USERS[lower] && USERS[lower].role === 'gestor') return USERS[lower];
+  // check dynamic team
+  return TEAM.find(a => a.name.toLowerCase() === lower) || null;
+}
+
+async function loadTeam() {
+  const remote = await fbGetTeam();
+  if (remote && remote.length > 0) TEAM = remote;
+  else await fbSaveTeam(TEAM); // first time: save defaults
+}
+
 const SEED_VERSION = 'v7-reset';
 
 const USERS = {
@@ -15,7 +36,14 @@ const USERS = {
   matheus:    { name: 'Matheus',    role: 'gestor', password: 'nickel123' },
 };
 
-const TIPOS   = ['Casa', 'Apto', 'Terreno', 'Comercial'];
+const TIPOS   = ['Casa', 'Apto', 'Studio', 'Terreno', 'Comercial'];
+
+const STATUS_OPTIONS = [
+  { value: '',      label: '—',    color: 'var(--text-muted)' },
+  { value: 'Fotos', label: 'Fotos', color: '#e67e22' },
+  { value: 'AVI',   label: 'AVI',   color: '#3498db' },
+  { value: 'SITE',  label: 'SITE',  color: '#c9a84c' },
+];
 const BAIRROS = ['Batel','Água Verde','Bigorrilho','Ecoville','Cabral','Juvevê','Mercês','Campo Comprido','Santa Felicidade','Santo Inácio','Vila Izabel'];
 const META_DOC = 1;
 const TIPO_COLORS = {
@@ -254,20 +282,39 @@ async function initLogin() {
   const s=getSession();
   if (s) { window.location.href=s.role==='gestor'?'dashboard-gestor.html':'dashboard-agente.html'; return; }
 
-  // seed only if Firestore is completely empty (never wipes existing data)
   document.getElementById('loading-msg').style.display='block';
+  await loadTeam();
   await fbSeedIfFirstTime(SEED);
   document.getElementById('loading-msg').style.display='none';
 
+  // populate agent select
+  const sel = document.getElementById('username');
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  TEAM.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.name.toLowerCase();
+    o.textContent = a.name;
+    sel.appendChild(o);
+  });
+  const oGestor = document.createElement('option');
+  oGestor.value = 'matheus'; oGestor.textContent = 'Matheus (Gestor)';
+  sel.appendChild(oGestor);
+
   document.getElementById('login-form').addEventListener('submit', e => {
     e.preventDefault();
-    const username=document.getElementById('username').value.trim().toLowerCase();
-    const password=document.getElementById('password').value;
-    const errEl=document.getElementById('login-error');
-    const user=USERS[username];
-    if (!user||user.password!==password) { errEl.textContent='Usuário ou senha incorretos.'; return; }
-    setSession({ username, name:user.name, role:user.role });
-    window.location.href=user.role==='gestor'?'dashboard-gestor.html':'dashboard-agente.html';
+    const username = document.getElementById('username').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
+    const errEl = document.getElementById('login-error');
+    // check gestor
+    if (username === 'matheus') {
+      if (password !== USERS.matheus.password) { errEl.textContent='Senha incorreta.'; return; }
+      setSession({ username, name:'Matheus', role:'gestor' });
+      window.location.href='dashboard-gestor.html'; return;
+    }
+    const agent = TEAM.find(a => a.name.toLowerCase() === username);
+    if (!agent || agent.password !== password) { errEl.textContent='Usuário ou senha incorretos.'; return; }
+    setSession({ username, name:agent.name, role:'agent' });
+    window.location.href='dashboard-agente.html';
   });
 }
 
@@ -399,7 +446,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
 }
 
 // ── GESTOR DASHBOARD ─────────────────────────────────────
-let gestorChart=null, docStatusChart=null, analyticsChart=null;
+let evolucaoChart=null, analyticsChart=null;
 let activePeriod='week', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
 let gestorUnsubscribe=null;
 
@@ -411,6 +458,7 @@ function initGestorDashboard() {
   document.querySelectorAll('.filter-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{ activePeriod=btn.dataset.period; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderGestorDashboard(); });
   });
+  await loadTeam();
   gestorUnsubscribe=fbListen(async entries=>{
     saveEntries(entries);
     await fixSmallValues(entries);
@@ -420,6 +468,7 @@ function initGestorDashboard() {
   initDayView();
   initExport();
   initGestorLancamento();
+  initTeamManagement();
 }
 
 // Corrige valores digitados sem os zeros (ex: 2890 → 2890000)
@@ -439,7 +488,7 @@ async function fixSmallValues(entries) {
 }
 
 function initGestorLancamento() {
-  const agentNames=Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>USERS[k].name);
+  const agentNames=getAgentNames();
   const agentSel=document.getElementById('lanc-agent');
   agentNames.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; agentSel.appendChild(o); });
 
@@ -468,6 +517,84 @@ function initGestorLancamento() {
     document.getElementById('lanc-doc').value=0;
     document.getElementById('lanc-doc-details').innerHTML='';
     dateInput.value=today();
+  });
+}
+
+function renderEvolucaoDiaria(entries) {
+  const ctx = document.getElementById('evolucao-chart')?.getContext('2d');
+  if (!ctx) return;
+  if (evolucaoChart) evolucaoChart.destroy();
+
+  // collect unique dates sorted
+  const dates = [...new Set(entries.map(e=>e.date))].sort();
+  if (dates.length === 0) { return; }
+
+  // total DOC per day
+  const totalPerDay = dates.map(d => entries.filter(e=>e.date===d).reduce((s,e)=>s+e.doc,0));
+
+  // per agent datasets
+  const agentNames = getAgentNames();
+  const colors = ['#c9a84c','#6495ed','#2ecc71','#e67e22','#e74c3c','#9b59b6','#1abc9c','#f1c40f'];
+  const datasets = agentNames.map((name,i) => ({
+    label: name,
+    data: dates.map(d => { const e=entries.find(x=>x.date===d&&x.agent===name); return e?e.doc:0; }),
+    borderColor: colors[i%colors.length],
+    backgroundColor: colors[i%colors.length]+'33',
+    borderWidth: 2, pointRadius: 4, tension: .3, fill: false,
+  })).filter(ds => ds.data.some(v=>v>0));
+
+  evolucaoChart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: dates.map(formatDate), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color:'#888', font:{ family:'DM Sans', size:11 }, boxWidth:12 } } },
+      scales: {
+        x: { ticks:{ color:'#888', font:{ family:'DM Sans', size:10 } }, grid:{ color:'#1a1a1a' } },
+        y: { ticks:{ color:'#888', font:{ family:'DM Sans' }, stepSize:1 }, grid:{ color:'#1a1a1a' }, beginAtZero:true },
+      }
+    }
+  });
+}
+
+// ── TEAM MANAGEMENT ──────────────────────────────────────
+function initTeamManagement() {
+  const wrap = document.getElementById('team-mgmt');
+  if (!wrap) return;
+  renderTeamList();
+
+  document.getElementById('add-agent-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const name = document.getElementById('new-agent-name').value.trim();
+    const pass = document.getElementById('new-agent-pass').value.trim() || 'nickel123';
+    if (!name) return;
+    if (TEAM.find(a => a.name.toLowerCase() === name.toLowerCase())) {
+      alert('Angariador já existe.'); return;
+    }
+    TEAM.push({ name, password: pass });
+    await fbSaveTeam(TEAM);
+    document.getElementById('new-agent-name').value = '';
+    renderTeamList();
+  });
+}
+
+function renderTeamList() {
+  const list = document.getElementById('team-list');
+  if (!list) return;
+  list.innerHTML = TEAM.map((a,i) => `
+    <div class="team-row">
+      <span class="team-name">${a.name}</span>
+      <span class="team-pass" style="color:var(--text-muted);font-size:12px">${a.password}</span>
+      <button class="del-agent-btn" data-idx="${i}">Remover</button>
+    </div>`).join('');
+  list.querySelectorAll('.del-agent-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const name = TEAM[parseInt(btn.dataset.idx)].name;
+      if (!confirm(`Remover ${name} da equipe?`)) return;
+      TEAM.splice(parseInt(btn.dataset.idx), 1);
+      await fbSaveTeam(TEAM);
+      renderTeamList();
+    });
   });
 }
 
@@ -500,7 +627,7 @@ function renderStreakRanking() {
 function renderGestorDashboard() {
   const entries=filterEntries(activePeriod);
   const byAgent=sumByAgent(entries);
-  const agentNames=Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>USERS[k].name);
+  const agentNames=getAgentNames();
 
   const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
   document.getElementById('tot-prosp').textContent=totProsp;
@@ -513,21 +640,8 @@ function renderGestorDashboard() {
     return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
   }).join('');
 
-  const agentMap={}; byAgent.forEach(a=>{agentMap[a.agent]=a;});
-  const ctx=document.getElementById('team-chart').getContext('2d');
-  if (gestorChart) gestorChart.destroy();
-  gestorChart=new Chart(ctx,{type:'bar',data:{labels:agentNames,datasets:[
-    {label:'PROSP',data:agentNames.map(n=>agentMap[n]?.prosp||0),backgroundColor:'rgba(201,168,76,.45)',borderColor:'#c9a84c',borderWidth:1},
-    {label:'CPD',  data:agentNames.map(n=>agentMap[n]?.cpd  ||0),backgroundColor:'rgba(100,149,237,.45)',borderColor:'#6495ed',borderWidth:1},
-    {label:'DOC',  data:agentNames.map(n=>agentMap[n]?.doc  ||0),backgroundColor:'rgba(46,204,113,.7)', borderColor:'#2ecc71',borderWidth:1},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#888',font:{family:'DM Sans',size:12}}}},scales:{x:{ticks:{color:'#888',font:{family:'DM Sans',size:11}},grid:{color:'#1a1a1a'}},y:{ticks:{color:'#888',font:{family:'DM Sans'}},grid:{color:'#1a1a1a'},beginAtZero:true}}}});
-
-  const {start:wStart,end:wEnd}=weekRange(today());
-  const weekDocMap={};
-  getEntries().filter(e=>inRange(e.date,wStart,wEnd)).forEach(e=>{weekDocMap[e.agent]=(weekDocMap[e.agent]||0)+e.doc;});
-  const docCtx=document.getElementById('doc-status-chart').getContext('2d');
-  if (docStatusChart) docStatusChart.destroy();
-  docStatusChart=new Chart(docCtx,{type:'bar',data:{labels:agentNames,datasets:[{label:'DOC na semana',data:agentNames.map(n=>weekDocMap[n]||0),backgroundColor:agentNames.map(n=>(weekDocMap[n]||0)>=META_DOC?'rgba(46,204,113,.8)':'rgba(224,62,62,.7)'),borderColor:agentNames.map(n=>(weekDocMap[n]||0)>=META_DOC?'#2ecc71':'#e03e3e'),borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{family:'DM Sans',size:11}},grid:{color:'#1a1a1a'}},y:{ticks:{color:'#888',font:{family:'DM Sans'},stepSize:1},grid:{color:'#1a1a1a'},beginAtZero:true}}}});
+  // Evolução diária de DOC
+  renderEvolucaoDiaria(entries);
 
   const allDocs=entries.flatMap(e=>e.docDetails||[]);
   renderStreakRanking();
@@ -584,7 +698,7 @@ function renderDocList(entries) {
   const wrap=document.getElementById('doc-list-wrap');
 
   // build/keep filter
-  const agentNames=Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>USERS[k].name);
+  const agentNames=getAgentNames();
   const filterHTML=`<div style="margin-bottom:12px">
     <select id="doc-agent-filter" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;width:100%">
       <option value="">Todos os angariadores</option>
@@ -608,10 +722,8 @@ function renderDocList(entries) {
       <td>${d.bairro||'—'}</td>
       <td class="num-cell">${formatCurrency(d.valor)}</td>
       <td>
-        <select class="nota-select" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">
-          <option value="" ${!d.nota?'selected':''}>—</option>
-          <option value="SITE" ${d.nota==='SITE'?'selected':''}>SITE</option>
-          <option value="AVI" ${d.nota==='AVI'?'selected':''}>AVI</option>
+        <select class="nota-select status-sel-${(d.nota||'').toLowerCase().replace(/\s/g,'')}" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">
+          ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
         </select>
       </td>
       <td><button class="del-doc-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" title="Excluir">✕</button></td>
@@ -620,7 +732,14 @@ function renderDocList(entries) {
   wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
 
   wrap.querySelectorAll('.nota-select').forEach(sel=>{
-    sel.addEventListener('change',async()=>{
+    const applyColor = s => {
+      const opt = STATUS_OPTIONS.find(o=>o.value===s.value);
+      s.style.color = opt ? opt.color : 'var(--text-muted)';
+      s.style.borderColor = opt?.value ? opt.color : 'var(--border)';
+    };
+    applyColor(sel);
+    sel.addEventListener('change', async () => {
+      applyColor(sel);
       await updateDocNota(sel.dataset.date, sel.dataset.agent, parseInt(sel.dataset.idx), sel.value);
     });
   });
@@ -642,7 +761,7 @@ function initDayView() {
 
 function renderDayView(dateStr) {
   if (!dateStr) return;
-  const agentNames=Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>USERS[k].name);
+  const agentNames=getAgentNames();
   const entries=getEntries();
   const wrap=document.getElementById('day-view-wrap');
   wrap.innerHTML=`
