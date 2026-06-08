@@ -53,6 +53,7 @@ const META_DOC = 1;
 const TIPO_COLORS = {
   Casa:      { bg:'rgba(201,168,76,.8)',  border:'#c9a84c' },
   Apto:      { bg:'rgba(100,149,237,.8)', border:'#6495ed' },
+  Studio:    { bg:'rgba(155,89,182,.8)',  border:'#9b59b6' },
   Terreno:   { bg:'rgba(46,204,113,.8)',  border:'#2ecc71' },
   Comercial: { bg:'rgba(230,126,34,.8)',  border:'#e67e22' },
 };
@@ -603,7 +604,7 @@ function renderTeamList() {
 }
 
 function renderStreakRanking() {
-  const agentNames = Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>USERS[k].name);
+  const agentNames = getAgentNames();
   const streaks = agentNames.map(name => ({ name, streak: calcStreak(name) }))
     .sort((a,b) => b.streak - a.streak);
 
