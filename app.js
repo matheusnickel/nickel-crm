@@ -467,13 +467,21 @@ async function initGestorDashboard() {
   initTeamManagement();
 }
 
+function refreshLancAgentSelect() {
+  const sel=document.getElementById('lanc-agent');
+  if (!sel) return;
+  const current=sel.value;
+  sel.innerHTML='<option value="">Selecione</option>';
+  getAgentNames().forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+  if (current) sel.value=current; // mantém seleção se ainda existir
+}
+
 function initGestorLancamento() {
-  const agentNames=getAgentNames();
+  refreshLancAgentSelect();
   const agentSel=document.getElementById('lanc-agent');
-  agentNames.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n; agentSel.appendChild(o); });
 
   const dateInput=document.getElementById('lanc-date');
-  dateInput.value=today(); dateInput.max=today();
+  const t=today(); dateInput.value=t; dateInput.max=t;
 
   document.getElementById('lanc-doc').addEventListener('input',function(){
     document.getElementById('lanc-doc-details').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
@@ -496,7 +504,7 @@ function initGestorLancamento() {
     document.getElementById('lanc-cpd').value=0;
     document.getElementById('lanc-doc').value=0;
     document.getElementById('lanc-doc-details').innerHTML='';
-    dateInput.value=today();
+    const newToday=today(); dateInput.value=newToday; dateInput.max=newToday;
   });
 }
 
@@ -552,6 +560,7 @@ function initTeamManagement() {
     await fbSaveTeam(TEAM);
     document.getElementById('new-agent-name').value = '';
     renderTeamList();
+    refreshLancAgentSelect();
   });
 }
 
@@ -571,6 +580,7 @@ function renderTeamList() {
       TEAM.splice(parseInt(btn.dataset.idx), 1);
       await fbSaveTeam(TEAM);
       renderTeamList();
+      refreshLancAgentSelect();
     });
   });
 }
