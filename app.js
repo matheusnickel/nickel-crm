@@ -133,6 +133,52 @@ function calcStreak(agentName) {
   return streak;
 }
 
+// ── STREAK VISUAL ────────────────────────────────────────
+function renderStreak(agentName, entries) {
+  const streak = calcStreak(agentName);
+  const sentDates = new Set(entries.map(e => e.date));
+  const t = today();
+
+  // last 7 days dots
+  const dots = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(t + 'T12:00:00');
+    d.setDate(d.getDate() - i);
+    const ds = toDateStr(d);
+    const sent = sentDates.has(ds);
+    const isToday = ds === t;
+    dots.push({ ds, sent, isToday });
+  }
+
+  // color tier
+  let color, label, emoji;
+  if (streak === 0)       { color='#555';     emoji='💤'; label='Nenhum dia seguido ainda'; }
+  else if (streak < 3)    { color='#cd7f32';  emoji='🔥'; label=`${streak} dia${streak>1?'s':''} seguido${streak>1?'s':''}!`; }
+  else if (streak < 7)    { color='#aaa';     emoji='🔥'; label=`${streak} dias seguidos! Bom ritmo!`; }
+  else if (streak < 14)   { color='#c9a84c';  emoji='🔥'; label=`${streak} dias seguidos! Incrível!`; }
+  else if (streak < 30)   { color='#6495ed';  emoji='🔥'; label=`${streak} dias seguidos! Elite!`; }
+  else                    { color='#2ecc71';  emoji='🏆'; label=`${streak} dias seguidos! Lendário!`; }
+
+  // check if yesterday was missed (streak broken)
+  const yesterday = new Date(t+'T12:00:00'); yesterday.setDate(yesterday.getDate()-1);
+  const missedYesterday = !sentDates.has(toDateStr(yesterday)) && streak === 0 && entries.length > 0;
+
+  const dotsHTML = dots.map(d => `
+    <div class="streak-dot ${d.sent?'sent':''} ${d.isToday?'today':''}" title="${formatDate(d.ds)}">
+      ${d.sent ? '🔥' : d.isToday ? '◯' : '✕'}
+    </div>`).join('');
+
+  document.getElementById('streak-wrap').innerHTML = `
+    <div class="streak-hero" style="--streak-color:${color}">
+      <div class="streak-fire">${emoji}</div>
+      <div class="streak-number" style="color:${color}">${streak}</div>
+      <div class="streak-label">${label}</div>
+      ${missedYesterday ? '<div class="streak-broken">Sequência zerada — não enviou ontem 😢</div>' : ''}
+    </div>
+    <div class="streak-dots">${dotsHTML}</div>
+    <div class="streak-hint">Últimos 7 dias</div>`;
+}
+
 // ── BAIRRO SELECT BINDING ────────────────────────────────
 function bindBairroSelects() {
   document.querySelectorAll('.doc-bairro-sel').forEach(sel => {
@@ -274,7 +320,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     statusEl.innerHTML=`<span class="status-icon">!</span><span>Falta${faltam>1?'m':''} <strong>${faltam} DOC</strong> para atingir a meta desta semana</span>`;
   }
 
-  document.getElementById('streak-num').textContent=calcStreak(session.name);
+  renderStreak(session.name, entries);
 
   // Alerta de dias não enviados na semana
   const missedEl=document.getElementById('missed-days-alert');
