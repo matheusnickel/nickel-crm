@@ -337,7 +337,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ── FORM ── */
-.daily-form .fields-row {
+.fields-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
