@@ -421,6 +421,10 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const docVal=parseInt(document.getElementById('f-doc').value)||0;
         const docDetails=collectDocDetails(docVal);
         for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
+        // Preserva nota do gestor ao corrigir (evita apagar FOTOS/AVI/SITE já definido)
+        if (sentToday?.docDetails) {
+          docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) d.nota = sentToday.docDetails[i].nota || ''; });
+        }
         const isEdit=!!sentToday;
         const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
         await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:parseInt(document.getElementById('f-cpd').value)||0,doc:docVal,docDetails});
@@ -504,9 +508,6 @@ function renderEvolucaoDiaria(entries) {
   // collect unique dates sorted
   const dates = [...new Set(entries.map(e=>e.date))].sort();
   if (dates.length === 0) { return; }
-
-  // total DOC per day
-  const totalPerDay = dates.map(d => entries.filter(e=>e.date===d).reduce((s,e)=>s+e.doc,0));
 
   // per agent datasets
   const agentNames = getAgentNames();
@@ -603,7 +604,6 @@ function renderStreakRanking() {
 function renderGestorDashboard() {
   const entries=filterEntries(activePeriod);
   const byAgent=sumByAgent(entries);
-  const agentNames=getAgentNames();
 
   const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
   document.getElementById('tot-prosp').textContent=totProsp;
