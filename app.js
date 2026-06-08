@@ -44,7 +44,7 @@ const TIPOS   = ['Casa', 'Apto', 'Studio', 'Terreno', 'Comercial'];
 
 const STATUS_OPTIONS = [
   { value: '',      label: '—',    color: 'var(--text-muted)' },
-  { value: 'Fotos', label: 'Fotos', color: '#e67e22' },
+  { value: 'FOTOS', label: 'FOTOS', color: '#e67e22' },
   { value: 'AVI',   label: 'AVI',   color: '#3498db' },
   { value: 'SITE',  label: 'SITE',  color: '#c9a84c' },
 ];
