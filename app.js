@@ -724,6 +724,6 @@ function renderConversion(ranked) {
 // ── PAGE DETECTION ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', ()=>{
   if      (document.getElementById('login-form'))  initLogin();
-  else if (document.getElementById('streak-num'))  initAgentDashboard();
+  else if (document.getElementById('streak-wrap'))  initAgentDashboard();
   else if (document.getElementById('gestor-name')) initGestorDashboard();
 });
