@@ -104,7 +104,7 @@ function setSession(u)    { localStorage.setItem('nickel_session', JSON.stringif
 function clearSession()   { localStorage.removeItem('nickel_session'); }
 
 // ── DATE UTILS ───────────────────────────────────────────
-function today()       { return new Date().toISOString().split('T')[0]; }
+function today()       { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function toDateStr(d)  { return d.toISOString().split('T')[0]; }
 function weekRange(ref) {
   const d=new Date(ref+'T12:00:00'), day=d.getDay(), diff=day===0?-6:1-day;
