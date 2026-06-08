@@ -1,7 +1,7 @@
 import { fbUpsertEntry, fbReseedIfNeeded, fbListen, entryId } from './firebase.js';
 
 // ── CONSTANTS ────────────────────────────────────────────
-const SEED_VERSION = 'v6-reset';
+const SEED_VERSION = 'v7-reset';
 
 const USERS = {
   bruna:      { name: 'Bruna',      role: 'agent', password: 'nickel123' },
@@ -473,30 +473,27 @@ function initGestorLancamento() {
 
 function renderStreakRanking() {
   const agentNames = Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>USERS[k].name);
-  const streaks = agentNames.map(name => {
-    const entries = getEntries().filter(e=>e.agent===name);
-    return { name, streak: calcStreak(name) };
-  }).sort((a,b) => b.streak - a.streak);
+  const streaks = agentNames.map(name => ({ name, streak: calcStreak(name) }))
+    .sort((a,b) => b.streak - a.streak);
 
   const wrap = document.getElementById('streak-ranking');
   if (!wrap) return;
 
   wrap.innerHTML = streaks.map((s, i) => {
     let emoji, color;
-    if      (s.streak === 0)  { emoji='💤'; color='#555'; }
-    else if (s.streak < 3)    { emoji='🔥'; color='#cd7f32'; }
-    else if (s.streak < 7)    { emoji='🔥'; color='#aaa'; }
-    else if (s.streak < 14)   { emoji='🔥'; color='#c9a84c'; }
-    else if (s.streak < 30)   { emoji='🔥'; color='#6495ed'; }
-    else                      { emoji='🏆'; color='#2ecc71'; }
-    const pos = i + 1;
+    if      (s.streak === 0) { emoji='💤'; color='#555'; }
+    else if (s.streak < 3)   { emoji='🔥'; color='#cd7f32'; }
+    else if (s.streak < 7)   { emoji='🔥'; color='#aaa'; }
+    else if (s.streak < 14)  { emoji='🔥'; color='#c9a84c'; }
+    else if (s.streak < 30)  { emoji='🔥'; color='#6495ed'; }
+    else                     { emoji='🏆'; color='#2ecc71'; }
+    const pos = i+1;
     const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
-    return `
-      <div class="streak-rank-row">
-        <span class="streak-rank-pos">${medal||pos}</span>
-        <span class="streak-rank-name">${s.name}</span>
-        <span class="streak-rank-val" style="color:${color}">${emoji} ${s.streak} dia${s.streak!==1?'s':''}</span>
-      </div>`;
+    return `<div class="srr">
+      <span class="srr-pos">${medal||pos}</span>
+      <span class="srr-name">${s.name}</span>
+      <span class="srr-val" style="color:${color}">${emoji} ${s.streak}d</span>
+    </div>`;
   }).join('');
 }
 

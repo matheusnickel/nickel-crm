@@ -42,12 +42,6 @@
       </div>
     </div>
 
-    <!-- Ranking de Sequência -->
-    <div class="card">
-      <div class="card-title">🔥 Sequência de envios — ranking</div>
-      <div id="streak-ranking"></div>
-    </div>
-
     <!-- Ranking -->
     <div class="card">
       <div class="card-title">Ranking — ordenado por DOC · CPD · PROSP</div>
@@ -173,6 +167,15 @@
     </div>
 
   </main>
+
+  <!-- Widget flutuante streak -->
+  <div id="streak-widget">
+    <div id="streak-widget-header" onclick="document.getElementById('streak-widget').classList.toggle('collapsed')">
+      🔥 Sequência
+      <span id="streak-widget-arrow">▲</span>
+    </div>
+    <div id="streak-ranking"></div>
+  </div>
 
   <script type="module" src="app.js"></script>
 </body>
