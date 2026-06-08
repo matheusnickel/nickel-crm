@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, entryId, fbGetTeam, fbSaveTeam } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
@@ -12,8 +12,6 @@ const USERS = {
   karen:      { name: 'Karen',      role: 'agent', password: 'nickel123' },
   matheus:    { name: 'Matheus',    role: 'gestor', password: 'nickel123' },
 };
-
-const SEED_VERSION = 'v7-reset';
 
 // ── TEAM (após USERS) ────────────────────────────────────
 let TEAM = Object.keys(USERS)
@@ -454,9 +452,8 @@ async function initGestorDashboard() {
     btn.addEventListener('click',()=>{ activePeriod=btn.dataset.period; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderGestorDashboard(); });
   });
   await loadTeam();
-  gestorUnsubscribe=fbListen(async entries=>{
+  gestorUnsubscribe=fbListen(entries=>{
     saveEntries(entries);
-    await fixSmallValues(entries);
     renderGestorDashboard();
     renderDayView(document.getElementById('day-input')?.value||today());
   });
@@ -464,22 +461,6 @@ async function initGestorDashboard() {
   initExport();
   initGestorLancamento();
   initTeamManagement();
-}
-
-// Corrige valores digitados sem os zeros (ex: 2890 → 2890000)
-// Roda uma vez por sessão de gestor
-let _valorFixRan = false;
-async function fixSmallValues(entries) {
-  if (_valorFixRan) return;
-  _valorFixRan = true;
-  for (const entry of entries) {
-    if (!entry.docDetails?.length) continue;
-    let changed = false;
-    entry.docDetails.forEach(d => {
-      if (d.valor > 0 && d.valor < 50000) { d.valor = d.valor * 1000; changed = true; }
-    });
-    if (changed) { localUpsert(entry); await fbUpsertEntry(entry); }
-  }
 }
 
 function initGestorLancamento() {
@@ -708,7 +689,7 @@ function renderDocList(entries) {
     return;
   }
   wrap.innerHTML=filterHTML+`<div style="overflow-x:auto"><table class="data-table" style="table-layout:auto">
-    <thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>SITE / AVI</th><th></th></tr></thead>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th><th></th></tr></thead>
     <tbody>${rows.map(d=>`<tr>
       <td style="white-space:nowrap">${formatDate(d.date)}</td>
       <td>${d.agent}</td>
@@ -836,7 +817,7 @@ function generateReport(period) {
   </table>
   <h2>DOCs registrados</h2>
   ${allDocs.length===0?'<p style="color:#888">Nenhum DOC no período.</p>':`
-  <table><thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num">Valor</th><th>SITE / AVI</th></tr></thead>
+  <table><thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num">Valor</th><th>Status</th></tr></thead>
   <tbody>${allDocs.map(d=>`<tr><td>${formatDate(d.date)}</td><td>${d.agent}</td><td>${d.nome||'—'}</td><td>${d.tipo||'—'}</td><td>${d.bairro||'—'}</td><td class="num">${formatCurrency(d.valor)}</td><td>${d.nota||'—'}</td></tr>`).join('')}</tbody>
   </table>`}
   <h2>Totais</h2>
