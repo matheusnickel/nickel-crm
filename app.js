@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbReseedIfNeeded, fbListen, entryId } from './firebase.js';
+import { fbUpsertEntry, fbSeedIfFirstTime, fbListen, entryId } from './firebase.js';
 
 // ── CONSTANTS ────────────────────────────────────────────
 const SEED_VERSION = 'v7-reset';
@@ -254,9 +254,9 @@ async function initLogin() {
   const s=getSession();
   if (s) { window.location.href=s.role==='gestor'?'dashboard-gestor.html':'dashboard-agente.html'; return; }
 
+  // seed only if Firestore is completely empty (never wipes existing data)
   document.getElementById('loading-msg').style.display='block';
-  localStorage.removeItem('nickel_entries'); // clear stale cache before reseed
-  await fbReseedIfNeeded(SEED, SEED_VERSION);
+  await fbSeedIfFirstTime(SEED);
   document.getElementById('loading-msg').style.display='none';
 
   document.getElementById('login-form').addEventListener('submit', e => {

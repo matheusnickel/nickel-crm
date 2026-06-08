@@ -25,20 +25,13 @@ export async function fbUpsertEntry(entry) {
   await setDoc(doc(db, 'entries', entryId(entry.date, entry.agent)), entry);
 }
 
-// Full reset + reseed when SEED_VERSION changes
-export async function fbReseedIfNeeded(seedData, version) {
-  const verRef = doc(db, '_meta', 'seed_version');
-  const verSnap = await getDoc(verRef);
-  if (verSnap.exists() && verSnap.data().v === version) return;
-
-  // Delete all existing entries
+// Seed only if Firestore is completely empty — NEVER deletes existing data
+export async function fbSeedIfFirstTime(seedData) {
   const snap = await getDocs(collection(db, 'entries'));
+  if (!snap.empty) return; // data exists, do nothing
+  if (seedData.length === 0) return;
   const batch = writeBatch(db);
-  snap.docs.forEach(d => batch.delete(d.ref));
-
-  // Write fresh seed
   seedData.forEach(e => batch.set(doc(db, 'entries', entryId(e.date, e.agent)), e));
-  batch.set(verRef, { v: version, ts: new Date().toISOString() });
   await batch.commit();
 }
 
