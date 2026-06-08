@@ -289,6 +289,18 @@ a { color: inherit; text-decoration: none; }
   border-color: #6495ed;
   color: #6495ed;
 }
+.streak-rank-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #151515;
+}
+.streak-rank-row:last-child { border-bottom: none; }
+.streak-rank-pos { font-size: 18px; width: 32px; }
+.streak-rank-name { flex: 1; font-weight: 600; font-size: 14px; }
+.streak-rank-val { font-size: 15px; font-weight: 700; }
+
 .streak-hint {
   font-size: 11px;
   color: var(--text-muted);

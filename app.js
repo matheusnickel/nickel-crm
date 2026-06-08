@@ -1,7 +1,7 @@
 import { fbUpsertEntry, fbReseedIfNeeded, fbListen, entryId } from './firebase.js';
 
 // ── CONSTANTS ────────────────────────────────────────────
-const SEED_VERSION = 'v5-clean';
+const SEED_VERSION = 'v6-reset';
 
 const USERS = {
   bruna:      { name: 'Bruna',      role: 'agent', password: 'nickel123' },
@@ -471,6 +471,35 @@ function initGestorLancamento() {
   });
 }
 
+function renderStreakRanking() {
+  const agentNames = Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>USERS[k].name);
+  const streaks = agentNames.map(name => {
+    const entries = getEntries().filter(e=>e.agent===name);
+    return { name, streak: calcStreak(name) };
+  }).sort((a,b) => b.streak - a.streak);
+
+  const wrap = document.getElementById('streak-ranking');
+  if (!wrap) return;
+
+  wrap.innerHTML = streaks.map((s, i) => {
+    let emoji, color;
+    if      (s.streak === 0)  { emoji='💤'; color='#555'; }
+    else if (s.streak < 3)    { emoji='🔥'; color='#cd7f32'; }
+    else if (s.streak < 7)    { emoji='🔥'; color='#aaa'; }
+    else if (s.streak < 14)   { emoji='🔥'; color='#c9a84c'; }
+    else if (s.streak < 30)   { emoji='🔥'; color='#6495ed'; }
+    else                      { emoji='🏆'; color='#2ecc71'; }
+    const pos = i + 1;
+    const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
+    return `
+      <div class="streak-rank-row">
+        <span class="streak-rank-pos">${medal||pos}</span>
+        <span class="streak-rank-name">${s.name}</span>
+        <span class="streak-rank-val" style="color:${color}">${emoji} ${s.streak} dia${s.streak!==1?'s':''}</span>
+      </div>`;
+  }).join('');
+}
+
 function renderGestorDashboard() {
   const entries=filterEntries(activePeriod);
   const byAgent=sumByAgent(entries);
@@ -504,6 +533,7 @@ function renderGestorDashboard() {
   docStatusChart=new Chart(docCtx,{type:'bar',data:{labels:agentNames,datasets:[{label:'DOC na semana',data:agentNames.map(n=>weekDocMap[n]||0),backgroundColor:agentNames.map(n=>(weekDocMap[n]||0)>=META_DOC?'rgba(46,204,113,.8)':'rgba(224,62,62,.7)'),borderColor:agentNames.map(n=>(weekDocMap[n]||0)>=META_DOC?'#2ecc71':'#e03e3e'),borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#888',font:{family:'DM Sans',size:11}},grid:{color:'#1a1a1a'}},y:{ticks:{color:'#888',font:{family:'DM Sans'},stepSize:1},grid:{color:'#1a1a1a'},beginAtZero:true}}}});
 
   const allDocs=entries.flatMap(e=>e.docDetails||[]);
+  renderStreakRanking();
   renderDocList(entries);
   renderAnalyticsChart(allDocs);
 
