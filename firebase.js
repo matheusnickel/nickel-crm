@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
   getFirestore, collection, doc, setDoc, getDoc, getDocs,
-  writeBatch, onSnapshot
+  deleteDoc, writeBatch, onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -22,6 +22,10 @@ export function entryId(date, agent) {
 
 export async function fbUpsertEntry(entry) {
   await setDoc(doc(db, 'entries', entryId(entry.date, entry.agent)), entry);
+}
+
+export async function fbDeleteEntry(date, agent) {
+  await deleteDoc(doc(db, 'entries', entryId(date, agent)));
 }
 
 export async function fbSeedIfFirstTime(seedData) {

@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbSeedIfFirstTime, fbListen, entryId, fbGetTeam, fbSaveTeam } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, entryId, fbGetTeam, fbSaveTeam } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
@@ -36,12 +36,12 @@ const STATUS_OPTIONS = [
   { value: '',      label: '—',    color: 'var(--text-muted)' },
   { value: 'FOTOS', label: 'FOTOS', color: '#e67e22' },
   { value: 'AVI',   label: 'AVI',   color: '#3498db' },
-  { value: 'SITE',  label: 'SITE',  color: '#c9a84c' },
+  { value: 'SITE',  label: 'SITE',  color: '#a8e63d' },
 ];
 const BAIRROS = ['Batel','Água Verde','Bigorrilho','Ecoville','Cabral','Juvevê','Mercês','Campo Comprido','Santa Felicidade','Santo Inácio','Vila Izabel'];
 const META_DOC = 1;
 const TIPO_COLORS = {
-  Casa:      { bg:'rgba(201,168,76,.8)',  border:'#c9a84c' },
+  Casa:      { bg:'rgba(168,230,61,.8)',  border:'#a8e63d' },
   Apto:      { bg:'rgba(100,149,237,.8)', border:'#6495ed' },
   Studio:    { bg:'rgba(155,89,182,.8)',  border:'#9b59b6' },
   Terreno:   { bg:'rgba(46,204,113,.8)',  border:'#2ecc71' },
@@ -178,7 +178,7 @@ function renderStreak(agentName, entries) {
   if (streak === 0)       { color='#555';     emoji='💤'; label='Nenhum dia seguido ainda'; }
   else if (streak < 3)    { color='#cd7f32';  emoji='🔥'; label=`${streak} dia${streak>1?'s':''} seguido${streak>1?'s':''}!`; }
   else if (streak < 7)    { color='#aaa';     emoji='🔥'; label=`${streak} dias seguidos! Bom ritmo!`; }
-  else if (streak < 14)   { color='#c9a84c';  emoji='🔥'; label=`${streak} dias seguidos! Incrível!`; }
+  else if (streak < 14)   { color='#a8e63d';  emoji='🔥'; label=`${streak} dias seguidos! Incrível!`; }
   else if (streak < 30)   { color='#6495ed';  emoji='🔥'; label=`${streak} dias seguidos! Elite!`; }
   else                    { color='#2ecc71';  emoji='🏆'; label=`${streak} dias seguidos! Lendário!`; }
 
@@ -529,7 +529,7 @@ function renderEvolucaoDiaria(entries) {
 
   // per agent datasets
   const agentNames = getAgentNames();
-  const colors = ['#c9a84c','#6495ed','#2ecc71','#e67e22','#e74c3c','#9b59b6','#1abc9c','#f1c40f'];
+  const colors = ['#a8e63d','#6495ed','#2ecc71','#e67e22','#e74c3c','#9b59b6','#1abc9c','#f1c40f'];
   const datasets = agentNames.map((name,i) => ({
     label: name,
     data: dates.map(d => { const e=entries.find(x=>x.date===d&&x.agent===name); return e?e.doc:0; }),
@@ -606,7 +606,7 @@ function renderStreakRanking() {
     if      (s.streak === 0) { emoji='💤'; color='#555'; }
     else if (s.streak < 3)   { emoji='🔥'; color='#cd7f32'; }
     else if (s.streak < 7)   { emoji='🔥'; color='#aaa'; }
-    else if (s.streak < 14)  { emoji='🔥'; color='#c9a84c'; }
+    else if (s.streak < 14)  { emoji='🔥'; color='#a8e63d'; }
     else if (s.streak < 30)  { emoji='🔥'; color='#6495ed'; }
     else                     { emoji='🏆'; color='#2ecc71'; }
     const pos = i+1;
@@ -669,8 +669,8 @@ function renderAnalyticsChart(allDocs) {
   } else if (mode==='bairro') {
     const c={}; allDocs.forEach(d=>{if(d.bairro)c[d.bairro]=(c[d.bairro]||0)+1;});
     const sorted=Object.entries(c).sort((a,b)=>b[1]-a[1]);
-    const palette=['rgba(201,168,76,.7)','rgba(100,149,237,.7)','rgba(46,204,113,.7)','rgba(230,126,34,.7)','rgba(231,76,60,.7)','rgba(155,89,182,.7)','rgba(52,152,219,.7)','rgba(26,188,156,.7)','rgba(241,196,15,.7)','rgba(189,195,199,.7)','rgba(127,140,141,.7)'];
-    const palBorder=['#c9a84c','#6495ed','#2ecc71','#e67e22','#e74c3c','#9b59b6','#3498db','#1abc9c','#f1c40f','#bdc3c7','#7f8c8d'];
+    const palette=['rgba(168,230,61,.7)','rgba(100,149,237,.7)','rgba(46,204,113,.7)','rgba(230,126,34,.7)','rgba(231,76,60,.7)','rgba(155,89,182,.7)','rgba(52,152,219,.7)','rgba(26,188,156,.7)','rgba(241,196,15,.7)','rgba(189,195,199,.7)','rgba(127,140,141,.7)'];
+    const palBorder=['#a8e63d','#6495ed','#2ecc71','#e67e22','#e74c3c','#9b59b6','#3498db','#1abc9c','#f1c40f','#bdc3c7','#7f8c8d'];
     analyticsChart=new Chart(ctx,{type:'bar',data:{labels:sorted.map(x=>x[0]),datasets:[{label:'DOCs',data:sorted.map(x=>x[1]),backgroundColor:sorted.map((_,i)=>palette[i%palette.length]),borderColor:sorted.map((_,i)=>palBorder[i%palBorder.length]),borderWidth:1}]},options:{...base,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{...scalesXY.x,ticks:{...scalesXY.x.ticks,stepSize:1},beginAtZero:true},y:scalesXY.y}}});
   } else if (mode==='valor') {
     const s={}; TIPOS.forEach(t=>s[t]=0); allDocs.forEach(d=>{if(d.tipo&&d.valor)s[d.tipo]=(s[d.tipo]||0)+Number(d.valor);});
@@ -759,35 +759,40 @@ function renderDayView(dateStr) {
   const agentNames=getAgentNames();
   const entries=getEntries();
   const wrap=document.getElementById('day-view-wrap');
+
+  const rows = agentNames.map(name => {
+    const e=entries.find(x=>x.date===dateStr&&x.agent===name), has=!!e;
+    return `<tr>
+      <td class="day-agent-name">${name}</td>
+      <td class="num-cell day-num">${has ? e.prosp : '<span class="day-empty">—</span>'}</td>
+      <td class="num-cell day-num">${has ? e.cpd   : '<span class="day-empty">—</span>'}</td>
+      <td class="num-cell day-num doc-cell">${has ? e.doc : '<span class="day-empty">—</span>'}</td>
+      <td>${has ? `<button class="del-day-btn" data-date="${dateStr}" data-agent="${name}">Remover</button>` : ''}</td>
+    </tr>`;
+  }).join('');
+
   wrap.innerHTML=`
-    <table class="data-table rank-table" style="table-layout:fixed">
-      <colgroup><col style="width:auto"><col style="width:70px"><col style="width:70px"><col style="width:70px"></colgroup>
-      <thead><tr><th>Angariador</th><th class="num-cell">PROSP</th><th class="num-cell">CPD</th><th class="num-cell doc-th">DOC</th></tr></thead>
-      <tbody>${agentNames.map(name=>{
-        const e=entries.find(x=>x.date===dateStr&&x.agent===name),has=!!e;
-        return `<tr data-agent="${name}" data-has="${has}">
-          <td>${name}</td>
-          <td class="num-cell">${has?`<input class="inline-edit-input" data-field="prosp" type="number" min="0" value="${e.prosp}">`:'<span style="color:var(--text-muted)">—</span>'}</td>
-          <td class="num-cell">${has?`<input class="inline-edit-input" data-field="cpd" type="number" min="0" value="${e.cpd}">`:'<span style="color:var(--text-muted)">—</span>'}</td>
-          <td class="num-cell">${has?`<input class="inline-edit-input" data-field="doc" type="number" min="0" value="${e.doc}">`:'<span style="color:var(--text-muted)">—</span>'}</td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>
-    <button class="save-day-btn" id="save-day-btn">Salvar alterações do dia</button>`;
-  document.getElementById('save-day-btn').addEventListener('click',async()=>{
-    const btn=document.getElementById('save-day-btn'); btn.disabled=true; btn.textContent='Salvando...';
-    for (const tr of wrap.querySelectorAll('tbody tr')) {
-      if (tr.dataset.has!=='true') continue;
-      const name=tr.dataset.agent;
-      const prosp=parseInt(tr.querySelector('[data-field="prosp"]').value)||0;
-      const cpd=parseInt(tr.querySelector('[data-field="cpd"]').value)||0;
-      const doc=parseInt(tr.querySelector('[data-field="doc"]').value)||0;
-      const existing=getEntries().find(e=>e.date===dateStr&&e.agent===name);
-      await upsertEntry({date:dateStr,agent:name,prosp,cpd,doc,docDetails:existing?.docDetails||[]});
-      resetEditCount(name,dateStr);
-    }
-    btn.textContent='Salvo ✓'; btn.style.background='#2ecc71';
-    setTimeout(()=>{ btn.textContent='Salvar alterações do dia'; btn.style.background=''; btn.disabled=false; },2000);
+    <table class="data-table rank-table" style="table-layout:auto">
+      <thead><tr>
+        <th>Angariador</th>
+        <th class="num-cell">PROSP</th>
+        <th class="num-cell">CPD</th>
+        <th class="num-cell doc-th">DOC</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  wrap.querySelectorAll('.del-day-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { date, agent } = btn.dataset;
+      if (!confirm(`Remover lançamento de ${agent} em ${formatDate(date)}?\nO angariador poderá relançar.`)) return;
+      btn.disabled = true; btn.textContent = '...';
+      saveEntries(getEntries().filter(e => !(e.date===date && e.agent===agent)));
+      await fbDeleteEntry(date, agent);
+      resetEditCount(agent, date);
+      renderDayView(date);
+    });
   });
 }
 
