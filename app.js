@@ -149,7 +149,18 @@ function sumByAgent(entries) {
 }
 function calcStreak(agentName) {
   const days=[...new Set(getEntries().filter(e=>e.agent===agentName).map(e=>e.date))].sort().reverse();
-  let streak=0, cursor=new Date(today()+'T12:00:00');
+  if (days.length===0) return 0;
+  const t=today();
+  const yest=new Date(t+'T12:00:00'); yest.setDate(yest.getDate()-1);
+  const yesterdayStr=toDateStr(yest);
+  // A sequência só "quebra" quando um dia inteiro é perdido. Se o último
+  // envio foi ontem (e hoje ainda não foi lançado), a contagem continua —
+  // não zera só porque o dia de hoje ainda não terminou.
+  let cursor;
+  if (days[0]===t) cursor=new Date(t+'T12:00:00');
+  else if (days[0]===yesterdayStr) cursor=new Date(yesterdayStr+'T12:00:00');
+  else return 0;
+  let streak=0;
   for (const d of days) { if(d===toDateStr(cursor)){streak++;cursor.setDate(cursor.getDate()-1);}else break; }
   return streak;
 }
@@ -445,6 +456,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
 // ── GESTOR DASHBOARD ─────────────────────────────────────
 let evolucaoChart=null, analyticsChart=null;
 let activePeriod='week', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
+let activeMonthRef=today(); // 'YYYY-MM-DD' — referência do mês selecionado no filtro "Mês"
 let gestorUnsubscribe=null;
 
 async function initGestorDashboard() {
@@ -453,8 +465,25 @@ async function initGestorDashboard() {
   document.getElementById('gestor-name').textContent=session.name;
   document.getElementById('logout-btn').addEventListener('click',()=>{ if(gestorUnsubscribe)gestorUnsubscribe(); clearSession(); window.location.href='index.html'; });
   document.querySelectorAll('.filter-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{ activePeriod=btn.dataset.period; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderGestorDashboard(); });
+    btn.addEventListener('click',()=>{
+      activePeriod=btn.dataset.period;
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const mpWrap=document.getElementById('month-picker-wrap');
+      if (mpWrap) mpWrap.style.display = activePeriod==='month' ? 'block' : 'none';
+      renderGestorDashboard();
+    });
   });
+  const monthPicker=document.getElementById('month-picker');
+  if (monthPicker) {
+    monthPicker.value=activeMonthRef.slice(0,7);
+    monthPicker.max=today().slice(0,7);
+    monthPicker.addEventListener('change',()=>{
+      if (!monthPicker.value) return;
+      activeMonthRef=monthPicker.value+'-01';
+      renderGestorDashboard();
+    });
+  }
   await loadTeam();
   gestorUnsubscribe=fbListen(entries=>{
     saveEntries(entries);
@@ -612,7 +641,7 @@ function renderStreakRanking() {
 }
 
 function renderGestorDashboard() {
-  const entries=filterEntries(activePeriod);
+  const entries=filterEntries(activePeriod, activePeriod==='month'?activeMonthRef:undefined);
   const byAgent=sumByAgent(entries);
 
   const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
@@ -795,11 +824,11 @@ function initExport() {
 }
 
 function generateReport(period) {
-  const entries=filterEntries(period);
+  const t = period==='month' ? activeMonthRef : today();
+  const entries=filterEntries(period, period==='month'?activeMonthRef:undefined);
   const byAgent=sumByAgent(entries);
   const allDocs=entries.flatMap(e=>(e.docDetails||[]).map(d=>({...d,date:e.date,agent:e.agent})));
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
-  const t=today();
   const periodLabel = period==='today'?`Hoje (${formatDate(t)})` : period==='week'?`Semana (${formatDate(weekRange(t).start)} – ${formatDate(weekRange(t).end)})` : `Mês (${new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'})})`;
 
   const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
