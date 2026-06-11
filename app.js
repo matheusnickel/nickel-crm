@@ -169,8 +169,15 @@ function sumByAgent(entries) {
   entries.forEach(e=>{ if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0}; map[e.agent].prosp+=e.prosp; map[e.agent].cpd+=e.cpd; map[e.agent].doc+=e.doc; });
   return Object.values(map);
 }
+// Um lançamento só conta para a sequência se foi enviado no próprio dia
+// (submittedDate === date). Lançamentos retroativos (enviados depois) não
+// contam — o dia perdido não volta, mas não trava o envio dos dias seguintes.
+function isOnTime(e) { return (e.submittedDate||e.date)===e.date; }
+function getOnTimeDates(agentName) {
+  return [...new Set(getEntries().filter(e=>e.agent===agentName && isOnTime(e)).map(e=>e.date))];
+}
 function calcStreak(agentName) {
-  const days=[...new Set(getEntries().filter(e=>e.agent===agentName).map(e=>e.date))].sort().reverse();
+  const days=getOnTimeDates(agentName).sort().reverse();
   if (days.length===0) return 0;
   const t=today();
   const yest=new Date(t+'T12:00:00'); yest.setDate(yest.getDate()-1);
@@ -190,7 +197,7 @@ function calcStreak(agentName) {
 // ── STREAK VISUAL ────────────────────────────────────────
 function renderStreak(agentName, entries) {
   const streak = calcStreak(agentName);
-  const sentDates = new Set(entries.map(e => e.date));
+  const sentDates = new Set(getOnTimeDates(agentName));
   const t = today(); // local scope
 
   // last 7 days dots
@@ -460,7 +467,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
         }
         const isEdit=!!sentToday;
         const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
-        await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:parseInt(document.getElementById('f-cpd').value)||0,doc:docVal,docDetails});
+        const submittedDate=sentToday?.submittedDate||sentToday?.date||today();
+        await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:parseInt(document.getElementById('f-cpd').value)||0,doc:docVal,docDetails,submittedDate});
         if (isEdit) incrementEditCount(session.name,date);
       });
       const cancelBtn=document.getElementById('cancel-edit-btn');
@@ -562,7 +570,9 @@ function initGestorLancamento() {
     const docDetails=collectDocDetails(docVal);
     for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
     const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Salvando...';
-    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:parseInt(document.getElementById('lanc-cpd').value)||0,doc:docVal,docDetails});
+    const existing=getEntries().find(e=>e.date===date&&e.agent===agent);
+    const submittedDate=existing?.submittedDate||existing?.date||today();
+    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:parseInt(document.getElementById('lanc-cpd').value)||0,doc:docVal,docDetails,submittedDate});
     resetEditCount(agent,date);
     btn.disabled=false; btn.textContent='Salvar lançamento';
     // reset form
