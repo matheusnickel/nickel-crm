@@ -117,6 +117,28 @@ function monthRange(ref) {
   const start=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-01`;
   return { start, end:toDateStr(new Date(d.getFullYear(),d.getMonth()+1,0)) };
 }
+// Converte uma data 'YYYY-MM-DD' para o formato do <input type="week"> ('YYYY-Www')
+function isoWeekString(dateStr) {
+  const d=new Date(dateStr+'T12:00:00');
+  const target=new Date(d.valueOf());
+  const dayNr=(d.getDay()+6)%7;
+  target.setDate(target.getDate()-dayNr+3);
+  const firstThursday=target.valueOf();
+  target.setMonth(0,1);
+  if (target.getDay()!==4) target.setMonth(0, 1+((4-target.getDay())+7)%7);
+  const week=1+Math.ceil((firstThursday-target)/(7*24*3600*1000));
+  return `${d.getFullYear()}-W${String(week).padStart(2,'0')}`;
+}
+// Converte 'YYYY-Www' (do <input type="week">) para uma data 'YYYY-MM-DD' dentro daquela semana
+function isoWeekToDateStr(weekStr) {
+  const [yearStr, weekPart]=weekStr.split('-W');
+  const year=Number(yearStr), week=Number(weekPart);
+  const simple=new Date(year,0,1+(week-1)*7);
+  const dow=simple.getDay();
+  if (dow<=4) simple.setDate(simple.getDate()-dow+1);
+  else simple.setDate(simple.getDate()+8-dow);
+  return toDateStr(simple);
+}
 function inRange(s,a,b)   { return s>=a && s<=b; }
 function formatDate(s)    { const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
 function formatCurrency(v){ return (v&&v>0)?'R$ '+Number(v).toLocaleString('pt-BR'):'—'; }
@@ -457,6 +479,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
 let evolucaoChart=null, analyticsChart=null;
 let activePeriod='week', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
 let activeMonthRef=today(); // 'YYYY-MM-DD' — referência do mês selecionado no filtro "Mês"
+let activeWeekRef=today();  // 'YYYY-MM-DD' — referência da semana selecionada no filtro "Semana"
 let gestorUnsubscribe=null;
 
 async function initGestorDashboard() {
@@ -471,6 +494,8 @@ async function initGestorDashboard() {
       btn.classList.add('active');
       const mpWrap=document.getElementById('month-picker-wrap');
       if (mpWrap) mpWrap.style.display = activePeriod==='month' ? 'block' : 'none';
+      const wpWrap=document.getElementById('week-picker-wrap');
+      if (wpWrap) wpWrap.style.display = activePeriod==='week' ? 'block' : 'none';
       renderGestorDashboard();
     });
   });
@@ -484,6 +509,18 @@ async function initGestorDashboard() {
       renderGestorDashboard();
     });
   }
+  const weekPicker=document.getElementById('week-picker');
+  if (weekPicker) {
+    weekPicker.value=isoWeekString(activeWeekRef);
+    weekPicker.max=isoWeekString(today());
+    weekPicker.addEventListener('change',()=>{
+      if (!weekPicker.value) return;
+      activeWeekRef=isoWeekToDateStr(weekPicker.value);
+      renderGestorDashboard();
+    });
+  }
+  const wpWrapInit=document.getElementById('week-picker-wrap');
+  if (wpWrapInit) wpWrapInit.style.display = activePeriod==='week' ? 'block' : 'none';
   await loadTeam();
   gestorUnsubscribe=fbListen(entries=>{
     saveEntries(entries);
@@ -641,7 +678,8 @@ function renderStreakRanking() {
 }
 
 function renderGestorDashboard() {
-  const entries=filterEntries(activePeriod, activePeriod==='month'?activeMonthRef:undefined);
+  const ref = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
+  const entries=filterEntries(activePeriod, ref);
   const byAgent=sumByAgent(entries);
 
   const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
@@ -824,8 +862,8 @@ function initExport() {
 }
 
 function generateReport(period) {
-  const t = period==='month' ? activeMonthRef : today();
-  const entries=filterEntries(period, period==='month'?activeMonthRef:undefined);
+  const t = period==='month' ? activeMonthRef : period==='week' ? activeWeekRef : today();
+  const entries=filterEntries(period, period==='month'?activeMonthRef:period==='week'?activeWeekRef:undefined);
   const byAgent=sumByAgent(entries);
   const allDocs=entries.flatMap(e=>(e.docDetails||[]).map(d=>({...d,date:e.date,agent:e.agent})));
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
