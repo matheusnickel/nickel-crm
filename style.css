@@ -302,6 +302,24 @@ a { color: inherit; text-decoration: none; }
 .srr-name { flex: 1; font-weight: 600; color: var(--text); font-size: 13px; }
 .srr-val { font-weight: 700; font-size: 13px; white-space: nowrap; }
 
+/* ── RESUMO PARA O GRUPO (ranking + ofensiva) ── */
+.share-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px;
+  border-bottom: 1px solid #151515;
+  flex-wrap: wrap;
+}
+.share-row:last-child { border-bottom: none; }
+.share-row.podium-1 { background: rgba(168,230,61,.05); }
+.share-row.podium-2 { background: rgba(180,180,180,.04); }
+.share-row.podium-3 { background: rgba(180,100,40,.04); }
+.share-pos { font-size: 15px; width: 22px; flex-shrink: 0; text-align: center; font-weight: 700; color: var(--text-muted); }
+.share-name { font-weight: 700; color: var(--text); font-size: 13px; flex: 1 1 auto; min-width: 70px; }
+.share-stats { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.share-streak { font-weight: 700; font-size: 13px; white-space: nowrap; margin-left: auto; }
+
 /* ── TEAM MANAGEMENT ── */
 .team-row {
   display: flex;

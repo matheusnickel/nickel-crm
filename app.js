@@ -142,6 +142,12 @@ function isoWeekToDateStr(weekStr) {
 function inRange(s,a,b)   { return s>=a && s<=b; }
 function formatDate(s)    { const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
 function formatCurrency(v){ return (v&&v>0)?'R$ '+Number(v).toLocaleString('pt-BR'):'—'; }
+function getPeriodLabel(period, ref) {
+  const t = ref||today();
+  if (period==='today') return `Hoje (${formatDate(t)})`;
+  if (period==='week')  { const r=weekRange(t); return `Semana (${formatDate(r.start)} – ${formatDate(r.end)})`; }
+  return `Mês (${new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'})})`;
+}
 
 // Week days from Monday to yesterday (for missed-days check)
 function weekDaysBefore(ref) {
@@ -661,6 +667,16 @@ function renderTeamList() {
   });
 }
 
+// Visual da ofensiva (emoji + cor) reutilizado no ranking de sequência e no resumo p/ compartilhar
+function streakTier(streak) {
+  if      (streak === 0) return { emoji:'💤', color:'#555' };
+  else if (streak < 3)   return { emoji:'🔥', color:'#cd7f32' };
+  else if (streak < 7)   return { emoji:'🔥', color:'#aaa' };
+  else if (streak < 14)  return { emoji:'🔥', color:'#a8e63d' };
+  else if (streak < 30)  return { emoji:'🔥', color:'#6495ed' };
+  else                   return { emoji:'🏆', color:'#2ecc71' };
+}
+
 function renderStreakRanking() {
   const agentNames = getAgentNames();
   const streaks = agentNames.map(name => ({ name, streak: calcStreak(name) }))
@@ -670,19 +686,38 @@ function renderStreakRanking() {
   if (!wrap) return;
 
   wrap.innerHTML = streaks.map((s, i) => {
-    let emoji, color;
-    if      (s.streak === 0) { emoji='💤'; color='#555'; }
-    else if (s.streak < 3)   { emoji='🔥'; color='#cd7f32'; }
-    else if (s.streak < 7)   { emoji='🔥'; color='#aaa'; }
-    else if (s.streak < 14)  { emoji='🔥'; color='#a8e63d'; }
-    else if (s.streak < 30)  { emoji='🔥'; color='#6495ed'; }
-    else                     { emoji='🏆'; color='#2ecc71'; }
+    const { emoji, color } = streakTier(s.streak);
     const pos = i+1;
     const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
     return `<div class="srr">
       <span class="srr-pos">${medal||pos}</span>
       <span class="srr-name">${s.name}</span>
       <span class="srr-val" style="color:${color}">${emoji} ${s.streak}d</span>
+    </div>`;
+  }).join('');
+}
+
+// ── RESUMO PARA O GRUPO (ranking + ofensiva, pronto para print) ──
+function renderShareCard(ranked, ref) {
+  const wrap = document.getElementById('share-list');
+  if (!wrap) return;
+  document.getElementById('share-period-label').textContent = getPeriodLabel(activePeriod, ref);
+
+  if (ranked.length===0) {
+    wrap.innerHTML = '<div class="empty-state">Sem dados no período</div>';
+    return;
+  }
+
+  wrap.innerHTML = ranked.map((a,i)=>{
+    const pos=i+1;
+    const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':pos;
+    const streak = calcStreak(a.agent);
+    const { emoji, color } = streakTier(streak);
+    return `<div class="share-row ${pos<=3?'podium-'+pos:''}">
+      <span class="share-pos">${medal}</span>
+      <span class="share-name">${a.agent}</span>
+      <span class="share-stats">DOC <strong>${a.doc}</strong> · CPD <strong>${a.cpd}</strong> · PROSP <strong>${a.prosp}</strong></span>
+      <span class="share-streak" style="color:${color}">${emoji} ${streak}d</span>
     </div>`;
   }).join('');
 }
@@ -702,6 +737,8 @@ function renderGestorDashboard() {
     const pos=i+1;
     return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
   }).join('');
+
+  renderShareCard(ranked, ref);
 
   // Evolução diária de DOC
   renderEvolucaoDiaria(entries);
@@ -877,7 +914,7 @@ function generateReport(period) {
   const byAgent=sumByAgent(entries);
   const allDocs=entries.flatMap(e=>(e.docDetails||[]).map(d=>({...d,date:e.date,agent:e.agent})));
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
-  const periodLabel = period==='today'?`Hoje (${formatDate(t)})` : period==='week'?`Semana (${formatDate(weekRange(t).start)} – ${formatDate(weekRange(t).end)})` : `Mês (${new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'})})`;
+  const periodLabel = getPeriodLabel(period, t);
 
   const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
   <title>Nickel CRM — Relatório</title>
