@@ -67,16 +67,6 @@ async function upsertEntry(entry) {
   await fbUpsertEntry(entry);
 }
 
-async function deleteDocDetail(date, agent, docIdx) {
-  const entries = getEntries();
-  const entry = entries.find(e => e.date===date && e.agent===agent);
-  if (!entry) return;
-  entry.docDetails = (entry.docDetails||[]).filter((_,i)=>i!==docIdx);
-  entry.doc = Math.max(0, entry.doc-1);
-  localUpsert(entry);
-  await fbUpsertEntry(entry);
-}
-
 async function updateDocNota(date, agent, docIdx, nota) {
   const entries = getEntries();
   const entry = entries.find(e => e.date===date && e.agent===agent);
@@ -836,11 +826,13 @@ function renderDocList(entries) {
     return;
   }
   wrap.innerHTML=filterHTML+`<div style="overflow-x:auto"><table class="data-table" style="table-layout:auto">
-    <thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Indicação</th><th>Nome do indicador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th></tr></thead>
     <tbody>${rows.map(d=>`<tr>
       <td style="white-space:nowrap">${formatDate(d.date)}</td>
       <td>${d.agent}</td>
-      <td style="font-weight:500">${d.nome||'—'}${d.indicacao==='sim'?`<div style="font-size:11px;font-weight:400;color:var(--text-muted);margin-top:2px">📌 Indicação: ${d.indicador||'—'}</div>`:''}</td>
+      <td>${d.indicacao==='sim'?'Sim':'Não'}</td>
+      <td>${d.indicacao==='sim'?(d.indicador||'—'):'—'}</td>
+      <td style="font-weight:500">${d.nome||'—'}</td>
       <td>${d.tipo?`<span class="tipo-tag tipo-${d.tipo.toLowerCase()}">${d.tipo}</span>`:'—'}</td>
       <td>${d.bairro||'—'}</td>
       <td class="num-cell">${formatCurrency(d.valor)}</td>
@@ -849,7 +841,6 @@ function renderDocList(entries) {
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
         </select>
       </td>
-      <td><button class="del-doc-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" title="Excluir">✕</button></td>
     </tr>`).join('')}</tbody></table></div>`;
 
   wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
@@ -864,12 +855,6 @@ function renderDocList(entries) {
     sel.addEventListener('change', async () => {
       applyColor(sel);
       await updateDocNota(sel.dataset.date, sel.dataset.agent, parseInt(sel.dataset.idx), sel.value);
-    });
-  });
-  wrap.querySelectorAll('.del-doc-btn').forEach(btn=>{
-    btn.addEventListener('click',async()=>{
-      if (confirm(`Excluir DOC de ${btn.dataset.agent} em ${formatDate(btn.dataset.date)}?`))
-        await deleteDocDetail(btn.dataset.date,btn.dataset.agent,parseInt(btn.dataset.idx));
     });
   });
 }
