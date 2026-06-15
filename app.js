@@ -710,31 +710,6 @@ function renderStreakRanking() {
   }).join('');
 }
 
-// ── RESUMO PARA O GRUPO (ranking + ofensiva, pronto para print) ──
-function renderShareCard(ranked, ref) {
-  const wrap = document.getElementById('share-list');
-  if (!wrap) return;
-  document.getElementById('share-period-label').textContent = getPeriodLabel(activePeriod, ref);
-
-  if (ranked.length===0) {
-    wrap.innerHTML = '<div class="empty-state">Sem dados no período</div>';
-    return;
-  }
-
-  wrap.innerHTML = ranked.map((a,i)=>{
-    const pos=i+1;
-    const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':pos;
-    const streak = calcStreak(a.agent);
-    const { emoji, color } = streakTier(streak);
-    return `<div class="share-row ${pos<=3?'podium-'+pos:''}">
-      <span class="share-pos">${medal}</span>
-      <span class="share-name">${a.agent}</span>
-      <span class="share-stats">DOC <strong>${a.doc}</strong> · CPD <strong>${a.cpd}</strong> · PROSP <strong>${a.prosp}</strong></span>
-      <span class="share-streak" style="color:${color}">${emoji} ${streak}d</span>
-    </div>`;
-  }).join('');
-}
-
 function renderGestorDashboard() {
   const ref = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
   const entries=filterEntries(activePeriod, ref);
@@ -750,8 +725,6 @@ function renderGestorDashboard() {
     const pos=i+1;
     return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
   }).join('');
-
-  renderShareCard(ranked, ref);
 
   // Evolução diária de DOC
   renderEvolucaoDiaria(entries);
