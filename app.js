@@ -255,6 +255,13 @@ function bindBairroSelects() {
       outro.style.display = this.value==='__outro__' ? 'block' : 'none';
     });
   });
+  document.querySelectorAll('.doc-indicacao').forEach(sel => {
+    sel.addEventListener('change', function() {
+      const wrap = document.querySelector(`.doc-indicador-wrap[data-idx="${this.dataset.idx}"]`);
+      if (!wrap) return;
+      wrap.style.display = this.value==='sim' ? 'block' : 'none';
+    });
+  });
 }
 
 // ── DOC FORM BUILDER (agent — no nota field) ─────────────
@@ -262,7 +269,8 @@ function buildDocDetailsHTML(count, prefill) {
   if (count===0) return '';
   let html=`<div class="doc-details-wrap"><div class="doc-details-title">Detalhes dos ${count} DOC${count>1?'s':''}</div>`;
   for (let i=0; i<count; i++) {
-    const pre=(prefill&&prefill[i])?prefill[i]:{nome:'',valor:'',bairro:'',tipo:''};
+    const pre=(prefill&&prefill[i])?prefill[i]:{nome:'',valor:'',bairro:'',tipo:'',indicacao:'',indicador:''};
+    const isIndicacao=pre.indicacao==='sim';
     html+=`
     <div class="doc-detail-card">
       <div class="doc-detail-num">DOC ${i+1}</div>
@@ -294,6 +302,19 @@ function buildDocDetailsHTML(count, prefill) {
           </select>
         </div>
       </div>
+      <div class="doc-detail-row-indic">
+        <div class="form-group">
+          <label>É indicação?</label>
+          <select class="doc-indicacao" data-idx="${i}">
+            <option value="nao" ${!isIndicacao?'selected':''}>Não</option>
+            <option value="sim" ${isIndicacao?'selected':''}>Sim</option>
+          </select>
+        </div>
+        <div class="form-group doc-indicador-wrap" data-idx="${i}" style="display:${isIndicacao?'block':'none'}">
+          <label>Nome do indicador</label>
+          <input type="text" class="doc-indicador" data-idx="${i}" placeholder="Ex: Maria Souza" value="${pre.indicador||''}">
+        </div>
+      </div>
     </div>`;
   }
   return html+'</div>';
@@ -310,6 +331,8 @@ function collectDocDetails(count) {
       valor: parseFloat(document.querySelector(`.doc-valor[data-idx="${i}"]`)?.value)||0,
       bairro,
       tipo:  document.querySelector(`.doc-tipo[data-idx="${i}"]`)?.value||'',
+      indicacao: document.querySelector(`.doc-indicacao[data-idx="${i}"]`)?.value||'nao',
+      indicador: document.querySelector(`.doc-indicador[data-idx="${i}"]`)?.value.trim()||'',
       nota:  '',
     });
   }
@@ -425,7 +448,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
   const formWrap=document.getElementById('form-wrap');
   if (sentToday&&!editing) {
     const docSummary=(sentToday.docDetails||[]).map((d,i)=>
-      `<div class="doc-summary-item">DOC ${i+1}: <strong>${d.nome||'—'}</strong> · ${d.tipo||'—'} · ${d.bairro||'—'} · ${formatCurrency(d.valor)}</div>`
+      `<div class="doc-summary-item">DOC ${i+1}: <strong>${d.nome||'—'}</strong> · ${d.tipo||'—'} · ${d.bairro||'—'} · ${formatCurrency(d.valor)}${d.indicacao==='sim'?` · Indicação: ${d.indicador||'—'}`:''}</div>`
     ).join('');
     const editBtn=canEdit
       ?`<button class="btn btn-outline" id="edit-today-btn" style="margin-top:14px;font-size:13px;padding:9px">Corrigir lançamento de ${formatDate(date)}</button>`
@@ -813,7 +836,7 @@ function renderDocList(entries) {
     return;
   }
   wrap.innerHTML=filterHTML+`<div style="overflow-x:auto"><table class="data-table" style="table-layout:auto">
-    <thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Indicação</th><th>Status</th><th></th></tr></thead>
     <tbody>${rows.map(d=>`<tr>
       <td style="white-space:nowrap">${formatDate(d.date)}</td>
       <td>${d.agent}</td>
@@ -821,6 +844,7 @@ function renderDocList(entries) {
       <td>${d.tipo?`<span class="tipo-tag tipo-${d.tipo.toLowerCase()}">${d.tipo}</span>`:'—'}</td>
       <td>${d.bairro||'—'}</td>
       <td class="num-cell">${formatCurrency(d.valor)}</td>
+      <td>${d.indicacao==='sim'?`Sim — ${d.indicador||'—'}`:'Não'}</td>
       <td>
         <select class="nota-select status-sel-${(d.nota||'').toLowerCase().replace(/\s/g,'')}" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
@@ -941,8 +965,8 @@ function generateReport(period) {
   </table>
   <h2>DOCs registrados</h2>
   ${allDocs.length===0?'<p style="color:#888">Nenhum DOC no período.</p>':`
-  <table><thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num">Valor</th><th>Status</th></tr></thead>
-  <tbody>${allDocs.map(d=>`<tr><td>${formatDate(d.date)}</td><td>${d.agent}</td><td>${d.nome||'—'}</td><td>${d.tipo||'—'}</td><td>${d.bairro||'—'}</td><td class="num">${formatCurrency(d.valor)}</td><td>${d.nota||'—'}</td></tr>`).join('')}</tbody>
+  <table><thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num">Valor</th><th>Indicação</th><th>Status</th></tr></thead>
+  <tbody>${allDocs.map(d=>`<tr><td>${formatDate(d.date)}</td><td>${d.agent}</td><td>${d.nome||'—'}</td><td>${d.tipo||'—'}</td><td>${d.bairro||'—'}</td><td class="num">${formatCurrency(d.valor)}</td><td>${d.indicacao==='sim'?`Sim — ${d.indicador||'—'}`:'Não'}</td><td>${d.nota||'—'}</td></tr>`).join('')}</tbody>
   </table>`}
   <h2>Totais</h2>
   <table><thead><tr><th>PROSP</th><th>CPD</th><th>DOC</th></tr></thead>

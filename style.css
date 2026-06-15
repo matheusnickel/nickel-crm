@@ -678,6 +678,15 @@ tr.podium-3 td { background: rgba(180,100,40,.04); }
 
 .doc-detail-row2 .form-group { margin-bottom: 0; }
 
+.doc-detail-row-indic {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.doc-detail-row-indic .form-group { margin-bottom: 0; }
+
 /* ── DOC SUMMARY (sent-today view) ── */
 .doc-summary-list {
   margin-top: 10px;
