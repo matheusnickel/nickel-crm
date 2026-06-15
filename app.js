@@ -825,10 +825,14 @@ function renderDocList(entries) {
     wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
     return;
   }
-  wrap.innerHTML=filterHTML+`<div style="overflow-x:auto"><table class="data-table" style="table-layout:auto">
-    <thead><tr><th>Data</th><th>Angariador</th><th>Indicação</th><th>Nome do indicador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th></tr></thead>
+  wrap.innerHTML=filterHTML+`<div class="doc-table-wrap"><table class="data-table doc-table">
+    <colgroup>
+      <col style="width:11%"><col style="width:11%"><col style="width:9%"><col style="width:12%">
+      <col style="width:15%"><col style="width:9%"><col style="width:12%"><col style="width:12%"><col style="width:9%">
+    </colgroup>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Indicação</th><th>Indicador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th></tr></thead>
     <tbody>${rows.map(d=>`<tr>
-      <td style="white-space:nowrap">${formatDate(d.date)}</td>
+      <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
       <td>${d.indicacao==='sim'?'Sim':'Não'}</td>
       <td>${d.indicacao==='sim'?(d.indicador||'—'):'—'}</td>
