@@ -836,15 +836,14 @@ function renderDocList(entries) {
     return;
   }
   wrap.innerHTML=filterHTML+`<div style="overflow-x:auto"><table class="data-table" style="table-layout:auto">
-    <thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Indicação</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th><th></th></tr></thead>
     <tbody>${rows.map(d=>`<tr>
       <td style="white-space:nowrap">${formatDate(d.date)}</td>
       <td>${d.agent}</td>
-      <td style="font-weight:500">${d.nome||'—'}</td>
+      <td style="font-weight:500">${d.nome||'—'}${d.indicacao==='sim'?`<div style="font-size:11px;font-weight:400;color:var(--text-muted);margin-top:2px">📌 Indicação: ${d.indicador||'—'}</div>`:''}</td>
       <td>${d.tipo?`<span class="tipo-tag tipo-${d.tipo.toLowerCase()}">${d.tipo}</span>`:'—'}</td>
       <td>${d.bairro||'—'}</td>
       <td class="num-cell">${formatCurrency(d.valor)}</td>
-      <td>${d.indicacao==='sim'?`Sim — ${d.indicador||'—'}`:'Não'}</td>
       <td>
         <select class="nota-select status-sel-${(d.nota||'').toLowerCase().replace(/\s/g,'')}" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
