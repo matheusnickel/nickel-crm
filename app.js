@@ -684,7 +684,7 @@ function renderTeamList() {
 function streakTier(streak) {
   if      (streak === 0) return { emoji:'💤', color:'#555' };
   else if (streak < 3)   return { emoji:'🔥', color:'#cd7f32' };
-  else if (streak < 7)   return { emoji:'🔥', color:'#aaa' };
+  else if (streak < 7)   return { emoji:'🔥', color:'#ff7a00' };
   else if (streak < 14)  return { emoji:'🔥', color:'#a8e63d' };
   else if (streak < 30)  return { emoji:'🔥', color:'#6495ed' };
   else                   return { emoji:'🏆', color:'#2ecc71' };
