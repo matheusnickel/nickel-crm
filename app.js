@@ -76,6 +76,15 @@ async function updateDocNota(date, agent, docIdx, nota) {
   await fbUpsertEntry(entry);
 }
 
+async function updateDocValor(date, agent, docIdx, valor) {
+  const entries = getEntries();
+  const entry = entries.find(e => e.date===date && e.agent===agent);
+  if (!entry || !entry.docDetails[docIdx]) return;
+  entry.docDetails[docIdx].valor = valor;
+  localUpsert(entry);
+  await fbUpsertEntry(entry);
+}
+
 // ── EDIT COUNT ───────────────────────────────────────────
 function getEditCounts()           { return JSON.parse(localStorage.getItem('nickel_edit_count')||'{}'); }
 function getEditCount(name, date)  { return getEditCounts()[name+'_'+date]||0; }
@@ -813,7 +822,7 @@ function renderDocList(entries) {
       <td style="font-weight:500">${d.nome||'—'}</td>
       <td>${d.tipo?`<span class="tipo-tag tipo-${d.tipo.toLowerCase()}">${d.tipo}</span>`:'—'}</td>
       <td>${d.bairro||'—'}</td>
-      <td class="num-cell">${formatCurrency(d.valor)}</td>
+      <td class="num-cell doc-valor-cell" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" data-valor="${d.valor}" title="Clique para editar" style="cursor:pointer">${formatCurrency(d.valor)}</td>
       <td>
         <select class="nota-select status-sel-${(d.nota||'').toLowerCase().replace(/\s/g,'')}" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
@@ -822,6 +831,24 @@ function renderDocList(entries) {
     </tr>`).join('')}</tbody></table></div>`;
 
   wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
+
+  wrap.querySelectorAll('.doc-valor-cell').forEach(cell=>{
+    cell.addEventListener('click', function() {
+      if (this.querySelector('input')) return;
+      const current = parseFloat(this.dataset.valor)||0;
+      this.innerHTML=`<input type="number" class="doc-valor-edit" value="${current}" min="0" style="width:90px;background:var(--bg3);border:1px solid var(--gold);border-radius:4px;color:var(--text);font-size:11px;padding:2px 4px;text-align:right">`;
+      const inp = this.querySelector('input');
+      inp.focus(); inp.select();
+      const save = async () => {
+        const novo = parseFloat(inp.value)||0;
+        await updateDocValor(cell.dataset.date, cell.dataset.agent, parseInt(cell.dataset.idx), novo);
+        cell.dataset.valor = novo;
+        cell.innerHTML = formatCurrency(novo);
+      };
+      inp.addEventListener('blur', save);
+      inp.addEventListener('keydown', e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ cell.innerHTML=formatCurrency(current); } });
+    });
+  });
 
   wrap.querySelectorAll('.nota-select').forEach(sel=>{
     const applyColor = s => {
