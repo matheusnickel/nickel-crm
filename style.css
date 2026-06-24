@@ -447,6 +447,17 @@ a { color: inherit; text-decoration: none; }
 .doc-table .nota-select { font-size: 9px; padding: 2px 3px; width: 100%; }
 .doc-table .tipo-tag { padding: 1px 4px; font-size: 9px; }
 
+.doc-edit-btn { background:none; border:none; cursor:pointer; font-size:13px; padding:0 2px; opacity:.6; transition:.15s; }
+.doc-edit-btn:hover, .doc-edit-btn.active { opacity:1; }
+
+.doc-edit-row td { padding: 8px 6px !important; background: var(--bg3); }
+.doc-edit-form { display:flex; flex-direction:column; gap:10px; }
+.doc-edit-fields { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.doc-edit-fields .form-group label { font-size:10px; }
+.doc-edit-fields input, .doc-edit-fields select { font-size:12px; padding:6px 8px; }
+.doc-edit-actions { display:flex; gap:8px; }
+.doc-edit-actions .btn { font-size:12px; padding:7px 16px; }
+
 /* rank table col widths */
 .rank-table col.col-pos   { width: 44px; }
 .rank-table col.col-name  { width: auto; }

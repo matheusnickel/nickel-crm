@@ -76,11 +76,11 @@ async function updateDocNota(date, agent, docIdx, nota) {
   await fbUpsertEntry(entry);
 }
 
-async function updateDocValor(date, agent, docIdx, valor) {
+async function updateDocDetail(date, agent, docIdx, fields) {
   const entries = getEntries();
   const entry = entries.find(e => e.date===date && e.agent===agent);
   if (!entry || !entry.docDetails[docIdx]) return;
-  entry.docDetails[docIdx].valor = valor;
+  Object.assign(entry.docDetails[docIdx], fields);
   localUpsert(entry);
   await fbUpsertEntry(entry);
 }
@@ -808,13 +808,17 @@ function renderDocList(entries) {
     wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
     return;
   }
+  const bairrosOpts = BAIRROS.map(b=>`<option value="${b}">${b}</option>`).join('');
+  const tiposOpts   = TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('');
+
   wrap.innerHTML=filterHTML+`<div class="doc-table-wrap"><table class="data-table doc-table">
     <colgroup>
-      <col style="width:11%"><col style="width:11%"><col style="width:9%"><col style="width:12%">
-      <col style="width:15%"><col style="width:9%"><col style="width:12%"><col style="width:12%"><col style="width:9%">
+      <col style="width:10%"><col style="width:10%"><col style="width:8%"><col style="width:11%">
+      <col style="width:13%"><col style="width:8%"><col style="width:11%"><col style="width:11%"><col style="width:9%"><col style="width:9%">
     </colgroup>
-    <thead><tr><th>Data</th><th>Angariador</th><th>Indicação</th><th>Indicador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th></tr></thead>
-    <tbody>${rows.map(d=>`<tr>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Indicação</th><th>Indicador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th><th></th></tr></thead>
+    <tbody>${rows.map(d=>`
+    <tr data-row-date="${d.date}" data-row-agent="${d.agent}" data-row-idx="${d.idx}">
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
       <td>${d.indicacao==='sim'?'Sim':'Não'}</td>
@@ -822,31 +826,89 @@ function renderDocList(entries) {
       <td style="font-weight:500">${d.nome||'—'}</td>
       <td>${d.tipo?`<span class="tipo-tag tipo-${d.tipo.toLowerCase()}">${d.tipo}</span>`:'—'}</td>
       <td>${d.bairro||'—'}</td>
-      <td class="num-cell doc-valor-cell" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" data-valor="${d.valor}" title="Clique para editar" style="cursor:pointer">${formatCurrency(d.valor)}</td>
+      <td class="num-cell">${formatCurrency(d.valor)}</td>
       <td>
         <select class="nota-select status-sel-${(d.nota||'').toLowerCase().replace(/\s/g,'')}" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
         </select>
       </td>
+      <td><button class="doc-edit-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}"
+        data-nome="${(d.nome||'').replace(/"/g,'&quot;')}" data-valor="${d.valor||0}"
+        data-bairro="${(d.bairro||'').replace(/"/g,'&quot;')}" data-tipo="${d.tipo||''}"
+        data-indicacao="${d.indicacao||'nao'}" data-indicador="${(d.indicador||'').replace(/"/g,'&quot;')}">✏️</button></td>
+    </tr>
+    <tr class="doc-edit-row" id="edit-row-${d.date}-${d.agent}-${d.idx}" style="display:none">
+      <td colspan="10">
+        <div class="doc-edit-form">
+          <div class="doc-edit-fields">
+            <div class="form-group" style="margin:0"><label>Proprietário</label><input class="ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}"></div>
+            <div class="form-group" style="margin:0"><label>Valor</label><input class="ef-valor" type="number" min="0" value="${d.valor||0}"></div>
+            <div class="form-group" style="margin:0"><label>Tipo</label><select class="ef-tipo"><option value="">Selecione</option>${tiposOpts}</select></div>
+            <div class="form-group" style="margin:0"><label>Bairro</label><select class="ef-bairro"><option value="">Selecione</option>${bairrosOpts}</select></div>
+            <div class="form-group" style="margin:0"><label>Indicação</label><select class="ef-indicacao"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+            <div class="form-group ef-indicador-wrap" style="margin:0"><label>Indicador</label><input class="ef-indicador" type="text" value="${(d.indicador||'').replace(/"/g,'&quot;')}"></div>
+          </div>
+          <div class="doc-edit-actions">
+            <button class="btn ef-save" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">Salvar</button>
+            <button class="btn btn-outline ef-cancel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">Cancelar</button>
+          </div>
+        </div>
+      </td>
     </tr>`).join('')}</tbody></table></div>`;
 
   wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
 
-  wrap.querySelectorAll('.doc-valor-cell').forEach(cell=>{
-    cell.addEventListener('click', function() {
-      if (this.querySelector('input')) return;
-      const current = parseFloat(this.dataset.valor)||0;
-      this.innerHTML=`<input type="number" class="doc-valor-edit" value="${current}" min="0" style="width:90px;background:var(--bg3);border:1px solid var(--gold);border-radius:4px;color:var(--text);font-size:11px;padding:2px 4px;text-align:right">`;
-      const inp = this.querySelector('input');
-      inp.focus(); inp.select();
-      const save = async () => {
-        const novo = parseFloat(inp.value)||0;
-        await updateDocValor(cell.dataset.date, cell.dataset.agent, parseInt(cell.dataset.idx), novo);
-        cell.dataset.valor = novo;
-        cell.innerHTML = formatCurrency(novo);
+  // pre-fill selects in edit rows
+  rows.forEach(d => {
+    const row = wrap.querySelector(`#edit-row-${d.date}-${d.agent}-${d.idx}`);
+    if (!row) return;
+    row.querySelector('.ef-tipo').value = d.tipo||'';
+    row.querySelector('.ef-bairro').value = BAIRROS.includes(d.bairro) ? d.bairro : '';
+    row.querySelector('.ef-indicacao').value = d.indicacao||'nao';
+    const indWrap = row.querySelector('.ef-indicador-wrap');
+    indWrap.style.display = (d.indicacao==='sim') ? '' : 'none';
+    row.querySelector('.ef-indicacao').addEventListener('change', function(){
+      indWrap.style.display = this.value==='sim' ? '' : 'none';
+    });
+  });
+
+  // edit button toggle
+  wrap.querySelectorAll('.doc-edit-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = `edit-row-${btn.dataset.date}-${btn.dataset.agent}-${btn.dataset.idx}`;
+      const editRow = wrap.querySelector(`#${id}`);
+      const isOpen = editRow.style.display !== 'none';
+      // close all others
+      wrap.querySelectorAll('.doc-edit-row').forEach(r=>r.style.display='none');
+      wrap.querySelectorAll('.doc-edit-btn').forEach(b=>b.classList.remove('active'));
+      if (!isOpen) { editRow.style.display=''; btn.classList.add('active'); }
+    });
+  });
+
+  // save
+  wrap.querySelectorAll('.ef-save').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = `edit-row-${btn.dataset.date}-${btn.dataset.agent}-${btn.dataset.idx}`;
+      const row = wrap.querySelector(`#${id}`);
+      const fields = {
+        nome:      row.querySelector('.ef-nome').value.trim(),
+        valor:     parseFloat(row.querySelector('.ef-valor').value)||0,
+        tipo:      row.querySelector('.ef-tipo').value,
+        bairro:    row.querySelector('.ef-bairro').value,
+        indicacao: row.querySelector('.ef-indicacao').value,
+        indicador: row.querySelector('.ef-indicador').value.trim(),
       };
-      inp.addEventListener('blur', save);
-      inp.addEventListener('keydown', e=>{ if(e.key==='Enter') inp.blur(); if(e.key==='Escape'){ cell.innerHTML=formatCurrency(current); } });
+      btn.textContent='Salvando...'; btn.disabled=true;
+      await updateDocDetail(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), fields);
+      renderDocList(entries);
+    });
+  });
+
+  // cancel
+  wrap.querySelectorAll('.ef-cancel').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = `edit-row-${btn.dataset.date}-${btn.dataset.agent}-${btn.dataset.idx}`;
+      wrap.querySelector(`#${id}`).style.display='none';
     });
   });
 
