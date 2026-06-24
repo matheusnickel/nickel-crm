@@ -837,7 +837,7 @@ function renderDocList(entries) {
         data-bairro="${(d.bairro||'').replace(/"/g,'&quot;')}" data-tipo="${d.tipo||''}"
         data-indicacao="${d.indicacao||'nao'}" data-indicador="${(d.indicador||'').replace(/"/g,'&quot;')}">✏️</button></td>
     </tr>
-    <tr class="doc-edit-row" id="edit-row-${d.date}-${d.agent}-${d.idx}" style="display:none">
+    <tr class="doc-edit-row" data-edit-date="${d.date}" data-edit-agent="${d.agent}" data-edit-idx="${d.idx}" style="display:none">
       <td colspan="10">
         <div class="doc-edit-form">
           <div class="doc-edit-fields">
@@ -858,9 +858,12 @@ function renderDocList(entries) {
 
   wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
 
+  const findEditRow = (date, agent, idx) =>
+    wrap.querySelector(`.doc-edit-row[data-edit-date="${date}"][data-edit-agent="${agent}"][data-edit-idx="${idx}"]`);
+
   // pre-fill selects in edit rows
   rows.forEach(d => {
-    const row = wrap.querySelector(`#edit-row-${d.date}-${d.agent}-${d.idx}`);
+    const row = findEditRow(d.date, d.agent, d.idx);
     if (!row) return;
     row.querySelector('.ef-tipo').value = d.tipo||'';
     row.querySelector('.ef-bairro').value = BAIRROS.includes(d.bairro) ? d.bairro : '';
@@ -875,8 +878,7 @@ function renderDocList(entries) {
   // edit button toggle
   wrap.querySelectorAll('.doc-edit-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      const id = `edit-row-${btn.dataset.date}-${btn.dataset.agent}-${btn.dataset.idx}`;
-      const editRow = wrap.querySelector(`#${id}`);
+      const editRow = findEditRow(btn.dataset.date, btn.dataset.agent, btn.dataset.idx);
       const isOpen = editRow.style.display !== 'none';
       // close all others
       wrap.querySelectorAll('.doc-edit-row').forEach(r=>r.style.display='none');
@@ -888,8 +890,7 @@ function renderDocList(entries) {
   // save
   wrap.querySelectorAll('.ef-save').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
-      const id = `edit-row-${btn.dataset.date}-${btn.dataset.agent}-${btn.dataset.idx}`;
-      const row = wrap.querySelector(`#${id}`);
+      const row = findEditRow(btn.dataset.date, btn.dataset.agent, btn.dataset.idx);
       const fields = {
         nome:      row.querySelector('.ef-nome').value.trim(),
         valor:     parseFloat(row.querySelector('.ef-valor').value)||0,
@@ -907,8 +908,7 @@ function renderDocList(entries) {
   // cancel
   wrap.querySelectorAll('.ef-cancel').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      const id = `edit-row-${btn.dataset.date}-${btn.dataset.agent}-${btn.dataset.idx}`;
-      wrap.querySelector(`#${id}`).style.display='none';
+      findEditRow(btn.dataset.date, btn.dataset.agent, btn.dataset.idx).style.display='none';
     });
   });
 
