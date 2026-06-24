@@ -303,15 +303,18 @@ a { color: inherit; text-decoration: none; }
 .srr-val { font-weight: 700; font-size: 13px; white-space: nowrap; }
 
 /* ── LINHA DO TEMPO ── */
-.tl-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.tl-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .tl-header { margin-bottom: 2px; }
-.tl-name { width: 80px; flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tl-cells { display: flex; gap: 3px; flex: 1; }
-.tl-cell { flex: 1; height: 22px; border-radius: 3px; background: var(--bg3); border: 1px solid var(--border); }
+.tl-name { width: 90px; flex-shrink: 0; display: flex; flex-direction: column; gap: 1px; }
+.tl-agent-name { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-streak { font-size: 11px; font-weight: 700; white-space: nowrap; }
+.tl-cells { display: flex; gap: 2px; flex: 1; }
+.tl-cell { flex: 1; height: 20px; border-radius: 3px; background: var(--bg3); border: 1px solid var(--border); }
 .tl-cell.tl-sent { background: #a8e63d; border-color: #a8e63d; }
 .tl-cell.tl-today { outline: 2px solid var(--gold); outline-offset: 1px; }
-.tl-head { background: none; border: none; height: 16px; font-size: 9px; color: var(--text-muted); text-align: center; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.tl-head { background: none; border: none; height: 28px; font-size: 8px; color: var(--text-muted); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 2px; font-weight: 600; }
 .tl-head.tl-today { color: var(--gold); }
+.tl-month { font-size: 7px; color: var(--gold); text-transform: uppercase; line-height: 1; }
 
 /* ── TEAM MANAGEMENT ── */
 .team-row {

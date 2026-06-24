@@ -700,25 +700,7 @@ function streakTier(streak) {
   else                   return { emoji:'🏆', color:'#2ecc71' };
 }
 
-function renderStreakRanking() {
-  const agentNames = getAgentNames();
-  const streaks = agentNames.map(name => ({ name, streak: calcStreak(name) }))
-    .sort((a,b) => b.streak - a.streak);
-
-  const wrap = document.getElementById('streak-ranking');
-  if (!wrap) return;
-
-  wrap.innerHTML = streaks.map((s, i) => {
-    const { emoji, color } = streakTier(s.streak);
-    const pos = i+1;
-    const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
-    return `<div class="srr">
-      <span class="srr-pos">${medal||pos}</span>
-      <span class="srr-name">${s.name}</span>
-      <span class="srr-val" style="color:${color}">${emoji} ${s.streak}d</span>
-    </div>`;
-  }).join('');
-}
+function renderStreakRanking() { renderTimeline(); }
 
 function renderGestorDashboard() {
   const ref = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
@@ -934,7 +916,7 @@ function renderTimeline() {
   const entries = getEntries();
   const t = today();
 
-  // build last 30 days array (oldest → newest)
+  // build last 30 days (oldest → newest)
   const days = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(t + 'T12:00:00');
@@ -942,28 +924,43 @@ function renderTimeline() {
     days.push(toDateStr(d));
   }
 
-  // set of dates each agent sent
+  // sent dates per agent
   const sentMap = {};
   agentNames.forEach(name => {
     sentMap[name] = new Set(entries.filter(e => e.agent === name).map(e => e.date));
   });
 
-  // header row: day numbers
-  const headerCells = days.map(d => {
-    const num = d.slice(8); // DD
+  // sort by streak desc
+  const sorted = agentNames
+    .map(name => ({ name, streak: calcStreak(name) }))
+    .sort((a, b) => b.streak - a.streak);
+
+  // header: month abbreviation at first day of each month + day number
+  const headerCells = days.map((d, i) => {
     const isToday = d === t;
-    return `<div class="tl-cell tl-head${isToday?' tl-today':''}">${num}</div>`;
+    const day = d.slice(8);
+    const isFirstOfMonth = day === '01' || i === 0;
+    const monthAbbr = isFirstOfMonth
+      ? new Date(d + 'T12:00:00').toLocaleString('pt-BR', { month: 'short' }).replace('.', '')
+      : '';
+    return `<div class="tl-cell tl-head${isToday ? ' tl-today' : ''}" title="${formatDate(d)}">
+      ${monthAbbr ? `<span class="tl-month">${monthAbbr}</span>` : ''}
+      <span>${day}</span>
+    </div>`;
   }).join('');
 
-  // agent rows
-  const agentRows = agentNames.map(name => {
+  const agentRows = sorted.map(({ name, streak }) => {
+    const { emoji, color } = streakTier(streak);
     const cells = days.map(d => {
       const sent = sentMap[name].has(d);
       const isToday = d === t;
-      return `<div class="tl-cell tl-day${sent?' tl-sent':''}${isToday?' tl-today':''}" title="${formatDate(d)}"></div>`;
+      return `<div class="tl-cell tl-day${sent ? ' tl-sent' : ''}${isToday ? ' tl-today' : ''}" title="${formatDate(d)}"></div>`;
     }).join('');
     return `<div class="tl-row">
-      <div class="tl-name">${name}</div>
+      <div class="tl-name">
+        <span class="tl-agent-name">${name}</span>
+        <span class="tl-streak" style="color:${color}">${emoji} ${streak}d</span>
+      </div>
       <div class="tl-cells">${cells}</div>
     </div>`;
   }).join('');
