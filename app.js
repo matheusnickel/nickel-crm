@@ -553,6 +553,7 @@ async function initGestorDashboard() {
     saveEntries(entries);
     renderGestorDashboard();
     renderDayView(document.getElementById('day-input')?.value||today());
+    renderTimeline();
   });
   initDayView();
   initExport();
@@ -834,6 +835,56 @@ function renderDocList(entries) {
       await updateDocNota(sel.dataset.date, sel.dataset.agent, parseInt(sel.dataset.idx), sel.value);
     });
   });
+}
+
+// ── LINHA DO TEMPO (últimos 30 dias) ─────────────────────
+function renderTimeline() {
+  const wrap = document.getElementById('timeline-wrap');
+  if (!wrap) return;
+  const agentNames = getAgentNames();
+  const entries = getEntries();
+  const t = today();
+
+  // build last 30 days array (oldest → newest)
+  const days = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(t + 'T12:00:00');
+    d.setDate(d.getDate() - i);
+    days.push(toDateStr(d));
+  }
+
+  // set of dates each agent sent
+  const sentMap = {};
+  agentNames.forEach(name => {
+    sentMap[name] = new Set(entries.filter(e => e.agent === name).map(e => e.date));
+  });
+
+  // header row: day numbers
+  const headerCells = days.map(d => {
+    const num = d.slice(8); // DD
+    const isToday = d === t;
+    return `<div class="tl-cell tl-head${isToday?' tl-today':''}">${num}</div>`;
+  }).join('');
+
+  // agent rows
+  const agentRows = agentNames.map(name => {
+    const cells = days.map(d => {
+      const sent = sentMap[name].has(d);
+      const isToday = d === t;
+      return `<div class="tl-cell tl-day${sent?' tl-sent':''}${isToday?' tl-today':''}" title="${formatDate(d)}"></div>`;
+    }).join('');
+    return `<div class="tl-row">
+      <div class="tl-name">${name}</div>
+      <div class="tl-cells">${cells}</div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="tl-row tl-header">
+      <div class="tl-name"></div>
+      <div class="tl-cells">${headerCells}</div>
+    </div>
+    ${agentRows}`;
 }
 
 // ── CONSULTA POR DIA ─────────────────────────────────────
