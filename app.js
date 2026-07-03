@@ -1134,8 +1134,16 @@ function renderTimeline() {
     </div>
     ${agentRows}`;
 
-  document.getElementById('tl-start').addEventListener('change', e => { tlStart = e.target.value; renderTimeline(); });
-  document.getElementById('tl-end').addEventListener('change',   e => { tlEnd   = e.target.value; renderTimeline(); });
+  document.getElementById('tl-start').addEventListener('change', e => {
+    tlStart = e.target.value;
+    if (tlStart > tlEnd) tlEnd = tlStart;
+    renderTimeline();
+  });
+  document.getElementById('tl-end').addEventListener('change', e => {
+    tlEnd = e.target.value;
+    if (tlEnd < tlStart) tlStart = tlEnd;
+    renderTimeline();
+  });
 }
 
 // ── CONSULTA POR DIA ─────────────────────────────────────
