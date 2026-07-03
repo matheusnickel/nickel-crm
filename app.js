@@ -223,7 +223,7 @@ function calcMonthlyScore(agentName, monthEntries) {
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
   const raw = (doc * 0.5) + (cpd * 0.05) + (prosp * 0.002);
-  const cap = doc >= 12 ? 10 : 5.9;
+  const cap = doc >= 20 ? 10 : doc >= 12 ? 9.9 : 5.9;
   return Math.min(raw, cap);
 }
 
