@@ -278,21 +278,28 @@ function renderNotasRanking() {
     });
   }
 
-  rows.sort((a, b) => b.score - a.score);
+  if (activeNotaTab === 'dia') {
+    rows.sort((a, b) => {
+      if (a.sent !== b.sent) return a.sent ? -1 : 1;
+      return b.score - a.score;
+    });
+  } else {
+    rows.sort((a, b) => b.score - a.score);
+  }
 
   const medals = ['🥇', '🥈', '🥉'];
 
   const rowsHTML = rows.map((r, i) => {
     const col = scoreColor(r.score);
-    const medal = i < 3 ? medals[i] : `${i + 1}`;
     const notShown = activeNotaTab === 'dia' && !r.sent;
+    const medal = (!notShown && i < 3) ? medals[i] : (notShown ? '—' : `${i + 1}`);
     const scoreStr = notShown ? '—' : r.score.toFixed(1);
     const colorStyle = notShown ? 'color:var(--text-muted)' : `color:${col};font-weight:700`;
     return `<tr>
       <td style="font-size:16px;text-align:center;width:36px">${medal}</td>
       <td>${r.name}</td>
       <td class="num-cell nota-score" style="${colorStyle}">${scoreStr}</td>
-      <td class="num-cell" style="color:var(--text-muted);font-size:12px">${notShown ? '—' : scoreLabel(notShown ? 0 : r.score)}</td>
+      <td class="num-cell" style="color:var(--text-muted);font-size:12px">${notShown ? '—' : scoreLabel(r.score)}</td>
     </tr>`;
   }).join('');
 
