@@ -213,7 +213,7 @@ function calcWeeklyScore(agentName, weekEntries) {
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
   const raw = (doc * 2.0) + (cpd * 0.15) + (prosp * 0.005);
-  const cap = doc >= 3 ? 10 : 5.9;
+  const cap = doc >= 3 ? 10 : doc >= 1 ? 7.9 : 5.9;
   return Math.min(raw, cap);
 }
 
