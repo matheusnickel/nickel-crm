@@ -316,6 +316,61 @@ a { color: inherit; text-decoration: none; }
 .tl-head.tl-today { color: var(--gold); }
 .tl-month { font-size: 7px; color: var(--gold); text-transform: uppercase; line-height: 1; }
 
+/* ── NOTA TABS ── */
+.nota-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.nota-tab-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.nota-tab-btn.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #07090f;
+  font-weight: 700;
+}
+.nota-score {
+  font-size: 15px;
+}
+
+/* ── AGENT DAILY SCORE ── */
+.agent-daily-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0 6px;
+  padding: 10px 16px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+}
+.agent-nota-val {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+.agent-nota-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.agent-nota-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* ── TEAM MANAGEMENT ── */
 .team-row {
   display: flex;

@@ -199,6 +199,123 @@ function calcStreak(agentName) {
   return streak;
 }
 
+// ── SCORING / NOTA ───────────────────────────────────────
+function calcDailyScore(entry) {
+  if (!entry) return 0;
+  const raw = (entry.doc * 6.0) + (entry.cpd * 1.0) + (entry.prosp * 0.015);
+  const cap = entry.doc >= 1 ? 10 : 5.9;
+  return Math.min(raw, cap);
+}
+
+function calcWeeklyScore(agentName, weekEntries) {
+  const mine = weekEntries.filter(e => e.agent === agentName);
+  const doc   = mine.reduce((s, e) => s + e.doc,   0);
+  const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
+  const prosp = mine.reduce((s, e) => s + e.prosp, 0);
+  const raw = (doc * 2.0) + (cpd * 0.15) + (prosp * 0.005);
+  const cap = doc >= 3 ? 10 : 5.9;
+  return Math.min(raw, cap);
+}
+
+function calcMonthlyScore(agentName, monthEntries) {
+  const mine = monthEntries.filter(e => e.agent === agentName);
+  const doc   = mine.reduce((s, e) => s + e.doc,   0);
+  const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
+  const prosp = mine.reduce((s, e) => s + e.prosp, 0);
+  const raw = (doc * 0.5) + (cpd * 0.05) + (prosp * 0.002);
+  const cap = doc >= 12 ? 10 : 5.9;
+  return Math.min(raw, cap);
+}
+
+function scoreColor(score) {
+  if (score >= 9)   return '#2ecc71';
+  if (score >= 7)   return '#a8e63d';
+  if (score >= 6)   return '#f0c040';
+  if (score >= 4)   return '#ff7a00';
+  return '#e74c3c';
+}
+
+function scoreLabel(score) {
+  if (score >= 9)   return 'Excelente';
+  if (score >= 7)   return 'Ótimo';
+  if (score >= 6)   return 'Bom';
+  if (score >= 4)   return 'Regular';
+  return 'Fraco';
+}
+
+// ── NOTAS RANKING ─────────────────────────────────────────
+let activeNotaTab = 'dia';
+
+function renderNotasRanking() {
+  const wrap = document.getElementById('notas-ranking-wrap');
+  if (!wrap) return;
+
+  const t = today();
+  const weekRef   = activeWeekRef  || t;
+  const monthRef  = activeMonthRef || t;
+
+  const weekE  = filterEntries('week',  weekRef);
+  const monthE = filterEntries('month', monthRef);
+  const dayE   = filterEntries('today', t);
+
+  const names = getAgentNames();
+
+  let rows;
+  if (activeNotaTab === 'dia') {
+    rows = names.map(name => {
+      const e = dayE.find(x => x.agent === name);
+      return { name, score: calcDailyScore(e || null), doc: e?.doc || 0, sent: !!e };
+    });
+  } else if (activeNotaTab === 'semana') {
+    rows = names.map(name => {
+      const doc = weekE.filter(x => x.agent === name).reduce((s, e) => s + e.doc, 0);
+      return { name, score: calcWeeklyScore(name, weekE), doc, sent: true };
+    });
+  } else {
+    rows = names.map(name => {
+      const doc = monthE.filter(x => x.agent === name).reduce((s, e) => s + e.doc, 0);
+      return { name, score: calcMonthlyScore(name, monthE), doc, sent: true };
+    });
+  }
+
+  rows.sort((a, b) => b.score - a.score);
+
+  const medals = ['🥇', '🥈', '🥉'];
+
+  const rowsHTML = rows.map((r, i) => {
+    const col = scoreColor(r.score);
+    const medal = i < 3 ? medals[i] : `${i + 1}`;
+    const notShown = activeNotaTab === 'dia' && !r.sent;
+    const scoreStr = notShown ? '—' : r.score.toFixed(1);
+    const colorStyle = notShown ? 'color:var(--text-muted)' : `color:${col};font-weight:700`;
+    return `<tr>
+      <td style="font-size:16px;text-align:center;width:36px">${medal}</td>
+      <td>${r.name}</td>
+      <td class="num-cell nota-score" style="${colorStyle}">${scoreStr}</td>
+      <td class="num-cell" style="color:var(--text-muted);font-size:12px">${notShown ? '—' : scoreLabel(notShown ? 0 : r.score)}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div class="nota-tabs">
+      <button class="nota-tab-btn${activeNotaTab==='dia'?' active':''}" data-tab="dia">Dia</button>
+      <button class="nota-tab-btn${activeNotaTab==='semana'?' active':''}" data-tab="semana">Semana</button>
+      <button class="nota-tab-btn${activeNotaTab==='mes'?' active':''}" data-tab="mes">Mês</button>
+    </div>
+    <table class="data-table rank-table" style="margin-top:10px">
+      <thead><tr><th style="width:36px">#</th><th>Angariador</th><th class="num-cell">Nota</th><th class="num-cell">Nível</th></tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+    ${activeNotaTab==='dia'?'<div style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center">Apenas quem enviou hoje aparece com nota</div>':''}`;
+
+  wrap.querySelectorAll('.nota-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeNotaTab = btn.dataset.tab;
+      renderNotasRanking();
+    });
+  });
+}
+
 // ── STREAK VISUAL ────────────────────────────────────────
 function renderStreak(agentName, entries) {
   const streak = calcStreak(agentName);
@@ -452,11 +569,19 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const editBtn=canEdit
       ?`<button class="btn btn-outline" id="edit-today-btn" style="margin-top:14px;font-size:13px;padding:9px">Corrigir lançamento de ${formatDate(date)}</button>`
       :`<div style="margin-top:14px;padding:10px 14px;background:rgba(224,62,62,.08);border:1px solid rgba(224,62,62,.25);border-radius:8px;font-size:12px;color:#ff6b6b;text-align:center">Correções esgotadas. Para nova alteração, fale com o gestor.</div>`;
+    const dailyScore = calcDailyScore(sentToday);
+    const dsColor = scoreColor(dailyScore);
+    const dsLabel = scoreLabel(dailyScore);
     formWrap.innerHTML=`
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
         <div style="font-weight:600;color:#f0f0f0">Relatório de ${formatDate(date)} enviado</div>
         <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CPD <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong></div>
+        <div class="agent-daily-score" style="--nota-color:${dsColor}">
+          <span class="agent-nota-val" style="color:${dsColor}">${dailyScore.toFixed(1)}</span>
+          <span class="agent-nota-label">${dsLabel}</span>
+          <span class="agent-nota-hint">nota do dia</span>
+        </div>
         ${docSummary?`<div class="doc-summary-list">${docSummary}</div>`:''}
         ${editBtn}
       </div>`;
@@ -563,6 +688,7 @@ async function initGestorDashboard() {
     renderGestorDashboard();
     renderDayView(document.getElementById('day-input')?.value||today());
     renderTimeline();
+    renderNotasRanking();
   });
   initDayView();
   initExport();
@@ -735,6 +861,7 @@ function renderGestorDashboard() {
     b.onclick=()=>{ activeConvMode=b.dataset.mode; document.querySelectorAll('.conv-mode-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderConversion(ranked); };
     b.classList.toggle('active',b.dataset.mode===activeConvMode);
   });
+  renderNotasRanking();
 }
 
 function renderAnalyticsChart(allDocs) {
