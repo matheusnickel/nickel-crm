@@ -1058,6 +1058,8 @@ function renderDocList(entries) {
 }
 
 // ── LINHA DO TEMPO (últimos 30 dias) ─────────────────────
+let tlStart = null, tlEnd = null;
+
 function renderTimeline() {
   const wrap = document.getElementById('timeline-wrap');
   if (!wrap) return;
@@ -1065,35 +1067,35 @@ function renderTimeline() {
   const entries = getEntries();
   const t = today();
 
-  // build last 30 days (oldest → newest)
-  const days = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(t + 'T12:00:00');
-    d.setDate(d.getDate() - i);
-    days.push(toDateStr(d));
-  }
+  // default range: last 7 days
+  if (!tlStart) { const d = new Date(t+'T12:00:00'); d.setDate(d.getDate()-6); tlStart = toDateStr(d); }
+  if (!tlEnd)   tlEnd = t;
 
-  // sent dates per agent
-  const sentMap = {};
-  agentNames.forEach(name => {
-    sentMap[name] = new Set(entries.filter(e => e.agent === name).map(e => e.date));
-  });
+  // build days in range (oldest → newest)
+  const days = [];
+  let cur = new Date(tlStart+'T12:00:00');
+  const endD = new Date(tlEnd+'T12:00:00');
+  while (cur <= endD) { days.push(toDateStr(cur)); cur.setDate(cur.getDate()+1); }
+
+  // entry lookup per agent+date
+  const entryMap = {};
+  entries.forEach(e => { entryMap[e.agent+'|'+e.date] = e; });
 
   // sort by streak desc
   const sorted = agentNames
     .map(name => ({ name, streak: calcStreak(name) }))
     .sort((a, b) => b.streak - a.streak);
 
-  // header: month abbreviation at first day of each month + day number
+  // header
   const headerCells = days.map((d, i) => {
     const isToday = d === t;
     const day = d.slice(8);
     const isFirstOfMonth = day === '01' || i === 0;
     const monthAbbr = isFirstOfMonth
-      ? new Date(d + 'T12:00:00').toLocaleString('pt-BR', { month: 'short' }).replace('.', '')
+      ? new Date(d+'T12:00:00').toLocaleString('pt-BR',{month:'short'}).replace('.','')
       : '';
-    return `<div class="tl-cell tl-head${isToday ? ' tl-today' : ''}" title="${formatDate(d)}">
-      ${monthAbbr ? `<span class="tl-month">${monthAbbr}</span>` : ''}
+    return `<div class="tl-cell tl-head${isToday?' tl-today':''}" title="${formatDate(d)}">
+      ${monthAbbr?`<span class="tl-month">${monthAbbr}</span>`:''}
       <span>${day}</span>
     </div>`;
   }).join('');
@@ -1101,9 +1103,14 @@ function renderTimeline() {
   const agentRows = sorted.map(({ name, streak }) => {
     const { emoji, color } = streakTier(streak);
     const cells = days.map(d => {
-      const sent = sentMap[name].has(d);
+      const e = entryMap[name+'|'+d];
+      const sent = !!e;
       const isToday = d === t;
-      return `<div class="tl-cell tl-day${sent ? ' tl-sent' : ''}${isToday ? ' tl-today' : ''}" title="${formatDate(d)}"></div>`;
+      const score = sent ? calcDailyScore(e) : null;
+      const nota = score !== null ? (score % 1 === 0 ? score.toFixed(0) : score.toFixed(1)) : '';
+      return `<div class="tl-cell tl-day${sent?' tl-sent':''}${isToday?' tl-today':''}" title="${formatDate(d)}${sent?' — Nota '+score.toFixed(1):''}">
+        <span class="tl-nota">${nota}</span>
+      </div>`;
     }).join('');
     return `<div class="tl-row">
       <div class="tl-name">
@@ -1115,11 +1122,20 @@ function renderTimeline() {
   }).join('');
 
   wrap.innerHTML = `
+    <div class="tl-range-row">
+      <label>De</label>
+      <input type="date" id="tl-start" value="${tlStart}" max="${tlEnd}">
+      <label>até</label>
+      <input type="date" id="tl-end" value="${tlEnd}" max="${t}">
+    </div>
     <div class="tl-row tl-header">
       <div class="tl-name"></div>
       <div class="tl-cells">${headerCells}</div>
     </div>
     ${agentRows}`;
+
+  document.getElementById('tl-start').addEventListener('change', e => { tlStart = e.target.value; renderTimeline(); });
+  document.getElementById('tl-end').addEventListener('change',   e => { tlEnd   = e.target.value; renderTimeline(); });
 }
 
 // ── CONSULTA POR DIA ─────────────────────────────────────
