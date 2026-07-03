@@ -71,6 +71,7 @@
             <col class="col-doc">
             <col class="col-cpd">
             <col class="col-prosp">
+            <col><col><col>
           </colgroup>
           <thead>
             <tr>
@@ -79,6 +80,9 @@
               <th class="num-cell doc-th">DOC</th>
               <th class="num-cell">CPD</th>
               <th class="num-cell">PROSP</th>
+              <th class="num-cell rank-extra">VV</th>
+              <th class="num-cell rank-extra">VA</th>
+              <th class="num-cell rank-extra">FOTOS</th>
             </tr>
           </thead>
           <tbody id="rank-body"></tbody>
@@ -153,10 +157,15 @@
             <input type="date" id="lanc-date" required>
           </div>
         </div>
-        <div class="fields-row" style="margin-bottom:14px">
+        <div class="fields-row" style="margin-bottom:10px">
           <div class="field-box"><label>PROSP</label><input type="number" id="lanc-prosp" min="0" value="0"></div>
           <div class="field-box"><label>CPD</label><input type="number" id="lanc-cpd" min="0" value="0"></div>
           <div class="field-box"><label>DOC</label><input type="number" id="lanc-doc" min="0" value="0"></div>
+        </div>
+        <div class="fields-row" style="margin-bottom:14px">
+          <div class="field-box"><label style="color:#6495ed">VV</label><input type="number" id="lanc-vv" min="0" value="0"></div>
+          <div class="field-box"><label style="color:#6495ed">VA</label><input type="number" id="lanc-va" min="0" value="0"></div>
+          <div class="field-box"><label style="color:#6495ed">FOTOS</label><input type="number" id="lanc-fotos" min="0" value="0"></div>
         </div>
         <div id="lanc-doc-details"></div>
         <button type="submit" class="btn">Salvar lançamento</button>

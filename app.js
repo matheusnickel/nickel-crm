@@ -171,7 +171,11 @@ function filterEntries(period, ref) {
 }
 function sumByAgent(entries) {
   const map={};
-  entries.forEach(e=>{ if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0}; map[e.agent].prosp+=e.prosp; map[e.agent].cpd+=e.cpd; map[e.agent].doc+=e.doc; });
+  entries.forEach(e=>{
+    if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0,va:0,vv:0,fotos:0};
+    map[e.agent].prosp+=e.prosp; map[e.agent].cpd+=e.cpd; map[e.agent].doc+=e.doc;
+    map[e.agent].va+=(e.va||0); map[e.agent].vv+=(e.vv||0); map[e.agent].fotos+=(e.fotos||0);
+  });
   return Object.values(map);
 }
 // Um lançamento só conta para a sequência se foi enviado no próprio dia
@@ -583,6 +587,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         <div style="font-size:24px;margin-bottom:6px">✓</div>
         <div style="font-weight:600;color:#f0f0f0">Relatório de ${formatDate(date)} enviado</div>
         <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CPD <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong></div>
+        ${(sentToday.va||sentToday.vv||sentToday.fotos)?`<div style="font-size:12px;margin-top:4px;color:var(--text-muted)">VA <strong style="color:#6495ed">${sentToday.va||0}</strong> &nbsp;·&nbsp; VV <strong style="color:#6495ed">${sentToday.vv||0}</strong> &nbsp;·&nbsp; FOTOS <strong style="color:#6495ed">${sentToday.fotos||0}</strong></div>`:''}
         <div class="agent-daily-score" style="--nota-color:${dsColor}">
           <span class="agent-nota-val" style="color:${dsColor}">${dailyScore.toFixed(1)}</span>
           <span class="agent-nota-label">${dsLabel}</span>
@@ -593,7 +598,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       </div>`;
     if (canEdit) document.getElementById('edit-today-btn').addEventListener('click',()=>renderAgentDashboard(session,date,true));
   } else {
-    const pre=sentToday||{prosp:0,cpd:0,doc:0,docDetails:[]};
+    const pre=sentToday||{prosp:0,cpd:0,doc:0,va:0,vv:0,fotos:0,docDetails:[]};
     const isFuture = date > t;
     if (isFuture) {
       formWrap.innerHTML=`<div class="sent-today" style="color:var(--text-muted);font-size:13px">Não é possível lançar para datas futuras.</div>`;
@@ -605,6 +610,11 @@ function renderAgentDashboard(session, selectedDate, editing) {
             <div class="field-box"><label>PROSP</label><input type="number" id="f-prosp" min="0" value="${pre.prosp}" required></div>
             <div class="field-box"><label>CPD</label><input type="number" id="f-cpd" min="0" value="${pre.cpd}" required></div>
             <div class="field-box"><label>DOC</label><input type="number" id="f-doc" min="0" value="${pre.doc}" required></div>
+          </div>
+          <div class="fields-row" style="margin-top:8px">
+            <div class="field-box"><label style="color:#6495ed">VA</label><input type="number" id="f-va" min="0" value="${pre.va||0}"></div>
+            <div class="field-box"><label style="color:#6495ed">VV</label><input type="number" id="f-vv" min="0" value="${pre.vv||0}"></div>
+            <div class="field-box"><label style="color:#6495ed">FOTOS</label><input type="number" id="f-fotos" min="0" value="${pre.fotos||0}"></div>
           </div>
           <div id="doc-details-area">${buildDocDetailsHTML(pre.doc||0,pre.docDetails)}</div>
           <button type="submit" class="btn" style="margin-top:14px">${sentToday?'Salvar correção':'Enviar relatório'}</button>
@@ -627,7 +637,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const isEdit=!!sentToday;
         const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
         const submittedDate=sentToday?.submittedDate||sentToday?.date||today();
-        await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:parseInt(document.getElementById('f-cpd').value)||0,doc:docVal,docDetails,submittedDate});
+        await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:parseInt(document.getElementById('f-cpd').value)||0,doc:docVal,va:parseInt(document.getElementById('f-va').value)||0,vv:parseInt(document.getElementById('f-vv').value)||0,fotos:parseInt(document.getElementById('f-fotos').value)||0,docDetails,submittedDate});
         if (isEdit) incrementEditCount(session.name,date);
       });
       const cancelBtn=document.getElementById('cancel-edit-btn');
@@ -734,13 +744,16 @@ function initGestorLancamento() {
     const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Salvando...';
     const existing=getEntries().find(e=>e.date===date&&e.agent===agent);
     const submittedDate=existing?.submittedDate||existing?.date||today();
-    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:parseInt(document.getElementById('lanc-cpd').value)||0,doc:docVal,docDetails,submittedDate});
+    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:parseInt(document.getElementById('lanc-cpd').value)||0,doc:docVal,va:parseInt(document.getElementById('lanc-va').value)||0,vv:parseInt(document.getElementById('lanc-vv').value)||0,fotos:parseInt(document.getElementById('lanc-fotos').value)||0,docDetails,submittedDate});
     resetEditCount(agent,date);
     btn.disabled=false; btn.textContent='Salvar lançamento';
     // reset form
     document.getElementById('lanc-prosp').value=0;
     document.getElementById('lanc-cpd').value=0;
     document.getElementById('lanc-doc').value=0;
+    document.getElementById('lanc-va').value=0;
+    document.getElementById('lanc-vv').value=0;
+    document.getElementById('lanc-fotos').value=0;
     document.getElementById('lanc-doc-details').innerHTML='';
     const newToday=today(); dateInput.value=newToday; dateInput.max=newToday;
   });
@@ -861,7 +874,7 @@ function renderGestorDashboard() {
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
   document.getElementById('rank-body').innerHTML=ranked.map((a,i)=>{
     const pos=i+1;
-    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
+    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td><td class="num-cell rank-extra">${a.vv||0}</td><td class="num-cell rank-extra">${a.va||0}</td><td class="num-cell rank-extra">${a.fotos||0}</td></tr>`;
   }).join('');
 
   // Evolução diária de DOC
