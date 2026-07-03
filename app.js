@@ -202,6 +202,7 @@ function calcStreak(agentName) {
 // ── SCORING / NOTA ───────────────────────────────────────
 function calcDailyScore(entry) {
   if (!entry) return 0;
+  if (entry.doc === 0 && entry.cpd >= 4) return 5.9;
   const raw = (entry.doc * 6.0) + (entry.cpd * 1.05) + (entry.prosp * 0.05);
   const cap = entry.doc >= 3 ? 10 : entry.doc >= 1 ? 8.9 : 5.9;
   return Math.min(raw, cap);
@@ -701,6 +702,7 @@ async function initGestorDashboard() {
   initExport();
   initGestorLancamento();
   initTeamManagement();
+  document.getElementById('limpar-julho-btn')?.addEventListener('click', limparJulhoSemDoc);
 }
 
 function refreshLancAgentSelect() {
@@ -781,6 +783,19 @@ function renderEvolucaoDiaria(entries) {
 }
 
 // ── TEAM MANAGEMENT ──────────────────────────────────────
+async function limparJulhoSemDoc() {
+  const julho = '2026-07';
+  const entries = getEntries();
+  const paraApagar = entries.filter(e => e.date.startsWith(julho) && e.doc === 0);
+  if (paraApagar.length === 0) { alert('Nenhum lançamento sem DOC em julho para apagar.'); return; }
+  if (!confirm(`Apagar ${paraApagar.length} lançamento(s) de julho sem DOC?\n\nDOCs registrados serão mantidos.`)) return;
+  for (const e of paraApagar) {
+    saveEntries(getEntries().filter(x => !(x.date === e.date && x.agent === e.agent)));
+    await fbDeleteEntry(e.date, e.agent);
+  }
+  alert('Pronto! Lançamentos sem DOC de julho apagados.');
+}
+
 function initTeamManagement() {
   const wrap = document.getElementById('team-mgmt');
   if (!wrap) return;
