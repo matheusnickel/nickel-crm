@@ -582,6 +582,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const dailyScore = calcDailyScore(sentToday);
     const dsColor = scoreColor(dailyScore);
     const dsLabel = scoreLabel(dailyScore);
+    const dsMsg = dailyScore >= 8 ? 'Você foi bem, continue!' : dailyScore >= 6 ? 'Bom, mas pode melhorar.' : dailyScore > 3 ? 'Melhore!' : 'Fraco demais!';
     formWrap.innerHTML=`
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
@@ -593,6 +594,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
           <span class="agent-nota-label">${dsLabel}</span>
           <span class="agent-nota-hint">nota do dia</span>
         </div>
+        <div style="font-size:13px;font-weight:600;color:${dsColor};margin-top:6px;text-align:center">${dsMsg}</div>
         ${docSummary?`<div class="doc-summary-list">${docSummary}</div>`:''}
         ${editBtn}
       </div>`;
