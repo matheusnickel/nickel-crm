@@ -229,18 +229,16 @@ function calcMonthlyScore(agentName, monthEntries) {
 }
 
 function scoreColor(score) {
-  if (score >= 9)   return '#2ecc71';
-  if (score >= 7)   return '#a8e63d';
-  if (score >= 6)   return '#f0c040';
-  if (score >= 4)   return '#ff7a00';
-  return '#e74c3c';
+  if (score >= 8)   return '#6495ed'; // azul
+  if (score >= 6)   return '#a8e63d'; // verde
+  if (score > 3)    return '#f0c040'; // amarelo
+  return '#e74c3c';                   // vermelho
 }
 
 function scoreLabel(score) {
-  if (score >= 9)   return 'Excelente';
-  if (score >= 7)   return 'Ótimo';
+  if (score >= 8)   return 'Excelente';
   if (score >= 6)   return 'Bom';
-  if (score >= 4)   return 'Regular';
+  if (score > 3)    return 'Regular';
   return 'Fraco';
 }
 
@@ -1108,8 +1106,10 @@ function renderTimeline() {
       const isToday = d === t;
       const score = sent ? calcDailyScore(e) : null;
       const nota = score !== null ? (score % 1 === 0 ? score.toFixed(0) : score.toFixed(1)) : '';
-      return `<div class="tl-cell tl-day${sent?' tl-sent':''}${isToday?' tl-today':''}" title="${formatDate(d)}${sent?' — Nota '+score.toFixed(1):''}">
-        <span class="tl-nota">${nota}</span>
+      const cellBg = sent ? scoreColor(score) : '';
+      const notaColor = sent && score <= 3 ? '#fff' : '#07090f';
+      return `<div class="tl-cell tl-day${sent?' tl-sent':''}${isToday?' tl-today':''}" title="${formatDate(d)}${sent?' — Nota '+score.toFixed(1):''}" ${sent?`style="background:${cellBg};border-color:${cellBg}"`:''}>
+        <span class="tl-nota" style="color:${notaColor}">${nota}</span>
       </div>`;
     }).join('');
     return `<div class="tl-row">
