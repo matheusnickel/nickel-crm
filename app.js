@@ -251,7 +251,7 @@ function calcStreak(agentName) {
 // ── SCORING / NOTA ───────────────────────────────────────
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  const raw = (entry.doc * 6.0) + (entry.cpd * 1.5) + (entry.prosp * 0.028);
+  const raw = (entry.doc * 6.0) + (entry.cpd * 2.0) + (entry.prosp * 0.01);
   const cap = entry.doc >= 3 ? 10 : entry.doc >= 1 ? 8.9 : 5.9;
   return Math.min(raw, cap);
 }
@@ -261,7 +261,7 @@ function calcWeeklyScore(agentName, weekEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  const raw = (doc * 2.0) + (cpd * 0.15) + (prosp * 0.005);
+  const raw = (doc * 2.0) + (cpd * 0.5) + (prosp * 0.003);
   const cap = doc >= 6 ? 10 : doc >= 3 ? 8.9 : 5.9;
   return Math.min(raw, cap);
 }
@@ -271,7 +271,7 @@ function calcMonthlyScore(agentName, monthEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  const raw = (doc * 0.5) + (cpd * 0.05) + (prosp * 0.002);
+  const raw = (doc * 0.5) + (cpd * 0.15) + (prosp * 0.001);
   const cap = doc >= 20 ? 10 : doc >= 12 ? 9.9 : 5.9;
   return Math.min(raw, cap);
 }
