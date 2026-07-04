@@ -36,6 +36,13 @@ const STATUS_OPTIONS = [
   { value: 'AVI',   label: 'AVI',   color: '#3498db' },
   { value: 'SITE',  label: 'SITE',  color: '#a8e63d' },
 ];
+const CPD_STATUS_OPTIONS = [
+  { value: '',              label: '—' },
+  { value: 'tratativa',    label: 'Em tratativa' },
+  { value: 'doc',          label: 'Virou DOC' },
+  { value: 'doc_exclusivo', label: 'DOC Exclusivo' },
+  { value: 'descarte',     label: 'Descarte' },
+];
 const BAIRROS = ['Batel','Água Verde','Bigorrilho','Ecoville','Cabral','Juvevê','Mercês','Campo Comprido','Santa Felicidade','Santo Inácio','Vila Izabel'];
 const META_DOC = 1;
 const TIPO_COLORS = {
@@ -72,6 +79,44 @@ async function updateDocNota(date, agent, docIdx, nota) {
   const entry = entries.find(e => e.date===date && e.agent===agent);
   if (!entry || !entry.docDetails[docIdx]) return;
   entry.docDetails[docIdx].nota = nota;
+  localUpsert(entry);
+  await fbUpsertEntry(entry);
+}
+
+// ── CPD DETAILS ──────────────────────────────────────────
+function buildCpdDetailsHTML(count, prefill=[]) {
+  if (count === 0) return '';
+  let html = '<div class="cpd-details-wrap">';
+  for (let i = 0; i < count; i++) {
+    const p = prefill[i] || {};
+    html += `<div class="cpd-detail-item">
+      <span class="cpd-detail-label">CPD ${i+1}</span>
+      <input class="cpd-nome" data-idx="${i}" type="text" placeholder="Nome do proprietário" value="${(p.nome||'').replace(/"/g,'&quot;')}">
+      <input class="cpd-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone||'').replace(/"/g,'&quot;')}">
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function collectCpdDetails(count) {
+  const details = [];
+  for (let i = 0; i < count; i++) {
+    details.push({
+      nome:     document.querySelector(`.cpd-nome[data-idx="${i}"]`)?.value.trim() || '',
+      telefone: document.querySelector(`.cpd-tel[data-idx="${i}"]`)?.value.trim() || '',
+      status: '',
+      motivo: '',
+    });
+  }
+  return details;
+}
+
+async function updateCpdDetail(date, agent, cpdIdx, fields) {
+  const entries = getEntries();
+  const entry = entries.find(e => e.date===date && e.agent===agent);
+  if (!entry || !(entry.cpdDetails||[])[cpdIdx]) return;
+  Object.assign(entry.cpdDetails[cpdIdx], fields);
   localUpsert(entry);
   await fbUpsertEntry(entry);
 }
@@ -600,7 +645,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       </div>`;
     if (canEdit) document.getElementById('edit-today-btn').addEventListener('click',()=>renderAgentDashboard(session,date,true));
   } else {
-    const pre=sentToday||{prosp:0,cpd:0,doc:0,va:0,vv:0,fotos:0,docDetails:[]};
+    const pre=sentToday||{prosp:0,cpd:0,doc:0,va:0,vv:0,fotos:0,docDetails:[],cpdDetails:[]};
     const isFuture = date > t;
     if (isFuture) {
       formWrap.innerHTML=`<div class="sent-today" style="color:var(--text-muted);font-size:13px">Não é possível lançar para datas futuras.</div>`;
@@ -618,10 +663,14 @@ function renderAgentDashboard(session, selectedDate, editing) {
             <div class="field-box"><label style="color:#6495ed">VV</label><input type="number" id="f-vv" min="0" value="${pre.vv||0}"></div>
             <div class="field-box"><label style="color:#6495ed">FOTOS</label><input type="number" id="f-fotos" min="0" value="${pre.fotos||0}"></div>
           </div>
+          <div id="cpd-details-area">${buildCpdDetailsHTML(pre.cpd||0, pre.cpdDetails||[])}</div>
           <div id="doc-details-area">${buildDocDetailsHTML(pre.doc||0,pre.docDetails)}</div>
           <button type="submit" class="btn" style="margin-top:14px">${sentToday?'Salvar correção':'Enviar relatório'}</button>
           ${sentToday?'<button type="button" class="btn btn-outline" id="cancel-edit-btn" style="margin-top:8px">Cancelar</button>':''}
         </form>`;
+      document.getElementById('f-cpd').addEventListener('input',function(){
+        document.getElementById('cpd-details-area').innerHTML=buildCpdDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+      });
       document.getElementById('f-doc').addEventListener('input',function(){
         document.getElementById('doc-details-area').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
         bindBairroSelects();
@@ -629,17 +678,21 @@ function renderAgentDashboard(session, selectedDate, editing) {
       bindBairroSelects();
       document.getElementById('daily-form').addEventListener('submit',async ev=>{
         ev.preventDefault();
+        const cpdVal=parseInt(document.getElementById('f-cpd').value)||0;
+        const cpdDetails=collectCpdDetails(cpdVal);
+        if (sentToday?.cpdDetails) {
+          cpdDetails.forEach((d,i) => { if (sentToday.cpdDetails[i]) { d.status=sentToday.cpdDetails[i].status||''; d.motivo=sentToday.cpdDetails[i].motivo||''; } });
+        }
         const docVal=parseInt(document.getElementById('f-doc').value)||0;
         const docDetails=collectDocDetails(docVal);
         for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
-        // Preserva nota do gestor ao corrigir (evita apagar FOTOS/AVI/SITE já definido)
         if (sentToday?.docDetails) {
           docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) d.nota = sentToday.docDetails[i].nota || ''; });
         }
         const isEdit=!!sentToday;
         const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
         const submittedDate=sentToday?.submittedDate||sentToday?.date||today();
-        await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:parseInt(document.getElementById('f-cpd').value)||0,doc:docVal,va:parseInt(document.getElementById('f-va').value)||0,vv:parseInt(document.getElementById('f-vv').value)||0,fotos:parseInt(document.getElementById('f-fotos').value)||0,docDetails,submittedDate});
+        await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:cpdVal,doc:docVal,va:parseInt(document.getElementById('f-va').value)||0,vv:parseInt(document.getElementById('f-vv').value)||0,fotos:parseInt(document.getElementById('f-fotos').value)||0,cpdDetails,docDetails,submittedDate});
         if (isEdit) incrementEditCount(session.name,date);
       });
       const cancelBtn=document.getElementById('cancel-edit-btn');
@@ -731,6 +784,9 @@ function initGestorLancamento() {
   const dateInput=document.getElementById('lanc-date');
   const t=today(); dateInput.value=t; dateInput.max=t;
 
+  document.getElementById('lanc-cpd').addEventListener('input',function(){
+    document.getElementById('lanc-cpd-details').innerHTML=buildCpdDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+  });
   document.getElementById('lanc-doc').addEventListener('input',function(){
     document.getElementById('lanc-doc-details').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
     bindBairroSelects();
@@ -746,7 +802,9 @@ function initGestorLancamento() {
     const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Salvando...';
     const existing=getEntries().find(e=>e.date===date&&e.agent===agent);
     const submittedDate=existing?.submittedDate||existing?.date||today();
-    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:parseInt(document.getElementById('lanc-cpd').value)||0,doc:docVal,va:parseInt(document.getElementById('lanc-va').value)||0,vv:parseInt(document.getElementById('lanc-vv').value)||0,fotos:parseInt(document.getElementById('lanc-fotos').value)||0,docDetails,submittedDate});
+    const lancCpdVal=parseInt(document.getElementById('lanc-cpd').value)||0;
+    const lancCpdDetails=collectCpdDetails(lancCpdVal);
+    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,va:parseInt(document.getElementById('lanc-va').value)||0,vv:parseInt(document.getElementById('lanc-vv').value)||0,fotos:parseInt(document.getElementById('lanc-fotos').value)||0,cpdDetails:lancCpdDetails,docDetails,submittedDate});
     resetEditCount(agent,date);
     btn.disabled=false; btn.textContent='Salvar lançamento';
     // reset form
@@ -756,6 +814,7 @@ function initGestorLancamento() {
     document.getElementById('lanc-va').value=0;
     document.getElementById('lanc-vv').value=0;
     document.getElementById('lanc-fotos').value=0;
+    document.getElementById('lanc-cpd-details').innerHTML='';
     document.getElementById('lanc-doc-details').innerHTML='';
     const newToday=today(); dateInput.value=newToday; dateInput.max=newToday;
   });
@@ -885,6 +944,7 @@ function renderGestorDashboard() {
   const allDocs=entries.flatMap(e=>e.docDetails||[]);
   renderStreakRanking();
   renderDocList(entries);
+  renderCpdList(entries);
   renderAnalyticsChart(allDocs);
 
   document.querySelectorAll('.analytics-btn').forEach(b=>{
@@ -1177,11 +1237,15 @@ function renderDayView(dateStr) {
 
   const rows = agentNames.map(name => {
     const e=entries.find(x=>x.date===dateStr&&x.agent===name), has=!!e;
+    const dash='<span class="day-empty">—</span>';
     return `<tr>
       <td class="day-agent-name">${name}</td>
-      <td class="num-cell day-num">${has ? e.prosp : '<span class="day-empty">—</span>'}</td>
-      <td class="num-cell day-num">${has ? e.cpd   : '<span class="day-empty">—</span>'}</td>
-      <td class="num-cell day-num doc-cell">${has ? e.doc : '<span class="day-empty">—</span>'}</td>
+      <td class="num-cell day-num">${has ? e.prosp : dash}</td>
+      <td class="num-cell day-num">${has ? e.cpd   : dash}</td>
+      <td class="num-cell day-num doc-cell">${has ? e.doc : dash}</td>
+      <td class="num-cell rank-extra">${has ? (e.vv||0)    : dash}</td>
+      <td class="num-cell rank-extra">${has ? (e.va||0)    : dash}</td>
+      <td class="num-cell rank-extra">${has ? (e.fotos||0) : dash}</td>
       <td>${has ? `<button class="del-day-btn" data-date="${dateStr}" data-agent="${name}">Remover</button>` : ''}</td>
     </tr>`;
   }).join('');
@@ -1193,6 +1257,9 @@ function renderDayView(dateStr) {
         <th class="num-cell">PROSP</th>
         <th class="num-cell">CPD</th>
         <th class="num-cell doc-th">DOC</th>
+        <th class="num-cell rank-extra">VV</th>
+        <th class="num-cell rank-extra">VA</th>
+        <th class="num-cell rank-extra">FOTOS</th>
         <th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
@@ -1207,6 +1274,62 @@ function renderDayView(dateStr) {
       await fbDeleteEntry(date, agent);
       resetEditCount(agent, date);
       renderDayView(date);
+    });
+  });
+}
+
+// ── CPD LIST (gestor) ────────────────────────────────────
+function renderCpdList(entries) {
+  const wrap = document.getElementById('cpd-list-wrap');
+  if (!wrap) return;
+
+  const allRows = [];
+  entries.forEach(e => (e.cpdDetails||[]).forEach((d,i) => allRows.push({date:e.date, agent:e.agent, idx:i, ...d})));
+  allRows.sort((a,b) => b.date.localeCompare(a.date));
+
+  if (allRows.length === 0) {
+    wrap.innerHTML = '<div class="empty-state">Nenhum CPD com detalhes no período</div>';
+    return;
+  }
+
+  const statusOpts = CPD_STATUS_OPTIONS.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+
+  const rowsHTML = allRows.map(d => {
+    const selOpts = CPD_STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.status===o.value?'selected':''}>${o.label}</option>`).join('');
+    const isDescarte = d.status === 'descarte';
+    return `<tr data-cpd-date="${d.date}" data-cpd-agent="${d.agent}" data-cpd-idx="${d.idx}">
+      <td>${formatDate(d.date)}</td>
+      <td>${d.agent}</td>
+      <td style="color:var(--text-muted);text-align:center">${d.idx+1}</td>
+      <td style="font-weight:500">${d.nome||'—'}</td>
+      <td style="color:var(--text-muted)">${d.telefone||'—'}</td>
+      <td><select class="cpd-status-sel nota-select">${selOpts}</select></td>
+      <td><input class="cpd-motivo-inp" type="text" placeholder="Motivo" value="${(d.motivo||'').replace(/"/g,'&quot;')}" style="display:${isDescarte?'block':'none'};background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 8px;width:100%;outline:none"></td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<div class="doc-table-wrap"><table class="data-table doc-table" style="font-size:12px">
+    <thead><tr><th>Data</th><th>Angariador</th><th style="text-align:center">#</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Motivo</th></tr></thead>
+    <tbody>${rowsHTML}</tbody>
+  </table></div>`;
+
+  wrap.querySelectorAll('.cpd-status-sel').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const tr = sel.closest('tr');
+      const { cpdDate:date, cpdAgent:agent, cpdIdx:idx } = tr.dataset;
+      const motivoInp = tr.querySelector('.cpd-motivo-inp');
+      const isDescarte = sel.value === 'descarte';
+      motivoInp.style.display = isDescarte ? 'block' : 'none';
+      if (!isDescarte) motivoInp.value = '';
+      await updateCpdDetail(date, agent, parseInt(idx), { status: sel.value, motivo: isDescarte ? motivoInp.value : '' });
+    });
+  });
+
+  wrap.querySelectorAll('.cpd-motivo-inp').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const tr = inp.closest('tr');
+      const { cpdDate:date, cpdAgent:agent, cpdIdx:idx } = tr.dataset;
+      await updateCpdDetail(date, agent, parseInt(idx), { motivo: inp.value });
     });
   });
 }
