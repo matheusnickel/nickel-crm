@@ -251,8 +251,7 @@ function calcStreak(agentName) {
 // ── SCORING / NOTA ───────────────────────────────────────
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  if (entry.doc === 0 && entry.cpd >= 4) return 5.9;
-  const raw = (entry.doc * 6.0) + (entry.cpd * 1.05) + (entry.prosp * 0.05);
+  const raw = (entry.doc * 6.0) + (entry.cpd * 1.5) + (entry.prosp * 0.028);
   const cap = entry.doc >= 3 ? 10 : entry.doc >= 1 ? 8.9 : 5.9;
   return Math.min(raw, cap);
 }
