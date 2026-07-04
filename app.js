@@ -40,7 +40,7 @@ const CPD_STATUS_OPTIONS = [
   { value: '',              label: '—' },
   { value: 'tratativa',    label: 'Em tratativa' },
   { value: 'doc',          label: 'Virou DOC' },
-  { value: 'doc_exclusivo', label: 'DOC Exclusivo' },
+  { value: 'doc_exclusivo', label: 'Exclusivo' },
   { value: 'descarte',     label: 'Descarte' },
 ];
 const BAIRROS = ['Batel','Água Verde','Bigorrilho','Ecoville','Cabral','Juvevê','Mercês','Campo Comprido','Santa Felicidade','Santo Inácio','Vila Izabel'];
@@ -988,7 +988,7 @@ function renderAnalyticsChart(allDocs) {
 }
 
 // ── DOC LIST (gestor — with inline nota edit) ────────────
-let activeDocAgent = '';
+let activeDocAgent = '', activeCpdAgent = '';
 
 function renderDocList(entries) {
   const allRows=[];
@@ -1283,18 +1283,27 @@ function renderCpdList(entries) {
   const wrap = document.getElementById('cpd-list-wrap');
   if (!wrap) return;
 
+  const agentNames = getAgentNames();
+  const filterHTML = `<div style="margin-bottom:12px">
+    <select id="cpd-agent-filter" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;width:100%">
+      <option value="">Todos os angariadores</option>
+      ${agentNames.map(n=>`<option value="${n}" ${activeCpdAgent===n?'selected':''}>${n}</option>`).join('')}
+    </select>
+  </div>`;
+
   const allRows = [];
   entries.forEach(e => (e.cpdDetails||[]).forEach((d,i) => allRows.push({date:e.date, agent:e.agent, idx:i, ...d})));
   allRows.sort((a,b) => b.date.localeCompare(a.date));
 
+  const rows = activeCpdAgent ? allRows.filter(r => r.agent === activeCpdAgent) : allRows;
+
   if (allRows.length === 0) {
-    wrap.innerHTML = '<div class="empty-state">Nenhum CPD com detalhes no período</div>';
+    wrap.innerHTML = filterHTML + '<div class="empty-state">Nenhum CPD com detalhes no período</div>';
+    wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });
     return;
   }
 
-  const statusOpts = CPD_STATUS_OPTIONS.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
-
-  const rowsHTML = allRows.map(d => {
+  const rowsHTML = rows.map(d => {
     const selOpts = CPD_STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.status===o.value?'selected':''}>${o.label}</option>`).join('');
     const isDescarte = d.status === 'descarte';
     return `<tr data-cpd-date="${d.date}" data-cpd-agent="${d.agent}" data-cpd-idx="${d.idx}">
@@ -1308,10 +1317,12 @@ function renderCpdList(entries) {
     </tr>`;
   }).join('');
 
-  wrap.innerHTML = `<div class="doc-table-wrap"><table class="data-table doc-table" style="font-size:12px">
+  wrap.innerHTML = filterHTML + `<div class="doc-table-wrap"><table class="data-table doc-table" style="font-size:12px">
     <thead><tr><th>Data</th><th>Angariador</th><th style="text-align:center">#</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Motivo</th></tr></thead>
-    <tbody>${rowsHTML}</tbody>
+    <tbody>${rowsHTML || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum CPD para este angariador</td></tr>'}</tbody>
   </table></div>`;
+
+  wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });
 
   wrap.querySelectorAll('.cpd-status-sel').forEach(sel => {
     sel.addEventListener('change', async () => {
