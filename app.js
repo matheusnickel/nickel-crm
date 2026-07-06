@@ -370,6 +370,47 @@ function renderNotasRanking() {
   });
 }
 
+// ── AGENT DAILY RANKING ──────────────────────────────────
+function renderAgentDailyRanking(currentAgentName) {
+  const wrap = document.getElementById('agent-daily-ranking');
+  if (!wrap) return;
+  const t = today();
+  const dayEntries = filterEntries('today', t);
+  const names = getAgentNames();
+  const medals = ['🥇', '🥈', '🥉'];
+
+  const rows = names.map(name => {
+    const e = dayEntries.find(x => x.agent === name);
+    return { name, score: calcDailyScore(e || null), sent: !!e };
+  });
+
+  rows.sort((a, b) => {
+    if (a.sent !== b.sent) return a.sent ? -1 : 1;
+    return b.score - a.score;
+  });
+
+  const rowsHTML = rows.map((r, i) => {
+    const isMe = r.name === currentAgentName;
+    const col = scoreColor(r.score);
+    const medal = (!r.sent) ? '—' : i < 3 ? medals[i] : `${i + 1}`;
+    const scoreStr = r.sent ? r.score.toFixed(1) : '—';
+    const colorStyle = r.sent ? `color:${col};font-weight:700` : 'color:var(--text-muted)';
+    return `<tr style="${isMe ? 'background:rgba(168,230,61,0.07);' : ''}">
+      <td style="font-size:15px;text-align:center;width:36px">${medal}</td>
+      <td style="${isMe ? 'font-weight:700;color:#f0f0f0' : ''}">${r.name}${isMe ? ' 👤' : ''}</td>
+      <td class="num-cell nota-score" style="${colorStyle}">${scoreStr}</td>
+      <td class="num-cell" style="color:var(--text-muted);font-size:12px">${r.sent ? scoreLabel(r.score) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table class="data-table rank-table" style="margin-top:4px">
+      <thead><tr><th style="width:36px">#</th><th>Angariador</th><th class="num-cell">Nota</th><th class="num-cell">Nível</th></tr></thead>
+      <tbody>${rowsHTML}</tbody>
+    </table>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center">Apenas quem enviou hoje aparece com nota</div>`;
+}
+
 // ── STREAK VISUAL ────────────────────────────────────────
 function renderStreak(agentName, entries) {
   const streak = calcStreak(agentName);
@@ -698,6 +739,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
       if (cancelBtn) cancelBtn.addEventListener('click',()=>renderAgentDashboard(session,date));
     }
   }
+
+  renderAgentDailyRanking(session.name);
 
   const historyBody=document.getElementById('history-body');
   const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date));
