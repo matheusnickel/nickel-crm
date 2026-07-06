@@ -381,7 +381,8 @@ function renderAgentDailyRanking(currentAgentName) {
 
   const rows = names.map(name => {
     const e = dayEntries.find(x => x.agent === name);
-    return { name, score: calcDailyScore(e || null), sent: !!e };
+    const streak = calcStreak(name);
+    return { name, score: calcDailyScore(e || null), sent: !!e, streak };
   });
 
   rows.sort((a, b) => {
@@ -391,15 +392,17 @@ function renderAgentDailyRanking(currentAgentName) {
 
   const rowsHTML = rows.map((r, i) => {
     const isMe = r.name === currentAgentName;
-    const col = scoreColor(r.score);
-    const medal = (!r.sent) ? '—' : i < 3 ? medals[i] : `${i + 1}`;
-    const scoreStr = r.sent ? r.score.toFixed(1) : '—';
-    const colorStyle = r.sent ? `color:${col};font-weight:700` : 'color:var(--text-muted)';
-    return `<tr style="${isMe ? 'background:rgba(168,230,61,0.07);' : ''}">
+    const col = r.sent ? scoreColor(r.score) : '#e74c3c';
+    const medal = r.sent ? (i < 3 ? medals[i] : `${i + 1}`) : '💀';
+    const scoreStr = r.sent ? r.score.toFixed(1) : '0.0';
+    const colorStyle = `color:${col};font-weight:700`;
+    const streakBadge = r.streak >= 3 ? `<span style="font-size:11px;color:#f0c040;margin-left:6px">🔥${r.streak}d</span>` : '';
+    const rowBg = isMe ? 'background:rgba(168,230,61,0.07);' : !r.sent ? 'background:rgba(231,76,60,0.05);' : '';
+    return `<tr style="${rowBg}">
       <td style="font-size:15px;text-align:center;width:36px">${medal}</td>
-      <td style="${isMe ? 'font-weight:700;color:#f0f0f0' : ''}">${r.name}${isMe ? ' 👤' : ''}</td>
+      <td style="${isMe ? 'font-weight:700;color:#f0f0f0' : !r.sent ? 'color:var(--text-muted)' : ''}">${r.name}${isMe ? ' 👤' : ''}${streakBadge}</td>
       <td class="num-cell nota-score" style="${colorStyle}">${scoreStr}</td>
-      <td class="num-cell" style="color:var(--text-muted);font-size:12px">${r.sent ? scoreLabel(r.score) : '—'}</td>
+      <td class="num-cell" style="color:var(--text-muted);font-size:12px">${r.sent ? scoreLabel(r.score) : 'Sem envio'}</td>
     </tr>`;
   }).join('');
 
@@ -407,8 +410,7 @@ function renderAgentDailyRanking(currentAgentName) {
     <table class="data-table rank-table" style="margin-top:4px">
       <thead><tr><th style="width:36px">#</th><th>Angariador</th><th class="num-cell">Nota</th><th class="num-cell">Nível</th></tr></thead>
       <tbody>${rowsHTML}</tbody>
-    </table>
-    <div style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center">Apenas quem enviou hoje aparece com nota</div>`;
+    </table>`;
 }
 
 // ── STREAK VISUAL ────────────────────────────────────────
@@ -644,6 +646,13 @@ function renderAgentDashboard(session, selectedDate, editing) {
   }
 
   renderStreak(session.name, entries);
+
+  // Banner agressivo — não enviou hoje
+  const noSendBanner = document.getElementById('no-send-banner');
+  if (noSendBanner) {
+    const notSentToday = !entries.find(e => e.date === t);
+    noSendBanner.style.display = notSentToday ? 'flex' : 'none';
+  }
 
   // Alerta de dias não enviados na semana
   const missedEl=document.getElementById('missed-days-alert');
