@@ -1538,9 +1538,14 @@ function renderOfertaAtiva() {
       cq: parseInt(document.getElementById('of-cq').value) || 0,
       status: document.getElementById('of-status').value,
     };
-    await fbSaveOferta(oferta);
-    ofertas.push(oferta);
-    renderOfertaAtiva();
+    try {
+      await fbSaveOferta(oferta);
+      ofertas.push(oferta);
+      renderOfertaAtiva();
+    } catch(e) {
+      btn.disabled = false; btn.textContent = 'Registrar oferta';
+      alert('Erro ao salvar. Tente novamente.');
+    }
   });
 
   wrap.querySelectorAll('.del-oferta-btn').forEach(btn => {
