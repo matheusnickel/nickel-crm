@@ -24,13 +24,10 @@
 
   <main class="main-content">
 
-    <!-- DOC Semanal Hero -->
-    <div class="card doc-hero">
-      <div class="card-title">DOC desta semana</div>
-      <div class="doc-number" id="doc-week-num">0</div>
-      <div class="doc-label">Documentações</div>
-      <div class="doc-meta-label" id="doc-week-meta"></div>
-      <div class="doc-week" id="doc-week-range"></div>
+    <!-- Metas Semanal + Mensal -->
+    <div class="card">
+      <div class="card-title">🎯 Metas</div>
+      <div id="metas-wrap" class="metas-grid"></div>
     </div>
 
     <!-- Banner: não enviou hoje -->
@@ -38,15 +35,12 @@
       <span class="no-send-icon">⚠️</span>
       <div>
         <div class="no-send-title">Você não enviou o relatório de hoje!</div>
-        <div class="no-send-sub">Enquanto isso, seus colegas estão pontuando. Não fique pra trás.</div>
+        <div class="no-send-sub">Envie agora o relatório de hoje.</div>
       </div>
     </div>
 
     <!-- Alerta dias perdidos -->
     <div class="status-badge orange" id="missed-days-alert" style="display:none"></div>
-
-    <!-- Status meta -->
-    <div class="status-badge red" id="week-status" style="display:none"></div>
 
     <!-- Streak -->
     <div class="card" style="text-align:center">

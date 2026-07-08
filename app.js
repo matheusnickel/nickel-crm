@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
@@ -44,7 +44,8 @@ const CPD_STATUS_OPTIONS = [
   { value: 'descarte',     label: 'Descarte' },
 ];
 const BAIRROS = ['Batel','Água Verde','Bigorrilho','Ecoville','Cabral','Juvevê','Mercês','Campo Comprido','Santa Felicidade','Santo Inácio','Vila Izabel'];
-const META_DOC = 1;
+const META_DOC = 3;
+const META_DOC_MONTH = 12;
 const TIPO_COLORS = {
   Casa:      { bg:'rgba(168,230,61,.8)',  border:'#a8e63d' },
   Apto:      { bg:'rgba(100,149,237,.8)', border:'#6495ed' },
@@ -370,47 +371,72 @@ function renderNotasRanking() {
   });
 }
 
-// ── AGENT DAILY RANKING ──────────────────────────────────
+// ── AGENT RANKING (Dia / Semana / Mês) ───────────────────
+let activeAgentRankTab = 'dia';
+
 function renderAgentDailyRanking(currentAgentName) {
   const wrap = document.getElementById('agent-daily-ranking');
   if (!wrap) return;
   const t = today();
-  const dayEntries = filterEntries('today', t);
   const names = getAgentNames();
   const medals = ['🥇', '🥈', '🥉'];
 
-  const rows = names.map(name => {
-    const e = dayEntries.find(x => x.agent === name);
-    const streak = calcStreak(name);
-    return { name, score: calcDailyScore(e || null), sent: !!e, streak };
-  });
-
-  rows.sort((a, b) => {
-    if (a.sent !== b.sent) return a.sent ? -1 : 1;
-    return b.score - a.score;
-  });
+  let rows;
+  if (activeAgentRankTab === 'dia') {
+    const dayEntries = filterEntries('today', t);
+    rows = names.map(name => {
+      const e = dayEntries.find(x => x.agent === name);
+      const streak = calcStreak(name);
+      return { name, score: calcDailyScore(e || null), sent: !!e, streak };
+    });
+    rows.sort((a, b) => { if (a.sent !== b.sent) return a.sent ? -1 : 1; return b.score - a.score; });
+  } else if (activeAgentRankTab === 'semana') {
+    const weekEntries = filterEntries('week', t);
+    rows = names.map(name => {
+      const streak = calcStreak(name);
+      return { name, score: calcWeeklyScore(name, weekEntries), sent: true, streak };
+    });
+    rows.sort((a, b) => b.score - a.score);
+  } else {
+    const monthEntries = filterEntries('month', t);
+    rows = names.map(name => {
+      const streak = calcStreak(name);
+      return { name, score: calcMonthlyScore(name, monthEntries), sent: true, streak };
+    });
+    rows.sort((a, b) => b.score - a.score);
+  }
 
   const rowsHTML = rows.map((r, i) => {
     const isMe = r.name === currentAgentName;
-    const col = r.sent ? scoreColor(r.score) : '#e74c3c';
-    const medal = r.sent ? (i < 3 ? medals[i] : `${i + 1}`) : '💀';
-    const scoreStr = r.sent ? r.score.toFixed(1) : '0.0';
-    const colorStyle = `color:${col};font-weight:700`;
+    const isDia = activeAgentRankTab === 'dia';
+    const notSent = isDia && !r.sent;
+    const col = notSent ? '#e74c3c' : scoreColor(r.score);
+    const medal = notSent ? '💀' : (i < 3 ? medals[i] : `${i + 1}`);
+    const scoreStr = notSent ? '0.0' : r.score.toFixed(1);
     const streakBadge = r.streak >= 3 ? `<span style="font-size:11px;color:#f0c040;margin-left:6px">🔥${r.streak}d</span>` : '';
-    const rowBg = isMe ? 'background:rgba(168,230,61,0.07);' : !r.sent ? 'background:rgba(231,76,60,0.05);' : '';
+    const rowBg = isMe ? 'background:rgba(168,230,61,0.07);' : notSent ? 'background:rgba(231,76,60,0.05);' : '';
     return `<tr style="${rowBg}">
       <td style="font-size:15px;text-align:center;width:36px">${medal}</td>
-      <td style="${isMe ? 'font-weight:700;color:#f0f0f0' : !r.sent ? 'color:var(--text-muted)' : ''}">${r.name}${isMe ? ' 👤' : ''}${streakBadge}</td>
-      <td class="num-cell nota-score" style="${colorStyle}">${scoreStr}</td>
-      <td class="num-cell" style="color:var(--text-muted);font-size:12px">${r.sent ? scoreLabel(r.score) : 'Sem envio'}</td>
+      <td style="${isMe ? 'font-weight:700;color:#f0f0f0' : notSent ? 'color:var(--text-muted)' : ''}">${r.name}${isMe ? ' 👤' : ''}${streakBadge}</td>
+      <td class="num-cell nota-score" style="color:${col};font-weight:700">${scoreStr}</td>
+      <td class="num-cell" style="color:var(--text-muted);font-size:12px">${notSent ? 'Sem envio' : scoreLabel(r.score)}</td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = `
-    <table class="data-table rank-table" style="margin-top:4px">
+    <div class="nota-tabs">
+      <button class="nota-tab-btn${activeAgentRankTab==='dia'?' active':''}" data-tab="dia">Dia</button>
+      <button class="nota-tab-btn${activeAgentRankTab==='semana'?' active':''}" data-tab="semana">Semana</button>
+      <button class="nota-tab-btn${activeAgentRankTab==='mes'?' active':''}" data-tab="mes">Mês</button>
+    </div>
+    <table class="data-table rank-table" style="margin-top:10px">
       <thead><tr><th style="width:36px">#</th><th>Angariador</th><th class="num-cell">Nota</th><th class="num-cell">Nível</th></tr></thead>
       <tbody>${rowsHTML}</tbody>
     </table>`;
+
+  wrap.querySelectorAll('.nota-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => { activeAgentRankTab = btn.dataset.tab; renderAgentDailyRanking(currentAgentName); });
+  });
 }
 
 // ── STREAK VISUAL ────────────────────────────────────────
@@ -619,9 +645,52 @@ function renderAgentDashboard(session, selectedDate, editing) {
   const editCount=getEditCount(session.name,date);
   const canEdit=editCount<2;
 
-  document.getElementById('doc-week-num').textContent=weekDoc;
-  document.getElementById('doc-week-meta').textContent=`Meta: ${META_DOC} DOC`;
-  document.getElementById('doc-week-range').textContent=`${formatDate(wStart)} – ${formatDate(wEnd)}`;
+  const { start:mStart, end:mEnd } = monthRange(t);
+  const monthDoc = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s+e.doc, 0);
+
+  // Metas card
+  const metasWrap = document.getElementById('metas-wrap');
+  if (metasWrap) {
+    const wPct  = Math.min(weekDoc  / META_DOC       * 100, 100);
+    const mPct  = Math.min(monthDoc / META_DOC_MONTH * 100, 100);
+    const wOver = weekDoc  >= META_DOC;
+    const mOver = monthDoc >= META_DOC_MONTH;
+    const wColor  = wOver ? '#2ecc71' : weekDoc  >= META_DOC * 0.6 ? '#f0c040' : '#e74c3c';
+    const mColor  = mOver ? '#2ecc71' : monthDoc >= META_DOC_MONTH * 0.6 ? '#f0c040' : '#e74c3c';
+    const wLabel  = wOver ? `✓ Meta atingida!` : `Faltam ${META_DOC - weekDoc} DOC`;
+    const mLabel  = mOver ? `✓ Meta atingida!` : `Faltam ${META_DOC_MONTH - monthDoc} DOC`;
+    metasWrap.innerHTML = `
+      <div class="meta-card">
+        <div class="meta-header">
+          <span class="meta-title">Meta Semanal</span>
+          <span class="meta-period">${formatDate(wStart)} – ${formatDate(wEnd)}</span>
+        </div>
+        <div class="meta-numbers">
+          <span class="meta-done" style="color:${wColor}">${weekDoc}</span>
+          <span class="meta-sep">/</span>
+          <span class="meta-total">${META_DOC} DOC</span>
+        </div>
+        <div class="meta-bar-wrap">
+          <div class="meta-bar" style="width:${wPct}%;background:${wColor}"></div>
+        </div>
+        <div class="meta-label" style="color:${wColor}">${wLabel}</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-header">
+          <span class="meta-title">Meta Mensal</span>
+          <span class="meta-period">${new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'})}</span>
+        </div>
+        <div class="meta-numbers">
+          <span class="meta-done" style="color:${mColor}">${monthDoc}</span>
+          <span class="meta-sep">/</span>
+          <span class="meta-total">${META_DOC_MONTH} DOC</span>
+        </div>
+        <div class="meta-bar-wrap">
+          <div class="meta-bar" style="width:${mPct}%;background:${mColor}"></div>
+        </div>
+        <div class="meta-label" style="color:${mColor}">${mLabel}</div>
+      </div>`;
+  }
 
   // date picker
   const datePicker = document.getElementById('selected-date');
@@ -634,16 +703,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     }
   }
 
-  const statusEl=document.getElementById('week-status');
-  statusEl.style.display='flex';
-  if (weekDoc>=META_DOC) {
-    statusEl.className='status-badge green';
-    statusEl.innerHTML=`<span class="status-icon">✓</span><span>Meta da semana atingida — ${META_DOC} DOC</span>`;
-  } else {
-    const faltam=META_DOC-weekDoc;
-    statusEl.className='status-badge red';
-    statusEl.innerHTML=`<span class="status-icon">!</span><span>Falta${faltam>1?'m':''} <strong>${faltam} DOC</strong> para atingir a meta desta semana</span>`;
-  }
+  document.getElementById('week-status')?.remove && (document.getElementById('week-status').style.display='none');
 
   renderStreak(session.name, entries);
 
@@ -816,6 +876,7 @@ async function initGestorDashboard() {
   initExport();
   initGestorLancamento();
   initTeamManagement();
+  initOfertaAtiva();
   document.getElementById('limpar-julho-btn')?.addEventListener('click', limparJulhoSemDoc);
 }
 
@@ -1392,6 +1453,103 @@ function renderCpdList(entries) {
       const tr = inp.closest('tr');
       const { cpdDate:date, cpdAgent:agent, cpdIdx:idx } = tr.dataset;
       await updateCpdDetail(date, agent, parseInt(idx), { motivo: inp.value });
+    });
+  });
+}
+
+// ── OFERTA ATIVA SEMANAL ─────────────────────────────────
+let ofertas = [];
+
+async function initOfertaAtiva() {
+  try { ofertas = await fbGetOfertas(); } catch(e) { ofertas = []; }
+  renderOfertaAtiva();
+}
+
+function renderOfertaAtiva() {
+  const wrap = document.getElementById('oferta-wrap');
+  if (!wrap) return;
+
+  const sorted = [...ofertas].sort((a,b) => b.data.localeCompare(a.data));
+
+  const formHTML = `
+    <form id="oferta-form" class="oferta-form">
+      <div class="oferta-form-grid">
+        <div class="form-group" style="margin:0">
+          <label>Data de início</label>
+          <input type="date" id="of-data" required max="${today()}">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Duração</label>
+          <input type="text" id="of-duracao" placeholder="Ex: 1 semana" required>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Prospecções</label>
+          <input type="number" id="of-prosp" min="0" value="0">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Conv. Qualificadas (CQ)</label>
+          <input type="number" id="of-cq" min="0" value="0">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Status</label>
+          <select id="of-status">
+            <option value="">— Pendente —</option>
+            <option value="cumprida">✅ Cumprida</option>
+            <option value="nao_cumprida">❌ Não cumprida</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn" style="margin-top:12px">Registrar oferta</button>
+    </form>`;
+
+  const histHTML = sorted.length === 0 ? '<div class="empty-state" style="margin-top:16px">Nenhuma oferta registrada ainda</div>' : `
+    <div style="margin-top:20px">
+      <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Histórico</div>
+      <div class="oferta-list">
+        ${sorted.map(o => {
+          const statusLabel = o.status === 'cumprida' ? '✅ Cumprida' : o.status === 'nao_cumprida' ? '❌ Não cumprida' : '⏳ Pendente';
+          const statusColor = o.status === 'cumprida' ? '#2ecc71' : o.status === 'nao_cumprida' ? '#e74c3c' : '#f0c040';
+          return `<div class="oferta-item">
+            <div class="oferta-item-top">
+              <span class="oferta-date">${formatDate(o.data)}</span>
+              <span class="oferta-duracao">${o.duracao}</span>
+              <span class="oferta-status" style="color:${statusColor}">${statusLabel}</span>
+              <button class="del-oferta-btn" data-id="${o.id}" style="margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px">✕</button>
+            </div>
+            <div class="oferta-item-nums">
+              <span>PROSP <strong>${o.prospeccoes}</strong></span>
+              <span>CQ <strong>${o.cq}</strong></span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  wrap.innerHTML = formHTML + histHTML;
+
+  document.getElementById('oferta-form').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const btn = ev.target.querySelector('[type="submit"]');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    const oferta = {
+      id: 'oferta_' + Date.now(),
+      data: document.getElementById('of-data').value,
+      duracao: document.getElementById('of-duracao').value.trim(),
+      prospeccoes: parseInt(document.getElementById('of-prosp').value) || 0,
+      cq: parseInt(document.getElementById('of-cq').value) || 0,
+      status: document.getElementById('of-status').value,
+    };
+    await fbSaveOferta(oferta);
+    ofertas.push(oferta);
+    renderOfertaAtiva();
+  });
+
+  wrap.querySelectorAll('.del-oferta-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Remover esta oferta?')) return;
+      await fbDeleteOferta(btn.dataset.id);
+      ofertas = ofertas.filter(o => o.id !== btn.dataset.id);
+      renderOfertaAtiva();
     });
   });
 }

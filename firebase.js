@@ -43,6 +43,20 @@ export function fbListen(callback) {
   });
 }
 
+// ── OFERTAS ATIVAS ──────────────────────────────────────
+export async function fbGetOfertas() {
+  const snap = await getDocs(collection(db, 'ofertas'));
+  return snap.docs.map(d => d.data());
+}
+
+export async function fbSaveOferta(oferta) {
+  await setDoc(doc(db, 'ofertas', oferta.id), oferta);
+}
+
+export async function fbDeleteOferta(id) {
+  await deleteDoc(doc(db, 'ofertas', id));
+}
+
 // ── TEAM MANAGEMENT ─────────────────────────────────────
 export async function fbGetTeam() {
   const snap = await getDoc(doc(db, '_meta', 'team'));
