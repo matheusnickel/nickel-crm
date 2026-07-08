@@ -703,7 +703,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
     }
   }
 
-  document.getElementById('week-status')?.remove && (document.getElementById('week-status').style.display='none');
 
   renderStreak(session.name, entries);
 
