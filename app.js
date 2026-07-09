@@ -380,58 +380,84 @@ function renderAgentContacts(agentName) {
   const t = today();
   const entries = getEntries().filter(e => e.agent === agentName);
 
+  // CPDs ativos (exclui os que viraram DOC — esses vão para aba DOC)
   const cpds = [];
   entries.forEach(e => (e.cpdDetails||[]).forEach((d, i) => {
-    if (d.nome) cpds.push({ ...d, entryDate: e.date, idx: i });
+    if (d.nome && d.status !== 'doc' && d.status !== 'doc_exclusivo' && d.status !== 'descarte')
+      cpds.push({ ...d, entryDate: e.date, idx: i, _type: 'cpd' });
   }));
   cpds.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
+  // DOCs: lançamentos reais + CPDs que viraram DOC
   const docs = [];
   entries.forEach(e => (e.docDetails||[]).forEach((d, i) => {
-    if (d.nome) docs.push({ ...d, entryDate: e.date, idx: i });
+    if (d.nome) docs.push({ ...d, entryDate: e.date, idx: i, _type: 'doc' });
+  }));
+  entries.forEach(e => (e.cpdDetails||[]).forEach((d, i) => {
+    if (d.nome && (d.status === 'doc' || d.status === 'doc_exclusivo'))
+      docs.push({ ...d, entryDate: e.date, idx: i, _type: 'cpd-virou-doc' });
   }));
   docs.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
-  const makeRow = (d, type, statusLabel) => {
-    const done = d.lastContact === t;
-    const pending = !done;
-    const rowBg = pending ? 'background:rgba(231,76,60,0.04);' : '';
-    const warning = pending ? `<span style="font-size:10px;color:#e74c3c;font-weight:600;margin-left:4px">⚠ pendente</span>` : '';
-    return `<tr style="${rowBg}">
-      <td style="font-weight:500">${d.nome}${warning}</td>
-      <td style="color:var(--text-muted);font-size:12px">${type==='cpd'?(d.telefone||'—'):`${d.tipo||'—'} · ${d.bairro||'—'}`}</td>
-      <td style="font-size:12px">${statusLabel}</td>
-      <td style="font-size:11px;color:var(--text-muted);white-space:nowrap">${d.lastContact ? formatDate(d.lastContact) : '—'}</td>
-      <td><button class="contact-btn${done?' contact-done':''}" data-type="${type}" data-entry-date="${d.entryDate}" data-idx="${d.idx}" title="${done?'Clique para desfazer':'Marcar contato de hoje'}">${done ? '✅ Feito' : '○ Contactei'}</button></td>
-    </tr>`;
+  const pendingCpd = cpds.filter(d => (d.contactDates||[]).slice(-1)[0] !== t).length;
+  const pendingDoc = docs.filter(d => (d.contactDates||[]).slice(-1)[0] !== t).length;
+
+  const cpdStatusSelOpts = CPD_STATUS_OPTIONS
+    .filter(o => o.value !== 'doc' && o.value !== 'doc_exclusivo')
+    .map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+  const makeRow = (d) => {
+    const dates = d.contactDates || (d.lastContact ? [d.lastContact] : []);
+    const doneToday = dates[dates.length - 1] === t;
+    const pending = !doneToday;
+    const rowBg = pending ? 'background:rgba(231,76,60,0.05);' : '';
+    const histLabel = dates.length === 0 ? '—'
+      : `${formatDate(dates[dates.length-1])}${dates.length > 1 ? ` <span style="color:var(--text-muted);font-size:10px">(${dates.length}x)</span>` : ''}`;
+
+    if (d._type === 'cpd') {
+      const statusSelOpts = CPD_STATUS_OPTIONS.map(o =>
+        `<option value="${o.value}" ${d.status===o.value?'selected':''}>${o.label}</option>`).join('');
+      return `<tr style="${rowBg}" data-entry-date="${d.entryDate}" data-idx="${d.idx}">
+        <td style="font-weight:500">${d.nome}${pending?'<span class="contact-pending-badge">● hoje</span>':''}</td>
+        <td style="color:var(--text-muted);font-size:12px">${d.telefone||'—'}</td>
+        <td><select class="cpd-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${statusSelOpts}</select></td>
+        <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
+        <td><button class="contact-btn${doneToday?' contact-done':''}" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button></td>
+      </tr>`;
+    } else {
+      const statusLabel = d._type === 'cpd-virou-doc'
+        ? `<span style="color:#a8e63d;font-size:11px">CPD → DOC</span>`
+        : (STATUS_OPTIONS.find(o => o.value === (d.nota||''))?.label || '—');
+      return `<tr style="${rowBg}">
+        <td style="font-weight:500">${d.nome}${pending?'<span class="contact-pending-badge">● hoje</span>':''}</td>
+        <td style="color:var(--text-muted);font-size:12px">${d.tipo||'—'} · ${d.bairro||'—'}</td>
+        <td style="font-size:12px">${statusLabel}</td>
+        <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
+        <td><button class="contact-btn${doneToday?' contact-done':''}" data-type="${d._type}" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button></td>
+      </tr>`;
+    }
   };
 
-  const cpdRows = cpds.map(d => {
-    const statusLabel = CPD_STATUS_OPTIONS.find(o => o.value === (d.status||''))?.label || '—';
-    return makeRow(d, 'cpd', statusLabel);
-  }).join('');
-
-  const docRows = docs.map(d => {
-    const statusLabel = STATUS_OPTIONS.find(o => o.value === (d.nota||''))?.label || '—';
-    return makeRow(d, 'doc', statusLabel);
-  }).join('');
-
   const isCpd = agentContactTab === 'cpd';
-  const rows  = isCpd ? cpdRows : docRows;
-  const count = isCpd ? cpds.length : docs.length;
-  const colB  = isCpd ? 'Telefone' : 'Imóvel';
+  const list  = isCpd ? cpds : docs;
+  const pendCount = isCpd ? pendingCpd : pendingDoc;
 
   wrap.innerHTML = `
-    <div class="nota-tabs">
-      <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">CPDs (${cpds.length})</button>
-      <button class="nota-tab-btn${!isCpd?' active':''}" data-ctab="doc">DOCs (${docs.length})</button>
+    <div class="nota-tabs" style="position:relative">
+      <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">
+        CPDs (${cpds.length})${pendingCpd>0?`<span class="contact-tab-badge">${pendingCpd}</span>`:''}
+      </button>
+      <button class="nota-tab-btn${!isCpd?' active':''}" data-ctab="doc">
+        DOCs (${docs.length})${pendingDoc>0?`<span class="contact-tab-badge">${pendingDoc}</span>`:''}
+      </button>
     </div>
-    ${count === 0
-      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CPD':'DOC'} com nome registrado</div>`
+    ${pendCount > 0 ? `<div class="contact-alert">⚠ ${pendCount} contato${pendCount>1?'s':''} pendente${pendCount>1?'s':''} hoje — ligue agora!</div>` : `<div class="contact-ok">✓ Todos contatados hoje</div>`}
+    ${list.length === 0
+      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CPD ativo':'DOC'} registrado</div>`
       : `<div style="overflow-x:auto;margin-top:10px">
           <table class="data-table">
-            <thead><tr><th>Nome</th><th>${colB}</th><th>Status</th><th>Últ. contato</th><th></th></tr></thead>
-            <tbody>${rows}</tbody>
+            <thead><tr><th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th><th>Histórico</th><th></th></tr></thead>
+            <tbody>${list.map(makeRow).join('')}</tbody>
           </table>
         </div>`}`;
 
@@ -439,22 +465,40 @@ function renderAgentContacts(agentName) {
     btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; renderAgentContacts(agentName); })
   );
 
+  // Status change (CPD tracker)
+  wrap.querySelectorAll('.cpd-tracker-status').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const entryDate = sel.dataset.entryDate;
+      const idx = parseInt(sel.dataset.idx);
+      await updateCpdDetail(entryDate, agentName, idx, { status: sel.value });
+      renderAgentContacts(agentName);
+    });
+  });
+
+  // Contact button
   wrap.querySelectorAll('.contact-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const isDone = btn.classList.contains('contact-done');
-      const newContact = isDone ? '' : t;
       btn.disabled = true; btn.textContent = '...';
       const type = btn.dataset.type;
       const entryDate = btn.dataset.entryDate;
       const idx = parseInt(btn.dataset.idx);
       const allEntries = getEntries();
       const entry = allEntries.find(e => e.date === entryDate && e.agent === agentName);
-      if (type === 'cpd') {
-        if (entry?.cpdDetails?.[idx]) { entry.cpdDetails[idx].lastContact = newContact; saveEntries(allEntries); }
-        await updateCpdDetail(entryDate, agentName, idx, { lastContact: newContact });
-      } else {
-        if (entry?.docDetails?.[idx]) { entry.docDetails[idx].lastContact = newContact; saveEntries(allEntries); }
-        await updateDocDetail(entryDate, agentName, idx, { lastContact: newContact });
+      const detail = type === 'cpd' || type === 'cpd-virou-doc'
+        ? entry?.cpdDetails?.[idx]
+        : entry?.docDetails?.[idx];
+      if (detail) {
+        const dates = detail.contactDates ? [...detail.contactDates] : (detail.lastContact ? [detail.lastContact] : []);
+        const doneToday = dates[dates.length - 1] === t;
+        const newDates = doneToday ? dates.filter(d => d !== t) : [...dates.filter(d => d !== t), t];
+        detail.contactDates = newDates;
+        detail.lastContact  = newDates[newDates.length - 1] || '';
+        saveEntries(allEntries);
+        if (type === 'cpd' || type === 'cpd-virou-doc') {
+          await updateCpdDetail(entryDate, agentName, idx, { contactDates: newDates, lastContact: detail.lastContact });
+        } else {
+          await updateDocDetail(entryDate, agentName, idx, { contactDates: newDates, lastContact: detail.lastContact });
+        }
       }
       renderAgentContacts(agentName);
     });
@@ -879,13 +923,13 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const cpdVal=parseInt(document.getElementById('f-cpd').value)||0;
         const cpdDetails=collectCpdDetails(cpdVal);
         if (sentToday?.cpdDetails) {
-          cpdDetails.forEach((d,i) => { if (sentToday.cpdDetails[i]) { d.status=sentToday.cpdDetails[i].status||''; d.motivo=sentToday.cpdDetails[i].motivo||''; d.lastContact=sentToday.cpdDetails[i].lastContact||''; } });
+          cpdDetails.forEach((d,i) => { if (sentToday.cpdDetails[i]) { const s=sentToday.cpdDetails[i]; d.status=s.status||''; d.motivo=s.motivo||''; d.lastContact=s.lastContact||''; d.contactDates=s.contactDates||[]; } });
         }
         const docVal=parseInt(document.getElementById('f-doc').value)||0;
         const docDetails=collectDocDetails(docVal);
         for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
         if (sentToday?.docDetails) {
-          docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) { d.nota = sentToday.docDetails[i].nota || ''; d.lastContact = sentToday.docDetails[i].lastContact || ''; } });
+          docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) { const s=sentToday.docDetails[i]; d.nota=s.nota||''; d.lastContact=s.lastContact||''; d.contactDates=s.contactDates||[]; } });
         }
         const isEdit=!!sentToday;
         const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
