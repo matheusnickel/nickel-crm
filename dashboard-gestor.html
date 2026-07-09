@@ -95,17 +95,12 @@
 
     </div>
 
-    <!-- Linha 2: Evolução de DOC (1/2) + Conversão (1/2) -->
+    <!-- Linha 2: Conversão (largura total) -->
     <div class="g-row g-row-1-1">
 
-      <div class="card">
-        <div class="card-title">Evolução diária de DOC</div>
-        <div class="chart-wrap" style="height:240px">
-          <canvas id="evolucao-chart"></canvas>
-        </div>
-      </div>
+      <canvas id="evolucao-chart" style="display:none"></canvas>
 
-      <div class="card">
+      <div class="card" style="grid-column:1/-1">
         <div class="card-title">Taxa de conversão</div>
         <div class="conv-mode-row">
           <button class="conv-mode-btn active" data-mode="prosp-cpd">PROSP → CPD</button>
