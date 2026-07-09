@@ -176,6 +176,10 @@ a { color: inherit; text-decoration: none; }
   margin: 0 auto;
 }
 
+.main-content.wide {
+  max-width: 1200px;
+}
+
 /* ── CARDS ── */
 .card {
   background: var(--bg2);
