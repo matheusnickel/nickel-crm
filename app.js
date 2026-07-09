@@ -878,13 +878,13 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const cpdVal=parseInt(document.getElementById('f-cpd').value)||0;
         const cpdDetails=collectCpdDetails(cpdVal);
         if (sentToday?.cpdDetails) {
-          cpdDetails.forEach((d,i) => { if (sentToday.cpdDetails[i]) { d.status=sentToday.cpdDetails[i].status||''; d.motivo=sentToday.cpdDetails[i].motivo||''; } });
+          cpdDetails.forEach((d,i) => { if (sentToday.cpdDetails[i]) { d.status=sentToday.cpdDetails[i].status||''; d.motivo=sentToday.cpdDetails[i].motivo||''; d.lastContact=sentToday.cpdDetails[i].lastContact||''; } });
         }
         const docVal=parseInt(document.getElementById('f-doc').value)||0;
         const docDetails=collectDocDetails(docVal);
         for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
         if (sentToday?.docDetails) {
-          docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) d.nota = sentToday.docDetails[i].nota || ''; });
+          docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) { d.nota = sentToday.docDetails[i].nota || ''; d.lastContact = sentToday.docDetails[i].lastContact || ''; } });
         }
         const isEdit=!!sentToday;
         const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
