@@ -371,6 +371,95 @@ function renderNotasRanking() {
   });
 }
 
+// ── AGENT CONTACTS (CPDs & DOCs) ─────────────────────────
+let agentContactTab = 'cpd';
+
+function renderAgentContacts(agentName) {
+  const wrap = document.getElementById('agent-contacts-wrap');
+  if (!wrap) return;
+  const t = today();
+  const entries = getEntries().filter(e => e.agent === agentName);
+
+  const cpds = [];
+  entries.forEach(e => (e.cpdDetails||[]).forEach((d, i) => {
+    if (d.nome) cpds.push({ ...d, entryDate: e.date, idx: i });
+  }));
+  cpds.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
+
+  const docs = [];
+  entries.forEach(e => (e.docDetails||[]).forEach((d, i) => {
+    if (d.nome) docs.push({ ...d, entryDate: e.date, idx: i });
+  }));
+  docs.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
+
+  const cpdRows = cpds.map(d => {
+    const done = d.lastContact === t;
+    const statusLabel = CPD_STATUS_OPTIONS.find(o => o.value === (d.status||''))?.label || '—';
+    return `<tr>
+      <td style="font-weight:500">${d.nome}</td>
+      <td style="color:var(--text-muted);font-size:12px">${d.telefone||'—'}</td>
+      <td style="font-size:12px">${statusLabel}</td>
+      <td style="font-size:11px;color:var(--text-muted);white-space:nowrap">${d.lastContact ? formatDate(d.lastContact) : '—'}</td>
+      <td><button class="contact-btn${done?' contact-done':''}" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${done ? '✅' : '○ Contactei'}</button></td>
+    </tr>`;
+  }).join('');
+
+  const docRows = docs.map(d => {
+    const done = d.lastContact === t;
+    const statusLabel = STATUS_OPTIONS.find(o => o.value === (d.nota||''))?.label || '—';
+    return `<tr>
+      <td style="font-weight:500">${d.nome}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${d.tipo||'—'} · ${d.bairro||'—'}</td>
+      <td style="font-size:12px">${statusLabel}</td>
+      <td style="font-size:11px;color:var(--text-muted);white-space:nowrap">${d.lastContact ? formatDate(d.lastContact) : '—'}</td>
+      <td><button class="contact-btn${done?' contact-done':''}" data-type="doc" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${done ? '✅' : '○ Contactei'}</button></td>
+    </tr>`;
+  }).join('');
+
+  const isCpd = agentContactTab === 'cpd';
+  const rows  = isCpd ? cpdRows : docRows;
+  const count = isCpd ? cpds.length : docs.length;
+  const colB  = isCpd ? 'Telefone' : 'Imóvel';
+
+  wrap.innerHTML = `
+    <div class="nota-tabs">
+      <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">CPDs (${cpds.length})</button>
+      <button class="nota-tab-btn${!isCpd?' active':''}" data-ctab="doc">DOCs (${docs.length})</button>
+    </div>
+    ${count === 0
+      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CPD':'DOC'} com nome registrado</div>`
+      : `<div style="overflow-x:auto;margin-top:10px">
+          <table class="data-table">
+            <thead><tr><th>Nome</th><th>${colB}</th><th>Status</th><th>Últ. contato</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`}`;
+
+  wrap.querySelectorAll('[data-ctab]').forEach(btn =>
+    btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; renderAgentContacts(agentName); })
+  );
+
+  wrap.querySelectorAll('.contact-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (btn.classList.contains('contact-done')) return;
+      btn.disabled = true; btn.textContent = '...';
+      const type = btn.dataset.type;
+      const entryDate = btn.dataset.entryDate;
+      const idx = parseInt(btn.dataset.idx);
+      const allEntries = getEntries();
+      const entry = allEntries.find(e => e.date === entryDate && e.agent === agentName);
+      if (type === 'cpd') {
+        if (entry?.cpdDetails?.[idx]) { entry.cpdDetails[idx].lastContact = t; saveEntries(allEntries); }
+        await updateCpdDetail(entryDate, agentName, idx, { lastContact: t });
+      } else {
+        if (entry?.docDetails?.[idx]) { entry.docDetails[idx].lastContact = t; saveEntries(allEntries); }
+        await updateDocDetail(entryDate, agentName, idx, { lastContact: t });
+      }
+      renderAgentContacts(agentName);
+    });
+  });
+}
+
 // ── AGENT RANKING (Dia / Semana / Mês) ───────────────────
 let activeAgentRankTab = 'dia';
 
@@ -808,6 +897,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     }
   }
 
+  renderAgentContacts(session.name);
   renderAgentDailyRanking(session.name);
 
   const historyBody=document.getElementById('history-body');
