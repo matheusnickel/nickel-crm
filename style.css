@@ -185,7 +185,7 @@ a { color: inherit; text-decoration: none; }
   display: grid;
   gap: 16px;
   margin-bottom: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 .g-row > .card,
 .g-row > div > .card { margin-bottom: 0; }
