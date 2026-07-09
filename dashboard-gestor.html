@@ -166,8 +166,11 @@
     <!-- Linha 5: Novo lançamento (1/2) + Exportar + Consulta (1/2 empilhados) -->
     <div class="g-row g-row-1-1">
 
-      <div class="card">
-        <div class="card-title">Novo lançamento</div>
+      <div class="card collapsible-card">
+        <button class="card-title card-toggle" data-target="lanc-body">
+          Novo lançamento <span class="toggle-arrow">▸</span>
+        </button>
+        <div class="card-body" id="lanc-body" style="display:none">
         <form id="gestor-lanc-form">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
             <div class="form-group" style="margin-bottom:0">
@@ -195,6 +198,7 @@
           <div id="lanc-doc-details"></div>
           <button type="submit" class="btn">Salvar lançamento</button>
         </form>
+        </div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:16px">
