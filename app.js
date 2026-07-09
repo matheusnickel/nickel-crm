@@ -1346,7 +1346,9 @@ function renderDocList(entries) {
     const row = findEditRow(d.date, d.agent, d.idx);
     if (!row) return;
     row.querySelector('.ef-tipo').value = d.tipo||'';
-    row.querySelector('.ef-bairro').value = BAIRROS.includes(d.bairro) ? d.bairro : '';
+    const bSel = row.querySelector('.ef-bairro');
+    if (d.bairro && !BAIRROS.includes(d.bairro)) { const opt=document.createElement('option'); opt.value=d.bairro; opt.textContent=d.bairro; bSel.appendChild(opt); }
+    bSel.value = d.bairro || '';
     row.querySelector('.ef-indicacao').value = d.indicacao||'nao';
     const indWrap = row.querySelector('.ef-indicador-wrap');
     indWrap.style.display = (d.indicacao==='sim') ? '' : 'none';
@@ -1381,7 +1383,8 @@ function renderDocList(entries) {
       };
       btn.textContent='Salvando...'; btn.disabled=true;
       await updateDocDetail(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), fields);
-      renderDocList(entries);
+      const freshRef = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
+      renderDocList(filterEntries(activePeriod, freshRef));
     });
   });
 
