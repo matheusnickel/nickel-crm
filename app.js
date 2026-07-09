@@ -770,6 +770,7 @@ async function initLogin() {
 // ── AGENT DASHBOARD ──────────────────────────────────────
 let agentUnsubscribe=null;
 let histExpanded=false;
+let agentEditing=false;
 
 function initAgentDashboard() {
   const session=getSession();
@@ -780,7 +781,7 @@ function initAgentDashboard() {
   agentUnsubscribe=fbListen(entries=>{
     saveEntries(entries);
     const dp=document.getElementById('selected-date');
-    renderAgentDashboard(session, dp?.value||today());
+    renderAgentDashboard(session, dp?.value||today(), agentEditing);
   });
 }
 
@@ -848,7 +849,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     if (datePicker.value !== date) datePicker.value = date;
     if (!datePicker._bound) {
       datePicker._bound = true;
-      datePicker.addEventListener('change', () => renderAgentDashboard(session, datePicker.value));
+      datePicker.addEventListener('change', () => { agentEditing=false; renderAgentDashboard(session, datePicker.value); });
     }
   }
 
@@ -900,7 +901,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         ${docSummary?`<div class="doc-summary-list">${docSummary}</div>`:''}
         ${editBtn}
       </div>`;
-    if (canEdit) document.getElementById('edit-today-btn').addEventListener('click',()=>renderAgentDashboard(session,date,true));
+    if (canEdit) document.getElementById('edit-today-btn').addEventListener('click',()=>{ agentEditing=true; renderAgentDashboard(session,date,true); });
   } else {
     const pre=sentToday||{prosp:0,cpd:0,doc:0,va:0,vv:0,fotos:0,docDetails:[],cpdDetails:[]};
     const isFuture = date > t;
@@ -947,13 +948,14 @@ function renderAgentDashboard(session, selectedDate, editing) {
           docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) { const s=sentToday.docDetails[i]; d.nota=s.nota||''; d.lastContact=s.lastContact||''; d.contactDates=s.contactDates||[]; } });
         }
         const isEdit=!!sentToday;
+        agentEditing=false;
         const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
         const submittedDate=sentToday?.submittedDate||sentToday?.date||today();
         await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:cpdVal,doc:docVal,va:parseInt(document.getElementById('f-va').value)||0,vv:parseInt(document.getElementById('f-vv').value)||0,fotos:parseInt(document.getElementById('f-fotos').value)||0,cpdDetails,docDetails,submittedDate});
         if (isEdit) incrementEditCount(session.name,date);
       });
       const cancelBtn=document.getElementById('cancel-edit-btn');
-      if (cancelBtn) cancelBtn.addEventListener('click',()=>renderAgentDashboard(session,date));
+      if (cancelBtn) cancelBtn.addEventListener('click',()=>{ agentEditing=false; renderAgentDashboard(session,date); });
     }
   }
 
