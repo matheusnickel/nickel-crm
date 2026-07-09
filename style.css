@@ -180,6 +180,48 @@ a { color: inherit; text-decoration: none; }
   max-width: 1200px;
 }
 
+/* ── GESTOR GRID ROWS ── */
+.g-row {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: start;
+}
+.g-row > .card,
+.g-row > div > .card { margin-bottom: 0; }
+.g-row-1-1 { grid-template-columns: 1fr 1fr; }
+.g-row-2-1 { grid-template-columns: 2fr 1fr; }
+
+@media (max-width: 900px) {
+  .g-row-1-1,
+  .g-row-2-1 { grid-template-columns: 1fr; }
+}
+
+/* ── COLLAPSIBLE CARD ── */
+.card-toggle {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 0;
+  padding: 0;
+}
+.card-toggle:hover { color: var(--text); }
+.toggle-arrow {
+  font-size: 13px;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.collapsible-card.open .toggle-arrow { transform: rotate(90deg); }
+.card-body { margin-top: 14px; }
+
 /* ── CARDS ── */
 .card {
   background: var(--bg2);

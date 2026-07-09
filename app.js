@@ -402,10 +402,6 @@ function renderAgentContacts(agentName) {
   const pendingCpd = cpds.filter(d => (d.contactDates||[]).slice(-1)[0] !== t).length;
   const pendingDoc = docs.filter(d => (d.contactDates||[]).slice(-1)[0] !== t).length;
 
-  const cpdStatusSelOpts = CPD_STATUS_OPTIONS
-    .filter(o => o.value !== 'doc' && o.value !== 'doc_exclusivo')
-    .map(o => `<option value="${o.value}">${o.label}</option>`).join('');
-
   const makeRow = (d) => {
     const dates = d.contactDates || (d.lastContact ? [d.lastContact] : []);
     const doneToday = dates[dates.length - 1] === t;
@@ -433,7 +429,7 @@ function renderAgentContacts(agentName) {
            </select>`;
       return `<tr style="${rowBg}">
         <td style="font-weight:500">${d.nome}${pending?'<span class="contact-pending-badge">● hoje</span>':''}</td>
-        <td style="color:var(--text-muted);font-size:12px">${d.tipo||'—'} · ${d.bairro||'—'}</td>
+        <td style="color:var(--text-muted);font-size:12px">${isCpdDoc ? (d.telefone||'—') : `${d.tipo||'—'} · ${d.bairro||'—'}`}</td>
         <td>${statusCell}</td>
         <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
         <td><button class="contact-btn${doneToday?' contact-done':''}" data-type="${d._type}" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button></td>
@@ -454,7 +450,7 @@ function renderAgentContacts(agentName) {
         DOCs (${docs.length})${pendingDoc>0?`<span class="contact-tab-badge">${pendingDoc}</span>`:''}
       </button>
     </div>
-    ${pendCount > 0 ? `<div class="contact-alert">⚠ ${pendCount} contato${pendCount>1?'s':''} pendente${pendCount>1?'s':''} hoje — ligue agora!</div>` : `<div class="contact-ok">✓ Todos contatados hoje</div>`}
+    ${pendCount > 0 ? `<div class="contact-alert">⚠ ${pendCount} contato${pendCount>1?'s':''} pendente${pendCount>1?'s':''} hoje — ligue agora!</div>` : list.length > 0 ? `<div class="contact-ok">✓ Todos contatados hoje</div>` : ''}
     ${list.length === 0
       ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CPD ativo':'DOC'} registrado</div>`
       : `<div style="overflow-x:auto;margin-top:10px">
@@ -474,27 +470,23 @@ function renderAgentContacts(agentName) {
       const entryDate = sel.dataset.entryDate;
       const idx = parseInt(sel.dataset.idx);
       await updateCpdDetail(entryDate, agentName, idx, { status: sel.value });
+      if (sel.value === 'doc' || sel.value === 'doc_exclusivo') agentContactTab = 'doc';
       renderAgentContacts(agentName);
     });
   });
 
-  // Status change (DOC tracker)
+  // Status change + color (DOC tracker)
   wrap.querySelectorAll('.doc-tracker-status').forEach(sel => {
-    sel.addEventListener('change', async () => {
-      const entryDate = sel.dataset.entryDate;
-      const idx = parseInt(sel.dataset.idx);
+    const applyColor = () => {
       const opt = STATUS_OPTIONS.find(o => o.value === sel.value);
       sel.style.color = opt?.color || 'var(--text-muted)';
       sel.style.borderColor = opt?.value ? opt.color : 'var(--border)';
-      await updateDocNota(entryDate, agentName, idx, sel.value);
+    };
+    applyColor();
+    sel.addEventListener('change', async () => {
+      applyColor();
+      await updateDocNota(sel.dataset.entryDate, agentName, parseInt(sel.dataset.idx), sel.value);
     });
-  });
-
-  // Apply color to existing doc status selects
-  wrap.querySelectorAll('.doc-tracker-status').forEach(sel => {
-    const opt = STATUS_OPTIONS.find(o => o.value === sel.value);
-    sel.style.color = opt?.color || 'var(--text-muted)';
-    sel.style.borderColor = opt?.value ? opt.color : 'var(--border)';
   });
 
   // Contact button
@@ -596,7 +588,7 @@ function renderAgentDailyRanking(currentAgentName) {
 }
 
 // ── STREAK VISUAL ────────────────────────────────────────
-function renderStreak(agentName, entries) {
+function renderStreak(agentName) {
   const streak = calcStreak(agentName);
   const sentDates = new Set(getOnTimeDates(agentName));
   const t = today(); // local scope
@@ -616,14 +608,14 @@ function renderStreak(agentName, entries) {
   let color, label, emoji;
   if (streak === 0)       { color='#555';     emoji='💤'; label='Nenhum dia seguido ainda'; }
   else if (streak < 3)    { color='#cd7f32';  emoji='🔥'; label=`${streak} dia${streak>1?'s':''} seguido${streak>1?'s':''}!`; }
-  else if (streak < 7)    { color='#aaa';     emoji='🔥'; label=`${streak} dias seguidos! Bom ritmo!`; }
+  else if (streak < 7)    { color='#ff7a00';  emoji='🔥'; label=`${streak} dias seguidos! Bom ritmo!`; }
   else if (streak < 14)   { color='#a8e63d';  emoji='🔥'; label=`${streak} dias seguidos! Incrível!`; }
   else if (streak < 30)   { color='#6495ed';  emoji='🔥'; label=`${streak} dias seguidos! Elite!`; }
   else                    { color='#2ecc71';  emoji='🏆'; label=`${streak} dias seguidos! Lendário!`; }
 
   // check if yesterday was missed (streak broken)
   const yesterday = new Date(t+'T12:00:00'); yesterday.setDate(yesterday.getDate()-1);
-  const missedYesterday = !sentDates.has(toDateStr(yesterday)) && streak === 0 && entries.length > 0;
+  const missedYesterday = !sentDates.has(toDateStr(yesterday)) && streak === 0 && sentDates.size > 0;
 
   const dotsHTML = dots.map(d => `
     <div class="streak-dot ${d.sent?'sent':''} ${d.isToday?'today':''}" title="${formatDate(d.ds)}">
@@ -777,6 +769,7 @@ async function initLogin() {
 
 // ── AGENT DASHBOARD ──────────────────────────────────────
 let agentUnsubscribe=null;
+let histExpanded=false;
 
 function initAgentDashboard() {
   const session=getSession();
@@ -860,7 +853,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
   }
 
 
-  renderStreak(session.name, entries);
+  renderStreak(session.name);
 
   // Banner agressivo — não enviou hoje
   const noSendBanner = document.getElementById('no-send-banner');
@@ -968,10 +961,24 @@ function renderAgentDashboard(session, selectedDate, editing) {
   renderAgentDailyRanking(session.name);
 
   const historyBody=document.getElementById('history-body');
+  const histShowMore=document.getElementById('hist-show-more');
   const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date));
-  historyBody.innerHTML=sorted.length===0
-    ?'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">Nenhum registro</td></tr>'
-    :sorted.map(e=>`<tr><td>${formatDate(e.date)}</td><td class="num-cell">${e.prosp}</td><td class="num-cell">${e.cpd}</td><td class="num-cell">${e.doc}</td></tr>`).join('');
+  const renderHistRows = (limit) => {
+    const visible = limit ? sorted.slice(0, limit) : sorted;
+    historyBody.innerHTML=visible.length===0
+      ?'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">Nenhum registro</td></tr>'
+      :visible.map(e=>`<tr><td>${formatDate(e.date)}</td><td class="num-cell">${e.prosp}</td><td class="num-cell">${e.cpd}</td><td class="num-cell">${e.doc}</td></tr>`).join('');
+    if (histShowMore) {
+      if (sorted.length > 3 && limit) {
+        histShowMore.style.display='block';
+        histShowMore.textContent=`Ver todos (${sorted.length})`;
+        histShowMore.onclick=()=>{ histExpanded=true; renderHistRows(null); histShowMore.style.display='none'; };
+      } else {
+        histShowMore.style.display='none';
+      }
+    }
+  };
+  renderHistRows(histExpanded ? null : 3);
 }
 
 // ── GESTOR DASHBOARD ─────────────────────────────────────
@@ -1033,7 +1040,6 @@ async function initGestorDashboard() {
   initGestorLancamento();
   initTeamManagement();
   initOfertaAtiva();
-  document.getElementById('limpar-julho-btn')?.addEventListener('click', limparJulhoSemDoc);
 }
 
 function refreshLancAgentSelect() {
@@ -1577,7 +1583,6 @@ function renderCpdList(entries) {
     return `<tr data-cpd-date="${d.date}" data-cpd-agent="${d.agent}" data-cpd-idx="${d.idx}">
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
-      <td style="color:var(--text-muted);text-align:center">${d.idx+1}</td>
       <td style="font-weight:500">${d.nome||'—'}</td>
       <td style="color:var(--text-muted)">${d.telefone||'—'}</td>
       <td><select class="cpd-status-sel nota-select">${selOpts}</select></td>
@@ -1586,8 +1591,8 @@ function renderCpdList(entries) {
   }).join('');
 
   wrap.innerHTML = filterHTML + `<div class="doc-table-wrap"><table class="data-table doc-table" style="font-size:12px">
-    <thead><tr><th>Data</th><th>Angariador</th><th style="text-align:center">#</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Motivo</th></tr></thead>
-    <tbody>${rowsHTML || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum CPD para este angariador</td></tr>'}</tbody>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Motivo</th></tr></thead>
+    <tbody>${rowsHTML || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum CPD para este angariador</td></tr>'}</tbody>
   </table></div>`;
 
   wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });

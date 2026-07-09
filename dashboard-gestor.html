@@ -25,26 +25,22 @@
 
   <main class="main-content wide">
 
-    <!-- Filtro -->
+    <!-- Filtro + Pickers (full width) -->
     <div class="filter-row">
       <button class="filter-btn" data-period="today">Hoje</button>
       <button class="filter-btn active" data-period="week">Semana</button>
       <button class="filter-btn" data-period="month">Mês</button>
     </div>
-
-    <!-- Seletor de semana (aparece quando "Semana" está ativo) -->
     <div class="form-group" id="week-picker-wrap" style="display:none;margin-bottom:16px">
       <label>Selecione a semana</label>
       <input type="week" id="week-picker">
     </div>
-
-    <!-- Seletor de mês (aparece quando "Mês" está ativo) -->
     <div class="form-group" id="month-picker-wrap" style="display:none;margin-bottom:16px">
       <label>Selecione o mês</label>
       <input type="month" id="month-picker">
     </div>
 
-    <!-- Totais -->
+    <!-- Totais (full width) -->
     <div class="totals-grid">
       <div class="total-box">
         <div class="t-val" id="tot-prosp">0</div>
@@ -60,171 +56,220 @@
       </div>
     </div>
 
-    <!-- Ranking -->
-    <div class="card">
-      <div class="card-title">Ranking — ordenado por DOC · CPD · PROSP</div>
-      <div style="overflow-x:auto">
-        <table class="data-table rank-table">
-          <colgroup>
-            <col class="col-pos">
-            <col class="col-name">
-            <col class="col-doc">
-            <col class="col-cpd">
-            <col class="col-prosp">
-            <col><col><col>
-          </colgroup>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Angariador</th>
-              <th class="num-cell doc-th">DOC</th>
-              <th class="num-cell">CPD</th>
-              <th class="num-cell">PROSP</th>
-              <th class="num-cell rank-extra">VV</th>
-              <th class="num-cell rank-extra">VA</th>
-              <th class="num-cell rank-extra">FOTOS</th>
-            </tr>
-          </thead>
-          <tbody id="rank-body"></tbody>
-        </table>
+    <!-- Linha 1: Ranking (2/3) + Ranking de Notas (1/3) -->
+    <div class="g-row g-row-2-1">
+
+      <div class="card">
+        <div class="card-title">Ranking — ordenado por DOC · CPD · PROSP</div>
+        <div style="overflow-x:auto">
+          <table class="data-table rank-table">
+            <colgroup>
+              <col class="col-pos">
+              <col class="col-name">
+              <col class="col-doc">
+              <col class="col-cpd">
+              <col class="col-prosp">
+              <col><col><col>
+            </colgroup>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Angariador</th>
+                <th class="num-cell doc-th">DOC</th>
+                <th class="num-cell">CPD</th>
+                <th class="num-cell">PROSP</th>
+                <th class="num-cell rank-extra">VV</th>
+                <th class="num-cell rank-extra">VA</th>
+                <th class="num-cell rank-extra">FOTOS</th>
+              </tr>
+            </thead>
+            <tbody id="rank-body"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- Evolução diária de DOC -->
-    <div class="card">
-      <div class="card-title">Evolução diária de DOC</div>
-      <div class="chart-wrap" style="height:240px">
-        <canvas id="evolucao-chart"></canvas>
+      <div class="card">
+        <div class="card-title">⭐ Ranking de Notas</div>
+        <div id="notas-ranking-wrap"></div>
       </div>
+
     </div>
 
-    <!-- Oferta Ativa Semanal -->
-    <div class="card">
-      <div class="card-title">🏹 Oferta Ativa Semanal</div>
-      <div id="oferta-wrap"></div>
-    </div>
+    <!-- Linha 2: Evolução de DOC (1/2) + Conversão (1/2) -->
+    <div class="g-row g-row-1-1">
 
-    <!-- Sequência + Linha do tempo unificadas -->
-    <div class="card">
-      <div class="card-title">🔥 Sequência de envios — últimos 30 dias</div>
-      <div id="timeline-wrap"></div>
-    </div>
-
-    <!-- Ranking de Notas -->
-    <div class="card">
-      <div class="card-title">⭐ Ranking de Notas</div>
-      <div id="notas-ranking-wrap"></div>
-    </div>
-
-    <!-- DOCs registrados -->
-    <div class="card">
-      <div class="card-title">DOCs registrados no período</div>
-      <div id="doc-list-wrap"></div>
-    </div>
-
-    <!-- CPDs registrados -->
-    <div class="card">
-      <div class="card-title">CPDs — acompanhamento</div>
-      <div id="cpd-list-wrap"></div>
-    </div>
-
-    <!-- Gráfico analítico DOCs -->
-    <div class="card">
-      <div class="card-title">Análise de DOCs</div>
-      <div class="analytics-row">
-        <button class="analytics-btn active" data-mode="tipo">Tipo</button>
-        <button class="analytics-btn" data-mode="bairro">Bairro</button>
-        <button class="analytics-btn" data-mode="valor">Valor total</button>
-        <button class="analytics-btn" data-mode="ticket">Ticket médio</button>
+      <div class="card">
+        <div class="card-title">Evolução diária de DOC</div>
+        <div class="chart-wrap" style="height:240px">
+          <canvas id="evolucao-chart"></canvas>
+        </div>
       </div>
-      <div class="chart-wrap" style="height:260px">
-        <canvas id="tipo-chart"></canvas>
+
+      <div class="card">
+        <div class="card-title">Taxa de conversão</div>
+        <div class="conv-mode-row">
+          <button class="conv-mode-btn active" data-mode="prosp-cpd">PROSP → CPD</button>
+          <button class="conv-mode-btn" data-mode="cpd-doc">CPD → DOC</button>
+        </div>
+        <div id="conv-list"></div>
       </div>
-      <div id="analytics-empty" class="empty-state" style="display:none">Nenhum DOC com dados registrado</div>
+
     </div>
 
-    <!-- Conversão -->
-    <div class="card">
-      <div class="card-title">Taxa de conversão</div>
-      <div class="conv-mode-row">
-        <button class="conv-mode-btn active" data-mode="prosp-cpd">PROSP → CPD</button>
-        <button class="conv-mode-btn" data-mode="cpd-doc">CPD → DOC</button>
+    <!-- Linha 3: DOCs (1/2) + CPDs (1/2) -->
+    <div class="g-row g-row-1-1">
+
+      <div class="card collapsible-card">
+        <button class="card-title card-toggle" data-target="doc-list-body">
+          DOCs registrados no período <span class="toggle-arrow">▸</span>
+        </button>
+        <div class="card-body" id="doc-list-body" style="display:none">
+          <div id="doc-list-wrap"></div>
+        </div>
       </div>
-      <div id="conv-list"></div>
+
+      <div class="card collapsible-card">
+        <button class="card-title card-toggle" data-target="cpd-list-body">
+          CPDs — acompanhamento <span class="toggle-arrow">▸</span>
+        </button>
+        <div class="card-body" id="cpd-list-body" style="display:none">
+          <div id="cpd-list-wrap"></div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Novo lançamento (gestor) -->
-    <div class="card">
-      <div class="card-title">Novo lançamento</div>
-      <form id="gestor-lanc-form">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-          <div class="form-group" style="margin-bottom:0">
-            <label>Angariador</label>
-            <select id="lanc-agent" required>
-              <option value="">Selecione</option>
-            </select>
+    <!-- Linha 4: Análise DOCs (1/2) + Sequência (1/2) -->
+    <div class="g-row g-row-1-1">
+
+      <div class="card">
+        <div class="card-title">Análise de DOCs</div>
+        <div class="analytics-row">
+          <button class="analytics-btn active" data-mode="tipo">Tipo</button>
+          <button class="analytics-btn" data-mode="bairro">Bairro</button>
+          <button class="analytics-btn" data-mode="valor">Valor total</button>
+          <button class="analytics-btn" data-mode="ticket">Ticket médio</button>
+        </div>
+        <div class="chart-wrap" style="height:260px">
+          <canvas id="tipo-chart"></canvas>
+        </div>
+        <div id="analytics-empty" class="empty-state" style="display:none">Nenhum DOC com dados registrado</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🔥 Sequência de envios — últimos 30 dias</div>
+        <div id="timeline-wrap"></div>
+      </div>
+
+    </div>
+
+    <!-- Linha 5: Novo lançamento (1/2) + Exportar + Consulta (1/2 empilhados) -->
+    <div class="g-row g-row-1-1">
+
+      <div class="card">
+        <div class="card-title">Novo lançamento</div>
+        <form id="gestor-lanc-form">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div class="form-group" style="margin-bottom:0">
+              <label>Angariador</label>
+              <select id="lanc-agent" required>
+                <option value="">Selecione</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Data</label>
+              <input type="date" id="lanc-date" required>
+            </div>
           </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label>Data</label>
-            <input type="date" id="lanc-date" required>
+          <div class="fields-row" style="margin-bottom:10px">
+            <div class="field-box"><label>PROSP</label><input type="number" id="lanc-prosp" min="0" value="0"></div>
+            <div class="field-box"><label>CPD</label><input type="number" id="lanc-cpd" min="0" value="0"></div>
+            <div class="field-box"><label>DOC</label><input type="number" id="lanc-doc" min="0" value="0"></div>
+          </div>
+          <div class="fields-row" style="margin-bottom:14px">
+            <div class="field-box"><label style="color:#6495ed">VV</label><input type="number" id="lanc-vv" min="0" value="0"></div>
+            <div class="field-box"><label style="color:#6495ed">VA</label><input type="number" id="lanc-va" min="0" value="0"></div>
+            <div class="field-box"><label style="color:#6495ed">FOTOS</label><input type="number" id="lanc-fotos" min="0" value="0"></div>
+          </div>
+          <div id="lanc-cpd-details"></div>
+          <div id="lanc-doc-details"></div>
+          <button type="submit" class="btn">Salvar lançamento</button>
+        </form>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Exportar relatório</div>
+          <div class="export-row">
+            <button class="export-btn" data-period="today">Hoje</button>
+            <button class="export-btn" data-period="week">Semana</button>
+            <button class="export-btn" data-period="month">Mês</button>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Abre uma nova aba — use "Imprimir" do navegador para salvar como PDF.</div>
+        </div>
+
+        <div class="card collapsible-card" style="margin-bottom:0">
+          <button class="card-title card-toggle" data-target="day-view-body">
+            Consulta por dia <span class="toggle-arrow">▸</span>
+          </button>
+          <div class="card-body" id="day-view-body" style="display:none">
+            <div class="form-group" style="margin-bottom:14px;margin-top:4px">
+              <label>Selecione o dia</label>
+              <input type="date" id="day-input">
+            </div>
+            <div id="day-view-wrap"></div>
           </div>
         </div>
-        <div class="fields-row" style="margin-bottom:10px">
-          <div class="field-box"><label>PROSP</label><input type="number" id="lanc-prosp" min="0" value="0"></div>
-          <div class="field-box"><label>CPD</label><input type="number" id="lanc-cpd" min="0" value="0"></div>
-          <div class="field-box"><label>DOC</label><input type="number" id="lanc-doc" min="0" value="0"></div>
-        </div>
-        <div class="fields-row" style="margin-bottom:14px">
-          <div class="field-box"><label style="color:#6495ed">VV</label><input type="number" id="lanc-vv" min="0" value="0"></div>
-          <div class="field-box"><label style="color:#6495ed">VA</label><input type="number" id="lanc-va" min="0" value="0"></div>
-          <div class="field-box"><label style="color:#6495ed">FOTOS</label><input type="number" id="lanc-fotos" min="0" value="0"></div>
-        </div>
-        <div id="lanc-cpd-details"></div>
-        <div id="lanc-doc-details"></div>
-        <button type="submit" class="btn">Salvar lançamento</button>
-      </form>
-    </div>
 
-    <!-- Exportar Relatório PDF -->
-    <div class="card">
-      <div class="card-title">Exportar relatório</div>
-      <div class="export-row">
-        <button class="export-btn" data-period="today">Hoje</button>
-        <button class="export-btn" data-period="week">Semana</button>
-        <button class="export-btn" data-period="month">Mês</button>
       </div>
-      <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Abre uma nova aba — use "Imprimir" do navegador para salvar como PDF.</div>
+
     </div>
 
-    <!-- Consulta por dia -->
-    <div class="card">
-      <div class="card-title">Consulta por dia</div>
-      <div class="form-group" style="margin-bottom:14px">
-        <label>Selecione o dia</label>
-        <input type="date" id="day-input">
+    <!-- Linha 6: Oferta Ativa + Equipe (colapsáveis, full width) -->
+    <div class="card collapsible-card" id="oferta-card">
+      <button class="card-title card-toggle" data-target="oferta-body">
+        🏹 Oferta Ativa Semanal <span class="toggle-arrow">▸</span>
+      </button>
+      <div class="card-body" id="oferta-body" style="display:none">
+        <div id="oferta-wrap"></div>
       </div>
-      <div id="day-view-wrap"></div>
     </div>
 
-    <!-- Gestão de equipe -->
-    <div class="card" id="team-mgmt">
-      <div class="card-title">Equipe — adicionar / remover</div>
-      <div id="team-list" style="margin-bottom:16px"></div>
-      <form id="add-agent-form" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
-        <div class="form-group" style="margin:0">
-          <label>Nome</label>
-          <input type="text" id="new-agent-name" placeholder="Ex: Lucas" required>
-        </div>
-        <div class="form-group" style="margin:0">
-          <label>Senha</label>
-          <input type="text" id="new-agent-pass" placeholder="nickel123">
-        </div>
-        <button type="submit" class="btn" style="padding:12px 16px;white-space:nowrap">+ Adicionar</button>
-      </form>
+    <div class="card collapsible-card" id="team-mgmt">
+      <button class="card-title card-toggle" data-target="team-body">
+        Equipe — adicionar / remover <span class="toggle-arrow">▸</span>
+      </button>
+      <div class="card-body" id="team-body" style="display:none">
+        <div id="team-list" style="margin-bottom:16px"></div>
+        <form id="add-agent-form" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+          <div class="form-group" style="margin:0">
+            <label>Nome</label>
+            <input type="text" id="new-agent-name" placeholder="Ex: Lucas" required>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Senha</label>
+            <input type="text" id="new-agent-pass" placeholder="nickel123">
+          </div>
+          <button type="submit" class="btn" style="padding:12px 16px;white-space:nowrap">+ Adicionar</button>
+        </form>
+      </div>
     </div>
 
   </main>
 
   <script type="module" src="app.js"></script>
+  <script>
+    document.addEventListener('click', e => {
+      const btn = e.target.closest('.card-toggle');
+      if (!btn) return;
+      const body = document.getElementById(btn.dataset.target);
+      if (!body) return;
+      const card = btn.closest('.collapsible-card');
+      const open = body.style.display === 'none';
+      body.style.display = open ? 'block' : 'none';
+      card.classList.toggle('open', open);
+    });
+  </script>
 </body>
 </html>
