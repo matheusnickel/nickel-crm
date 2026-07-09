@@ -1101,7 +1101,7 @@ function renderEvolucaoDiaria(entries) {
 
   // collect unique dates sorted
   const dates = [...new Set(entries.map(e=>e.date))].sort();
-  if (dates.length === 0) { return; }
+  if (dates.length === 0) { evolucaoChart = null; return; }
 
   // per agent datasets
   const agentNames = getAgentNames();
@@ -1237,7 +1237,7 @@ function renderAnalyticsChart(allDocs) {
   const ctx=document.getElementById('tipo-chart').getContext('2d');
   if (analyticsChart) analyticsChart.destroy();
   document.getElementById('analytics-empty').style.display=allDocs.length===0?'block':'none';
-  if (allDocs.length===0) return;
+  if (allDocs.length===0) { analyticsChart = null; return; }
   const mode=activeAnalyticsMode;
   const base={responsive:true,maintainAspectRatio:false};
   const scalesXY={x:{ticks:{color:'#888',font:{family:'DM Sans',size:11}},grid:{color:'#1a1a1a'}},y:{ticks:{color:'#888',font:{family:'DM Sans'}},grid:{color:'#1a1a1a'},beginAtZero:true}};
