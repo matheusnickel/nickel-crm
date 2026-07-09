@@ -392,28 +392,28 @@ function renderAgentContacts(agentName) {
   }));
   docs.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
-  const cpdRows = cpds.map(d => {
+  const makeRow = (d, type, statusLabel) => {
     const done = d.lastContact === t;
-    const statusLabel = CPD_STATUS_OPTIONS.find(o => o.value === (d.status||''))?.label || '—';
-    return `<tr>
-      <td style="font-weight:500">${d.nome}</td>
-      <td style="color:var(--text-muted);font-size:12px">${d.telefone||'—'}</td>
+    const pending = !done;
+    const rowBg = pending ? 'background:rgba(231,76,60,0.04);' : '';
+    const warning = pending ? `<span style="font-size:10px;color:#e74c3c;font-weight:600;margin-left:4px">⚠ pendente</span>` : '';
+    return `<tr style="${rowBg}">
+      <td style="font-weight:500">${d.nome}${warning}</td>
+      <td style="color:var(--text-muted);font-size:12px">${type==='cpd'?(d.telefone||'—'):`${d.tipo||'—'} · ${d.bairro||'—'}`}</td>
       <td style="font-size:12px">${statusLabel}</td>
       <td style="font-size:11px;color:var(--text-muted);white-space:nowrap">${d.lastContact ? formatDate(d.lastContact) : '—'}</td>
-      <td><button class="contact-btn${done?' contact-done':''}" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${done ? '✅' : '○ Contactei'}</button></td>
+      <td><button class="contact-btn${done?' contact-done':''}" data-type="${type}" data-entry-date="${d.entryDate}" data-idx="${d.idx}" title="${done?'Clique para desfazer':'Marcar contato de hoje'}">${done ? '✅ Feito' : '○ Contactei'}</button></td>
     </tr>`;
+  };
+
+  const cpdRows = cpds.map(d => {
+    const statusLabel = CPD_STATUS_OPTIONS.find(o => o.value === (d.status||''))?.label || '—';
+    return makeRow(d, 'cpd', statusLabel);
   }).join('');
 
   const docRows = docs.map(d => {
-    const done = d.lastContact === t;
     const statusLabel = STATUS_OPTIONS.find(o => o.value === (d.nota||''))?.label || '—';
-    return `<tr>
-      <td style="font-weight:500">${d.nome}</td>
-      <td style="font-size:12px;color:var(--text-muted)">${d.tipo||'—'} · ${d.bairro||'—'}</td>
-      <td style="font-size:12px">${statusLabel}</td>
-      <td style="font-size:11px;color:var(--text-muted);white-space:nowrap">${d.lastContact ? formatDate(d.lastContact) : '—'}</td>
-      <td><button class="contact-btn${done?' contact-done':''}" data-type="doc" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${done ? '✅' : '○ Contactei'}</button></td>
-    </tr>`;
+    return makeRow(d, 'doc', statusLabel);
   }).join('');
 
   const isCpd = agentContactTab === 'cpd';
@@ -441,7 +441,8 @@ function renderAgentContacts(agentName) {
 
   wrap.querySelectorAll('.contact-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (btn.classList.contains('contact-done')) return;
+      const isDone = btn.classList.contains('contact-done');
+      const newContact = isDone ? '' : t;
       btn.disabled = true; btn.textContent = '...';
       const type = btn.dataset.type;
       const entryDate = btn.dataset.entryDate;
@@ -449,11 +450,11 @@ function renderAgentContacts(agentName) {
       const allEntries = getEntries();
       const entry = allEntries.find(e => e.date === entryDate && e.agent === agentName);
       if (type === 'cpd') {
-        if (entry?.cpdDetails?.[idx]) { entry.cpdDetails[idx].lastContact = t; saveEntries(allEntries); }
-        await updateCpdDetail(entryDate, agentName, idx, { lastContact: t });
+        if (entry?.cpdDetails?.[idx]) { entry.cpdDetails[idx].lastContact = newContact; saveEntries(allEntries); }
+        await updateCpdDetail(entryDate, agentName, idx, { lastContact: newContact });
       } else {
-        if (entry?.docDetails?.[idx]) { entry.docDetails[idx].lastContact = t; saveEntries(allEntries); }
-        await updateDocDetail(entryDate, agentName, idx, { lastContact: t });
+        if (entry?.docDetails?.[idx]) { entry.docDetails[idx].lastContact = newContact; saveEntries(allEntries); }
+        await updateDocDetail(entryDate, agentName, idx, { lastContact: newContact });
       }
       renderAgentContacts(agentName);
     });
