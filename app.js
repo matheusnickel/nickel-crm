@@ -425,13 +425,16 @@ function renderAgentContacts(agentName) {
         <td><button class="contact-btn${doneToday?' contact-done':''}" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button></td>
       </tr>`;
     } else {
-      const statusLabel = d._type === 'cpd-virou-doc'
+      const isCpdDoc = d._type === 'cpd-virou-doc';
+      const statusCell = isCpdDoc
         ? `<span style="color:#a8e63d;font-size:11px">CPD → DOC</span>`
-        : (STATUS_OPTIONS.find(o => o.value === (d.nota||''))?.label || '—');
+        : `<select class="doc-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+            ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
+           </select>`;
       return `<tr style="${rowBg}">
         <td style="font-weight:500">${d.nome}${pending?'<span class="contact-pending-badge">● hoje</span>':''}</td>
         <td style="color:var(--text-muted);font-size:12px">${d.tipo||'—'} · ${d.bairro||'—'}</td>
-        <td style="font-size:12px">${statusLabel}</td>
+        <td>${statusCell}</td>
         <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
         <td><button class="contact-btn${doneToday?' contact-done':''}" data-type="${d._type}" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button></td>
       </tr>`;
@@ -473,6 +476,25 @@ function renderAgentContacts(agentName) {
       await updateCpdDetail(entryDate, agentName, idx, { status: sel.value });
       renderAgentContacts(agentName);
     });
+  });
+
+  // Status change (DOC tracker)
+  wrap.querySelectorAll('.doc-tracker-status').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const entryDate = sel.dataset.entryDate;
+      const idx = parseInt(sel.dataset.idx);
+      const opt = STATUS_OPTIONS.find(o => o.value === sel.value);
+      sel.style.color = opt?.color || 'var(--text-muted)';
+      sel.style.borderColor = opt?.value ? opt.color : 'var(--border)';
+      await updateDocNota(entryDate, agentName, idx, sel.value);
+    });
+  });
+
+  // Apply color to existing doc status selects
+  wrap.querySelectorAll('.doc-tracker-status').forEach(sel => {
+    const opt = STATUS_OPTIONS.find(o => o.value === sel.value);
+    sel.style.color = opt?.color || 'var(--text-muted)';
+    sel.style.borderColor = opt?.value ? opt.color : 'var(--border)';
   });
 
   // Contact button
