@@ -463,7 +463,7 @@ function renderAgentContacts(agentName) {
         DOCs (${docs.length})
       </button>
     </div>
-    ${pendCount > 0 ? `<div class="contact-alert">⚠ ${pendCount} contato${pendCount>1?'s':''} pendente${pendCount>1?'s':''} hoje — ligue agora!</div>` : list.length > 0 ? `<div class="contact-ok">✓ Todos contatados hoje</div>` : ''}
+    ${isCpd && pendingCpd > 0 ? `<div class="contact-alert">⚠ ${pendingCpd} contato${pendingCpd>1?'s':''} pendente${pendingCpd>1?'s':''} hoje — ligue agora!</div>` : isCpd && cpds.length > 0 ? `<div class="contact-ok">✓ Todos contatados hoje</div>` : ''}
     ${list.length === 0
       ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CPD ativo':'DOC'} registrado</div>`
       : `<div style="overflow-x:auto;margin-top:10px">
