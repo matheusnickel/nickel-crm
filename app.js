@@ -1798,6 +1798,7 @@ function generateReport(period) {
   </body></html>`;
 
   const w=window.open('','_blank');
+  if (!w) { alert('Ative os pop-ups no navegador para exportar o relatório.'); return; }
   w.document.write(html);
   w.document.close();
 }
