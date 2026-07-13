@@ -470,7 +470,7 @@ function renderAgentContacts(agentName) {
       const entryDate = sel.dataset.entryDate;
       const idx = parseInt(sel.dataset.idx);
       await updateCpdDetail(entryDate, agentName, idx, { status: sel.value });
-      if (sel.value === 'doc' || sel.value === 'doc_exclusivo') agentContactTab = 'doc';
+      if (sel.value === 'doc') agentContactTab = 'doc';
       renderAgentContacts(agentName);
     });
   });
