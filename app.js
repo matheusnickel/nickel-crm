@@ -383,7 +383,7 @@ function renderAgentContacts(agentName) {
   // CPDs ativos (exclui os que viraram DOC — esses vão para aba DOC)
   const cpds = [];
   entries.forEach(e => (e.cpdDetails||[]).forEach((d, i) => {
-    if (d.nome && d.status !== 'doc' && d.status !== 'doc_exclusivo' && d.status !== 'descarte')
+    if (d.nome && d.status !== 'doc' && d.status !== 'descarte')
       cpds.push({ ...d, entryDate: e.date, idx: i, _type: 'cpd' });
   }));
   cpds.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
@@ -394,7 +394,7 @@ function renderAgentContacts(agentName) {
     if (d.nome) docs.push({ ...d, entryDate: e.date, idx: i, _type: 'doc' });
   }));
   entries.forEach(e => (e.cpdDetails||[]).forEach((d, i) => {
-    if (d.nome && (d.status === 'doc' || d.status === 'doc_exclusivo'))
+    if (d.nome && d.status === 'doc')
       docs.push({ ...d, entryDate: e.date, idx: i, _type: 'cpd-virou-doc' });
   }));
   docs.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
