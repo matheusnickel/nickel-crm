@@ -399,14 +399,10 @@ function renderAgentContacts(agentName) {
   }));
   cpds.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
-  // DOCs: lançamentos reais + CPDs que viraram DOC
+  // DOCs: apenas lançamentos reais do docDetails
   const docs = [];
   entries.forEach(e => (e.docDetails||[]).forEach((d, i) => {
     if (d.nome) docs.push({ ...d, entryDate: e.date, idx: i, _type: 'doc' });
-  }));
-  entries.forEach(e => (e.cpdDetails||[]).forEach((d, i) => {
-    if (d.nome && d.status === 'doc')
-      docs.push({ ...d, entryDate: e.date, idx: i, _type: 'cpd-virou-doc' });
   }));
   docs.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
@@ -432,20 +428,14 @@ function renderAgentContacts(agentName) {
         <td><button class="contact-btn${doneToday?' contact-done':''}" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button></td>
       </tr>`;
     } else {
-      const isCpdDoc = d._type === 'cpd-virou-doc';
-      const statusCell = isCpdDoc
-        ? `<span style="color:#a8e63d;font-size:11px">CPD → DOC</span>`
-        : `<select class="doc-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">
-            ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
-           </select>`;
-      const actionCell = d._type === 'doc'
-        ? `<button class="del-doc-detail-btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}" title="Excluir DOC" style="background:none;border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px">🗑</button>`
-        : '';
+      const statusCell = `<select class="doc-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">
+          ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
+         </select>`;
       return `<tr>
         <td style="font-weight:500">${d.nome}</td>
-        <td style="color:var(--text-muted);font-size:12px">${isCpdDoc ? (d.telefone||'—') : `${d.tipo||'—'} · ${d.bairro||'—'}`}</td>
+        <td style="color:var(--text-muted);font-size:12px">${d.tipo||'—'} · ${d.bairro||'—'}</td>
         <td>${statusCell}</td>
-        <td>${actionCell}</td>
+        <td><button class="del-doc-detail-btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}" title="Excluir DOC" style="background:none;border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px">🗑</button></td>
       </tr>`;
     }
   };
