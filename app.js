@@ -31,10 +31,11 @@ async function loadTeam() {
 const TIPOS   = ['Casa', 'Apto', 'Studio', 'Terreno', 'Comercial'];
 
 const STATUS_OPTIONS = [
-  { value: '',      label: '—',    color: 'var(--text-muted)' },
-  { value: 'FOTOS', label: 'FOTOS', color: '#e67e22' },
-  { value: 'AVI',   label: 'AVI',   color: '#3498db' },
-  { value: 'SITE',  label: 'SITE',  color: '#a8e63d' },
+  { value: '',      label: '—',                 color: 'var(--text-muted)' },
+  { value: 'FOTOS', label: 'FOTOS',             color: '#e67e22' },
+  { value: 'AVI',   label: 'AVI',               color: '#3498db' },
+  { value: 'AV',    label: 'Falta assinar AV',  color: '#9b59b6' },
+  { value: 'SITE',  label: 'SITE',              color: '#a8e63d' },
 ];
 const CPD_STATUS_OPTIONS = [
   { value: '',              label: '—' },
@@ -118,6 +119,16 @@ async function updateCpdDetail(date, agent, cpdIdx, fields) {
   const entry = entries.find(e => e.date===date && e.agent===agent);
   if (!entry || !(entry.cpdDetails||[])[cpdIdx]) return;
   Object.assign(entry.cpdDetails[cpdIdx], fields);
+  localUpsert(entry);
+  await fbUpsertEntry(entry);
+}
+
+async function deleteDocDetail(date, agent, docIdx) {
+  const entries = getEntries();
+  const entry = entries.find(e => e.date === date && e.agent === agent);
+  if (!entry || !entry.docDetails[docIdx]) return;
+  entry.docDetails.splice(docIdx, 1);
+  entry.doc = entry.docDetails.length;
   localUpsert(entry);
   await fbUpsertEntry(entry);
 }
@@ -427,12 +438,14 @@ function renderAgentContacts(agentName) {
         : `<select class="doc-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">
             ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
            </select>`;
-      return `<tr style="${rowBg}">
-        <td style="font-weight:500">${d.nome}${pending?'<span class="contact-pending-badge">● hoje</span>':''}</td>
+      const actionCell = d._type === 'doc'
+        ? `<button class="del-doc-detail-btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}" title="Excluir DOC" style="background:none;border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px">🗑</button>`
+        : '';
+      return `<tr>
+        <td style="font-weight:500">${d.nome}</td>
         <td style="color:var(--text-muted);font-size:12px">${isCpdDoc ? (d.telefone||'—') : `${d.tipo||'—'} · ${d.bairro||'—'}`}</td>
         <td>${statusCell}</td>
-        <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
-        <td><button class="contact-btn${doneToday?' contact-done':''}" data-type="${d._type}" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button></td>
+        <td>${actionCell}</td>
       </tr>`;
     }
   };
@@ -447,7 +460,7 @@ function renderAgentContacts(agentName) {
         CPDs (${cpds.length})${pendingCpd>0?`<span class="contact-tab-badge">${pendingCpd}</span>`:''}
       </button>
       <button class="nota-tab-btn${!isCpd?' active':''}" data-ctab="doc">
-        DOCs (${docs.length})${pendingDoc>0?`<span class="contact-tab-badge">${pendingDoc}</span>`:''}
+        DOCs (${docs.length})
       </button>
     </div>
     ${pendCount > 0 ? `<div class="contact-alert">⚠ ${pendCount} contato${pendCount>1?'s':''} pendente${pendCount>1?'s':''} hoje — ligue agora!</div>` : list.length > 0 ? `<div class="contact-ok">✓ Todos contatados hoje</div>` : ''}
@@ -455,7 +468,7 @@ function renderAgentContacts(agentName) {
       ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CPD ativo':'DOC'} registrado</div>`
       : `<div style="overflow-x:auto;margin-top:10px">
           <table class="data-table">
-            <thead><tr><th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th><th>Histórico</th><th></th></tr></thead>
+            <thead><tr><th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th></tr></thead>
             <tbody>${list.map(makeRow).join('')}</tbody>
           </table>
         </div>`}`;
@@ -486,6 +499,16 @@ function renderAgentContacts(agentName) {
     sel.addEventListener('change', async () => {
       applyColor();
       await updateDocNota(sel.dataset.entryDate, agentName, parseInt(sel.dataset.idx), sel.value);
+    });
+  });
+
+  // Delete DOC detail button
+  wrap.querySelectorAll('.del-doc-detail-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Excluir este DOC?')) return;
+      btn.disabled = true; btn.textContent = '...';
+      await deleteDocDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx));
+      renderAgentContacts(agentName);
     });
   });
 
