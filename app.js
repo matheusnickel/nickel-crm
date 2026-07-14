@@ -123,6 +123,65 @@ async function updateCpdDetail(date, agent, cpdIdx, fields) {
   await fbUpsertEntry(entry);
 }
 
+async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
+  const entries = getEntries();
+  const entry = entries.find(e => e.date === date && e.agent === agent);
+  if (!entry) return;
+  if (entry.cpdDetails?.[cpdIdx]) entry.cpdDetails[cpdIdx].status = 'doc';
+  if (!entry.docDetails) entry.docDetails = [];
+  entry.docDetails.push(docDetail);
+  entry.doc = entry.docDetails.length;
+  localUpsert(entry);
+  await fbUpsertEntry(entry);
+}
+
+function showDocFromCpdModal(cpd, onConfirm, onCancel) {
+  document.getElementById('doc-modal-overlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'doc-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px';
+  const bairrosOpts = BAIRROS.map(b=>`<option value="${b}">${b}</option>`).join('');
+  const tiposOpts   = TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('');
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
+      <div style="font-size:14px;font-weight:700;color:#f0f0f0;margin-bottom:6px">📋 Preencher dados do DOC</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px"><strong>${cpd.nome||''}</strong> está virando DOC — preencha as informações:</div>
+      <div class="form-group"><label>Nome do proprietário</label><input type="text" id="md-nome" value="${(cpd.nome||'').replace(/"/g,'&quot;')}" required></div>
+      <div class="form-group"><label>Tipo</label><select id="md-tipo"><option value="">Selecione</option>${tiposOpts}</select></div>
+      <div class="form-group"><label>Bairro</label>
+        <select id="md-bairro"><option value="">Selecione</option>${bairrosOpts}<option value="__outro__">Outro...</option></select>
+        <input type="text" id="md-bairro-outro" placeholder="Digite o bairro" style="margin-top:6px;display:none">
+      </div>
+      <div class="form-group"><label>Valor (ex: 450000)</label><input type="number" id="md-valor" min="0" placeholder="0"></div>
+      <div class="form-group"><label>É indicação?</label><select id="md-indicacao"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+      <div class="form-group" id="md-indicador-wrap" style="display:none"><label>Nome do indicador</label><input type="text" id="md-indicador" placeholder="Ex: Maria Souza"></div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button type="button" class="btn" id="md-confirm" style="flex:1">Confirmar DOC</button>
+        <button type="button" class="btn btn-outline" id="md-cancel" style="flex:1">Cancelar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('md-bairro').addEventListener('change', function() {
+    document.getElementById('md-bairro-outro').style.display = this.value==='__outro__' ? 'block' : 'none';
+  });
+  document.getElementById('md-indicacao').addEventListener('change', function() {
+    document.getElementById('md-indicador-wrap').style.display = this.value==='sim' ? 'block' : 'none';
+  });
+  document.getElementById('md-cancel').addEventListener('click', () => { overlay.remove(); onCancel(); });
+  document.getElementById('md-confirm').addEventListener('click', () => {
+    const nome      = document.getElementById('md-nome').value.trim();
+    const tipo      = document.getElementById('md-tipo').value;
+    const bairroSel = document.getElementById('md-bairro').value;
+    const bairro    = bairroSel==='__outro__' ? document.getElementById('md-bairro-outro').value.trim() : bairroSel;
+    const valor     = parseFloat(document.getElementById('md-valor').value) || 0;
+    const indicacao = document.getElementById('md-indicacao').value;
+    const indicador = document.getElementById('md-indicador').value.trim();
+    if (!nome || !tipo || !bairro) { alert('Preencha nome, tipo e bairro.'); return; }
+    overlay.remove();
+    onConfirm({ nome, tipo, bairro, valor, indicacao, indicador, nota:'', lastContact:'', contactDates:[] });
+  });
+}
+
 async function deleteDocDetail(date, agent, docIdx) {
   const entries = getEntries();
   const entry = entries.find(e => e.date === date && e.agent === agent);
@@ -472,9 +531,25 @@ function renderAgentContacts(agentName) {
     sel.addEventListener('change', async () => {
       const entryDate = sel.dataset.entryDate;
       const idx = parseInt(sel.dataset.idx);
-      await updateCpdDetail(entryDate, agentName, idx, { status: sel.value });
-      if (sel.value === 'doc') agentContactTab = 'doc';
-      renderAgentContacts(agentName);
+
+      if (sel.value === 'doc') {
+        // revert visually while modal is open
+        const entries = getEntries();
+        const entry = entries.find(e => e.date === entryDate && e.agent === agentName);
+        const cpd = entry?.cpdDetails?.[idx] || {};
+        sel.value = cpd.status || '';
+
+        showDocFromCpdModal(cpd, async (docDetail) => {
+          await convertCpdToDoc(entryDate, agentName, idx, docDetail);
+          agentContactTab = 'doc';
+          renderAgentContacts(agentName);
+        }, () => {
+          // cancelled — nothing to do, select already reverted
+        });
+      } else {
+        await updateCpdDetail(entryDate, agentName, idx, { status: sel.value });
+        renderAgentContacts(agentName);
+      }
     });
   });
 
