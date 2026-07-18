@@ -331,10 +331,11 @@ function calcStreak(agentName) {
 
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  // Teto: 0.5 DOC-eq de pipeline por dia (dia ótimo sem DOC = 5 pts)
-  const pipeline = entry.cpd / 4.5 + entry.prosp / 37;
-  const effective = entry.doc + Math.min(pipeline, 0.5);
-  return Math.min(effective * 10, 10);
+  if (entry.doc > 0) return 10;
+  // PROSP sem CPD vale metade (ausência de conversão penaliza)
+  const effProsp = entry.cpd === 0 ? entry.prosp * 0.5 : entry.prosp;
+  const raw = entry.cpd * 0.9 + effProsp * 0.24;
+  return parseFloat(Math.min(raw, 9.9).toFixed(1));
 }
 
 function calcWeeklyScore(agentName, weekEntries) {
