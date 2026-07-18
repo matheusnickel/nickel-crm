@@ -1000,14 +1000,14 @@ function renderAgentDashboard(session, selectedDate, editing) {
         <form class="daily-form" id="daily-form">
           ${sentToday?`<div style="font-size:12px;color:var(--gold);margin-bottom:12px;text-align:center">Editando lançamento de ${formatDate(date)}</div>`:''}
           <div class="fields-row">
-            <div class="field-box"><label>PROSP</label><input type="number" id="f-prosp" min="0" value="${pre.prosp}" required></div>
-            <div class="field-box"><label>CPD</label><input type="number" id="f-cpd" min="0" value="${pre.cpd}" required></div>
-            <div class="field-box"><label>DOC</label><input type="number" id="f-doc" min="0" value="${pre.doc}" required></div>
+            <div class="field-box"><label>PROSP<span class="field-hint">Prospecção</span></label><input type="number" id="f-prosp" min="0" value="${pre.prosp}" required></div>
+            <div class="field-box"><label>CPD<span class="field-hint">Conv. Proprietário Diferente</span></label><input type="number" id="f-cpd" min="0" value="${pre.cpd}" required></div>
+            <div class="field-box"><label>DOC<span class="field-hint">Pegou Documentação</span></label><input type="number" id="f-doc" min="0" value="${pre.doc}" required></div>
           </div>
           <div class="fields-row" style="margin-top:8px">
-            <div class="field-box"><label style="color:#6495ed">VA</label><input type="number" id="f-va" min="0" value="${pre.va||0}"></div>
-            <div class="field-box"><label style="color:#6495ed">VV</label><input type="number" id="f-vv" min="0" value="${pre.vv||0}"></div>
-            <div class="field-box"><label style="color:#6495ed">FOTOS</label><input type="number" id="f-fotos" min="0" value="${pre.fotos||0}"></div>
+            <div class="field-box"><label style="color:#6495ed">VA<span class="field-hint">Visita de Angariação</span></label><input type="number" id="f-va" min="0" value="${pre.va||0}"></div>
+            <div class="field-box"><label style="color:#6495ed">VV<span class="field-hint">Visita de Venda</span></label><input type="number" id="f-vv" min="0" value="${pre.vv||0}"></div>
+            <div class="field-box"><label style="color:#6495ed">FOTOS<span class="field-hint">Fotos do imóvel</span></label><input type="number" id="f-fotos" min="0" value="${pre.fotos||0}"></div>
           </div>
           <div id="cpd-details-area">${buildCpdDetailsHTML(pre.cpd||0, pre.cpdDetails||[])}</div>
           <div id="doc-details-area">${buildDocDetailsHTML(pre.doc||0,pre.docDetails)}</div>
