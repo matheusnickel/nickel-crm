@@ -338,15 +338,36 @@ function calcDailyScore(entry) {
   return parseFloat(Math.min(raw, 9.9).toFixed(1));
 }
 
-function calcWeeklyScore(agentName, weekEntries) {
+function calcWeeklyScore(agentName, weekEntries, monthEntries, weekRef) {
   const mine  = weekEntries.filter(e => e.agent === agentName);
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta: 3 DOC/semana. Teto pipeline: 0.75 DOC-eq (25% da meta)
-  const pipeline = cpd / 4.5 + prosp / 37;
-  const effective = doc + Math.min(pipeline, 0.75);
-  return Math.min(effective / 3 * 10, 10);
+
+  // 4+ DOC = nota máxima (acima da meta)
+  if (doc >= 4) return 10;
+
+  // Base fixa por tier de DOC
+  const base     = doc === 3 ? 8 : doc === 2 ? 6 : doc === 1 ? 3 : 0;
+  const nextTier = doc === 3 ? 10 : doc === 2 ? 8 : doc === 1 ? 6 : 3;
+  const maxBonus = nextTier - base - 0.1; // nunca chega no próximo nível
+
+  // Bônus CPD: acima de 21/semana tem peso (média necessária para ritmo de 12 DOC/mês ≈ 13/sem)
+  const cpdBonus = cpd > 21 ? Math.min((cpd - 21) / 15, 1) * (maxBonus * 0.55) : 0;
+
+  // Bônus PROSP: acima da média real da equipe (~44/semana)
+  const prospBonus = prosp > 44 ? Math.min((prosp - 44) / 60, 1) * (maxBonus * 0.25) : 0;
+
+  // Bônus mensal: se está no ritmo de 12 DOC/mês (3 por semana decorrida)
+  const mineMonth    = (monthEntries || []).filter(e => e.agent === agentName);
+  const monthDoc     = mineMonth.reduce((s, e) => s + e.doc, 0);
+  const refDate      = weekRef ? new Date(weekRef) : new Date();
+  const weekOfMonth  = Math.max(1, Math.ceil(refDate.getDate() / 7));
+  const pace         = monthDoc / (weekOfMonth * 3);
+  const monthBonus   = pace >= 1 ? maxBonus * 0.2 : 0;
+
+  const totalBonus = Math.min(cpdBonus + prospBonus + monthBonus, maxBonus);
+  return parseFloat(Math.min(base + totalBonus, 9.9).toFixed(1));
 }
 
 function calcMonthlyScore(agentName, monthEntries) {
@@ -400,7 +421,7 @@ function renderNotasRanking() {
   } else if (activeNotaTab === 'semana') {
     rows = names.map(name => {
       const doc = weekE.filter(x => x.agent === name).reduce((s, e) => s + e.doc, 0);
-      return { name, score: calcWeeklyScore(name, weekE), doc, sent: true };
+      return { name, score: calcWeeklyScore(name, weekE, monthE, weekRef), doc, sent: true };
     });
   } else {
     rows = names.map(name => {
@@ -643,7 +664,8 @@ function renderAgentDailyRanking(currentAgentName) {
     const weekEntries = filterEntries('week', t);
     rows = names.map(name => {
       const streak = calcStreak(name);
-      return { name, score: calcWeeklyScore(name, weekEntries), sent: true, streak };
+      const monthEntriesForWeek = filterEntries('month', t);
+      return { name, score: calcWeeklyScore(name, weekEntries, monthEntriesForWeek, t), sent: true, streak };
     });
     rows.sort((a, b) => b.score - a.score);
   } else {
