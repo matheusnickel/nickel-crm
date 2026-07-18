@@ -345,11 +345,11 @@ function calcWeeklyScore(agentName, weekEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // DOC tem peso máximo. CPD conta em cheio (vai virar DOC) — sem teto artificial.
-  // 3 DOC-eq na semana = 10. 30 CPDs = 10. Qualquer combinação vale.
-  // Taxas reais: 1 DOC = 4.5 CPD = 37 PROSP
-  const equiv = doc + cpd / 4.5 + prosp / 37;
-  return parseFloat(Math.min(equiv / 3 * 10, 10).toFixed(1));
+  // Meta: 3 DOC/semana = 10. DOC é o que importa.
+  // CPD e PROSP têm bônus mínimo (máx 0.5) — igual à lógica da nota mensal.
+  const docScore      = doc * (10 / 3);
+  const pipelineBonus = Math.min(cpd * 0.1 + prosp * 0.003, 0.5);
+  return parseFloat(Math.min(docScore + pipelineBonus, 10).toFixed(1));
 }
 
 function calcMonthlyScore(agentName, monthEntries) {
