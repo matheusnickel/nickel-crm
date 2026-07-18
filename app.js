@@ -348,11 +348,16 @@ function calcWeeklyScore(agentName, weekEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta: 3 DOC/semana = 10. DOC é o que importa.
-  // CPD e PROSP têm bônus mínimo (máx 0.5) — igual à lógica da nota mensal.
-  const docScore      = doc * (10 / 3);
-  const pipelineBonus = Math.min(cpd * 0.1 + prosp * 0.003, 0.5);
-  return parseFloat(Math.min(docScore + pipelineBonus, 10).toFixed(1));
+  // < 3 DOC: não bateu meta semanal — máx 6.0
+  // 3 DOC = 7.5 (meta cumprida), 6 DOC = 10 (semana perfeita)
+  if (doc >= 3) {
+    const docScore = 7.5 + (doc - 3) * (2.5 / 3);
+    const bonus = Math.min(cpd * 0.05 + prosp * 0.003, 0.5);
+    return parseFloat(Math.min(docScore + bonus, 10).toFixed(1));
+  }
+  const base = doc * 2.0;
+  const pipeline = Math.min(cpd * 0.15 + prosp * 0.01, 2.0);
+  return parseFloat(Math.min(base + pipeline, 6.0).toFixed(1));
 }
 
 function calcMonthlyScore(agentName, monthEntries) {
