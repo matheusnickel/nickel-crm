@@ -365,11 +365,14 @@ function calcMonthlyScore(agentName, monthEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta: 12 DOC = nota 10. DOC é o que importa.
-  // CPD e PROSP têm peso mínimo (quem trabalhou mas não converteu tem um pequeno reconhecimento)
-  const docScore     = doc * (10 / 12);
-  const pipelineBonus = Math.min(cpd * 0.02 + prosp * 0.001, 0.5);
-  return parseFloat(Math.min(docScore + pipelineBonus, 10).toFixed(1));
+  // Meta: 12 DOC = 8.0 · 13 = 9.0 · 14+ = 10.0
+  // CP/PROSP quebram a nota dentro de cada faixa (max +0.9); abaixo da meta max +0.5
+  const bonus = Math.min(cpd * 0.02 + prosp * 0.001, 0.9);
+  if (doc >= 14) return parseFloat((10.0).toFixed(1));
+  if (doc >= 13) return parseFloat(Math.min(9.0 + bonus, 9.9).toFixed(1));
+  if (doc >= 12) return parseFloat(Math.min(8.0 + bonus, 8.9).toFixed(1));
+  const subBonus = Math.min(cpd * 0.02 + prosp * 0.001, 0.5);
+  return parseFloat(Math.min(doc * (7.5 / 12) + subBonus, 7.9).toFixed(1));
 }
 
 function scoreColor(score) {
