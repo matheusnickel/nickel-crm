@@ -320,31 +320,39 @@ function calcStreak(agentName) {
 }
 
 // ── SCORING / NOTA ───────────────────────────────────────
+// ── SISTEMA DE PONTUAÇÃO ─────────────────────────────────
+// Baseado nas taxas reais de conversão (jun+jul/2026):
+//   1 DOC = 4.5 CPD = 37 PROSP  →  meta mensal = 12 DOC
+// Pesos: 1 CPD = 1/4.5 ≈ 0.222 DOC-eq  |  1 PROSP = 1/37 ≈ 0.027 DOC-eq
+// Quem bate a meta (12 DOC/mês ou equivalente em CPD/PROSP) tira 10.
+
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  const raw = (entry.doc * 6.0) + (entry.cpd * 2.0) + (entry.prosp * 0.01);
-  const cap = entry.doc >= 3 ? 10 : entry.doc >= 1 ? 8.9 : 5.9;
-  return Math.min(raw, cap);
+  // Meta diária: 12 DOC ÷ 22 dias úteis ≈ 0.545 DOC/dia → 10 pts
+  // Mas como DOC diário é raro, escalonamos para que 1 DOC + esforço = ~10
+  // Pesos: DOC*6 + CPD*1.33 + PROSP*0.162  (1 DOC ≈ 4.5 CPDs ≈ 37 PROSPs)
+  const raw = (entry.doc * 6.0) + (entry.cpd * 1.33) + (entry.prosp * 0.162);
+  return Math.min(raw, 10);
 }
 
 function calcWeeklyScore(agentName, weekEntries) {
-  const mine = weekEntries.filter(e => e.agent === agentName);
+  const mine  = weekEntries.filter(e => e.agent === agentName);
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  const raw = (doc * 2.0) + (cpd * 0.5) + (prosp * 0.003);
-  const cap = doc >= 6 ? 10 : doc >= 3 ? 8.9 : 5.9;
-  return Math.min(raw, cap);
+  // Meta semanal: 3 DOC → 10 pts  |  13 CPD → 10 pts  |  111 PROSP → 10 pts
+  const raw = (doc * 3.33) + (cpd * 0.74) + (prosp * 0.090);
+  return Math.min(raw, 10);
 }
 
 function calcMonthlyScore(agentName, monthEntries) {
-  const mine = monthEntries.filter(e => e.agent === agentName);
+  const mine  = monthEntries.filter(e => e.agent === agentName);
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  const raw = (doc * 0.5) + (cpd * 0.15) + (prosp * 0.001);
-  const cap = doc >= 20 ? 10 : doc >= 12 ? 9.9 : 5.9;
-  return Math.min(raw, cap);
+  // Meta mensal: 12 DOC → 10 pts  |  54 CPD → 10 pts  |  447 PROSP → 10 pts
+  const raw = (doc * 0.833) + (cpd * 0.185) + (prosp * 0.0224);
+  return Math.min(raw, 10);
 }
 
 function scoreColor(score) {
