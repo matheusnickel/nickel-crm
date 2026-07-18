@@ -319,20 +319,22 @@ function calcStreak(agentName) {
   return streak;
 }
 
-// ── SCORING / NOTA ───────────────────────────────────────
 // ── SISTEMA DE PONTUAÇÃO ─────────────────────────────────
-// Baseado nas taxas reais de conversão (jun+jul/2026):
-//   1 DOC = 4.5 CPD = 37 PROSP  →  meta mensal = 12 DOC
-// Pesos: 1 CPD = 1/4.5 ≈ 0.222 DOC-eq  |  1 PROSP = 1/37 ≈ 0.027 DOC-eq
-// Quem bate a meta (12 DOC/mês ou equivalente em CPD/PROSP) tira 10.
+// DOC é o resultado principal. CPD e PROSP são pipeline — ajudam, mas têm teto.
+// Taxas reais (jun+jul/2026): 1 DOC = 4.5 CPD = 37 PROSP
+//
+// Fórmula: (doc + min(pipeline, teto)) / meta × 10
+//   pipeline = cpd/4.5 + prosp/37  (DOC-equivalentes de pipeline)
+//   teto: máx de pipeline que pode contribuir (não substitui DOC)
+//
+// Metas: 12 DOC/mês · 3 DOC/semana · 1 DOC/dia
 
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  // Meta diária: 12 DOC ÷ 22 dias úteis ≈ 0.545 DOC/dia → 10 pts
-  // Mas como DOC diário é raro, escalonamos para que 1 DOC + esforço = ~10
-  // Pesos: DOC*6 + CPD*1.33 + PROSP*0.162  (1 DOC ≈ 4.5 CPDs ≈ 37 PROSPs)
-  const raw = (entry.doc * 6.0) + (entry.cpd * 1.33) + (entry.prosp * 0.162);
-  return Math.min(raw, 10);
+  // Teto: 0.5 DOC-eq de pipeline por dia (dia ótimo sem DOC = 5 pts)
+  const pipeline = entry.cpd / 4.5 + entry.prosp / 37;
+  const effective = entry.doc + Math.min(pipeline, 0.5);
+  return Math.min(effective * 10, 10);
 }
 
 function calcWeeklyScore(agentName, weekEntries) {
@@ -340,9 +342,10 @@ function calcWeeklyScore(agentName, weekEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta semanal: 3 DOC → 10 pts  |  13 CPD → 10 pts  |  111 PROSP → 10 pts
-  const raw = (doc * 3.33) + (cpd * 0.74) + (prosp * 0.090);
-  return Math.min(raw, 10);
+  // Meta: 3 DOC/semana. Teto pipeline: 0.75 DOC-eq (25% da meta)
+  const pipeline = cpd / 4.5 + prosp / 37;
+  const effective = doc + Math.min(pipeline, 0.75);
+  return Math.min(effective / 3 * 10, 10);
 }
 
 function calcMonthlyScore(agentName, monthEntries) {
@@ -350,9 +353,10 @@ function calcMonthlyScore(agentName, monthEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta mensal: 12 DOC → 10 pts  |  54 CPD → 10 pts  |  447 PROSP → 10 pts
-  const raw = (doc * 0.833) + (cpd * 0.185) + (prosp * 0.0224);
-  return Math.min(raw, 10);
+  // Meta: 12 DOC/mês. Teto pipeline: 3 DOC-eq (25% da meta)
+  const pipeline = cpd / 4.5 + prosp / 37;
+  const effective = doc + Math.min(pipeline, 3);
+  return Math.min(effective / 12 * 10, 10);
 }
 
 function scoreColor(score) {
