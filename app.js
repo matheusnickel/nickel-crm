@@ -331,13 +331,15 @@ function calcStreak(agentName) {
 
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  // DOC não é automático 10 — depende do esforço do dia.
-  // Referência: 3 CPD + 30 PROSP (sem DOC) = 6.0 (fez o necessário mas não converteu)
-  //             3 CPD + 30 PROSP + 1 DOC   = 9.2 (fez o trabalho e converteu)
-  //             1 DOC sem esforço           = 3.2 (como conseguiu sem prospectar?)
-  // Pesos derivados da taxa real: 1 CPD = 8.3 PROSP
-  const raw = entry.doc * 3.2 + entry.cpd * 0.9 + entry.prosp * 0.11;
-  return parseFloat(Math.min(raw, 10).toFixed(1));
+  // Referência: 3 CPD + 30 PROSP (sem DOC) = 6.0 (esforço mínimo, sem resultado)
+  //             6 CPD + 40 PROSP (sem DOC)  ≈ 9.8 (esforço alto — nota alta, mas não chega em 10 sem DOC)
+  //             1 DOC + 0 esforço           = 6.0 (piso garantido: teve resultado)
+  //             1 DOC + esforço moderado    = 7–9 (granular conforme o que fez + converteu)
+  //             1 DOC + esforço alto        → pode chegar em 10
+  const effortScore = entry.cpd * 0.9 + entry.prosp * 0.11;
+  const natural = entry.doc * 3.2 + effortScore;
+  const floor = entry.doc > 0 ? 6.0 : 0;
+  return parseFloat(Math.min(Math.max(natural, floor), 10).toFixed(1));
 }
 
 function calcWeeklyScore(agentName, weekEntries) {
