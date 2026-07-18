@@ -1431,7 +1431,7 @@ function renderDocList(entries) {
             <div class="form-group" style="margin:0"><label>Proprietário</label><input class="ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}"></div>
             <div class="form-group" style="margin:0"><label>Valor</label><input class="ef-valor" type="number" min="0" value="${d.valor||0}"></div>
             <div class="form-group" style="margin:0"><label>Tipo</label><select class="ef-tipo"><option value="">Selecione</option>${tiposOpts}</select></div>
-            <div class="form-group" style="margin:0"><label>Bairro</label><select class="ef-bairro"><option value="">Selecione</option>${bairrosOpts}</select></div>
+            <div class="form-group" style="margin:0"><label>Bairro</label><select class="ef-bairro"><option value="">Selecione</option>${bairrosOpts}<option value="__outro__">Outro...</option></select><input type="text" class="ef-bairro-outro" placeholder="Digite o bairro" style="margin-top:6px;display:none"></div>
             <div class="form-group" style="margin:0"><label>Indicação</label><select class="ef-indicacao"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
             <div class="form-group ef-indicador-wrap" style="margin:0"><label>Indicador</label><input class="ef-indicador" type="text" value="${(d.indicador||'').replace(/"/g,'&quot;')}"></div>
           </div>
@@ -1454,8 +1454,17 @@ function renderDocList(entries) {
     if (!row) return;
     row.querySelector('.ef-tipo').value = d.tipo||'';
     const bSel = row.querySelector('.ef-bairro');
-    if (d.bairro && !BAIRROS.includes(d.bairro)) { const opt=document.createElement('option'); opt.value=d.bairro; opt.textContent=d.bairro; bSel.appendChild(opt); }
-    bSel.value = d.bairro || '';
+    const bOutro = row.querySelector('.ef-bairro-outro');
+    if (d.bairro && !BAIRROS.includes(d.bairro)) {
+      bSel.value = '__outro__';
+      bOutro.value = d.bairro;
+      bOutro.style.display = 'block';
+    } else {
+      bSel.value = d.bairro || '';
+    }
+    bSel.addEventListener('change', function() {
+      bOutro.style.display = this.value === '__outro__' ? 'block' : 'none';
+    });
     row.querySelector('.ef-indicacao').value = d.indicacao||'nao';
     const indWrap = row.querySelector('.ef-indicador-wrap');
     indWrap.style.display = (d.indicacao==='sim') ? '' : 'none';
@@ -1484,7 +1493,7 @@ function renderDocList(entries) {
         nome:      row.querySelector('.ef-nome').value.trim(),
         valor:     parseFloat(row.querySelector('.ef-valor').value)||0,
         tipo:      row.querySelector('.ef-tipo').value,
-        bairro:    row.querySelector('.ef-bairro').value,
+        bairro:    row.querySelector('.ef-bairro').value === '__outro__' ? row.querySelector('.ef-bairro-outro').value.trim() : row.querySelector('.ef-bairro').value,
         indicacao: row.querySelector('.ef-indicacao').value,
         indicador: row.querySelector('.ef-indicador').value.trim(),
       };
