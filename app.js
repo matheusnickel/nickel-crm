@@ -338,7 +338,8 @@ function calcDailyScore(entry) {
   //             1 DOC + esforço alto        → pode chegar em 10
   const effortScore = entry.cpd * 0.9 + entry.prosp * 0.11;
   const natural = entry.doc * 3.2 + effortScore;
-  const floor = entry.doc > 0 ? 6.0 : 0;
+  // DOC garante mínimo 6.0; cada CPD/PROSP sobe esse mínimo levemente
+  const floor = entry.doc > 0 ? 6.0 + entry.cpd * 0.1 + entry.prosp * 0.012 : 0;
   return parseFloat(Math.min(Math.max(natural, floor), 10).toFixed(1));
 }
 
