@@ -355,10 +355,11 @@ function calcMonthlyScore(agentName, monthEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta: 12 DOC/mês. Teto pipeline: 3 DOC-eq (25% da meta)
-  const pipeline = cpd / 4.5 + prosp / 37;
-  const effective = doc + Math.min(pipeline, 3);
-  return Math.min(effective / 12 * 10, 10);
+  // Meta: 12 DOC = nota 10. DOC é o que importa.
+  // CPD e PROSP têm peso mínimo (quem trabalhou mas não converteu tem um pequeno reconhecimento)
+  const docScore     = doc * (10 / 12);
+  const pipelineBonus = Math.min(cpd * 0.02 + prosp * 0.001, 0.5);
+  return parseFloat(Math.min(docScore + pipelineBonus, 10).toFixed(1));
 }
 
 function scoreColor(score) {
