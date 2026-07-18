@@ -331,13 +331,13 @@ function calcStreak(agentName) {
 
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  if (entry.doc > 0) return 10;
-  // CPD tem peso principal. PROSP tem peso pequeno (pode vir por relacionamento).
-  // PROSP sem CPD vale metade — sem conversão, o esforço conta menos.
-  // Ritmo para 12 DOC/mês = 2.45 CPD/dia → nota Regular (~4.9)
-  const effProsp = entry.cpd === 0 ? entry.prosp * 0.5 : entry.prosp;
-  const raw = entry.cpd * 2.0 + effProsp * 0.08;
-  return parseFloat(Math.min(raw, 9.9).toFixed(1));
+  // DOC não é automático 10 — depende do esforço do dia.
+  // Referência: 3 CPD + 30 PROSP (sem DOC) = 6.0 (fez o necessário mas não converteu)
+  //             3 CPD + 30 PROSP + 1 DOC   = 9.2 (fez o trabalho e converteu)
+  //             1 DOC sem esforço           = 3.2 (como conseguiu sem prospectar?)
+  // Pesos derivados da taxa real: 1 CPD = 8.3 PROSP
+  const raw = entry.doc * 3.2 + entry.cpd * 0.9 + entry.prosp * 0.11;
+  return parseFloat(Math.min(raw, 10).toFixed(1));
 }
 
 function calcWeeklyScore(agentName, weekEntries) {
