@@ -48,7 +48,7 @@
       </div>
       <div class="total-box">
         <div class="t-val" id="tot-cpd">0</div>
-        <div class="t-lbl">CPD</div>
+        <div class="t-lbl">CP</div>
       </div>
       <div class="total-box">
         <div class="t-val" id="tot-doc">0</div>
@@ -60,7 +60,7 @@
     <div class="g-row g-row-2-1">
 
       <div class="card">
-        <div class="card-title">Ranking — ordenado por DOC · CPD · PROSP</div>
+        <div class="card-title">Ranking — ordenado por DOC · CP · PROSP</div>
         <div style="overflow-x:auto">
           <table class="data-table rank-table">
             <colgroup>
@@ -76,7 +76,7 @@
                 <th>#</th>
                 <th>Angariador</th>
                 <th class="num-cell doc-th">DOC</th>
-                <th class="num-cell">CPD</th>
+                <th class="num-cell">CP</th>
                 <th class="num-cell">PROSP</th>
                 <th class="num-cell rank-extra">VV</th>
                 <th class="num-cell rank-extra">VA</th>
@@ -106,8 +106,8 @@
         </button>
         <div class="card-body" id="conv-body" style="display:none">
           <div class="conv-mode-row">
-            <button class="conv-mode-btn active" data-mode="prosp-cpd">PROSP → CPD</button>
-            <button class="conv-mode-btn" data-mode="cpd-doc">CPD → DOC</button>
+            <button class="conv-mode-btn active" data-mode="prosp-cpd">PROSP → CP</button>
+            <button class="conv-mode-btn" data-mode="cpd-doc">CP → DOC</button>
           </div>
           <div id="conv-list"></div>
         </div>
@@ -129,7 +129,7 @@
 
       <div class="card collapsible-card">
         <button class="card-title card-toggle" data-target="cpd-list-body">
-          CPDs — acompanhamento <span class="toggle-arrow">▸</span>
+          CPs — acompanhamento <span class="toggle-arrow">▸</span>
         </button>
         <div class="card-body" id="cpd-list-body" style="display:none">
           <div id="cpd-list-wrap"></div>
@@ -185,7 +185,7 @@
           </div>
           <div class="fields-row" style="margin-bottom:10px">
             <div class="field-box"><label>PROSP</label><input type="number" id="lanc-prosp" min="0" value="0"></div>
-            <div class="field-box"><label>CPD</label><input type="number" id="lanc-cpd" min="0" value="0"></div>
+            <div class="field-box"><label>CP</label><input type="number" id="lanc-cpd" min="0" value="0"></div>
             <div class="field-box"><label>DOC</label><input type="number" id="lanc-doc" min="0" value="0"></div>
           </div>
           <div class="fields-row" style="margin-bottom:14px">

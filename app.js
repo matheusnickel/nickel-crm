@@ -92,7 +92,7 @@ function buildCpdDetailsHTML(count, prefill=[]) {
   for (let i = 0; i < count; i++) {
     const p = prefill[i] || {};
     html += `<div class="cpd-detail-item">
-      <span class="cpd-detail-label">CPD ${i+1}</span>
+      <span class="cpd-detail-label">CP ${i+1}</span>
       <input class="cpd-nome" data-idx="${i}" type="text" placeholder="Nome do proprietário" value="${(p.nome||'').replace(/"/g,'&quot;')}">
       <input class="cpd-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone||'').replace(/"/g,'&quot;')}">
     </div>`;
@@ -523,7 +523,7 @@ function renderAgentContacts(agentName) {
   wrap.innerHTML = `
     <div class="nota-tabs" style="position:relative">
       <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">
-        CPDs (${cpds.length})${pendingCpd>0?`<span class="contact-tab-badge">${pendingCpd}</span>`:''}
+        CPs (${cpds.length})${pendingCpd>0?`<span class="contact-tab-badge">${pendingCpd}</span>`:''}
       </button>
       <button class="nota-tab-btn${!isCpd?' active':''}" data-ctab="doc">
         DOCs (${docs.length})
@@ -531,7 +531,7 @@ function renderAgentContacts(agentName) {
     </div>
     ${isCpd && pendingCpd > 0 ? `<div class="contact-alert">⚠ ${pendingCpd} contato${pendingCpd>1?'s':''} pendente${pendingCpd>1?'s':''} hoje — ligue agora!</div>` : isCpd && cpds.length > 0 ? `<div class="contact-ok">✓ Todos contatados hoje</div>` : ''}
     ${list.length === 0
-      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CPD ativo':'DOC'} registrado</div>`
+      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CP ativo':'DOC'} registrado</div>`
       : `<div style="overflow-x:auto;margin-top:10px">
           <table class="data-table">
             <thead><tr><th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th></tr></thead>
@@ -995,7 +995,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
         <div style="font-weight:600;color:#f0f0f0">Relatório de ${formatDate(date)} enviado</div>
-        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CPD <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong></div>
+        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CP <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong></div>
         ${(sentToday.va||sentToday.vv||sentToday.fotos)?`<div style="font-size:12px;margin-top:4px;color:var(--text-muted)">VA <strong style="color:#6495ed">${sentToday.va||0}</strong> &nbsp;·&nbsp; VV <strong style="color:#6495ed">${sentToday.vv||0}</strong> &nbsp;·&nbsp; FOTOS <strong style="color:#6495ed">${sentToday.fotos||0}</strong></div>`:''}
         <div class="agent-daily-score" style="--nota-color:${dsColor}">
           <span class="agent-nota-val" style="color:${dsColor}">${dailyScore.toFixed(1)}</span>
@@ -1018,7 +1018,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
           ${sentToday?`<div style="font-size:12px;color:var(--gold);margin-bottom:12px;text-align:center">Editando lançamento de ${formatDate(date)}</div>`:''}
           <div class="fields-row">
             <div class="field-box"><label>PROSP<span class="field-hint">Prospecção</span></label><input type="number" id="f-prosp" min="0" value="${pre.prosp}" required></div>
-            <div class="field-box"><label>CPD<span class="field-hint">Conv. Proprietário Diferente</span></label><input type="number" id="f-cpd" min="0" value="${pre.cpd}" required></div>
+            <div class="field-box"><label>CP<span class="field-hint">(Nova conversa com o proprietário)</span></label><input type="number" id="f-cpd" min="0" value="${pre.cpd}" required></div>
             <div class="field-box"><label>DOC<span class="field-hint">Pegou Documentação</span></label><input type="number" id="f-doc" min="0" value="${pre.doc}" required></div>
           </div>
           <div class="fields-row" style="margin-top:8px">
@@ -1639,7 +1639,7 @@ function renderDayView(dateStr) {
       <thead><tr>
         <th>Angariador</th>
         <th class="num-cell">PROSP</th>
-        <th class="num-cell">CPD</th>
+        <th class="num-cell">CP</th>
         <th class="num-cell doc-th">DOC</th>
         <th class="num-cell rank-extra">VV</th>
         <th class="num-cell rank-extra">VA</th>
@@ -1682,7 +1682,7 @@ function renderCpdList(entries) {
   const rows = activeCpdAgent ? allRows.filter(r => r.agent === activeCpdAgent) : allRows;
 
   if (allRows.length === 0) {
-    wrap.innerHTML = filterHTML + '<div class="empty-state">Nenhum CPD com detalhes no período</div>';
+    wrap.innerHTML = filterHTML + '<div class="empty-state">Nenhum CP com detalhes no período</div>';
     wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });
     return;
   }
@@ -1702,7 +1702,7 @@ function renderCpdList(entries) {
 
   wrap.innerHTML = filterHTML + `<div class="doc-table-wrap"><table class="data-table doc-table" style="font-size:12px">
     <thead><tr><th>Data</th><th>Angariador</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Motivo</th></tr></thead>
-    <tbody>${rowsHTML || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum CPD para este angariador</td></tr>'}</tbody>
+    <tbody>${rowsHTML || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum CP para este angariador</td></tr>'}</tbody>
   </table></div>`;
 
   wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });
@@ -1865,7 +1865,7 @@ function generateReport(period) {
   <h1>Nickel CRM — Relatório</h1>
   <div class="period">${periodLabel}</div>
   <h2>Ranking</h2>
-  <table><thead><tr><th>#</th><th>Angariador</th><th class="num">DOC</th><th class="num">CPD</th><th class="num">PROSP</th></tr></thead>
+  <table><thead><tr><th>#</th><th>Angariador</th><th class="num">DOC</th><th class="num">CP</th><th class="num">PROSP</th></tr></thead>
   <tbody>${ranked.map((a,i)=>`<tr><td class="${i===0?'gold':''}">${i<3?['🥇','🥈','🥉'][i]:i+1}</td><td>${a.agent}</td><td class="num">${a.doc}</td><td class="num">${a.cpd}</td><td class="num">${a.prosp}</td></tr>`).join('')}</tbody>
   </table>
   <h2>DOCs registrados</h2>
@@ -1874,7 +1874,7 @@ function generateReport(period) {
   <tbody>${allDocs.map(d=>`<tr><td>${formatDate(d.date)}</td><td>${d.agent}</td><td>${d.nome||'—'}</td><td>${d.tipo||'—'}</td><td>${d.bairro||'—'}</td><td class="num">${formatCurrency(d.valor)}</td><td>${d.indicacao==='sim'?`Sim — ${d.indicador||'—'}`:'Não'}</td><td>${d.nota||'—'}</td></tr>`).join('')}</tbody>
   </table>`}
   <h2>Totais</h2>
-  <table><thead><tr><th>PROSP</th><th>CPD</th><th>DOC</th></tr></thead>
+  <table><thead><tr><th>PROSP</th><th>CP</th><th>DOC</th></tr></thead>
   <tbody><tr><td>${byAgent.reduce((s,a)=>s+a.prosp,0)}</td><td>${byAgent.reduce((s,a)=>s+a.cpd,0)}</td><td>${byAgent.reduce((s,a)=>s+a.doc,0)}</td></tr></tbody>
   </table>
   </body></html>`;
@@ -1897,7 +1897,7 @@ function renderConversion(ranked) {
     return `<div class="conv-card">
       <div class="conv-card-header"><span class="conv-agent">${pos<=3?PODIUM_LABEL[pos]:''} ${a.agent}</span><span class="conv-pct ${pct==='—'?'muted':''}">${pct}</span></div>
       <div class="conv-bar-wrap"><div class="conv-bar" style="width:${den>0?Math.min((num/den)*100,100):0}%"></div></div>
-      <div class="conv-detail">${isProspCpd?'CPD / PROSP':'DOC / CPD'}: ${den>0?`${num} de ${den}`:'—'}</div>
+      <div class="conv-detail">${isProspCpd?'CP / PROSP':'DOC / CP'}: ${den>0?`${num} de ${den}`:'—'}</div>
     </div>`;
   }).join('');
 }
