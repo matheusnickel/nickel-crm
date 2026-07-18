@@ -355,8 +355,8 @@ function calcWeeklyScore(agentName, weekEntries, monthEntries, weekRef) {
   // Bônus CPD: acima de 21/semana tem peso (média necessária para ritmo de 12 DOC/mês ≈ 13/sem)
   const cpdBonus = cpd > 21 ? Math.min((cpd - 21) / 15, 1) * (maxBonus * 0.55) : 0;
 
-  // Bônus PROSP: acima da média real da equipe (~44/semana)
-  const prospBonus = prosp > 44 ? Math.min((prosp - 44) / 60, 1) * (maxBonus * 0.25) : 0;
+  // Bônus PROSP: acima de 150/semana (~30/dia × 5 dias, mínimo para ritmo de 12 DOC/mês)
+  const prospBonus = prosp > 150 ? Math.min((prosp - 150) / 100, 1) * (maxBonus * 0.25) : 0;
 
   // Bônus mensal: se está no ritmo de 12 DOC/mês (3 por semana decorrida)
   const mineMonth    = (monthEntries || []).filter(e => e.agent === agentName);
