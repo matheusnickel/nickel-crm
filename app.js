@@ -1717,12 +1717,23 @@ function renderCpdList(entries) {
       <td style="color:var(--text-muted)">${d.telefone||'—'}</td>
       <td><select class="cpd-status-sel nota-select">${selOpts}</select></td>
       <td><input class="cpd-motivo-inp" type="text" placeholder="Motivo" value="${(d.motivo||'').replace(/"/g,'&quot;')}" style="display:${isDescarte?'block':'none'};background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 8px;width:100%;outline:none"></td>
+      <td><button class="cpd-edit-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px 6px">✏️</button></td>
+    </tr>
+    <tr class="cpd-edit-row" data-edit-date="${d.date}" data-edit-agent="${d.agent}" data-edit-idx="${d.idx}" style="display:none">
+      <td colspan="7" style="padding:8px 4px">
+        <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:end">
+          <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="cpd-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none"></div>
+          <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="cpd-ef-tel" type="text" value="${(d.telefone||'').replace(/"/g,'&quot;')}" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none"></div>
+          <button class="cpd-ef-save btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Salvar</button>
+          <button class="cpd-ef-cancel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:8px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;white-space:nowrap">Cancelar</button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = filterHTML + `<div class="doc-table-wrap"><table class="data-table doc-table" style="font-size:12px">
-    <thead><tr><th>Data</th><th>Angariador</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Motivo</th></tr></thead>
-    <tbody>${rowsHTML || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum CP para este angariador</td></tr>'}</tbody>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Motivo</th><th></th></tr></thead>
+    <tbody>${rowsHTML || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum CP para este angariador</td></tr>'}</tbody>
   </table></div>`;
 
   wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });
@@ -1744,6 +1755,33 @@ function renderCpdList(entries) {
       const tr = inp.closest('tr');
       const { cpdDate:date, cpdAgent:agent, cpdIdx:idx } = tr.dataset;
       await updateCpdDetail(date, agent, parseInt(idx), { motivo: inp.value });
+    });
+  });
+
+  wrap.querySelectorAll('.cpd-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const editRow = wrap.querySelector(`.cpd-edit-row[data-edit-date="${btn.dataset.date}"][data-edit-agent="${btn.dataset.agent}"][data-edit-idx="${btn.dataset.idx}"]`);
+      const isOpen = editRow.style.display !== 'none';
+      wrap.querySelectorAll('.cpd-edit-row').forEach(r => r.style.display = 'none');
+      if (!isOpen) editRow.style.display = '';
+    });
+  });
+
+  wrap.querySelectorAll('.cpd-ef-save').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const editRow = wrap.querySelector(`.cpd-edit-row[data-edit-date="${btn.dataset.date}"][data-edit-agent="${btn.dataset.agent}"][data-edit-idx="${btn.dataset.idx}"]`);
+      const nome = editRow.querySelector('.cpd-ef-nome').value.trim();
+      const telefone = editRow.querySelector('.cpd-ef-tel').value.trim();
+      btn.textContent = 'Salvando...'; btn.disabled = true;
+      await updateCpdDetail(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), { nome, telefone });
+      const freshRef = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
+      renderCpdList(filterEntries(activePeriod, freshRef));
+    });
+  });
+
+  wrap.querySelectorAll('.cpd-ef-cancel').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelector(`.cpd-edit-row[data-edit-date="${btn.dataset.date}"][data-edit-agent="${btn.dataset.agent}"][data-edit-idx="${btn.dataset.idx}"]`).style.display = 'none';
     });
   });
 }
