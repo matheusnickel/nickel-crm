@@ -504,6 +504,9 @@ function renderAgentContacts(agentName) {
     const histLabel = dates.length === 0 ? '—'
       : `${formatDate(dates[dates.length-1])}${dates.length > 1 ? ` <span style="color:var(--text-muted);font-size:10px">(${dates.length}x)</span>` : ''}`;
 
+    const inpStyle = 'background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:\'DM Sans\',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none';
+    const cancelBtnStyle = 'background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:7px 12px;cursor:pointer;font-family:\'DM Sans\',sans-serif;font-size:13px;white-space:nowrap';
+
     if (d._type === 'cpd') {
       const statusSelOpts = CPD_STATUS_OPTIONS.map(o =>
         `<option value="${o.value}" ${d.status===o.value?'selected':''}>${o.label}</option>`).join('');
@@ -512,17 +515,47 @@ function renderAgentContacts(agentName) {
         <td style="color:var(--text-muted);font-size:12px">${d.telefone||'—'}</td>
         <td><select class="cpd-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${statusSelOpts}</select></td>
         <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
-        <td><button class="contact-btn${doneToday?' contact-done':''}" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button></td>
+        <td style="white-space:nowrap">
+          <button class="contact-btn${doneToday?' contact-done':''}" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button>
+          <button class="ac-edit-btn" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;margin-left:4px">✏️</button>
+        </td>
+      </tr>
+      <tr class="ac-edit-row" data-edit-type="cpd" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="display:none">
+        <td colspan="5" style="padding:8px 0">
+          <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:end">
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="ac-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="ac-ef-tel" type="text" value="${(d.telefone||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
+            <button class="ac-ef-save btn" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Salvar</button>
+            <button class="ac-ef-cancel" data-edit-type="cpd" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="${cancelBtnStyle}">Cancelar</button>
+          </div>
+        </td>
       </tr>`;
     } else {
+      const bairrosOpts = BAIRROS.map(b=>`<option value="${b}" ${d.bairro===b?'selected':''}>${b}</option>`).join('');
+      const tiposOpts   = TIPOS.map(tp=>`<option value="${tp}" ${d.tipo===tp?'selected':''}>${tp}</option>`).join('');
       const statusCell = `<select class="doc-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
          </select>`;
-      return `<tr>
+      return `<tr data-entry-date="${d.entryDate}" data-idx="${d.idx}">
         <td style="font-weight:500">${d.nome}</td>
         <td style="color:var(--text-muted);font-size:12px">${d.tipo||'—'} · ${d.bairro||'—'}</td>
         <td>${statusCell}</td>
-        <td><button class="del-doc-detail-btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}" title="Excluir DOC" style="background:none;border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px">🗑</button></td>
+        <td style="white-space:nowrap">
+          <button class="ac-edit-btn" data-type="doc" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">✏️</button>
+          <button class="del-doc-detail-btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}" title="Excluir DOC" style="background:none;border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px">🗑</button>
+        </td>
+      </tr>
+      <tr class="ac-edit-row" data-edit-type="doc" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="display:none">
+        <td colspan="4" style="padding:8px 0">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:8px;align-items:end">
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="ac-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Tipo</label><select class="ac-ef-tipo" style="${inpStyle}"><option value="">Selecione</option>${tiposOpts}</select></div>
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Bairro</label><select class="ac-ef-bairro" style="${inpStyle}"><option value="">Selecione</option>${bairrosOpts}${d.bairro&&!BAIRROS.includes(d.bairro)?`<option value="${d.bairro}" selected>${d.bairro}</option>`:''}</select></div>
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Valor</label><input class="ac-ef-valor" type="number" min="0" value="${d.valor||0}" style="${inpStyle}"></div>
+            <button class="ac-ef-save btn" data-type="doc" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Salvar</button>
+            <button class="ac-ef-cancel" data-edit-type="doc" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="${cancelBtnStyle}">Cancelar</button>
+          </div>
+        </td>
       </tr>`;
     }
   };
@@ -602,6 +635,43 @@ function renderAgentContacts(agentName) {
       btn.disabled = true; btn.textContent = '...';
       await deleteDocDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx));
       renderAgentContacts(agentName);
+    });
+  });
+
+  // Edit button (toggle inline row)
+  wrap.querySelectorAll('.ac-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const editRow = wrap.querySelector(`.ac-edit-row[data-edit-type="${btn.dataset.type}"][data-edit-date="${btn.dataset.entryDate}"][data-edit-idx="${btn.dataset.idx}"]`);
+      const isOpen = editRow.style.display !== 'none';
+      wrap.querySelectorAll('.ac-edit-row').forEach(r => r.style.display = 'none');
+      if (!isOpen) editRow.style.display = '';
+    });
+  });
+
+  // Save edit
+  wrap.querySelectorAll('.ac-ef-save').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const editRow = wrap.querySelector(`.ac-edit-row[data-edit-type="${btn.dataset.type}"][data-edit-date="${btn.dataset.entryDate}"][data-edit-idx="${btn.dataset.idx}"]`);
+      btn.textContent = 'Salvando...'; btn.disabled = true;
+      if (btn.dataset.type === 'cpd') {
+        const nome = editRow.querySelector('.ac-ef-nome').value.trim();
+        const telefone = editRow.querySelector('.ac-ef-tel').value.trim();
+        await updateCpdDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), { nome, telefone });
+      } else {
+        const nome  = editRow.querySelector('.ac-ef-nome').value.trim();
+        const tipo  = editRow.querySelector('.ac-ef-tipo').value;
+        const bairro = editRow.querySelector('.ac-ef-bairro').value;
+        const valor = parseFloat(editRow.querySelector('.ac-ef-valor').value) || 0;
+        await updateDocDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), { nome, tipo, bairro, valor });
+      }
+      renderAgentContacts(agentName);
+    });
+  });
+
+  // Cancel edit
+  wrap.querySelectorAll('.ac-ef-cancel').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelector(`.ac-edit-row[data-edit-type="${btn.dataset.editType}"][data-edit-date="${btn.dataset.editDate}"][data-edit-idx="${btn.dataset.editIdx}"]`).style.display = 'none';
     });
   });
 
