@@ -506,13 +506,12 @@ function renderAgentContacts(agentName) {
       const statusSelOpts = CPD_STATUS_OPTIONS.map(o =>
         `<option value="${o.value}" ${d.status===o.value?'selected':''}>${o.label}</option>`).join('');
       return `<tr style="${rowBg}" data-entry-date="${d.entryDate}" data-idx="${d.idx}">
-        <td style="font-weight:500">${d.nome}${pending?'<span class="contact-pending-badge">● hoje</span>':''}</td>
+        <td style="font-weight:500">${d.nome}</td>
         <td style="color:var(--text-muted);font-size:12px">${d.telefone||'—'}</td>
         <td><select class="cpd-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${statusSelOpts}</select></td>
         <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
         <td style="white-space:nowrap">
-          <button class="contact-btn${doneToday?' contact-done':''}" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}">${doneToday?'✅ Feito':'○ Contactei'}</button>
-          <button class="ac-edit-btn" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px;margin-left:4px">✏️</button>
+          <button class="ac-edit-btn" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">✏️</button>
         </td>
       </tr>
       <tr class="ac-edit-row" data-edit-type="cpd" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="display:none">
@@ -568,7 +567,6 @@ function renderAgentContacts(agentName) {
         DOCs (${docs.length})
       </button>
     </div>
-    ${isCpd && pendingCpd > 0 ? `<div class="contact-alert">⚠ ${pendingCpd} contato${pendingCpd>1?'s':''} pendente${pendingCpd>1?'s':''} hoje — ligue agora!</div>` : isCpd && cpds.length > 0 ? `<div class="contact-ok">✓ Todos contatados hoje</div>` : ''}
     ${list.length === 0
       ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CP ativo':'DOC'} registrado</div>`
       : `<div style="overflow-x:auto;margin-top:10px">
