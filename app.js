@@ -488,14 +488,8 @@ function renderAgentContacts(agentName) {
   }));
   docs.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
-  const pendingCpd = cpds.filter(d => (d.contactDates||[]).slice(-1)[0] !== t).length;
-  const pendingDoc = docs.filter(d => (d.contactDates||[]).slice(-1)[0] !== t).length;
-
   const makeRow = (d) => {
     const dates = d.contactDates || (d.lastContact ? [d.lastContact] : []);
-    const doneToday = dates[dates.length - 1] === t;
-    const pending = !doneToday;
-    const rowBg = pending ? 'background:rgba(231,76,60,0.05);' : '';
     const histLabel = dates.length === 0 ? '—'
       : `${formatDate(dates[dates.length-1])}${dates.length > 1 ? ` <span style="color:var(--text-muted);font-size:10px">(${dates.length}x)</span>` : ''}`;
 
@@ -505,7 +499,7 @@ function renderAgentContacts(agentName) {
     if (d._type === 'cpd') {
       const statusSelOpts = CPD_STATUS_OPTIONS.map(o =>
         `<option value="${o.value}" ${d.status===o.value?'selected':''}>${o.label}</option>`).join('');
-      return `<tr style="${rowBg}" data-entry-date="${d.entryDate}" data-idx="${d.idx}">
+      return `<tr data-entry-date="${d.entryDate}" data-idx="${d.idx}">
         <td style="font-weight:500">${d.nome}</td>
         <td style="color:var(--text-muted);font-size:12px">${d.telefone||'—'}</td>
         <td><select class="cpd-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${statusSelOpts}</select></td>
@@ -668,34 +662,6 @@ function renderAgentContacts(agentName) {
     });
   });
 
-  // Contact button
-  wrap.querySelectorAll('.contact-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      btn.disabled = true; btn.textContent = '...';
-      const type = btn.dataset.type;
-      const entryDate = btn.dataset.entryDate;
-      const idx = parseInt(btn.dataset.idx);
-      const allEntries = getEntries();
-      const entry = allEntries.find(e => e.date === entryDate && e.agent === agentName);
-      const detail = type === 'cpd' || type === 'cpd-virou-doc'
-        ? entry?.cpdDetails?.[idx]
-        : entry?.docDetails?.[idx];
-      if (detail) {
-        const dates = detail.contactDates ? [...detail.contactDates] : (detail.lastContact ? [detail.lastContact] : []);
-        const doneToday = dates[dates.length - 1] === t;
-        const newDates = doneToday ? dates.filter(d => d !== t) : [...dates.filter(d => d !== t), t];
-        detail.contactDates = newDates;
-        detail.lastContact  = newDates[newDates.length - 1] || '';
-        saveEntries(allEntries);
-        if (type === 'cpd' || type === 'cpd-virou-doc') {
-          await updateCpdDetail(entryDate, agentName, idx, { contactDates: newDates, lastContact: detail.lastContact });
-        } else {
-          await updateDocDetail(entryDate, agentName, idx, { contactDates: newDates, lastContact: detail.lastContact });
-        }
-      }
-      renderAgentContacts(agentName);
-    });
-  });
 }
 
 // ── AGENT RANKING (Dia / Semana / Mês) ───────────────────
