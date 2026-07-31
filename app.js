@@ -2004,7 +2004,8 @@ function initExport() {
 
 function generateReport(period) {
   const t = period==='month' ? activeMonthRef : period==='week' ? activeWeekRef : today();
-  const entries=filterEntries(period, period==='month'?activeMonthRef:period==='week'?activeWeekRef:undefined);
+  const team=new Set(getAgentNames());
+  const entries=filterEntries(period, period==='month'?activeMonthRef:period==='week'?activeWeekRef:undefined).filter(e=>team.has(e.agent));
   const byAgent=sumByAgent(entries);
   const allDocs=entries.flatMap(e=>(e.docDetails||[]).map(d=>({...d,date:e.date,agent:e.agent})));
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
