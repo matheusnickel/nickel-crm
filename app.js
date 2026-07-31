@@ -748,10 +748,12 @@ function renderAgentDailyRanking(currentAgentName) {
       <button class="nota-tab-btn${activeAgentRankTab==='dia'?' active':''}" data-tab="dia">Dia</button>
       <button class="nota-tab-btn${activeAgentRankTab==='mes'?' active':''}" data-tab="mes">Mês</button>
     </div>
-    <table class="data-table rank-table" style="margin-top:10px">
-      <thead><tr><th style="width:36px">#</th><th>Angariador</th><th class="num-cell">Nota</th><th class="num-cell">Nível</th></tr></thead>
-      <tbody>${rowsHTML}</tbody>
-    </table>`;
+    <div style="overflow-x:auto">
+      <table class="data-table rank-table" style="margin-top:10px;min-width:280px">
+        <thead><tr><th style="width:36px">#</th><th>Angariador</th><th class="num-cell">Nota</th><th class="num-cell">Nível</th></tr></thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    </div>`;
 
   wrap.querySelectorAll('.nota-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => { activeAgentRankTab = btn.dataset.tab; renderAgentDailyRanking(currentAgentName); });
