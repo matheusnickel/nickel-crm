@@ -727,48 +727,54 @@ function renderAgentDailyRanking(currentAgentName) {
 
 // ── STREAK VISUAL ────────────────────────────────────────
 function renderStreak(agentName) {
-  const streak = calcStreak(agentName);
-  const sentDates = new Set(getOnTimeDates(agentName));
-  const t = today(); // local scope
+  const t = today();
+  const entries = getEntries().filter(e => e.agent === agentName);
 
-  // last 7 days dots
-  const dots = [];
+  // Build last 7 calendar days
+  const days = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(t + 'T12:00:00');
     d.setDate(d.getDate() - i);
     const ds = toDateStr(d);
-    const sent = sentDates.has(ds);
+    const entry = entries.find(e => e.date === ds) || null;
+    const score = entry ? calcDailyScore(entry) : null;
     const isToday = ds === t;
-    dots.push({ ds, sent, isToday });
+    // Short label: day/month
+    const [,mm,dd] = ds.split('-');
+    days.push({ ds, entry, score, isToday, label: `${dd}/${mm}` });
   }
 
-  // color tier
-  let color, label, emoji;
-  if (streak === 0)       { color='#555';     emoji='💤'; label='Nenhum dia seguido ainda'; }
-  else if (streak < 3)    { color='#cd7f32';  emoji='🔥'; label=`${streak} dia${streak>1?'s':''} seguido${streak>1?'s':''}!`; }
-  else if (streak < 7)    { color='#ff7a00';  emoji='🔥'; label=`${streak} dias seguidos! Bom ritmo!`; }
-  else if (streak < 14)   { color='#a8e63d';  emoji='🔥'; label=`${streak} dias seguidos! Incrível!`; }
-  else if (streak < 30)   { color='#6495ed';  emoji='🔥'; label=`${streak} dias seguidos! Elite!`; }
-  else                    { color='#2ecc71';  emoji='🏆'; label=`${streak} dias seguidos! Lendário!`; }
+  const streak = calcStreak(agentName);
+  let streakColor = '#555';
+  if (streak >= 30) streakColor = '#2ecc71';
+  else if (streak >= 14) streakColor = '#6495ed';
+  else if (streak >= 7)  streakColor = '#a8e63d';
+  else if (streak >= 3)  streakColor = '#ff7a00';
+  else if (streak >= 1)  streakColor = '#cd7f32';
 
-  // check if yesterday was missed (streak broken)
-  const yesterday = new Date(t+'T12:00:00'); yesterday.setDate(yesterday.getDate()-1);
-  const missedYesterday = !sentDates.has(toDateStr(yesterday)) && streak === 0 && sentDates.size > 0;
-
-  const dotsHTML = dots.map(d => `
-    <div class="streak-dot ${d.sent?'sent':''} ${d.isToday?'today':''}" title="${formatDate(d.ds)}">
-      ${d.sent ? '🔥' : d.isToday ? '◯' : '✕'}
-    </div>`).join('');
+  const barsHTML = days.map(d => {
+    const hasSent = d.score !== null;
+    const score = d.score ?? 0;
+    const barPct = hasSent ? Math.max(score / 10 * 100, 6) : 0;
+    const barColor = hasSent ? scoreColor(score) : 'var(--border)';
+    const scoreText = hasSent ? score.toFixed(1) : '—';
+    const todayStyle = d.isToday ? 'border:2px solid rgba(255,255,255,0.3);border-radius:10px;padding:2px 2px 0;' : '';
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;${todayStyle}">
+        <div style="font-size:11px;font-weight:700;color:${hasSent ? barColor : 'var(--text-muted)'}">${scoreText}</div>
+        <div style="width:100%;height:72px;background:var(--bg3);border-radius:6px;overflow:hidden;display:flex;align-items:flex-end">
+          <div style="width:100%;height:${barPct}%;background:${barColor};border-radius:6px;transition:height .3s"></div>
+        </div>
+        <div style="font-size:10px;color:${d.isToday ? '#fff' : 'var(--text-muted)'};font-weight:${d.isToday ? 700 : 400}">${d.label}</div>
+      </div>`;
+  }).join('');
 
   document.getElementById('streak-wrap').innerHTML = `
-    <div class="streak-hero" style="--streak-color:${color}">
-      <div class="streak-fire">${emoji}</div>
-      <div class="streak-number" style="color:${color}">${streak}</div>
-      <div class="streak-label">${label}</div>
-      ${missedYesterday ? '<div class="streak-broken">Sequência zerada — não enviou ontem 😢</div>' : ''}
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <div style="font-size:13px;color:var(--text-muted)">Sequência atual:</div>
+      <div style="font-size:20px;font-weight:700;color:${streakColor}">${streak > 0 ? `🔥 ${streak}d` : '—'}</div>
     </div>
-    <div class="streak-dots">${dotsHTML}</div>
-    <div class="streak-hint">Últimos 7 dias</div>`;
+    <div style="display:flex;gap:6px;align-items:flex-end">${barsHTML}</div>`;
 }
 
 // ── BAIRRO SELECT BINDING ────────────────────────────────
