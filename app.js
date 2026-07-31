@@ -336,7 +336,7 @@ function calcDailyScore(entry) {
   //             1 DOC + 0 esforço           = 6.0 (piso garantido: teve resultado)
   //             1 DOC + esforço moderado    = 7–9 (granular conforme o que fez + converteu)
   //             1 DOC + esforço alto        → pode chegar em 10
-  const effortScore = entry.cpd * 0.9 + entry.prosp * 0.11;
+  const effortScore = entry.cpd * 0.9 + (entry.video||0) * 0.9 + entry.prosp * 0.11;
   const natural = entry.doc * 3.2 + effortScore;
   // DOC garante mínimo 6.0; cada CPD/PROSP sobe esse mínimo levemente
   const floor = entry.doc > 0 ? 6.0 + entry.cpd * 0.1 + entry.prosp * 0.012 : 0;
@@ -412,11 +412,6 @@ function renderNotasRanking() {
       const e = dayE.find(x => x.agent === name);
       return { name, score: calcDailyScore(e || null), doc: e?.doc || 0, sent: !!e };
     });
-  } else if (activeNotaTab === 'semana') {
-    rows = names.map(name => {
-      const doc = weekE.filter(x => x.agent === name).reduce((s, e) => s + e.doc, 0);
-      return { name, score: calcWeeklyScore(name, weekE), doc, sent: true };
-    });
   } else {
     rows = names.map(name => {
       const doc = monthE.filter(x => x.agent === name).reduce((s, e) => s + e.doc, 0);
@@ -452,7 +447,6 @@ function renderNotasRanking() {
   wrap.innerHTML = `
     <div class="nota-tabs">
       <button class="nota-tab-btn${activeNotaTab==='dia'?' active':''}" data-tab="dia">Dia</button>
-      <button class="nota-tab-btn${activeNotaTab==='semana'?' active':''}" data-tab="semana">Semana</button>
       <button class="nota-tab-btn${activeNotaTab==='mes'?' active':''}" data-tab="mes">Mês</button>
     </div>
     <table class="data-table rank-table" style="margin-top:10px">
@@ -724,13 +718,6 @@ function renderAgentDailyRanking(currentAgentName) {
       return { name, score: calcDailyScore(e || null), sent: !!e, streak };
     });
     rows.sort((a, b) => { if (a.sent !== b.sent) return a.sent ? -1 : 1; return b.score - a.score; });
-  } else if (activeAgentRankTab === 'semana') {
-    const weekEntries = filterEntries('week', t);
-    rows = names.map(name => {
-      const streak = calcStreak(name);
-      return { name, score: calcWeeklyScore(name, weekEntries), sent: true, streak };
-    });
-    rows.sort((a, b) => b.score - a.score);
   } else {
     const monthEntries = filterEntries('month', t);
     rows = names.map(name => {
@@ -760,7 +747,6 @@ function renderAgentDailyRanking(currentAgentName) {
   wrap.innerHTML = `
     <div class="nota-tabs">
       <button class="nota-tab-btn${activeAgentRankTab==='dia'?' active':''}" data-tab="dia">Dia</button>
-      <button class="nota-tab-btn${activeAgentRankTab==='semana'?' active':''}" data-tab="semana">Semana</button>
       <button class="nota-tab-btn${activeAgentRankTab==='mes'?' active':''}" data-tab="mes">Mês</button>
     </div>
     <table class="data-table rank-table" style="margin-top:10px">
@@ -1076,8 +1062,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
         <div style="font-weight:600;color:#f0f0f0">Relatório de ${formatDate(date)} enviado</div>
-        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CP <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong></div>
-        ${(sentToday.va||sentToday.vv||sentToday.fotos)?`<div style="font-size:12px;margin-top:4px;color:var(--text-muted)">VA <strong style="color:#6495ed">${sentToday.va||0}</strong> &nbsp;·&nbsp; VV <strong style="color:#6495ed">${sentToday.vv||0}</strong> &nbsp;·&nbsp; FOTOS <strong style="color:#6495ed">${sentToday.fotos||0}</strong></div>`:''}
+        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CP <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong>${sentToday.video ? ` &nbsp;·&nbsp; VÍDEO <strong style="color:#e879f9">${sentToday.video}</strong>` : ''}</div>
         <div class="agent-daily-score" style="--nota-color:${dsColor}">
           <span class="agent-nota-val" style="color:${dsColor}">${dailyScore.toFixed(1)}</span>
           <span class="agent-nota-label">${dsLabel}</span>
@@ -1089,59 +1074,117 @@ function renderAgentDashboard(session, selectedDate, editing) {
       </div>`;
     if (canEdit) document.getElementById('edit-today-btn').addEventListener('click',()=>{ agentEditing=true; renderAgentDashboard(session,date,true); });
   } else {
-    const pre=sentToday||{prosp:0,cpd:0,doc:0,va:0,vv:0,fotos:0,docDetails:[],cpdDetails:[]};
+    const pre=sentToday||{prosp:0,cpd:0,doc:0,video:0,docDetails:[],cpdDetails:[]};
     const isFuture = date > t;
     if (isFuture) {
       formWrap.innerHTML=`<div class="sent-today" style="color:var(--text-muted);font-size:13px">Não é possível lançar para datas futuras.</div>`;
     } else {
-      formWrap.innerHTML=`
-        <form class="daily-form" id="daily-form">
-          ${sentToday?`<div style="font-size:12px;color:var(--gold);margin-bottom:12px;text-align:center">Editando lançamento de ${formatDate(date)}</div>`:''}
-          <div class="fields-row">
-            <div class="field-box"><label>PROSP<span class="field-hint">Prospecção</span></label><input type="number" id="f-prosp" min="0" value="${pre.prosp}" required></div>
-            <div class="field-box"><label>CP<span class="field-hint">(Nova conversa com o proprietário)</span></label><input type="number" id="f-cpd" min="0" value="${pre.cpd}" required></div>
-            <div class="field-box"><label>DOC<span class="field-hint">Pegou Documentação</span></label><input type="number" id="f-doc" min="0" value="${pre.doc}" required></div>
+      // ── STEP-BY-STEP WIZARD ──────────────────────────────
+      const WSTEPS = [
+        { key:'prosp', label:'PROSP',  hint:'Quantos imóveis você prospectou?',          color:'#f0c040', pts:'+0.11 pts/unidade' },
+        { key:'cp',    label:'CP',     hint:'Quantas conversas com proprietário?',        color:'#6495ed', pts:'+0.9 pts/unidade' },
+        { key:'doc',   label:'DOC',    hint:'Quantas documentações você pegou?',          color:'#a8e63d', pts:'garante piso 6.0 no dia' },
+        { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (IG, TikTok…)',color:'#e879f9', pts:'+0.9 pts/unidade' },
+      ];
+      const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0 };
+      let wStep = 0;
+
+      const wizStepsHTML = WSTEPS.map((s, i) => `
+        <div class="wiz-step" id="wiz-step-${i}" style="${i>0?'display:none':''}">
+          <div style="font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:4px">${s.hint}</div>
+          <div style="font-size:15px;font-weight:700;text-align:center;color:${s.color};margin-bottom:2px">${s.label}</div>
+          <div style="font-size:11px;background:var(--bg3);border-radius:8px;padding:5px 12px;text-align:center;color:var(--text-muted);margin-bottom:18px;display:inline-block;width:100%;box-sizing:border-box"><strong style="color:${s.color}">${s.pts}</strong></div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:24px">
+            <button class="wiz-adj" data-step="${i}" data-d="-1" style="width:48px;height:48px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:26px;cursor:pointer;line-height:1;flex-shrink:0">−</button>
+            <div id="wval-${i}" style="font-size:58px;font-weight:700;color:${s.color};min-width:72px;text-align:center;font-variant-numeric:tabular-nums">${wVals[s.key]}</div>
+            <button class="wiz-adj" data-step="${i}" data-d="1" style="width:48px;height:48px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:26px;cursor:pointer;line-height:1;flex-shrink:0">+</button>
           </div>
-          <div class="fields-row" style="margin-top:8px">
-            <div class="field-box"><label style="color:#6495ed">VA<span class="field-hint">Visita de Angariação</span></label><input type="number" id="f-va" min="0" value="${pre.va||0}"></div>
-            <div class="field-box"><label style="color:#6495ed">VV<span class="field-hint">Visita de Venda</span></label><input type="number" id="f-vv" min="0" value="${pre.vv||0}"></div>
-            <div class="field-box"><label style="color:#6495ed">FOTOS<span class="field-hint">Fotos do imóvel</span></label><input type="number" id="f-fotos" min="0" value="${pre.fotos||0}"></div>
+          <div style="display:flex;gap:8px">
+            ${i > 0 ? `<button class="wiz-back" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text-muted);border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">← Voltar</button>` : ''}
+            <button class="wiz-next" style="flex:2;background:var(--accent);border:none;color:#07090f;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">${i < WSTEPS.length - 1 ? 'Próximo →' : 'Continuar ✓'}</button>
           </div>
-          <div id="cpd-details-area">${buildCpdDetailsHTML(pre.cpd||0, pre.cpdDetails||[])}</div>
-          <div id="doc-details-area">${buildDocDetailsHTML(pre.doc||0,pre.docDetails)}</div>
-          <button type="submit" class="btn" style="margin-top:14px">${sentToday?'Salvar correção':'Enviar relatório'}</button>
-          ${sentToday?'<button type="button" class="btn btn-outline" id="cancel-edit-btn" style="margin-top:8px">Cancelar</button>':''}
-        </form>`;
-      document.getElementById('f-cpd').addEventListener('input',function(){
-        document.getElementById('cpd-details-area').innerHTML=buildCpdDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+        </div>`).join('');
+
+      formWrap.innerHTML = `
+        <div id="daily-wizard" style="padding:8px 0">
+          ${sentToday ? `<div style="font-size:12px;color:var(--gold);margin-bottom:12px;text-align:center">Editando lançamento de ${formatDate(date)}</div>` : ''}
+          <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px" id="wiz-dots">
+            ${WSTEPS.map((_, i) => `<div class="wiz-dot" id="wdot-${i}"></div>`).join('')}
+          </div>
+          ${wizStepsHTML}
+          <div id="wiz-details" style="display:none">
+            <div id="wiz-cpd-area"></div>
+            <div id="wiz-doc-area"></div>
+            <button id="wiz-submit" class="btn" style="margin-top:14px;width:100%">${sentToday ? 'Salvar correção' : 'Enviar relatório'}</button>
+            ${sentToday ? '<button type="button" class="btn btn-outline" id="wiz-cancel" style="margin-top:8px;width:100%">Cancelar</button>' : ''}
+          </div>
+        </div>`;
+
+      const updateDots = () => {
+        formWrap.querySelectorAll('.wiz-dot').forEach((d, i) => {
+          d.style.cssText = `width:8px;height:8px;border-radius:50%;transition:all .2s;background:${i < wStep ? 'var(--accent)' : i === wStep ? '#fff' : 'var(--border)'};transform:${i === wStep ? 'scale(1.4)' : 'scale(1)'}`;
+        });
+      };
+      updateDots();
+
+      formWrap.querySelectorAll('.wiz-adj').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.step);
+          const key = WSTEPS[i].key;
+          wVals[key] = Math.max(0, wVals[key] + parseInt(btn.dataset.d));
+          document.getElementById('wval-' + i).textContent = wVals[key];
+        });
       });
-      document.getElementById('f-doc').addEventListener('input',function(){
-        document.getElementById('doc-details-area').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+
+      const showStep = (n) => {
+        formWrap.querySelectorAll('.wiz-step').forEach(s => s.style.display = 'none');
+        const el = document.getElementById('wiz-step-' + n);
+        if (el) { el.style.display = ''; wStep = n; updateDots(); }
+      };
+
+      const showDetails = () => {
+        formWrap.querySelectorAll('.wiz-step').forEach(s => s.style.display = 'none');
+        document.getElementById('wiz-details').style.display = '';
+        document.getElementById('wiz-cpd-area').innerHTML = buildCpdDetailsHTML(wVals.cp, pre.cpdDetails||[]);
+        document.getElementById('wiz-doc-area').innerHTML = buildDocDetailsHTML(wVals.doc, pre.docDetails||[]);
         bindBairroSelects();
+        wStep = WSTEPS.length; updateDots();
+      };
+
+      formWrap.querySelectorAll('.wiz-next').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.closest('.wiz-step').id.split('-').pop());
+          if (idx < WSTEPS.length - 1) showStep(idx + 1); else showDetails();
+        });
       });
-      bindBairroSelects();
-      document.getElementById('daily-form').addEventListener('submit',async ev=>{
-        ev.preventDefault();
-        const cpdVal=parseInt(document.getElementById('f-cpd').value)||0;
-        const cpdDetails=collectCpdDetails(cpdVal);
+      formWrap.querySelectorAll('.wiz-back').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.closest('.wiz-step').id.split('-').pop());
+          showStep(idx - 1);
+        });
+      });
+
+      document.getElementById('wiz-submit').addEventListener('click', async () => {
+        const cpdDetails = collectCpdDetails(wVals.cp);
         if (sentToday?.cpdDetails) {
           cpdDetails.forEach((d,i) => { if (sentToday.cpdDetails[i]) { const s=sentToday.cpdDetails[i]; d.status=s.status||''; d.motivo=s.motivo||''; d.lastContact=s.lastContact||''; d.contactDates=s.contactDates||[]; } });
         }
-        const docVal=parseInt(document.getElementById('f-doc').value)||0;
-        const docDetails=collectDocDetails(docVal);
+        const docDetails = collectDocDetails(wVals.doc);
         for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
         if (sentToday?.docDetails) {
           docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) { const s=sentToday.docDetails[i]; d.nota=s.nota||''; d.lastContact=s.lastContact||''; d.contactDates=s.contactDates||[]; } });
         }
-        const isEdit=!!sentToday;
-        agentEditing=false;
-        const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Enviando...';
-        const submittedDate=sentToday?.submittedDate||sentToday?.date||today();
-        await upsertEntry({date,agent:session.name,prosp:parseInt(document.getElementById('f-prosp').value)||0,cpd:cpdVal,doc:docVal,va:parseInt(document.getElementById('f-va').value)||0,vv:parseInt(document.getElementById('f-vv').value)||0,fotos:parseInt(document.getElementById('f-fotos').value)||0,cpdDetails,docDetails,submittedDate});
-        if (isEdit) incrementEditCount(session.name,date);
+        const isEdit = !!sentToday;
+        agentEditing = false;
+        const submitBtn = document.getElementById('wiz-submit');
+        submitBtn.disabled = true; submitBtn.textContent = 'Enviando...';
+        const submittedDate = sentToday?.submittedDate||sentToday?.date||today();
+        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, cpdDetails, docDetails, submittedDate});
+        if (isEdit) incrementEditCount(session.name, date);
       });
-      const cancelBtn=document.getElementById('cancel-edit-btn');
-      if (cancelBtn) cancelBtn.addEventListener('click',()=>{ agentEditing=false; renderAgentDashboard(session,date); });
+
+      const cancelBtn = document.getElementById('wiz-cancel');
+      if (cancelBtn) cancelBtn.addEventListener('click', () => { agentEditing=false; renderAgentDashboard(session, date); });
     }
   }
 
@@ -1266,16 +1309,14 @@ function initGestorLancamento() {
     const submittedDate=existing?.submittedDate||existing?.date||today();
     const lancCpdVal=parseInt(document.getElementById('lanc-cpd').value)||0;
     const lancCpdDetails=collectCpdDetails(lancCpdVal);
-    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,va:parseInt(document.getElementById('lanc-va').value)||0,vv:parseInt(document.getElementById('lanc-vv').value)||0,fotos:parseInt(document.getElementById('lanc-fotos').value)||0,cpdDetails:lancCpdDetails,docDetails,submittedDate});
+    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,cpdDetails:lancCpdDetails,docDetails,submittedDate});
     resetEditCount(agent,date);
     btn.disabled=false; btn.textContent='Salvar lançamento';
     // reset form
     document.getElementById('lanc-prosp').value=0;
     document.getElementById('lanc-cpd').value=0;
     document.getElementById('lanc-doc').value=0;
-    document.getElementById('lanc-va').value=0;
-    document.getElementById('lanc-vv').value=0;
-    document.getElementById('lanc-fotos').value=0;
+    document.getElementById('lanc-video').value=0;
     document.getElementById('lanc-cpd-details').innerHTML='';
     document.getElementById('lanc-doc-details').innerHTML='';
     const newToday=today(); dateInput.value=newToday; dateInput.max=newToday;
