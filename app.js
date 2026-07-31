@@ -288,9 +288,8 @@ function filterEntries(period, ref) {
 function sumByAgent(entries) {
   const map={};
   entries.forEach(e=>{
-    if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0,va:0,vv:0,fotos:0};
+    if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0};
     map[e.agent].prosp+=e.prosp; map[e.agent].cpd+=e.cpd; map[e.agent].doc+=e.doc;
-    map[e.agent].va+=(e.va||0); map[e.agent].vv+=(e.vv||0); map[e.agent].fotos+=(e.fotos||0);
   });
   return Object.values(map);
 }
@@ -1438,7 +1437,7 @@ function renderGestorDashboard() {
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
   document.getElementById('rank-body').innerHTML=ranked.map((a,i)=>{
     const pos=i+1;
-    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td><td class="num-cell rank-extra">${a.vv||0}</td><td class="num-cell rank-extra">${a.va||0}</td><td class="num-cell rank-extra">${a.fotos||0}</td></tr>`;
+    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
   }).join('');
 
   // Evolução diária de DOC
@@ -1758,9 +1757,6 @@ function renderDayView(dateStr) {
       <td class="num-cell day-num">${has ? e.prosp : dash}</td>
       <td class="num-cell day-num">${has ? e.cpd   : dash}</td>
       <td class="num-cell day-num doc-cell">${has ? e.doc : dash}</td>
-      <td class="num-cell rank-extra">${has ? (e.vv||0)    : dash}</td>
-      <td class="num-cell rank-extra">${has ? (e.va||0)    : dash}</td>
-      <td class="num-cell rank-extra">${has ? (e.fotos||0) : dash}</td>
       <td>${has ? `<button class="del-day-btn" data-date="${dateStr}" data-agent="${name}">Remover</button>` : ''}</td>
     </tr>`;
   }).join('');
@@ -1772,9 +1768,6 @@ function renderDayView(dateStr) {
         <th class="num-cell">PROSP</th>
         <th class="num-cell">CP</th>
         <th class="num-cell doc-th">DOC</th>
-        <th class="num-cell rank-extra">VV</th>
-        <th class="num-cell rank-extra">VA</th>
-        <th class="num-cell rank-extra">FOTOS</th>
         <th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
