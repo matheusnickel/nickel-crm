@@ -1063,13 +1063,13 @@ function renderAgentDashboard(session, selectedDate, editing) {
           <div style="font-size:15px;font-weight:700;text-align:center;color:${s.color};margin-bottom:2px">${s.label}</div>
           <div style="font-size:11px;background:var(--bg3);border-radius:8px;padding:5px 12px;text-align:center;color:var(--text-muted);margin-bottom:18px;display:inline-block;width:100%;box-sizing:border-box"><strong style="color:${s.color}">${s.pts}</strong></div>
           <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:24px">
-            <button class="wiz-adj" data-step="${i}" data-d="-1" style="width:48px;height:48px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:26px;cursor:pointer;line-height:1;flex-shrink:0">−</button>
+            <button class="wiz-adj" data-step="${i}" data-d="-1" style="width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.1);color:#fff;font-size:28px;cursor:pointer;line-height:1;flex-shrink:0">−</button>
             <div id="wval-${i}" style="font-size:58px;font-weight:700;color:${s.color};min-width:72px;text-align:center;font-variant-numeric:tabular-nums">${wVals[s.key]}</div>
-            <button class="wiz-adj" data-step="${i}" data-d="1" style="width:48px;height:48px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-size:26px;cursor:pointer;line-height:1;flex-shrink:0">+</button>
+            <button class="wiz-adj" data-step="${i}" data-d="1" style="width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.1);color:#fff;font-size:28px;cursor:pointer;line-height:1;flex-shrink:0">+</button>
           </div>
           <div style="display:flex;gap:8px">
-            ${i > 0 ? `<button class="wiz-back" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text-muted);border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">← Voltar</button>` : ''}
-            <button class="wiz-next" style="flex:2;background:var(--accent);border:none;color:#07090f;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">${i < WSTEPS.length - 1 ? 'Próximo →' : 'Continuar ✓'}</button>
+            ${i > 0 ? `<button class="wiz-back" style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#cdd9e5;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">← Voltar</button>` : ''}
+            <button class="wiz-next" style="flex:2;background:var(--accent);border:none;color:#07090f;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">${i < WSTEPS.length - 1 ? 'Próximo →' : 'Continuar ✓'}</button>
           </div>
         </div>`).join('');
 
