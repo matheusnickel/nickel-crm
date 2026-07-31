@@ -287,7 +287,9 @@ function filterEntries(period, ref) {
 }
 function sumByAgent(entries) {
   const map={};
+  const team = new Set(getAgentNames());
   entries.forEach(e=>{
+    if (!team.has(e.agent)) return;
     if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0};
     map[e.agent].prosp+=e.prosp; map[e.agent].cpd+=e.cpd; map[e.agent].doc+=e.doc;
   });
