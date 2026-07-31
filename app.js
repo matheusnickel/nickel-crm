@@ -550,12 +550,11 @@ function renderAgentContacts(agentName) {
 
   const isCpd = agentContactTab === 'cpd';
   const list  = isCpd ? cpds : docs;
-  const pendCount = isCpd ? pendingCpd : pendingDoc;
 
   wrap.innerHTML = `
     <div class="nota-tabs" style="position:relative">
       <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">
-        CPs (${cpds.length})${pendingCpd>0?`<span class="contact-tab-badge">${pendingCpd}</span>`:''}
+        CPs (${cpds.length})
       </button>
       <button class="nota-tab-btn${!isCpd?' active':''}" data-ctab="doc">
         DOCs (${docs.length})
