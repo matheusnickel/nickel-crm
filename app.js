@@ -1502,8 +1502,8 @@ function renderDocList(entries) {
       <td style="font-weight:500">${d.nome||'—'}</td>
       <td>${d.tipo?`<span class="tipo-tag tipo-${d.tipo.toLowerCase()}">${d.tipo}</span>`:'—'}</td>
       <td>${d.bairro||'—'}</td>
-      <td class="num-cell" style="padding-right:16px">${formatCurrency(d.valor)}</td>
-      <td style="padding-left:4px">
+      <td class="num-cell" style="padding-right:28px">${formatCurrency(d.valor)}</td>
+      <td style="padding-left:12px">
         <select class="nota-select status-sel-${(d.nota||'').toLowerCase().replace(/\s/g,'')}" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}">
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
         </select>
