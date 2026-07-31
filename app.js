@@ -1428,7 +1428,8 @@ function renderStreakRanking() { renderTimeline(); }
 
 function renderGestorDashboard() {
   const ref = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
-  const entries=filterEntries(activePeriod, ref);
+  const team=new Set(getAgentNames());
+  const entries=filterEntries(activePeriod, ref).filter(e=>team.has(e.agent));
   const byAgent=sumByAgent(entries);
 
   const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
