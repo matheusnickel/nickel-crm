@@ -33,8 +33,8 @@ const TIPOS   = ['Casa', 'Apto', 'Studio', 'Terreno', 'Comercial'];
 const STATUS_OPTIONS = [
   { value: '',      label: '—',                 color: 'var(--text-muted)' },
   { value: 'FOTOS', label: 'FOTOS',             color: '#e67e22' },
-  { value: 'AVI',   label: 'AVI',               color: '#3498db' },
-  { value: 'AV',    label: 'Falta assinar AV',  color: '#9b59b6' },
+  { value: 'AVI',   label: 'AV ASSINADA',                       color: '#3498db' },
+  { value: 'AV',    label: 'FALTA ASSINAR AUTORIZAÇÃO DE VENDA', color: '#9b59b6' },
   { value: 'SITE',  label: 'SITE',              color: '#a8e63d' },
 ];
 const CPD_STATUS_OPTIONS = [
@@ -945,11 +945,13 @@ let agentUnsubscribe=null;
 let histExpanded=false;
 let agentEditing=false;
 
-function initAgentDashboard() {
+async function initAgentDashboard() {
   const session=getSession();
   if (!session||session.role!=='agent') { window.location.href='index.html'; return; }
   document.getElementById('agent-name').textContent=session.name;
   document.getElementById('logout-btn').addEventListener('click', ()=>{ if(agentUnsubscribe)agentUnsubscribe(); clearSession(); window.location.href='index.html'; });
+
+  await loadTeam();
 
   agentUnsubscribe=fbListen(entries=>{
     saveEntries(entries);
@@ -1084,8 +1086,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
       const WSTEPS = [
         { key:'prosp', label:'PROSP',  hint:'Quantos imóveis você prospectou?',          color:'#f0c040', pts:'+0.11 pts/unidade' },
         { key:'cp',    label:'CP',     hint:'Quantas conversas com proprietário?',        color:'#6495ed', pts:'+0.9 pts/unidade' },
-        { key:'doc',   label:'DOC',    hint:'Quantas documentações você pegou?',          color:'#a8e63d', pts:'garante piso 6.0 no dia' },
-        { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (IG, TikTok…)',color:'#e879f9', pts:'+0.9 pts/unidade' },
+        { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',        color:'#a8e63d', pts:'6 pontos por DOC' },
+        { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (Instagram | TikTok)',color:'#e879f9', pts:'+0.9 pts/unidade' },
       ];
       const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0 };
       let wStep = 0;
