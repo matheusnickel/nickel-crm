@@ -1712,12 +1712,13 @@ function renderTimeline() {
     + agentNames.map(n => `<option value="${n}" ${tlAgent===n?'selected':''}>${n}</option>`).join('');
 
   wrap.innerHTML = `
-    <div class="tl-range-row">
+    <div class="tl-range-row" style="flex-wrap:wrap;gap:8px">
       <label>De</label>
       <input type="date" id="tl-start" value="${tlStart}" max="${tlEnd}">
       <label>até</label>
       <input type="date" id="tl-end" value="${tlEnd}" max="${t}">
-      <select id="tl-agent" style="margin-left:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:13px">${agentOpts}</select>
+      <select id="tl-agent" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:13px">${agentOpts}</select>
+      <button id="tl-export-btn" style="margin-left:auto;background:var(--gold);border:none;color:#07090f;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">⬇ Exportar</button>
     </div>
     <div class="tl-row tl-header">
       <div class="tl-name"></div>
@@ -1739,6 +1740,105 @@ function renderTimeline() {
     tlAgent = e.target.value;
     renderTimeline();
   });
+
+  document.getElementById('tl-export-btn').addEventListener('click', () => {
+    exportTimeline(sorted, days, t);
+  });
+}
+
+function exportTimeline(sorted, days, t) {
+  function scoreHex(s) {
+    if (s >= 8) return '#6495ed';
+    if (s >= 6) return '#a8e63d';
+    if (s >= 3) return '#f0c040';
+    return '#e74c3c';
+  }
+  function textOn(s) { return (s >= 3 && s < 8) ? '#111' : '#fff'; }
+
+  const entries = getEntries();
+  const entryMap = {};
+  entries.forEach(e => { entryMap[e.agent+'|'+e.date] = e; });
+
+  // Month labels for header
+  const headerCells = days.map((d, i) => {
+    const day = d.slice(8);
+    const isFirst = day === '01' || i === 0;
+    const month = isFirst ? new Date(d+'T12:00:00').toLocaleString('pt-BR',{month:'short'}).replace('.','').toUpperCase() : '';
+    return `<div style="display:inline-block;width:28px;text-align:center;font-size:9px;color:#888;line-height:1.2;vertical-align:top">
+      <div style="color:#aaa;font-size:8px;height:12px">${month}</div>
+      <div style="font-weight:600">${day}</div>
+    </div>`;
+  }).join('');
+
+  const agentRows = sorted.map(({ name, streak }) => {
+    const squares = days.map(d => {
+      const e = entryMap[name+'|'+d];
+      if (!e) {
+        return `<div style="display:inline-block;width:28px;height:32px;border-radius:5px;background:#f0f0f0;margin:1px;vertical-align:top;font-size:8px;line-height:32px;text-align:center;color:#ccc">${d.slice(8)}</div>`;
+      }
+      const score = calcDailyScore(e);
+      const bg = scoreHex(score);
+      const tc = textOn(score);
+      const label = score % 1 === 0 ? score.toFixed(0) : score.toFixed(1);
+      return `<div style="display:inline-block;width:28px;height:32px;border-radius:5px;background:${bg};margin:1px;vertical-align:top;text-align:center;font-size:8px;color:${tc};font-weight:700;line-height:16px;padding-top:2px">
+        <div>${d.slice(8)}</div><div>${label}</div>
+      </div>`;
+    }).join('');
+
+    const streakLabel = streak > 0 ? `🔥 ${streak}d` : '—';
+    return `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:10px 14px;border:1px solid #eee;border-radius:10px">
+        <div style="min-width:110px">
+          <div style="font-size:15px;font-weight:800;color:#111">${name}</div>
+          <div style="font-size:11px;color:#e67e22;margin-top:2px">${streakLabel}</div>
+        </div>
+        <div style="flex:1;line-height:1">${squares}</div>
+      </div>`;
+  }).join('');
+
+  const rangeLabel = tlStart === tlEnd ? formatDate(tlStart) : `${formatDate(tlStart)} até ${formatDate(tlEnd)}`;
+  const title = tlAgent ? `Sequência de Envios — ${tlAgent}` : 'Sequência de Envios — Todos os Angariadores';
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Nickel CRM — ${title}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:28px;max-width:1100px;margin:0 auto}
+    @media print{body{padding:12px}button{display:none!important}}
+  </style>
+  </head><body>
+
+  <button onclick="window.print()" style="background:#111;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;margin-bottom:24px;display:block">🖨 Imprimir / Salvar PDF</button>
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px">
+    <div>
+      <div style="font-size:10px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px">Nickel CRM</div>
+      <div style="font-size:20px;font-weight:800">${title}</div>
+    </div>
+    <div style="font-size:12px;color:#888;text-align:right">${rangeLabel}<br>Gerado em ${formatDate(t)}</div>
+  </div>
+
+  <!-- Legenda -->
+  <div style="display:flex;gap:16px;margin:12px 0 18px;font-size:10px;color:#555">
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#6495ed;margin-right:3px;vertical-align:middle"></span>Azul 8–10 (DOC captado)</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#a8e63d;margin-right:3px;vertical-align:middle"></span>Verde 6–7.9</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f0c040;margin-right:3px;vertical-align:middle"></span>Amarelo 3–5.9</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e74c3c;margin-right:3px;vertical-align:middle"></span>Vermelho 0–2.9</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f0f0f0;margin-right:3px;vertical-align:middle"></span>Sem lançamento</span>
+  </div>
+
+  <!-- Header de datas -->
+  <div style="padding-left:122px;margin-bottom:4px;line-height:1">${headerCells}</div>
+
+  <!-- Linhas por angariador -->
+  ${agentRows}
+
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { alert('Ative os pop-ups no navegador para exportar.'); return; }
+  w.document.write(html);
+  w.document.close();
 }
 
 // ── CONSULTA POR DIA ─────────────────────────────────────
