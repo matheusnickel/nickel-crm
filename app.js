@@ -1747,8 +1747,8 @@ function renderTimeline() {
 }
 
 function exportTimeline(sorted, days, t) {
-  const SX = s => { if(s>=8)return'#6495ed';if(s>=6)return'#a8e63d';if(s>=3)return'#f0c040';return'#e74c3c'; };
-  const TX = s => (s>=3&&s<8)?'#07090f':'#fff';
+  const SX = s=>{if(s>=8)return'#6495ed';if(s>=6)return'#a8e63d';if(s>=3)return'#f0c040';return'#e74c3c';};
+  const TX = s=>(s>=3&&s<8)?'#07090f':'#fff';
 
   const entries = getEntries();
   const eMap = {};
@@ -1757,139 +1757,144 @@ function exportTimeline(sorted, days, t) {
   const WDAYS = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
 
   function buildAgentPage(name, streak) {
-    // Stats for period
-    const agentPeriodEntries = days.map(d => eMap[name+'|'+d]).filter(Boolean);
-    const totDoc  = agentPeriodEntries.reduce((s,e)=>s+e.doc,0);
-    const totCpd  = agentPeriodEntries.reduce((s,e)=>s+e.cpd,0);
-    const totProsp= agentPeriodEntries.reduce((s,e)=>s+e.prosp,0);
-    const missedDays = days.filter(d => d <= t && !eMap[name+'|'+d]);
+    const agentPeriodEntries = days.map(d=>eMap[name+'|'+d]).filter(Boolean);
+    const totDoc   = agentPeriodEntries.reduce((s,e)=>s+e.doc,0);
+    const totCpd   = agentPeriodEntries.reduce((s,e)=>s+e.cpd,0);
+    const totProsp = agentPeriodEntries.reduce((s,e)=>s+e.prosp,0);
+    const missedDays = days.filter(d=>d<=t && !eMap[name+'|'+d]);
 
-    // Calendar grid — pad to week start (Sun=0)
-    const firstDate = new Date(days[0]+'T12:00:00');
-    const padStart  = firstDate.getDay(); // 0=Sun
+    // Calendar grid aligned to Sunday
+    const padStart = new Date(days[0]+'T12:00:00').getDay();
     const cells = [];
-    for (let i = 0; i < padStart; i++) cells.push({ type:'pad' });
-    days.forEach(d => {
-      const e = eMap[name+'|'+d];
-      const isFuture = d > t;
-      if (!e) { cells.push({ type: isFuture?'future':'missing', d }); return; }
-      const score = calcDailyScore(e);
-      cells.push({ type:'scored', d, score, e });
+    for (let i=0;i<padStart;i++) cells.push({type:'pad'});
+    days.forEach(d=>{
+      const e=eMap[name+'|'+d];
+      if (!e) { cells.push({type:d>t?'future':'missing',d}); return; }
+      const score=calcDailyScore(e);
+      cells.push({type:'scored',d,score});
     });
-    while (cells.length % 7 !== 0) cells.push({ type:'pad' });
+    while(cells.length%7!==0) cells.push({type:'pad'});
+
+    const numWeeks = cells.length/7;
+    // Each row height: fill available space
+    const rowH = Math.floor(420/numWeeks);
 
     const calRows = [];
-    for (let r = 0; r < cells.length/7; r++) {
-      const rowCells = cells.slice(r*7, r*7+7).map(c => {
-        if (c.type==='pad') return `<td style="background:transparent"></td>`;
-        const day = c.d.slice(8);
-        if (c.type==='future') return `<td style="background:#0a0f18;border-radius:10px;opacity:.3">
-          <div style="font-size:10px;color:#6b8299;font-weight:600;margin-bottom:4px">${day}</div>
+    for(let r=0;r<numWeeks;r++){
+      const rowCells=cells.slice(r*7,r*7+7).map(c=>{
+        if(c.type==='pad') return `<td></td>`;
+        const day=c.d.slice(8);
+        if(c.type==='future') return `<td style="background:#0d1117;border-radius:12px">
+          <div style="font-size:16px;font-weight:700;color:#1e2a38">${day}</div>
         </td>`;
-        if (c.type==='missing') return `<td style="background:#0e1218;border-radius:10px;border:2px dashed #1e2a38">
-          <div style="font-size:10px;color:#6b8299;font-weight:600;margin-bottom:6px">${day}</div>
-          <div style="font-size:18px;color:#1e2a38;font-weight:900">✕</div>
+        if(c.type==='missing') return `<td style="background:#1a0a0a;border-radius:12px;border:2px dashed rgba(231,76,60,.5)">
+          <div style="font-size:16px;font-weight:700;color:#5a2020;margin-bottom:4px">${day}</div>
+          <div style="font-size:28px;color:rgba(231,76,60,.4);font-weight:900;line-height:1">✕</div>
+          <div style="font-size:9px;color:rgba(231,76,60,.5);margin-top:4px;font-weight:600;letter-spacing:.5px">SEM<br>ENVIO</div>
         </td>`;
-        const bg = SX(c.score);
-        const tc = TX(c.score);
-        const lbl = c.score%1===0?c.score.toFixed(0):c.score.toFixed(1);
-        return `<td style="background:${bg};border-radius:10px;">
-          <div style="font-size:10px;color:${tc};opacity:.8;font-weight:600;margin-bottom:4px">${day}</div>
-          <div style="font-size:22px;color:${tc};font-weight:900;line-height:1">${lbl}</div>
+        const bg=SX(c.score);
+        const tc=TX(c.score);
+        const lbl=c.score%1===0?c.score.toFixed(0):c.score.toFixed(1);
+        return `<td style="background:${bg};border-radius:12px">
+          <div style="font-size:16px;font-weight:800;color:${tc};opacity:.7;margin-bottom:2px">${day}</div>
+          <div style="font-size:32px;font-weight:900;color:${tc};line-height:1">${lbl}</div>
         </td>`;
       }).join('');
-      calRows.push(`<tr style="height:70px">${rowCells}</tr>`);
+      calRows.push(`<tr style="height:${rowH}px;text-align:center;vertical-align:middle">${rowCells}</tr>`);
     }
 
-    const streakEmoji = streak>=7?'🔥':streak>=3?'🔥':streak>=1?'🔥':'';
-    const streakColor = streak>=14?'#6495ed':streak>=7?'#a8e63d':streak>=3?'#ff7a00':streak>=1?'#cd7f32':'#555';
-    const rangeLabel = days[0]===days[days.length-1]
-      ? formatDate(days[0])
-      : `${formatDate(days[0])} – ${formatDate(days[days.length-1])}`;
+    const streakColor=streak>=14?'#6495ed':streak>=7?'#a8e63d':streak>=3?'#ff7a00':streak>=1?'#cd7f32':'#555';
+    const rangeLabel=days[0]===days[days.length-1]?formatDate(days[0]):`${formatDate(days[0])} – ${formatDate(days[days.length-1])}`;
 
-    const missedMsg = missedDays.length > 0
-      ? `<div style="background:#1a0e0e;border:1px solid rgba(231,76,60,.3);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px">
-          <span style="font-size:22px">📅</span>
-          <span style="font-size:13px;color:#ff6b6b;line-height:1.5">
-            Você teve <strong>${missedDays.length} dia${missedDays.length>1?'s':''} sem lançamento</strong> neste período.
+    const missedMsg = missedDays.length>0
+      ? `<div style="background:#200d0d;border:2px solid rgba(231,76,60,.4);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:14px">
+          <span style="font-size:28px">📅</span>
+          <span style="font-size:13px;color:#ff8080;line-height:1.6">
+            Você teve <strong style="color:#ff4444">${missedDays.length} dia${missedDays.length>1?'s':''} sem lançamento</strong> neste período — os dias ${missedDays.map(d=>d.slice(8)+'/'+d.slice(5,7)).join(', ')}.
             Realize os lançamentos dos dias faltantes para que o seu relatório esteja completo.
           </span>
         </div>`
-      : `<div style="background:#0a1a0a;border:1px solid rgba(46,204,113,.3);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px">
-          <span style="font-size:22px">✅</span>
-          <span style="font-size:13px;color:#2ecc71;line-height:1.5">
+      : `<div style="background:#0a1f0a;border:2px solid rgba(46,204,113,.3);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:14px">
+          <span style="font-size:28px">✅</span>
+          <span style="font-size:13px;color:#2ecc71;line-height:1.6">
             <strong>Relatório completo!</strong> Todos os dias do período foram lançados. Continue assim!
           </span>
         </div>`;
 
     return `
-    <div style="background:#07090f;border-radius:20px;padding:32px 36px;page-break-after:always">
+    <div style="background:#07090f;min-height:100vh;padding:28px 32px;display:flex;flex-direction:column;page-break-after:always">
 
       <!-- Header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
         <div>
-          <div style="font-size:10px;color:#a8e63d;letter-spacing:3px;font-weight:700;text-transform:uppercase;margin-bottom:6px">NICKEL CRM</div>
-          <div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:-.5px">${name}</div>
-          <div style="font-size:13px;color:#6b8299;margin-top:4px">${rangeLabel}</div>
+          <div style="font-size:9px;color:#a8e63d;letter-spacing:4px;font-weight:800;text-transform:uppercase;margin-bottom:6px">NICKEL CRM · SEQUÊNCIA DE ENVIOS</div>
+          <div style="font-size:34px;font-weight:900;color:#fff;letter-spacing:-.5px;line-height:1">${name}</div>
+          <div style="font-size:13px;color:#6b8299;margin-top:6px">${rangeLabel}</div>
         </div>
         <div style="text-align:right">
-          ${streak>0?`<div style="font-size:32px;font-weight:900;color:${streakColor}">${streakEmoji} ${streak}d</div>
-          <div style="font-size:10px;color:#6b8299;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Sequência</div>`:''}
+          ${streak>0?`<div style="background:#0e1218;border:1px solid #1e2a38;border-radius:14px;padding:12px 20px;text-align:center">
+            <div style="font-size:28px;font-weight:900;color:${streakColor}">🔥 ${streak}d</div>
+            <div style="font-size:9px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:4px">Sequência</div>
+          </div>`:''}
         </div>
       </div>
 
       <!-- Stats -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px">
-        <div style="background:#0e1218;border-radius:12px;padding:16px 20px;border:1px solid #1e2a38">
-          <div style="font-size:32px;font-weight:900;color:#a8e63d">${totDoc}</div>
-          <div style="font-size:10px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:4px">DOC captados</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+        <div style="background:#0e1218;border-radius:12px;padding:14px 18px;border:1px solid #1e2a38">
+          <div style="font-size:36px;font-weight:900;color:#a8e63d;line-height:1">${totDoc}</div>
+          <div style="font-size:9px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:6px">DOC captados</div>
         </div>
-        <div style="background:#0e1218;border-radius:12px;padding:16px 20px;border:1px solid #1e2a38">
-          <div style="font-size:32px;font-weight:900;color:#6495ed">${totCpd}</div>
-          <div style="font-size:10px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:4px">Conversas (CP)</div>
+        <div style="background:#0e1218;border-radius:12px;padding:14px 18px;border:1px solid #1e2a38">
+          <div style="font-size:36px;font-weight:900;color:#6495ed;line-height:1">${totCpd}</div>
+          <div style="font-size:9px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:6px">Conversas (CP)</div>
         </div>
-        <div style="background:#0e1218;border-radius:12px;padding:16px 20px;border:1px solid #1e2a38">
-          <div style="font-size:32px;font-weight:900;color:#f0c040">${totProsp}</div>
-          <div style="font-size:10px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:4px">Prospecções</div>
+        <div style="background:#0e1218;border-radius:12px;padding:14px 18px;border:1px solid #1e2a38">
+          <div style="font-size:36px;font-weight:900;color:#f0c040;line-height:1">${totProsp}</div>
+          <div style="font-size:9px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:6px">Prospecções</div>
         </div>
       </div>
 
       <!-- Calendar -->
-      <table style="width:100%;border-collapse:separate;border-spacing:5px;margin-bottom:20px">
-        <thead><tr>${WDAYS.map(d=>`<th style="text-align:center;font-size:10px;color:#6b8299;letter-spacing:2px;font-weight:700;padding-bottom:8px;text-transform:uppercase">${d}</th>`).join('')}</tr></thead>
-        <tbody style="text-align:center">${calRows.join('')}</tbody>
+      <table style="width:100%;border-collapse:separate;border-spacing:6px;flex:1;margin-bottom:16px">
+        <thead><tr>${WDAYS.map(d=>`<th style="text-align:center;font-size:10px;color:#6b8299;letter-spacing:3px;font-weight:700;padding-bottom:10px;text-transform:uppercase">${d}</th>`).join('')}</tr></thead>
+        <tbody>${calRows.join('')}</tbody>
       </table>
 
       <!-- Legenda -->
-      <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
-        ${[['#6495ed','Azul — DOC captado (8–10)'],['#a8e63d','Verde — Esforço forte (6–7.9)'],['#f0c040','Amarelo — Esforço moderado (3–5.9)'],['#e74c3c','Vermelho — Pouco produzido (0–2.9)']].map(([c,l])=>`
-        <div style="display:flex;align-items:center;gap:6px">
-          <div style="width:12px;height:12px;border-radius:3px;background:${c};flex-shrink:0"></div>
-          <span style="font-size:10px;color:#6b8299">${l}</span>
+      <div style="display:flex;gap:20px;margin-bottom:14px;flex-wrap:wrap">
+        ${[['#6495ed','Azul 8–10'],['#a8e63d','Verde 6–7.9'],['#f0c040','Amarelo 3–5.9'],['#e74c3c','Vermelho 0–2.9']].map(([c,l])=>`
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:14px;height:14px;border-radius:4px;background:${c};flex-shrink:0"></div>
+          <span style="font-size:11px;color:#6b8299;font-weight:600">${l}</span>
         </div>`).join('')}
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:14px;height:14px;border-radius:4px;background:#1a0a0a;border:2px dashed rgba(231,76,60,.5);flex-shrink:0"></div>
+          <span style="font-size:11px;color:#6b8299;font-weight:600">Sem lançamento</span>
+        </div>
       </div>
 
       <!-- Mensagem -->
       ${missedMsg}
 
       <!-- Rodapé -->
-      <div style="margin-top:20px;text-align:center;font-size:10px;color:#1e2a38;letter-spacing:1px">NICKEL CRM · Gerado em ${formatDate(t)}</div>
+      <div style="margin-top:14px;text-align:right;font-size:9px;color:#1e2a38;letter-spacing:1px;text-transform:uppercase">NICKEL CRM · Gerado em ${formatDate(t)}</div>
     </div>`;
   }
 
-  const pages = sorted.map(({name,streak}) => buildAgentPage(name,streak)).join('');
+  const pages = sorted.map(({name,streak})=>buildAgentPage(name,streak)).join('');
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
   <title>Nickel CRM — Sequência de Envios</title>
   <style>
     @page{size:A4 portrait;margin:0}
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#030508;padding:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    @media print{.print-btn{display:none!important}body{padding:0}}
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    body{font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#030508}
+    @media print{.print-btn{display:none!important}}
   </style>
   </head><body>
-  <div style="text-align:center;margin-bottom:16px">
-    <button class="print-btn" onclick="window.print()" style="background:#a8e63d;color:#07090f;border:none;padding:12px 28px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:800;letter-spacing:.5px">🖨&nbsp; Imprimir / Salvar PDF</button>
+  <div class="print-btn" style="text-align:center;padding:20px;background:#030508">
+    <button onclick="window.print()" style="background:#a8e63d;color:#07090f;border:none;padding:13px 32px;border-radius:10px;cursor:pointer;font-size:15px;font-weight:800;letter-spacing:.5px">🖨&nbsp;&nbsp;Imprimir / Salvar PDF</button>
   </div>
   ${pages}
   </body></html>`;
