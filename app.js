@@ -386,11 +386,11 @@ function calcMonthlyScore(agentName, monthEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta: 12 DOC = 10.0. CP bônus máx +1.0 (30 CPs). PROSP bônus máx +0.3.
-  // Verde (6.0+) exige mínimo 6 DOC + ~30 CP. 5 DOC nunca alcança verde.
+  // Meta: 12 DOC = 10.0 — nota é quase 100% proporcional ao DOC.
+  // CP e PROSP são desempate mínimo apenas.
   const base    = (doc / 12) * 10;
-  const bonusCp = Math.min(cpd * 0.033, 1.0);
-  const bonusPr = Math.min(prosp * 0.001, 0.3);
+  const bonusCp = Math.min(cpd * 0.004, 0.2);
+  const bonusPr = Math.min(prosp * 0.0001, 0.05);
   return parseFloat(Math.min(base + bonusCp + bonusPr, 10).toFixed(1));
 }
 
