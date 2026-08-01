@@ -1642,7 +1642,7 @@ function renderDocList(entries) {
 }
 
 // ── LINHA DO TEMPO (últimos 30 dias) ─────────────────────
-let tlStart = null, tlEnd = null;
+let tlStart = null, tlEnd = null, tlAgent = '';
 
 function renderTimeline() {
   const wrap = document.getElementById('timeline-wrap');
@@ -1665,10 +1665,11 @@ function renderTimeline() {
   const entryMap = {};
   entries.forEach(e => { entryMap[e.agent+'|'+e.date] = e; });
 
-  // sort by streak desc
+  // sort by streak desc, filter by selected agent
   const sorted = agentNames
     .map(name => ({ name, streak: calcStreak(name) }))
-    .sort((a, b) => b.streak - a.streak);
+    .sort((a, b) => b.streak - a.streak)
+    .filter(r => !tlAgent || r.name === tlAgent);
 
   // header
   const headerCells = days.map((d, i) => {
@@ -1707,12 +1708,16 @@ function renderTimeline() {
     </div>`;
   }).join('');
 
+  const agentOpts = `<option value="">Todos os angariadores</option>`
+    + agentNames.map(n => `<option value="${n}" ${tlAgent===n?'selected':''}>${n}</option>`).join('');
+
   wrap.innerHTML = `
     <div class="tl-range-row">
       <label>De</label>
       <input type="date" id="tl-start" value="${tlStart}" max="${tlEnd}">
       <label>até</label>
       <input type="date" id="tl-end" value="${tlEnd}" max="${t}">
+      <select id="tl-agent" style="margin-left:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:13px">${agentOpts}</select>
     </div>
     <div class="tl-row tl-header">
       <div class="tl-name"></div>
@@ -1728,6 +1733,10 @@ function renderTimeline() {
   document.getElementById('tl-end').addEventListener('change', e => {
     tlEnd = e.target.value;
     if (tlEnd < tlStart) tlStart = tlEnd;
+    renderTimeline();
+  });
+  document.getElementById('tl-agent').addEventListener('change', e => {
+    tlAgent = e.target.value;
     renderTimeline();
   });
 }
