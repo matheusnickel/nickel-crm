@@ -2006,49 +2006,202 @@ function initExport() {
 }
 
 function generateReport(period) {
-  const t = period==='month' ? activeMonthRef : period==='week' ? activeWeekRef : today();
-  const team=new Set(getAgentNames());
-  const entries=filterEntries(period, period==='month'?activeMonthRef:period==='week'?activeWeekRef:undefined).filter(e=>team.has(e.agent));
-  const byAgent=sumByAgent(entries);
-  const allDocs=entries.flatMap(e=>(e.docDetails||[]).map(d=>({...d,date:e.date,agent:e.agent})));
-  const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
-  const periodLabel = getPeriodLabel(period, t);
+  const t = today();
+  const ref = period==='month' ? activeMonthRef : period==='week' ? activeWeekRef : t;
+  const team = getAgentNames();
+  const allEntries = getEntries();
+  const periodEntries = filterEntries(period, ref).filter(e => new Set(team).has(e.agent));
+  const periodLabel = getPeriodLabel(period, ref);
 
-  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-  <title>Nickel CRM — Relatório</title>
+  // Build date range for daily timeline
+  let rangeStart, rangeEnd;
+  if (period === 'today') {
+    rangeStart = rangeEnd = t;
+  } else if (period === 'week') {
+    const r = weekRange(ref); rangeStart = r.start; rangeEnd = r.end;
+  } else {
+    const r = monthRange(ref); rangeStart = r.start; rangeEnd = r.end;
+  }
+  const days = [];
+  let cur = new Date(rangeStart+'T12:00:00');
+  const endD = new Date(rangeEnd+'T12:00:00');
+  while (cur <= endD) { days.push(toDateStr(cur)); cur.setDate(cur.getDate()+1); }
+
+  // Ranking geral
+  const byAgent = sumByAgent(periodEntries);
+  const ranked = [...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
+
+  function scoreHex(score) {
+    if (score >= 8) return '#6495ed';
+    if (score >= 6) return '#a8e63d';
+    if (score >= 3) return '#f0c040';
+    return '#e74c3c';
+  }
+  function textOnScore(score) {
+    return score >= 3 && score < 8 ? '#111' : '#fff';
+  }
+
+  // Per-agent cards
+  const agentCards = ranked.map((a, i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
+    const agentEntries = allEntries.filter(e => e.agent === a.agent);
+    const entryMap = {};
+    agentEntries.forEach(e => { entryMap[e.date] = e; });
+
+    // Daily score timeline squares
+    const squares = days.map(d => {
+      const e = entryMap[d];
+      if (!e) return `<div style="display:inline-block;width:26px;height:26px;border-radius:4px;background:#e8e8e8;margin:2px;vertical-align:middle;font-size:8px;line-height:26px;text-align:center;color:#aaa">${d.slice(8)}</div>`;
+      const score = calcDailyScore(e);
+      const bg = scoreHex(score);
+      const tc = textOnScore(score);
+      const label = score % 1 === 0 ? score.toFixed(0) : score.toFixed(1);
+      return `<div style="display:inline-block;width:26px;height:26px;border-radius:4px;background:${bg};margin:2px;vertical-align:middle;font-size:7px;line-height:13px;text-align:center;color:${tc};font-weight:700">
+        <div>${d.slice(8)}</div><div>${label}</div>
+      </div>`;
+    }).join('');
+
+    // DOCs do período
+    const docs = periodEntries
+      .filter(e => e.agent === a.agent)
+      .flatMap(e => (e.docDetails||[]).map(d => ({...d, date: e.date})))
+      .filter(d => d.nome);
+
+    const docRows = docs.length === 0
+      ? '<tr><td colspan="5" style="color:#999;font-style:italic">Nenhum DOC no período</td></tr>'
+      : docs.map(d => {
+          const statusColors = {'FOTOS':'#e67e22','AVI':'#3498db','AV':'#9b59b6','SITE':'#a8e63d'};
+          const statusLabels = {'FOTOS':'FOTOS','AVI':'AV ASSINADA','AV':'FALTA ASSINAR','SITE':'SITE'};
+          const sColor = statusColors[d.nota] || '#999';
+          const sLabel = statusLabels[d.nota] || '—';
+          return `<tr>
+            <td style="color:#555;font-size:11px">${formatDate(d.date)}</td>
+            <td style="font-weight:600">${d.nome||'—'}</td>
+            <td>${d.tipo||'—'} · ${d.bairro||'—'}</td>
+            <td style="text-align:right;font-weight:600">${formatCurrency(d.valor)}</td>
+            <td><span style="background:${sColor};color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700">${sLabel}</span></td>
+          </tr>`;
+        }).join('');
+
+    const monthEntries = filterEntries('month', ref);
+    const notaMes = calcMonthlyScore(a.agent, monthEntries);
+    const notaMesBg = scoreHex(notaMes);
+
+    return `
+    <div style="border:1px solid #e0e0e0;border-radius:12px;padding:20px 24px;margin-bottom:24px;page-break-inside:avoid">
+
+      <!-- Cabeçalho do corretor -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:2px solid #f0f0f0;padding-bottom:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:22px">${medal}</span>
+          <span style="font-size:20px;font-weight:800;color:#111">${a.agent}</span>
+        </div>
+        <div style="display:flex;gap:20px;align-items:center">
+          <div style="text-align:center">
+            <div style="font-size:24px;font-weight:800;color:#a8e63d">${a.doc}</div>
+            <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase">DOC</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:24px;font-weight:800;color:#6495ed">${a.cpd}</div>
+            <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase">CP</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:24px;font-weight:800;color:#f0c040">${a.prosp}</div>
+            <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase">PROSP</div>
+          </div>
+          ${period !== 'today' ? `<div style="text-align:center;background:${notaMesBg};border-radius:10px;padding:8px 14px">
+            <div style="font-size:22px;font-weight:800;color:${textOnScore(notaMes)}">${notaMes.toFixed(1)}</div>
+            <div style="font-size:9px;color:${textOnScore(notaMes)};opacity:.85;letter-spacing:.5px">NOTA MÊS</div>
+          </div>` : ''}
+        </div>
+      </div>
+
+      <!-- Timeline de notas -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Notas diárias — ${periodLabel}</div>
+        <div style="line-height:1">${squares}</div>
+        <div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:#555">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#6495ed;margin-right:3px"></span>Azul 8–10 (DOC)</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#a8e63d;margin-right:3px"></span>Verde 6–7.9</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f0c040;margin-right:3px"></span>Amarelo 3–5.9</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e74c3c;margin-right:3px"></span>Vermelho 0–2.9</span>
+        </div>
+      </div>
+
+      <!-- DOCs captados -->
+      <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">DOCs captados</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr style="background:#f8f8f8">
+          <th style="text-align:left;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">DATA</th>
+          <th style="text-align:left;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">PROPRIETÁRIO</th>
+          <th style="text-align:left;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">IMÓVEL</th>
+          <th style="text-align:right;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">VALOR</th>
+          <th style="text-align:left;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">STATUS</th>
+        </tr></thead>
+        <tbody>${docRows}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+
+  // Totais gerais
+  const totDoc = byAgent.reduce((s,a)=>s+a.doc,0);
+  const totCpd = byAgent.reduce((s,a)=>s+a.cpd,0);
+  const totProsp = byAgent.reduce((s,a)=>s+a.prosp,0);
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Nickel CRM — Relatório por Angariador</title>
   <style>
-    body{font-family:Arial,sans-serif;color:#111;padding:24px;max-width:900px;margin:0 auto}
-    h1{font-size:20px;margin-bottom:4px}
-    h2{font-size:14px;color:#555;margin:24px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
-    .period{color:#888;font-size:13px;margin-bottom:20px}
-    table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px}
-    th{text-align:left;padding:7px 10px;background:#f5f5f5;font-size:11px;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid #ddd}
-    td{padding:7px 10px;border-bottom:1px solid #eee}
-    .num{text-align:right;font-weight:600}
-    .gold{color:#b8860b;font-weight:700}
-    .tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
-    @media print{body{padding:0}button{display:none}}
-    .print-btn{background:#111;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;margin-bottom:20px;font-size:14px}
-  </style></head><body>
-  <button class="print-btn" onclick="window.print()">Imprimir / Salvar PDF</button>
-  <h1>Nickel CRM — Relatório</h1>
-  <div class="period">${periodLabel}</div>
-  <h2>Ranking</h2>
-  <table><thead><tr><th>#</th><th>Angariador</th><th class="num">DOC</th><th class="num">CP</th><th class="num">PROSP</th></tr></thead>
-  <tbody>${ranked.map((a,i)=>`<tr><td class="${i===0?'gold':''}">${i<3?['🥇','🥈','🥉'][i]:i+1}</td><td>${a.agent}</td><td class="num">${a.doc}</td><td class="num">${a.cpd}</td><td class="num">${a.prosp}</td></tr>`).join('')}</tbody>
-  </table>
-  <h2>DOCs registrados</h2>
-  ${allDocs.length===0?'<p style="color:#888">Nenhum DOC no período.</p>':`
-  <table><thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num">Valor</th><th>Indicação</th><th>Status</th></tr></thead>
-  <tbody>${allDocs.map(d=>`<tr><td>${formatDate(d.date)}</td><td>${d.agent}</td><td>${d.nome||'—'}</td><td>${d.tipo||'—'}</td><td>${d.bairro||'—'}</td><td class="num">${formatCurrency(d.valor)}</td><td>${d.indicacao==='sim'?`Sim — ${d.indicador||'—'}`:'Não'}</td><td>${d.nota||'—'}</td></tr>`).join('')}</tbody>
-  </table>`}
-  <h2>Totais</h2>
-  <table><thead><tr><th>PROSP</th><th>CP</th><th>DOC</th></tr></thead>
-  <tbody><tr><td>${byAgent.reduce((s,a)=>s+a.prosp,0)}</td><td>${byAgent.reduce((s,a)=>s+a.cpd,0)}</td><td>${byAgent.reduce((s,a)=>s+a.doc,0)}</td></tr></tbody>
-  </table>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:32px;max-width:960px;margin:0 auto}
+    table td{padding:7px 8px;border-bottom:1px solid #f0f0f0}
+    @media print{
+      body{padding:16px}
+      button{display:none!important}
+      .page-break{page-break-before:always}
+    }
+  </style>
+  </head><body>
+
+  <button onclick="window.print()" style="background:#111;color:#fff;border:none;padding:11px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;margin-bottom:28px;display:block">🖨 Imprimir / Salvar PDF</button>
+
+  <!-- Cabeçalho -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px">
+    <div>
+      <div style="font-size:11px;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Nickel CRM</div>
+      <div style="font-size:26px;font-weight:800;color:#111">Relatório de Desempenho</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:13px;color:#555">${periodLabel}</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">Gerado em ${formatDate(t)}</div>
+    </div>
+  </div>
+
+  <!-- Totais gerais -->
+  <div style="display:flex;gap:16px;margin:20px 0 32px;padding:20px 24px;background:#f8f8f8;border-radius:12px">
+    <div style="flex:1;text-align:center">
+      <div style="font-size:32px;font-weight:800;color:#a8e63d">${totDoc}</div>
+      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">DOC total</div>
+    </div>
+    <div style="flex:1;text-align:center;border-left:1px solid #e0e0e0">
+      <div style="font-size:32px;font-weight:800;color:#6495ed">${totCpd}</div>
+      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">CP total</div>
+    </div>
+    <div style="flex:1;text-align:center;border-left:1px solid #e0e0e0">
+      <div style="font-size:32px;font-weight:800;color:#f0c040">${totProsp}</div>
+      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">PROSP total</div>
+    </div>
+    <div style="flex:1;text-align:center;border-left:1px solid #e0e0e0">
+      <div style="font-size:32px;font-weight:800;color:#111">${ranked.length}</div>
+      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Angariadores</div>
+    </div>
+  </div>
+
+  <!-- Cards por angariador -->
+  ${agentCards}
+
   </body></html>`;
 
-  const w=window.open('','_blank');
+  const w = window.open('','_blank');
   if (!w) { alert('Ative os pop-ups no navegador para exportar o relatório.'); return; }
   w.document.write(html);
   w.document.close();
