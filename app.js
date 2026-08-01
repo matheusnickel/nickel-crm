@@ -261,6 +261,19 @@ function getSalesMonth(monthRef) {
   const ym = (monthRef || today()).slice(0, 7);
   return SALES.filter(s => s.date && s.date.slice(0, 7) === ym);
 }
+function getSalesPeriod(period) {
+  const t = today();
+  const [y, m] = t.split('-').map(Number);
+  return SALES.filter(s => {
+    if (!s.date) return false;
+    const [sy, sm] = s.date.split('-').map(Number);
+    if (period === 'month')    return sy === y && sm === m;
+    if (period === 'quarter')  return (y - sy) * 12 + (m - sm) < 3  && sy * 12 + sm <= y * 12 + m;
+    if (period === 'semester') return (y - sy) * 12 + (m - sm) < 6  && sy * 12 + sm <= y * 12 + m;
+    if (period === 'year')     return sy === y;
+    return false;
+  });
+}
 function getPeriodLabel(period, ref) {
   const t = ref||today();
   if (period==='today') return `Hoje (${formatDate(t)})`;
@@ -1216,6 +1229,7 @@ let activeWeekRef=today();  // 'YYYY-MM-DD' — referência da semana selecionad
 let gestorUnsubscribe=null;
 let salesUnsubscribe=null;
 let SALES=[];
+let vgvPeriod='month';
 
 async function initGestorDashboard() {
   const session=getSession();
@@ -1283,19 +1297,31 @@ function renderVGVRanking() {
   const card = document.getElementById('vgv-ranking-card');
   const wrap = document.getElementById('vgv-ranking-wrap');
   if (!card || !wrap) return;
-  const showVGV = activePeriod === 'month';
-  const sales = showVGV ? getSalesMonth(activeMonthRef) : [];
-  if (!showVGV || !sales.length) { card.style.display = 'none'; return; }
+  if (!SALES.length) { card.style.display = 'none'; return; }
   card.style.display = '';
+
+  const PERIODS = [
+    { key: 'month',    label: 'Mês' },
+    { key: 'quarter',  label: 'Trimestre' },
+    { key: 'semester', label: 'Semestre' },
+    { key: 'year',     label: 'Ano' },
+  ];
+  const sales = getSalesPeriod(vgvPeriod);
   const byAgent = {};
   sales.forEach(s => { byAgent[s.agent] = (byAgent[s.agent] || 0) + s.value; });
   const ranked = Object.entries(byAgent).sort((a, b) => b[1] - a[1]);
   const total = ranked.reduce((s, [, v]) => s + v, 0);
   const PODIUM_CLS = { 1: 'badge-gold', 2: 'badge-silver', 3: 'badge-bronze' };
   const PODIUM_LBL = { 1: '🥇', 2: '🥈', 3: '🥉' };
+  const periodLabel = PERIODS.find(p => p.key === vgvPeriod)?.label || 'Mês';
+
   wrap.innerHTML = `
+    <div style="display:flex;gap:6px;margin-bottom:14px">
+      ${PERIODS.map(p => `<button class="filter-btn vgv-period-btn${vgvPeriod===p.key?' active':''}" data-vgv="${p.key}" style="flex:1;font-size:12px;padding:6px 4px">${p.label}</button>`).join('')}
+    </div>
+    ${!ranked.length ? `<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhuma venda registrada neste período.</div>` : `
     <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:13px;color:var(--text-muted)">Total VGV do mês</span>
+      <span style="font-size:13px;color:var(--text-muted)">Total VGV — ${periodLabel}</span>
       <span style="font-size:18px;font-weight:500;color:#a8e63d">${formatCurrency(total)}</span>
     </div>
     ${ranked.map(([name, val], i) => {
@@ -1309,7 +1335,11 @@ function renderVGVRanking() {
           <div style="font-size:11px;color:var(--text-muted)">${pct}% do total</div>
         </div>
       </div>`;
-    }).join('')}`;
+    }).join('')}`}`;
+
+  wrap.querySelectorAll('.vgv-period-btn').forEach(btn => {
+    btn.addEventListener('click', () => { vgvPeriod = btn.dataset.vgv; renderVGVRanking(); });
+  });
 }
 
 function renderVendasList() {
