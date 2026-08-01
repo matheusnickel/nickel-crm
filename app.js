@@ -267,9 +267,9 @@ function getSalesPeriod(period) {
   return SALES.filter(s => {
     if (!s.date) return false;
     const [sy, sm] = s.date.split('-').map(Number);
-    if (period === 'month')    return sy === y && sm === m;
-    if (period === 'quarter')  return (y - sy) * 12 + (m - sm) < 3  && sy * 12 + sm <= y * 12 + m;
-    if (period === 'semester') return (y - sy) * 12 + (m - sm) < 6  && sy * 12 + sm <= y * 12 + m;
+    if (period === 'month')    return s.date.slice(0,7) === vgvMonth;
+    if (period === 'quarter')  return (y-sy)*12+(m-sm) < 3  && sy*12+sm <= y*12+m;
+    if (period === 'semester') return (y-sy)*12+(m-sm) < 6  && sy*12+sm <= y*12+m;
     if (period === 'year')     return sy === y;
     return false;
   });
@@ -1262,6 +1262,7 @@ let gestorUnsubscribe=null;
 let salesUnsubscribe=null;
 let SALES=[];
 let vgvPeriod='month';
+let vgvMonth=today().slice(0,7);
 
 async function initGestorDashboard() {
   const session=getSession();
@@ -1333,45 +1334,53 @@ function renderVGVRanking() {
   card.style.display = '';
 
   const PERIODS = [
-    { key: 'month',    label: 'Mês' },
-    { key: 'quarter',  label: 'Trimestre' },
+    { key: 'month', label: 'Mês' },
+    { key: 'quarter', label: 'Trimestre' },
     { key: 'semester', label: 'Semestre' },
-    { key: 'year',     label: 'Ano' },
+    { key: 'year', label: 'Ano' },
   ];
   const sales = getSalesPeriod(vgvPeriod);
   const byAgent = {};
   sales.forEach(s => { byAgent[s.agent] = (byAgent[s.agent] || 0) + s.value; });
   const ranked = Object.entries(byAgent).sort((a, b) => b[1] - a[1]);
   const total = ranked.reduce((s, [, v]) => s + v, 0);
-  const PODIUM_CLS = { 1: 'badge-gold', 2: 'badge-silver', 3: 'badge-bronze' };
-  const PODIUM_LBL = { 1: '🥇', 2: '🥈', 3: '🥉' };
+  const posColor = { 1:'#f0c040', 2:'#b8b8b8', 3:'#cd7f32' };
   const periodLabel = PERIODS.find(p => p.key === vgvPeriod)?.label || 'Mês';
 
+  const monthPicker = vgvPeriod === 'month'
+    ? `<input type="month" id="vgv-month-input" value="${vgvMonth}" style="width:100%;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 10px;font-size:13px">`
+    : '';
+
   wrap.innerHTML = `
-    <div style="display:flex;gap:6px;margin-bottom:14px">
+    <div style="display:flex;gap:6px;margin-bottom:10px">
       ${PERIODS.map(p => `<button class="filter-btn vgv-period-btn${vgvPeriod===p.key?' active':''}" data-vgv="${p.key}" style="flex:1;font-size:12px;padding:6px 4px">${p.label}</button>`).join('')}
     </div>
-    ${!ranked.length ? `<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhuma venda registrada neste período.</div>` : `
-    <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:13px;color:var(--text-muted)">Total VGV — ${periodLabel}</span>
-      <span style="font-size:18px;font-weight:500;color:#a8e63d">${formatCurrency(total)}</span>
-    </div>
-    ${ranked.map(([name, val], i) => {
-      const pos = i + 1;
-      const pct = Math.round((val / total) * 100);
-      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)">
-        <span class="rank-badge ${PODIUM_CLS[pos] || ''}">${PODIUM_LBL[pos] || pos}</span>
-        <span style="flex:1;font-size:14px">${name}</span>
-        <div style="text-align:right">
-          <div style="font-size:15px;font-weight:500;color:#a8e63d">${formatCurrency(val)}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${pct}% do total</div>
-        </div>
-      </div>`;
-    }).join('')}`}`;
+    ${monthPicker}
+    ${!ranked.length
+      ? `<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhuma venda neste período.</div>`
+      : `<div style="margin-bottom:12px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+           <span style="font-size:13px;color:var(--text-muted)">Total VGV — ${periodLabel}</span>
+           <span style="font-size:17px;font-weight:500;color:#a8e63d">${formatCurrency(total)}</span>
+         </div>
+         ${ranked.map(([name, val], i) => {
+           const pos = i + 1;
+           const pct = Math.round((val / total) * 100);
+           const color = posColor[pos] || 'var(--text-muted)';
+           return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)">
+             <span style="font-size:15px;font-weight:500;color:${color};min-width:26px;text-align:center">${pos}°</span>
+             <span style="flex:1;font-size:14px">${name}</span>
+             <div style="text-align:right">
+               <div style="font-size:14px;font-weight:500;color:#a8e63d">${formatCurrency(val)}</div>
+               <div style="font-size:11px;color:var(--text-muted)">${pct}% do total</div>
+             </div>
+           </div>`;
+         }).join('')}`}`;
 
   wrap.querySelectorAll('.vgv-period-btn').forEach(btn => {
     btn.addEventListener('click', () => { vgvPeriod = btn.dataset.vgv; renderVGVRanking(); });
   });
+  const mi = document.getElementById('vgv-month-input');
+  if (mi) mi.addEventListener('change', e => { vgvMonth = e.target.value; renderVGVRanking(); });
 }
 
 function renderVendasList() {
