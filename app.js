@@ -1075,7 +1075,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
           </div>
           <div style="display:flex;gap:8px">
             ${i > 0 ? `<button class="wiz-back" style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#cdd9e5;border-radius:10px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">← Voltar</button>` : ''}
-            <button class="wiz-next" style="flex:2;background:var(--accent);border:none;color:#07090f;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif">${i < WSTEPS.length - 1 ? 'Próximo →' : 'Continuar ✓'}</button>
+            <button class="wiz-next" style="flex:2;background:#a8e63d;border:none;color:#07090f;border-radius:10px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.3px">${i < WSTEPS.length - 1 ? 'Próximo →' : 'Continuar ✓'}</button>
           </div>
         </div>`).join('');
 
