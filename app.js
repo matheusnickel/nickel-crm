@@ -1776,7 +1776,7 @@ function exportTimeline(sorted, days, t) {
     while(cells.length%7!==0) cells.push({type:'pad'});
 
     const numWeeks = cells.length/7;
-    const rowH = Math.floor(520/numWeeks);
+    const rowH = Math.floor(650/numWeeks);
 
     const calRows = [];
     for(let r=0;r<numWeeks;r++){
