@@ -332,61 +332,68 @@ function calcStreak(agentName) {
 
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  // Referência: 3 CPD + 30 PROSP (sem DOC) = 6.0 (esforço mínimo, sem resultado)
-  //             6 CPD + 40 PROSP (sem DOC)  ≈ 9.8 (esforço alto — nota alta, mas não chega em 10 sem DOC)
-  //             1 DOC + 0 esforço           = 6.0 (piso garantido: teve resultado)
-  //             1 DOC + esforço moderado    = 7–9 (granular conforme o que fez + converteu)
-  //             1 DOC + esforço alto        → pode chegar em 10
-  const effortScore = entry.cpd * 0.9 + (entry.video||0) * 0.9 + entry.prosp * 0.11;
-  const natural = entry.doc * 3.2 + effortScore;
-  // DOC garante mínimo 6.0; cada CPD/PROSP sobe esse mínimo levemente
-  const floor = entry.doc > 0 ? 6.0 + entry.cpd * 0.1 + entry.prosp * 0.012 : 0;
-  return parseFloat(Math.min(Math.max(natural, floor), 10).toFixed(1));
+  // Regras:
+  //   CP e VÍDEO têm mesmo peso: 3 CP (ou 3 vídeos) = nota 6.0 (verde)
+  //   PROSP é suporte: 10 PROSP ≈ +0.5 pts
+  //   1 DOC = mínimo 8.0 (azul); esforço empurra até 10
+  //   Sem DOC: máximo 7.9 (não entra na faixa azul)
+  //
+  //   Faixas: vermelho 0–2.9 · amarelo 3–5.9 · verde 6–7.9 · azul 8–10
+  const vid = entry.video || 0;
+  const effort = entry.cpd * 2.0 + vid * 2.0 + entry.prosp * 0.05;
+  if (entry.doc > 0) {
+    const base  = Math.min(entry.doc * 8.0, 10);
+    const bonus = effort * 0.15;
+    return parseFloat(Math.min(base + bonus, 10).toFixed(1));
+  }
+  return parseFloat(Math.min(effort, 7.9).toFixed(1));
 }
 
 function calcWeeklyScore(agentName, weekEntries) {
   const mine  = weekEntries.filter(e => e.agent === agentName);
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
+  const vid   = mine.reduce((s, e) => s + (e.video||0), 0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // < 3 DOC: não bateu meta semanal — máx 6.0
-  // 3 DOC = 7.5 (meta cumprida), 6 DOC = 10 (semana perfeita)
+  // Meta semanal: 3 DOC = azul (8.0+). Sem DOC: máx 7.9
+  const effort = cpd * 2.0 + vid * 2.0 + prosp * 0.05;
   if (doc >= 3) {
-    const docScore = 7.5 + (doc - 3) * (2.5 / 3);
-    const bonus = Math.min(cpd * 0.05 + prosp * 0.003, 0.5);
-    return parseFloat(Math.min(docScore + bonus, 10).toFixed(1));
+    const base  = Math.min(8.0 + (doc - 3) * 1.0, 10);
+    const bonus = Math.min(effort * 0.05, 0.9);
+    return parseFloat(Math.min(base + bonus, 10).toFixed(1));
   }
-  const base = doc * 2.0;
-  const pipeline = Math.min(cpd * 0.15 + prosp * 0.01, 2.0);
-  return parseFloat(Math.min(base + pipeline, 6.0).toFixed(1));
+  const base = doc * 2.5;
+  const pipeline = Math.min(effort * 0.1, 2.0);
+  return parseFloat(Math.min(base + pipeline, 7.9).toFixed(1));
 }
 
 function calcMonthlyScore(agentName, monthEntries) {
   const mine  = monthEntries.filter(e => e.agent === agentName);
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
+  const vid   = mine.reduce((s, e) => s + (e.video||0), 0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta: 12 DOC = 8.0 · 13 = 9.0 · 14+ = 10.0
-  // CP/PROSP quebram a nota dentro de cada faixa (max +0.9); abaixo da meta max +0.5
-  const bonus = Math.min(cpd * 0.02 + prosp * 0.001, 0.9);
-  if (doc >= 14) return parseFloat((10.0).toFixed(1));
-  if (doc >= 13) return parseFloat(Math.min(9.0 + bonus, 9.9).toFixed(1));
-  if (doc >= 12) return parseFloat(Math.min(8.0 + bonus, 8.9).toFixed(1));
-  const subBonus = Math.min(cpd * 0.02 + prosp * 0.001, 0.5);
-  return parseFloat(Math.min(doc * (7.5 / 12) + subBonus, 7.9).toFixed(1));
+  // Meta mensal: 12 DOC = azul (8.0+). Sem meta: máx 7.9
+  const effort = cpd * 2.0 + vid * 2.0 + prosp * 0.05;
+  const bonus  = Math.min(effort * 0.01, 0.9);
+  if (doc >= 14) return parseFloat(Math.min(10.0, 10).toFixed(1));
+  if (doc >= 12) return parseFloat(Math.min(8.0 + (doc - 12) * 0.5 + bonus, 9.9).toFixed(1));
+  const base = doc * (7.5 / 12);
+  const sub  = Math.min(effort * 0.005, 0.4);
+  return parseFloat(Math.min(base + sub, 7.9).toFixed(1));
 }
 
 function scoreColor(score) {
-  if (score >= 8)   return '#6495ed'; // azul
-  if (score >= 6)   return '#a8e63d'; // verde
-  if (score > 3)    return '#f0c040'; // amarelo
-  return '#e74c3c';                   // vermelho
+  if (score >= 8)  return '#6495ed'; // azul   — DOC garantido
+  if (score >= 6)  return '#a8e63d'; // verde  — esforço forte (3+ CP/VID)
+  if (score >= 3)  return '#f0c040'; // amarelo — esforço moderado
+  return '#e74c3c';                  // vermelho — pouco ou nada feito
 }
 
 function scoreLabel(score) {
-  if (score >= 8)   return 'Excelente';
-  if (score >= 6)   return 'Bom';
-  if (score > 3)    return 'Regular';
+  if (score >= 8)  return 'Excelente';
+  if (score >= 6)  return 'Bom';
+  if (score >= 3)  return 'Regular';
   return 'Fraco';
 }
 
