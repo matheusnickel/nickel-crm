@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
 import {
   getFirestore, collection, doc, setDoc, getDoc, getDocs,
-  deleteDoc, writeBatch, onSnapshot
+  deleteDoc, writeBatch, onSnapshot, addDoc
 } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -65,4 +65,19 @@ export async function fbGetTeam() {
 
 export async function fbSaveTeam(agents) {
   await setDoc(doc(db, '_meta', 'team'), { agents });
+}
+
+// ── VENDAS ──────────────────────────────────────────────
+export async function fbSaveSale(sale) {
+  await addDoc(collection(db, 'sales'), sale);
+}
+
+export async function fbDeleteSale(id) {
+  await deleteDoc(doc(db, 'sales', id));
+}
+
+export function fbListenSales(callback) {
+  return onSnapshot(collection(db, 'sales'), snap => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
 }

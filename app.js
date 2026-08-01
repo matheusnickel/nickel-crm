@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
@@ -257,6 +257,10 @@ function isoWeekToDateStr(weekStr) {
 function inRange(s,a,b)   { return s>=a && s<=b; }
 function formatDate(s)    { const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
 function formatCurrency(v){ return (v&&v>0)?'R$ '+Number(v).toLocaleString('pt-BR'):'—'; }
+function getSalesMonth(monthRef) {
+  const ym = (monthRef || today()).slice(0, 7);
+  return SALES.filter(s => s.date && s.date.slice(0, 7) === ym);
+}
 function getPeriodLabel(period, ref) {
   const t = ref||today();
   if (period==='today') return `Hoje (${formatDate(t)})`;
@@ -1210,6 +1214,8 @@ let activePeriod='week', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
 let activeMonthRef=today(); // 'YYYY-MM-DD' — referência do mês selecionado no filtro "Mês"
 let activeWeekRef=today();  // 'YYYY-MM-DD' — referência da semana selecionada no filtro "Semana"
 let gestorUnsubscribe=null;
+let salesUnsubscribe=null;
+let SALES=[];
 
 async function initGestorDashboard() {
   const session=getSession();
@@ -1258,11 +1264,68 @@ async function initGestorDashboard() {
     renderTimeline();
     renderNotasRanking();
   });
+  salesUnsubscribe=fbListenSales(sales=>{
+    SALES=sales;
+    renderGestorDashboard();
+    renderVendasList();
+  });
   initDayView();
   initExport();
   initGestorLancamento();
   initTeamManagement();
   initOfertaAtiva();
+  initVendas();
+}
+
+function renderVendasList() {
+  const wrap=document.getElementById('venda-list');
+  if (!wrap) return;
+  const ref=activeMonthRef||today();
+  const items=getSalesMonth(ref).sort((a,b)=>b.date.localeCompare(a.date));
+  if (!items.length) {
+    wrap.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhuma venda registrada este mês.</div>';
+    return;
+  }
+  wrap.innerHTML=items.map(s=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">
+      <div>
+        <div style="font-size:14px;font-weight:500">${s.agent}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${s.date.slice(8)}/${s.date.slice(5,7)}/${s.date.slice(0,4)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <span style="font-size:15px;font-weight:500;color:#a8e63d">${formatCurrency(s.value)}</span>
+        <button onclick="window.deleteSale('${s.id}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:0">×</button>
+      </div>
+    </div>`).join('');
+}
+
+window.deleteSale=async id=>{
+  if (!confirm('Remover esta venda?')) return;
+  await fbDeleteSale(id);
+};
+
+function initVendas() {
+  const form=document.getElementById('venda-form');
+  if (!form) return;
+  const sel=document.getElementById('venda-agent');
+  getAgentNames().forEach(n=>{ sel.innerHTML+=`<option value="${n}">${n}</option>`; });
+  document.getElementById('venda-date').value=today();
+  form.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const agent=document.getElementById('venda-agent').value;
+    const date=document.getElementById('venda-date').value;
+    const raw=document.getElementById('venda-value').value.replace(/\D/g,'');
+    const value=parseFloat(raw);
+    if (!agent||!date||!value) return;
+    const btn=form.querySelector('button[type=submit]');
+    btn.disabled=true;
+    await fbSaveSale({ agent, date, value });
+    form.reset();
+    sel.value='';
+    document.getElementById('venda-date').value=today();
+    btn.disabled=false;
+  });
+  renderVendasList();
 }
 
 function refreshLancAgentSelect() {
@@ -1428,10 +1491,14 @@ function renderGestorDashboard() {
   document.getElementById('tot-cpd').textContent=totCpd;
   document.getElementById('tot-doc').textContent=totDoc;
 
+  const salesByAgent={};
+  getSalesMonth(activeMonthRef).forEach(s=>{ salesByAgent[s.agent]=(salesByAgent[s.agent]||0)+s.value; });
+
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
   document.getElementById('rank-body').innerHTML=ranked.map((a,i)=>{
     const pos=i+1;
-    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
+    const v=salesByAgent[a.agent]||0;
+    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell" style="color:#a8e63d;font-weight:500">${v?formatCurrency(v):'—'}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
   }).join('');
 
   // Evolução diária de DOC

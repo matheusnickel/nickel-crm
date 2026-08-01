@@ -66,6 +66,7 @@
             <colgroup>
               <col class="col-pos">
               <col class="col-name">
+              <col class="col-vendas">
               <col class="col-doc">
               <col class="col-cpd">
               <col class="col-prosp">
@@ -74,6 +75,7 @@
               <tr>
                 <th>#</th>
                 <th>Angariador</th>
+                <th class="num-cell" style="color:#a8e63d">VENDAS</th>
                 <th class="num-cell doc-th">DOC</th>
                 <th class="num-cell">CP</th>
                 <th class="num-cell">PROSP</th>
@@ -221,6 +223,31 @@
 
       </div>
 
+    </div>
+
+    <!-- Vendas -->
+    <div class="card collapsible-card">
+      <button class="card-title card-toggle" data-target="vendas-body">
+        💰 Registrar venda <span class="toggle-arrow">▸</span>
+      </button>
+      <div class="card-body" id="vendas-body" style="display:none">
+        <form id="venda-form" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;margin-bottom:16px">
+          <div class="form-group" style="margin:0">
+            <label>Angariador</label>
+            <select id="venda-agent" required><option value="">Selecione</option></select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Data</label>
+            <input type="date" id="venda-date" required>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Valor (R$)</label>
+            <input type="number" id="venda-value" min="1" step="1" placeholder="3000000" required>
+          </div>
+          <button type="submit" class="btn" style="padding:12px 16px;white-space:nowrap">+ Registrar</button>
+        </form>
+        <div id="venda-list"></div>
+      </div>
     </div>
 
     <!-- Linha 6: Oferta Ativa + Equipe (colapsáveis, full width) -->
