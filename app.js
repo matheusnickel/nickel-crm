@@ -1263,10 +1263,12 @@ async function initGestorDashboard() {
     renderDayView(document.getElementById('day-input')?.value||today());
     renderTimeline();
     renderNotasRanking();
+    renderVGVRanking();
   });
   salesUnsubscribe=fbListenSales(sales=>{
     SALES=sales;
     renderGestorDashboard();
+    renderVGVRanking();
     renderVendasList();
   });
   initDayView();
@@ -1275,6 +1277,39 @@ async function initGestorDashboard() {
   initTeamManagement();
   initOfertaAtiva();
   initVendas();
+}
+
+function renderVGVRanking() {
+  const card = document.getElementById('vgv-ranking-card');
+  const wrap = document.getElementById('vgv-ranking-wrap');
+  if (!card || !wrap) return;
+  const showVGV = activePeriod === 'month';
+  const sales = showVGV ? getSalesMonth(activeMonthRef) : [];
+  if (!showVGV || !sales.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const byAgent = {};
+  sales.forEach(s => { byAgent[s.agent] = (byAgent[s.agent] || 0) + s.value; });
+  const ranked = Object.entries(byAgent).sort((a, b) => b[1] - a[1]);
+  const total = ranked.reduce((s, [, v]) => s + v, 0);
+  const PODIUM_CLS = { 1: 'badge-gold', 2: 'badge-silver', 3: 'badge-bronze' };
+  const PODIUM_LBL = { 1: '🥇', 2: '🥈', 3: '🥉' };
+  wrap.innerHTML = `
+    <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:var(--text-muted)">Total VGV do mês</span>
+      <span style="font-size:18px;font-weight:500;color:#a8e63d">${formatCurrency(total)}</span>
+    </div>
+    ${ranked.map(([name, val], i) => {
+      const pos = i + 1;
+      const pct = Math.round((val / total) * 100);
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)">
+        <span class="rank-badge ${PODIUM_CLS[pos] || ''}">${PODIUM_LBL[pos] || pos}</span>
+        <span style="flex:1;font-size:14px">${name}</span>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:500;color:#a8e63d">${formatCurrency(val)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${pct}% do total</div>
+        </div>
+      </div>`;
+    }).join('')}`;
 }
 
 function renderVendasList() {
