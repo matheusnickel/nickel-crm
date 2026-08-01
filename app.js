@@ -1776,28 +1776,27 @@ function exportTimeline(sorted, days, t) {
     while(cells.length%7!==0) cells.push({type:'pad'});
 
     const numWeeks = cells.length/7;
-    // Each row height: fill available space
-    const rowH = Math.floor(420/numWeeks);
+    const rowH = Math.floor(520/numWeeks);
 
     const calRows = [];
     for(let r=0;r<numWeeks;r++){
       const rowCells=cells.slice(r*7,r*7+7).map(c=>{
         if(c.type==='pad') return `<td></td>`;
         const day=c.d.slice(8);
-        if(c.type==='future') return `<td style="background:#0d1117;border-radius:12px">
-          <div style="font-size:16px;font-weight:700;color:#1e2a38">${day}</div>
+        if(c.type==='future') return `<td style="background:#0d1117;border-radius:14px">
+          <div style="font-size:22px;font-weight:700;color:#1e2a38">${day}</div>
         </td>`;
-        if(c.type==='missing') return `<td style="background:#1a0a0a;border-radius:12px;border:2px dashed rgba(231,76,60,.5)">
-          <div style="font-size:16px;font-weight:700;color:#5a2020;margin-bottom:4px">${day}</div>
-          <div style="font-size:28px;color:rgba(231,76,60,.4);font-weight:900;line-height:1">✕</div>
-          <div style="font-size:9px;color:rgba(231,76,60,.5);margin-top:4px;font-weight:600;letter-spacing:.5px">SEM<br>ENVIO</div>
+        if(c.type==='missing') return `<td style="background:#1a0a0a;border-radius:14px;border:3px dashed rgba(231,76,60,.5)">
+          <div style="font-size:22px;font-weight:800;color:#7a2020;margin-bottom:6px">${day}</div>
+          <div style="font-size:40px;color:rgba(231,76,60,.5);font-weight:900;line-height:1">✕</div>
+          <div style="font-size:11px;color:rgba(231,76,60,.6);margin-top:6px;font-weight:700;letter-spacing:1px">SEM ENVIO</div>
         </td>`;
         const bg=SX(c.score);
         const tc=TX(c.score);
         const lbl=c.score%1===0?c.score.toFixed(0):c.score.toFixed(1);
-        return `<td style="background:${bg};border-radius:12px">
-          <div style="font-size:16px;font-weight:800;color:${tc};opacity:.7;margin-bottom:2px">${day}</div>
-          <div style="font-size:32px;font-weight:900;color:${tc};line-height:1">${lbl}</div>
+        return `<td style="background:${bg};border-radius:14px">
+          <div style="font-size:20px;font-weight:800;color:${tc};opacity:.75;margin-bottom:4px">${day}</div>
+          <div style="font-size:44px;font-weight:900;color:${tc};line-height:1">${lbl}</div>
         </td>`;
       }).join('');
       calRows.push(`<tr style="height:${rowH}px;text-align:center;vertical-align:middle">${rowCells}</tr>`);
@@ -1889,7 +1888,7 @@ function exportTimeline(sorted, days, t) {
   <style>
     @page{size:A4 portrait;margin:0}
     *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-    body{font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#030508}
+    html,body{font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#030508!important;color:#f0f4f8}
     @media print{.print-btn{display:none!important}}
   </style>
   </head><body>
