@@ -332,21 +332,30 @@ function calcStreak(agentName) {
 
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  // Regras:
-  //   CP e VÍDEO têm mesmo peso: 3 CP (ou 3 vídeos) = nota 6.0 (verde)
-  //   PROSP é suporte: 10 PROSP ≈ +0.5 pts
-  //   1 DOC = mínimo 8.0 (azul); esforço empurra até 10
-  //   Sem DOC: máximo 7.9 (não entra na faixa azul)
+  // Faixas: vermelho 0–2.9 · amarelo 3–5.9 · verde 6–7.9 · azul 8–10
   //
-  //   Faixas: vermelho 0–2.9 · amarelo 3–5.9 · verde 6–7.9 · azul 8–10
+  // Sem DOC:
+  //   0 de tudo            → 0.0 (vermelho — não produziu nada)
+  //   qualquer atividade   → mínimo 3.0 (amarelo)
+  //   3 CP ou 3 vídeos     → 6.0 (verde)
+  //   esforço alto         → máx 7.9 (azul é exclusivo de quem captou DOC)
+  //
+  // Com DOC:
+  //   1 DOC                → 8.0 (azul)
+  //   1 DOC + esforço      → até 10.0
+  //   2+ DOC               → 10.0
   const vid = entry.video || 0;
-  const effort = entry.cpd * 2.0 + vid * 2.0 + entry.prosp * 0.05;
+  const anyActivity = entry.cpd + vid + entry.prosp > 0;
+  const effort = entry.cpd * 1.0 + vid * 1.0 + entry.prosp * 0.025;
+
   if (entry.doc > 0) {
     const base  = Math.min(entry.doc * 8.0, 10);
-    const bonus = effort * 0.15;
+    const bonus = Math.min(effort * 0.15, 2.0);
     return parseFloat(Math.min(base + bonus, 10).toFixed(1));
   }
-  return parseFloat(Math.min(effort, 7.9).toFixed(1));
+
+  if (!anyActivity) return 0;
+  return parseFloat(Math.min(3.0 + effort, 7.9).toFixed(1));
 }
 
 function calcWeeklyScore(agentName, weekEntries) {
@@ -356,15 +365,18 @@ function calcWeeklyScore(agentName, weekEntries) {
   const vid   = mine.reduce((s, e) => s + (e.video||0), 0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
   // Meta semanal: 3 DOC = azul (8.0+). Sem DOC: máx 7.9
-  const effort = cpd * 2.0 + vid * 2.0 + prosp * 0.05;
+  const effort = cpd * 1.0 + vid * 1.0 + prosp * 0.025;
+  const anyActivity = cpd + vid + prosp + doc > 0;
   if (doc >= 3) {
     const base  = Math.min(8.0 + (doc - 3) * 1.0, 10);
     const bonus = Math.min(effort * 0.05, 0.9);
     return parseFloat(Math.min(base + bonus, 10).toFixed(1));
   }
-  const base = doc * 2.5;
+  if (!anyActivity) return 0;
+  const base = doc > 0 ? doc * 2.5 : 0;
   const pipeline = Math.min(effort * 0.1, 2.0);
-  return parseFloat(Math.min(base + pipeline, 7.9).toFixed(1));
+  const floor = anyActivity ? 3.0 : 0;
+  return parseFloat(Math.min(Math.max(floor, base + pipeline), 7.9).toFixed(1));
 }
 
 function calcMonthlyScore(agentName, monthEntries) {
