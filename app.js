@@ -334,18 +334,15 @@ function calcDailyScore(entry) {
   if (!entry) return 0;
   // Faixas: vermelho 0–2.9 · amarelo 3–5.9 · verde 6–7.9 · azul 8–10
   //
-  // Sem DOC:
-  //   0 de tudo            → 0.0 (vermelho — não produziu nada)
-  //   qualquer atividade   → mínimo 3.0 (amarelo)
-  //   3 CP ou 3 vídeos     → 6.0 (verde)
-  //   esforço alto         → máx 7.9 (azul é exclusivo de quem captou DOC)
-  //
-  // Com DOC:
-  //   1 DOC                → 8.0 (azul)
-  //   1 DOC + esforço      → até 10.0
-  //   2+ DOC               → 10.0
+  // VERMELHO: sem CP, sem DOC, sem vídeo E prosp ≤ 30
+  // AMARELO mínimo (3.0) quando:
+  //   - pelo menos 1 CP, ou
+  //   - pelo menos 1 vídeo, ou
+  //   - prosp > 30 (esforço alto de prospecção)
+  // A partir do mínimo 3.0, cada atividade extra sobe a nota
+  // Sem DOC: teto 7.9 (azul é exclusivo de quem captou DOC)
+  // Com DOC: base 8.0 + bônus de esforço até 10.0
   const vid = entry.video || 0;
-  const anyActivity = entry.cpd + vid + entry.prosp > 0;
   const effort = entry.cpd * 1.0 + vid * 1.0 + entry.prosp * 0.025;
 
   if (entry.doc > 0) {
@@ -354,7 +351,12 @@ function calcDailyScore(entry) {
     return parseFloat(Math.min(base + bonus, 10).toFixed(1));
   }
 
-  if (!anyActivity) return 0;
+  // Sem DOC: verifica se atinge o piso amarelo
+  const meetsFloor = entry.cpd > 0 || vid > 0 || entry.prosp > 30;
+  if (!meetsFloor) {
+    // Vermelho: só prosp baixo ou nada — mostra valor pequeno mas fica vermelho
+    return parseFloat(Math.min(entry.prosp * 0.025, 2.9).toFixed(1));
+  }
   return parseFloat(Math.min(3.0 + effort, 7.9).toFixed(1));
 }
 
