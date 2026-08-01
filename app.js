@@ -1747,95 +1747,154 @@ function renderTimeline() {
 }
 
 function exportTimeline(sorted, days, t) {
-  function scoreHex(s) {
-    if (s >= 8) return '#6495ed';
-    if (s >= 6) return '#a8e63d';
-    if (s >= 3) return '#f0c040';
-    return '#e74c3c';
-  }
-  function textOn(s) { return (s >= 3 && s < 8) ? '#111' : '#fff'; }
+  const SX = s => { if(s>=8)return'#6495ed';if(s>=6)return'#a8e63d';if(s>=3)return'#f0c040';return'#e74c3c'; };
+  const TX = s => (s>=3&&s<8)?'#07090f':'#fff';
 
   const entries = getEntries();
-  const entryMap = {};
-  entries.forEach(e => { entryMap[e.agent+'|'+e.date] = e; });
+  const eMap = {};
+  entries.forEach(e => { eMap[e.agent+'|'+e.date] = e; });
 
-  // Month labels for header
-  const headerCells = days.map((d, i) => {
-    const day = d.slice(8);
-    const isFirst = day === '01' || i === 0;
-    const month = isFirst ? new Date(d+'T12:00:00').toLocaleString('pt-BR',{month:'short'}).replace('.','').toUpperCase() : '';
-    return `<div style="display:inline-block;width:28px;text-align:center;font-size:9px;color:#888;line-height:1.2;vertical-align:top">
-      <div style="color:#aaa;font-size:8px;height:12px">${month}</div>
-      <div style="font-weight:600">${day}</div>
-    </div>`;
-  }).join('');
+  const WDAYS = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
 
-  const agentRows = sorted.map(({ name, streak }) => {
-    const squares = days.map(d => {
-      const e = entryMap[name+'|'+d];
-      if (!e) {
-        return `<div style="display:inline-block;width:28px;height:32px;border-radius:5px;background:#f0f0f0;margin:1px;vertical-align:top;font-size:8px;line-height:32px;text-align:center;color:#ccc">${d.slice(8)}</div>`;
-      }
+  function buildAgentPage(name, streak) {
+    // Stats for period
+    const agentPeriodEntries = days.map(d => eMap[name+'|'+d]).filter(Boolean);
+    const totDoc  = agentPeriodEntries.reduce((s,e)=>s+e.doc,0);
+    const totCpd  = agentPeriodEntries.reduce((s,e)=>s+e.cpd,0);
+    const totProsp= agentPeriodEntries.reduce((s,e)=>s+e.prosp,0);
+    const missedDays = days.filter(d => d <= t && !eMap[name+'|'+d]);
+
+    // Calendar grid — pad to week start (Sun=0)
+    const firstDate = new Date(days[0]+'T12:00:00');
+    const padStart  = firstDate.getDay(); // 0=Sun
+    const cells = [];
+    for (let i = 0; i < padStart; i++) cells.push({ type:'pad' });
+    days.forEach(d => {
+      const e = eMap[name+'|'+d];
+      const isFuture = d > t;
+      if (!e) { cells.push({ type: isFuture?'future':'missing', d }); return; }
       const score = calcDailyScore(e);
-      const bg = scoreHex(score);
-      const tc = textOn(score);
-      const label = score % 1 === 0 ? score.toFixed(0) : score.toFixed(1);
-      return `<div style="display:inline-block;width:28px;height:32px;border-radius:5px;background:${bg};margin:1px;vertical-align:top;text-align:center;font-size:8px;color:${tc};font-weight:700;line-height:16px;padding-top:2px">
-        <div>${d.slice(8)}</div><div>${label}</div>
-      </div>`;
-    }).join('');
+      cells.push({ type:'scored', d, score, e });
+    });
+    while (cells.length % 7 !== 0) cells.push({ type:'pad' });
 
-    const streakLabel = streak > 0 ? `🔥 ${streak}d` : '—';
+    const calRows = [];
+    for (let r = 0; r < cells.length/7; r++) {
+      const rowCells = cells.slice(r*7, r*7+7).map(c => {
+        if (c.type==='pad') return `<td style="background:transparent"></td>`;
+        const day = c.d.slice(8);
+        if (c.type==='future') return `<td style="background:#0a0f18;border-radius:10px;opacity:.3">
+          <div style="font-size:10px;color:#6b8299;font-weight:600;margin-bottom:4px">${day}</div>
+        </td>`;
+        if (c.type==='missing') return `<td style="background:#0e1218;border-radius:10px;border:2px dashed #1e2a38">
+          <div style="font-size:10px;color:#6b8299;font-weight:600;margin-bottom:6px">${day}</div>
+          <div style="font-size:18px;color:#1e2a38;font-weight:900">✕</div>
+        </td>`;
+        const bg = SX(c.score);
+        const tc = TX(c.score);
+        const lbl = c.score%1===0?c.score.toFixed(0):c.score.toFixed(1);
+        return `<td style="background:${bg};border-radius:10px;">
+          <div style="font-size:10px;color:${tc};opacity:.8;font-weight:600;margin-bottom:4px">${day}</div>
+          <div style="font-size:22px;color:${tc};font-weight:900;line-height:1">${lbl}</div>
+        </td>`;
+      }).join('');
+      calRows.push(`<tr style="height:70px">${rowCells}</tr>`);
+    }
+
+    const streakEmoji = streak>=7?'🔥':streak>=3?'🔥':streak>=1?'🔥':'';
+    const streakColor = streak>=14?'#6495ed':streak>=7?'#a8e63d':streak>=3?'#ff7a00':streak>=1?'#cd7f32':'#555';
+    const rangeLabel = days[0]===days[days.length-1]
+      ? formatDate(days[0])
+      : `${formatDate(days[0])} – ${formatDate(days[days.length-1])}`;
+
+    const missedMsg = missedDays.length > 0
+      ? `<div style="background:#1a0e0e;border:1px solid rgba(231,76,60,.3);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:22px">📅</span>
+          <span style="font-size:13px;color:#ff6b6b;line-height:1.5">
+            Você teve <strong>${missedDays.length} dia${missedDays.length>1?'s':''} sem lançamento</strong> neste período.
+            Realize os lançamentos dos dias faltantes para que o seu relatório esteja completo.
+          </span>
+        </div>`
+      : `<div style="background:#0a1a0a;border:1px solid rgba(46,204,113,.3);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:22px">✅</span>
+          <span style="font-size:13px;color:#2ecc71;line-height:1.5">
+            <strong>Relatório completo!</strong> Todos os dias do período foram lançados. Continue assim!
+          </span>
+        </div>`;
+
     return `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:10px 14px;border:1px solid #eee;border-radius:10px">
-        <div style="min-width:110px">
-          <div style="font-size:15px;font-weight:800;color:#111">${name}</div>
-          <div style="font-size:11px;color:#e67e22;margin-top:2px">${streakLabel}</div>
-        </div>
-        <div style="flex:1;line-height:1">${squares}</div>
-      </div>`;
-  }).join('');
+    <div style="background:#07090f;border-radius:20px;padding:32px 36px;page-break-after:always">
 
-  const rangeLabel = tlStart === tlEnd ? formatDate(tlStart) : `${formatDate(tlStart)} até ${formatDate(tlEnd)}`;
-  const title = tlAgent ? `Sequência de Envios — ${tlAgent}` : 'Sequência de Envios — Todos os Angariadores';
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px">
+        <div>
+          <div style="font-size:10px;color:#a8e63d;letter-spacing:3px;font-weight:700;text-transform:uppercase;margin-bottom:6px">NICKEL CRM</div>
+          <div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:-.5px">${name}</div>
+          <div style="font-size:13px;color:#6b8299;margin-top:4px">${rangeLabel}</div>
+        </div>
+        <div style="text-align:right">
+          ${streak>0?`<div style="font-size:32px;font-weight:900;color:${streakColor}">${streakEmoji} ${streak}d</div>
+          <div style="font-size:10px;color:#6b8299;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Sequência</div>`:''}
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px">
+        <div style="background:#0e1218;border-radius:12px;padding:16px 20px;border:1px solid #1e2a38">
+          <div style="font-size:32px;font-weight:900;color:#a8e63d">${totDoc}</div>
+          <div style="font-size:10px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:4px">DOC captados</div>
+        </div>
+        <div style="background:#0e1218;border-radius:12px;padding:16px 20px;border:1px solid #1e2a38">
+          <div style="font-size:32px;font-weight:900;color:#6495ed">${totCpd}</div>
+          <div style="font-size:10px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:4px">Conversas (CP)</div>
+        </div>
+        <div style="background:#0e1218;border-radius:12px;padding:16px 20px;border:1px solid #1e2a38">
+          <div style="font-size:32px;font-weight:900;color:#f0c040">${totProsp}</div>
+          <div style="font-size:10px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:4px">Prospecções</div>
+        </div>
+      </div>
+
+      <!-- Calendar -->
+      <table style="width:100%;border-collapse:separate;border-spacing:5px;margin-bottom:20px">
+        <thead><tr>${WDAYS.map(d=>`<th style="text-align:center;font-size:10px;color:#6b8299;letter-spacing:2px;font-weight:700;padding-bottom:8px;text-transform:uppercase">${d}</th>`).join('')}</tr></thead>
+        <tbody style="text-align:center">${calRows.join('')}</tbody>
+      </table>
+
+      <!-- Legenda -->
+      <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap">
+        ${[['#6495ed','Azul — DOC captado (8–10)'],['#a8e63d','Verde — Esforço forte (6–7.9)'],['#f0c040','Amarelo — Esforço moderado (3–5.9)'],['#e74c3c','Vermelho — Pouco produzido (0–2.9)']].map(([c,l])=>`
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:12px;height:12px;border-radius:3px;background:${c};flex-shrink:0"></div>
+          <span style="font-size:10px;color:#6b8299">${l}</span>
+        </div>`).join('')}
+      </div>
+
+      <!-- Mensagem -->
+      ${missedMsg}
+
+      <!-- Rodapé -->
+      <div style="margin-top:20px;text-align:center;font-size:10px;color:#1e2a38;letter-spacing:1px">NICKEL CRM · Gerado em ${formatDate(t)}</div>
+    </div>`;
+  }
+
+  const pages = sorted.map(({name,streak}) => buildAgentPage(name,streak)).join('');
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-  <title>Nickel CRM — ${title}</title>
+  <title>Nickel CRM — Sequência de Envios</title>
   <style>
+    @page{size:A4 portrait;margin:0}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:28px;max-width:1100px;margin:0 auto}
-    @media print{body{padding:12px}button{display:none!important}}
+    body{font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#030508;padding:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    @media print{.print-btn{display:none!important}body{padding:0}}
   </style>
   </head><body>
-
-  <button onclick="window.print()" style="background:#111;color:#fff;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;margin-bottom:24px;display:block">🖨 Imprimir / Salvar PDF</button>
-
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px">
-    <div>
-      <div style="font-size:10px;color:#aaa;letter-spacing:2px;text-transform:uppercase;margin-bottom:3px">Nickel CRM</div>
-      <div style="font-size:20px;font-weight:800">${title}</div>
-    </div>
-    <div style="font-size:12px;color:#888;text-align:right">${rangeLabel}<br>Gerado em ${formatDate(t)}</div>
+  <div style="text-align:center;margin-bottom:16px">
+    <button class="print-btn" onclick="window.print()" style="background:#a8e63d;color:#07090f;border:none;padding:12px 28px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:800;letter-spacing:.5px">🖨&nbsp; Imprimir / Salvar PDF</button>
   </div>
-
-  <!-- Legenda -->
-  <div style="display:flex;gap:16px;margin:12px 0 18px;font-size:10px;color:#555">
-    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#6495ed;margin-right:3px;vertical-align:middle"></span>Azul 8–10 (DOC captado)</span>
-    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#a8e63d;margin-right:3px;vertical-align:middle"></span>Verde 6–7.9</span>
-    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f0c040;margin-right:3px;vertical-align:middle"></span>Amarelo 3–5.9</span>
-    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e74c3c;margin-right:3px;vertical-align:middle"></span>Vermelho 0–2.9</span>
-    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f0f0f0;margin-right:3px;vertical-align:middle"></span>Sem lançamento</span>
-  </div>
-
-  <!-- Header de datas -->
-  <div style="padding-left:122px;margin-bottom:4px;line-height:1">${headerCells}</div>
-
-  <!-- Linhas por angariador -->
-  ${agentRows}
-
+  ${pages}
   </body></html>`;
 
-  const w = window.open('', '_blank');
+  const w = window.open('','_blank');
   if (!w) { alert('Ative os pop-ups no navegador para exportar.'); return; }
   w.document.write(html);
   w.document.close();
