@@ -66,7 +66,6 @@
             <colgroup>
               <col class="col-pos">
               <col class="col-name">
-              <col class="col-vendas">
               <col class="col-doc">
               <col class="col-cpd">
               <col class="col-prosp">
@@ -75,7 +74,6 @@
               <tr>
                 <th>#</th>
                 <th>Angariador</th>
-                <th id="vendas-th" class="num-cell" style="color:#a8e63d">VGV</th>
                 <th class="num-cell doc-th">DOC</th>
                 <th class="num-cell">CP</th>
                 <th class="num-cell">PROSP</th>
@@ -86,17 +84,17 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">⭐ Ranking de Notas</div>
-        <div id="notas-ranking-wrap"></div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card">
+          <div class="card-title">⭐ Ranking de Notas</div>
+          <div id="notas-ranking-wrap"></div>
+        </div>
+        <div class="card" id="vgv-ranking-card" style="display:none">
+          <div class="card-title">🏆 Ranking de VGV</div>
+          <div id="vgv-ranking-wrap"></div>
+        </div>
       </div>
 
-    </div>
-
-    <!-- Ranking VGV (mensal) -->
-    <div class="card" id="vgv-ranking-card" style="display:none">
-      <div class="card-title">🏆 Ranking de VGV</div>
-      <div id="vgv-ranking-wrap"></div>
     </div>
 
     <!-- Linha 2: Conversão (largura total) -->

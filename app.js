@@ -964,6 +964,38 @@ async function initAgentDashboard() {
     const dp=document.getElementById('selected-date');
     renderAgentDashboard(session, dp?.value||today(), agentEditing);
   });
+  fbListenSales(sales=>{ SALES=sales; renderVGVRankingAgent(); });
+}
+
+function renderVGVRankingAgent() {
+  const wrap=document.getElementById('vgv-agent-wrap');
+  if (!wrap) return;
+  if (!SALES.length) { wrap.innerHTML='<div style="color:var(--text-muted);font-size:13px">Nenhuma venda registrada este mês.</div>'; return; }
+  const sales=getSalesPeriod('month');
+  const byAgent={};
+  sales.forEach(s=>{ byAgent[s.agent]=(byAgent[s.agent]||0)+s.value; });
+  const ranked=Object.entries(byAgent).sort((a,b)=>b[1]-a[1]);
+  const total=ranked.reduce((s,[,v])=>s+v,0);
+  const PODIUM_CLS={1:'badge-gold',2:'badge-silver',3:'badge-bronze'};
+  const PODIUM_LBL={1:'🥇',2:'🥈',3:'🥉'};
+  if (!ranked.length) { wrap.innerHTML='<div style="color:var(--text-muted);font-size:13px">Nenhuma venda registrada este mês.</div>'; return; }
+  wrap.innerHTML=`
+    <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between">
+      <span style="font-size:13px;color:var(--text-muted)">Total do mês</span>
+      <span style="font-size:15px;font-weight:500;color:#a8e63d">${formatCurrency(total)}</span>
+    </div>
+    ${ranked.map(([name,val],i)=>{
+      const pos=i+1;
+      const pct=Math.round((val/total)*100);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">
+        <span class="rank-badge ${PODIUM_CLS[pos]||''}">${PODIUM_LBL[pos]||pos}</span>
+        <span style="flex:1;font-size:14px">${name}</span>
+        <div style="text-align:right">
+          <div style="font-size:14px;font-weight:500;color:#a8e63d">${formatCurrency(val)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${pct}%</div>
+        </div>
+      </div>`;
+    }).join('')}`;
 }
 
 function renderAgentDashboard(session, selectedDate, editing) {
@@ -1556,19 +1588,10 @@ function renderGestorDashboard() {
   document.getElementById('tot-cpd').textContent=totCpd;
   document.getElementById('tot-doc').textContent=totDoc;
 
-  const showVGV = activePeriod === 'month';
-  const vgvTh = document.getElementById('vendas-th');
-  if (vgvTh) vgvTh.style.display = showVGV ? '' : 'none';
-
-  const salesByAgent={};
-  if (showVGV) getSalesMonth(activeMonthRef).forEach(s=>{ salesByAgent[s.agent]=(salesByAgent[s.agent]||0)+s.value; });
-
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
   document.getElementById('rank-body').innerHTML=ranked.map((a,i)=>{
     const pos=i+1;
-    const v=salesByAgent[a.agent]||0;
-    const vgvCell=showVGV?`<td class="num-cell" style="color:#a8e63d;font-weight:500">${v?formatCurrency(v):'—'}</td>`:'';
-    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td>${vgvCell}<td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
+    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
   }).join('');
 
   // Evolução diária de DOC
