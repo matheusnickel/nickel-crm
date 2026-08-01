@@ -1491,14 +1491,19 @@ function renderGestorDashboard() {
   document.getElementById('tot-cpd').textContent=totCpd;
   document.getElementById('tot-doc').textContent=totDoc;
 
+  const showVGV = activePeriod === 'month';
+  const vgvTh = document.getElementById('vendas-th');
+  if (vgvTh) vgvTh.style.display = showVGV ? '' : 'none';
+
   const salesByAgent={};
-  getSalesMonth(activeMonthRef).forEach(s=>{ salesByAgent[s.agent]=(salesByAgent[s.agent]||0)+s.value; });
+  if (showVGV) getSalesMonth(activeMonthRef).forEach(s=>{ salesByAgent[s.agent]=(salesByAgent[s.agent]||0)+s.value; });
 
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
   document.getElementById('rank-body').innerHTML=ranked.map((a,i)=>{
     const pos=i+1;
     const v=salesByAgent[a.agent]||0;
-    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell" style="color:#a8e63d;font-weight:500">${v?formatCurrency(v):'—'}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
+    const vgvCell=showVGV?`<td class="num-cell" style="color:#a8e63d;font-weight:500">${v?formatCurrency(v):'—'}</td>`:'';
+    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td>${vgvCell}<td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
   }).join('');
 
   // Evolução diária de DOC
