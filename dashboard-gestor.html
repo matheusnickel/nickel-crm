@@ -69,6 +69,8 @@
               <col class="col-doc">
               <col class="col-cpd">
               <col class="col-prosp">
+              <col>
+              <col>
             </colgroup>
             <thead>
               <tr>
@@ -77,6 +79,8 @@
                 <th class="num-cell doc-th">DOC</th>
                 <th class="num-cell">CP</th>
                 <th class="num-cell">PROSP</th>
+                <th class="num-cell" style="color:#ef4444">VA</th>
+                <th class="num-cell" style="color:#f97316">VR</th>
               </tr>
             </thead>
             <tbody id="rank-body"></tbody>
@@ -190,11 +194,15 @@
             <div class="field-box"><label>CP<span class="field-hint">(Nova conversa com o proprietário)</span></label><input type="number" id="lanc-cpd" min="0" value="0"></div>
             <div class="field-box"><label>DOC<span class="field-hint">(Pegou Documentação)</span></label><input type="number" id="lanc-doc" min="0" value="0"></div>
           </div>
-          <div class="fields-row" style="margin-bottom:14px">
+          <div class="fields-row" style="margin-bottom:10px">
             <div class="field-box"><label style="color:#e879f9">VÍDEO<span class="field-hint">(IG, TikTok…)</span></label><input type="number" id="lanc-video" min="0" value="0"></div>
+            <div class="field-box"><label style="color:#ef4444">VA<span class="field-hint">(Visita Agendada)</span></label><input type="number" id="lanc-va" min="0" value="0"></div>
+            <div class="field-box"><label style="color:#f97316">VR<span class="field-hint">(Visita Realizada)</span></label><input type="number" id="lanc-vr" min="0" value="0"></div>
           </div>
           <div id="lanc-cpd-details"></div>
           <div id="lanc-doc-details"></div>
+          <div id="lanc-va-details"></div>
+          <div id="lanc-vr-details"></div>
           <button type="submit" class="btn">Salvar lançamento</button>
         </form>
         </div>

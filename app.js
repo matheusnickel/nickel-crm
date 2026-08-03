@@ -85,6 +85,46 @@ async function updateDocNota(date, agent, docIdx, nota) {
   await fbUpsertEntry(entry);
 }
 
+// ── VA DETAILS (Visita Agendada — Treino Livre) ──────────
+function buildVaDetailsHTML(count, prefill=[]) {
+  if (count === 0) return '';
+  let html = '<div class="visit-details-wrap" style="margin-top:12px">';
+  for (let i = 0; i < count; i++) {
+    const p = prefill[i] || {};
+    html += `<div class="visit-detail-item" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:600;color:#ef4444;margin-bottom:8px">🏎️ TREINO LIVRE ${i+1} — Visita Agendada</div>
+      <input class="va-imovel" data-idx="${i}" type="text" placeholder="Nome do imóvel (ex: Apto Elos Barigui)" value="${(p.imovel||'').replace(/"/g,'&quot;')}" style="width:100%;margin-bottom:6px;box-sizing:border-box">
+      <input class="va-visitante" data-idx="${i}" type="text" placeholder="Nome do cliente comprador" value="${(p.visitante||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box">
+    </div>`;
+  }
+  return html + '</div>';
+}
+function collectVaDetails(count) {
+  const d=[];
+  for (let i=0;i<count;i++) d.push({ imovel:document.querySelector(`.va-imovel[data-idx="${i}"]`)?.value.trim()||'', visitante:document.querySelector(`.va-visitante[data-idx="${i}"]`)?.value.trim()||'' });
+  return d;
+}
+
+// ── VR DETAILS (Visita Realizada — Pit Stop) ─────────────
+function buildVrDetailsHTML(count, prefill=[]) {
+  if (count === 0) return '';
+  let html = '<div class="visit-details-wrap" style="margin-top:12px">';
+  for (let i = 0; i < count; i++) {
+    const p = prefill[i] || {};
+    html += `<div class="visit-detail-item" style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.3);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:600;color:#f97316;margin-bottom:8px">🔧 PIT STOP ${i+1} — Visita Realizada</div>
+      <input class="vr-imovel" data-idx="${i}" type="text" placeholder="Nome do imóvel (ex: Apto Elos Barigui)" value="${(p.imovel||'').replace(/"/g,'&quot;')}" style="width:100%;margin-bottom:6px;box-sizing:border-box">
+      <input class="vr-visitante" data-idx="${i}" type="text" placeholder="Nome do cliente comprador" value="${(p.visitante||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box">
+    </div>`;
+  }
+  return html + '</div>';
+}
+function collectVrDetails(count) {
+  const d=[];
+  for (let i=0;i<count;i++) d.push({ imovel:document.querySelector(`.vr-imovel[data-idx="${i}"]`)?.value.trim()||'', visitante:document.querySelector(`.vr-visitante[data-idx="${i}"]`)?.value.trim()||'' });
+  return d;
+}
+
 // ── CPD DETAILS ──────────────────────────────────────────
 function buildCpdDetailsHTML(count, prefill=[]) {
   if (count === 0) return '';
@@ -307,8 +347,9 @@ function sumByAgent(entries) {
   const team = new Set(getAgentNames());
   entries.forEach(e=>{
     if (!team.has(e.agent)) return;
-    if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0};
+    if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0,va:0,vr:0};
     map[e.agent].prosp+=e.prosp; map[e.agent].cpd+=e.cpd; map[e.agent].doc+=e.doc;
+    map[e.agent].va+=(e.va||0); map[e.agent].vr+=(e.vr||0);
   });
   return Object.values(map);
 }
@@ -1122,12 +1163,14 @@ function renderAgentDashboard(session, selectedDate, editing) {
     } else {
       // ── STEP-BY-STEP WIZARD ──────────────────────────────
       const WSTEPS = [
-        { key:'prosp', label:'PROSP',  hint:'Quantos imóveis você prospectou?',          color:'#f0c040', pts:'+0.11 pts/unidade' },
-        { key:'cp',    label:'CP',     hint:'Quantas conversas com proprietário?',        color:'#6495ed', pts:'+0.9 pts/unidade' },
-        { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',        color:'#a8e63d', pts:'6 pontos por DOC' },
-        { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (Instagram | TikTok)',color:'#e879f9', pts:'+0.9 pts/unidade' },
+        { key:'prosp', label:'PROSP',  hint:'Quantos imóveis você prospectou?',                                        color:'#f0c040', pts:'+0.11 pts/unidade' },
+        { key:'cp',    label:'CP',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
+        { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',                                     color:'#a8e63d', pts:'6 pontos por DOC' },
+        { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (Instagram | TikTok)',                      color:'#e879f9', pts:'+0.9 pts/unidade' },
+        { key:'va',    label:'🏎️ TREINO LIVRE', hint:'Visitas agendadas de cliente comprador na sua captação',       color:'#ef4444', pts:'controle interno' },
+        { key:'vr',    label:'🔧 PIT STOP',     hint:'Visitas realizadas de cliente comprador na sua captação',       color:'#f97316', pts:'controle interno' },
       ];
-      const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0 };
+      const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0, vr: pre.vr||0 };
       let wStep = 0;
 
       const wizStepsHTML = WSTEPS.map((s, i) => `
@@ -1156,6 +1199,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
           <div id="wiz-details" style="display:none">
             <div id="wiz-cpd-area"></div>
             <div id="wiz-doc-area"></div>
+            <div id="wiz-va-area"></div>
+            <div id="wiz-vr-area"></div>
             <button id="wiz-submit" class="btn" style="margin-top:14px;width:100%">${sentToday ? 'Salvar correção' : 'Enviar relatório'}</button>
             ${sentToday ? '<button type="button" class="btn btn-outline" id="wiz-cancel" style="margin-top:8px;width:100%">Cancelar</button>' : ''}
           </div>
@@ -1188,6 +1233,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
         document.getElementById('wiz-details').style.display = '';
         document.getElementById('wiz-cpd-area').innerHTML = buildCpdDetailsHTML(wVals.cp, pre.cpdDetails||[]);
         document.getElementById('wiz-doc-area').innerHTML = buildDocDetailsHTML(wVals.doc, pre.docDetails||[]);
+        document.getElementById('wiz-va-area').innerHTML = buildVaDetailsHTML(wVals.va, pre.vaDetails||[]);
+        document.getElementById('wiz-vr-area').innerHTML = buildVrDetailsHTML(wVals.vr, pre.vrDetails||[]);
         bindBairroSelects();
         wStep = WSTEPS.length; updateDots();
       };
@@ -1220,7 +1267,9 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const submitBtn = document.getElementById('wiz-submit');
         submitBtn.disabled = true; submitBtn.textContent = 'Enviando...';
         const submittedDate = sentToday?.submittedDate||sentToday?.date||today();
-        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, cpdDetails, docDetails, submittedDate});
+        const vaDetails = collectVaDetails(wVals.va);
+        const vrDetails = collectVrDetails(wVals.vr);
+        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:wVals.vr, cpdDetails, docDetails, vaDetails, vrDetails, submittedDate});
         if (isEdit) incrementEditCount(session.name, date);
       });
 
@@ -1457,6 +1506,12 @@ function initGestorLancamento() {
     document.getElementById('lanc-doc-details').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
     bindBairroSelects();
   });
+  document.getElementById('lanc-va').addEventListener('input',function(){
+    document.getElementById('lanc-va-details').innerHTML=buildVaDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+  });
+  document.getElementById('lanc-vr').addEventListener('input',function(){
+    document.getElementById('lanc-vr-details').innerHTML=buildVrDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+  });
 
   document.getElementById('gestor-lanc-form').addEventListener('submit',async ev=>{
     ev.preventDefault();
@@ -1470,7 +1525,11 @@ function initGestorLancamento() {
     const submittedDate=existing?.submittedDate||existing?.date||today();
     const lancCpdVal=parseInt(document.getElementById('lanc-cpd').value)||0;
     const lancCpdDetails=collectCpdDetails(lancCpdVal);
-    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,cpdDetails:lancCpdDetails,docDetails,submittedDate});
+    const lancVaVal=parseInt(document.getElementById('lanc-va').value)||0;
+    const lancVrVal=parseInt(document.getElementById('lanc-vr').value)||0;
+    const vaDetails=collectVaDetails(lancVaVal);
+    const vrDetails=collectVrDetails(lancVrVal);
+    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,va:lancVaVal,vr:lancVrVal,cpdDetails:lancCpdDetails,docDetails,vaDetails,vrDetails,submittedDate});
     resetEditCount(agent,date);
     btn.disabled=false; btn.textContent='Salvar lançamento';
     // reset form
@@ -1600,7 +1659,7 @@ function renderGestorDashboard() {
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
   document.getElementById('rank-body').innerHTML=ranked.map((a,i)=>{
     const pos=i+1;
-    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td></tr>`;
+    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td><td class="num-cell dim-cell" style="color:#ef4444">${a.va||0}</td><td class="num-cell dim-cell" style="color:#f97316">${a.vr||0}</td></tr>`;
   }).join('');
 
   // Evolução diária de DOC
