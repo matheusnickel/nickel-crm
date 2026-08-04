@@ -163,6 +163,15 @@ async function updateCpdDetail(date, agent, cpdIdx, fields) {
   await fbUpsertEntry(entry);
 }
 
+async function updateVideoValidated(date, agent, count) {
+  const entries = getEntries();
+  const entry = entries.find(e => e.date===date && e.agent===agent);
+  if (!entry) return;
+  entry.videoValidated = count;
+  localUpsert(entry);
+  await fbUpsertEntry(entry);
+}
+
 async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
   const entries = getEntries();
   const entry = entries.find(e => e.date === date && e.agent === agent);
@@ -1056,7 +1065,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
   const metasWrap = document.getElementById('metas-wrap');
   if (metasWrap) {
     const META_VID_MONTH = 15;
-    const monthVid = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.video||0), 0);
+    const monthVid = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.videoValidated||0), 0);
 
     const mPct  = Math.min(monthDoc / META_DOC_MONTH * 100, 100);
     const vPct  = Math.min(monthVid / META_VID_MONTH * 100, 100);
@@ -1656,7 +1665,7 @@ function renderGestorDashboard() {
   const byAgent=sumByAgent(entries);
 
   const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
-  const totVid=entries.reduce((s,e)=>s+(e.video||0),0);
+  const totVid=entries.reduce((s,e)=>s+(e.videoValidated||0),0);
   document.getElementById('tot-prosp').textContent=totProsp;
   document.getElementById('tot-cpd').textContent=totCpd;
   document.getElementById('tot-doc').textContent=totDoc;
@@ -1714,6 +1723,7 @@ function renderGestorDashboard() {
   renderDocList(entries);
   renderCpdList(entries);
   renderVisitList(entries);
+  renderVideoValidation(entries);
   renderAnalyticsChart(allDocs);
 
   document.querySelectorAll('.analytics-btn').forEach(b=>{
@@ -2325,6 +2335,53 @@ function renderCpdList(entries) {
   wrap.querySelectorAll('.cpd-ef-cancel').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelector(`.cpd-edit-row[data-edit-date="${btn.dataset.date}"][data-edit-agent="${btn.dataset.agent}"][data-edit-idx="${btn.dataset.idx}"]`).style.display = 'none';
+    });
+  });
+}
+
+// ── VIDEO VALIDATION (gestor) ────────────────────────────
+function renderVideoValidation(entries) {
+  const wrap = document.getElementById('video-validation-wrap');
+  if (!wrap) return;
+
+  const videoEntries = entries.filter(e => (e.video||0) > 0);
+  videoEntries.sort((a,b) => b.date.localeCompare(a.date));
+
+  if (!videoEntries.length) {
+    wrap.innerHTML = '<div class="empty-state">Nenhum vídeo lançado no período</div>';
+    return;
+  }
+
+  const rows = videoEntries.map(e => {
+    const validated = e.videoValidated ?? '';
+    return `<tr>
+      <td>${formatDate(e.date)}</td>
+      <td>${e.agent}</td>
+      <td class="num-cell" style="color:#e879f9">${e.video}</td>
+      <td class="num-cell">
+        <input class="vid-val-inp" type="number" min="0" max="${e.video}"
+          data-date="${e.date}" data-agent="${e.agent}"
+          value="${validated}"
+          placeholder="0"
+          style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:#a8e63d;font-family:'DM Sans',sans-serif;font-size:13px;padding:5px 8px;text-align:center;outline:none">
+      </td>
+      <td><button class="vid-val-btn btn" data-date="${e.date}" data-agent="${e.agent}" style="padding:6px 14px;font-size:12px">Salvar</button></td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
+    <thead><tr><th>Data</th><th>Angariador</th><th class="num-cell">Enviados</th><th class="num-cell">Validados</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+
+  wrap.querySelectorAll('.vid-val-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { date, agent } = btn.dataset;
+      const inp = wrap.querySelector(`.vid-val-inp[data-date="${date}"][data-agent="${agent}"]`);
+      const count = Math.max(0, parseInt(inp.value)||0);
+      btn.textContent = '...'; btn.disabled = true;
+      await updateVideoValidated(date, agent, count);
+      btn.textContent = '✓'; btn.disabled = false;
     });
   });
 }
