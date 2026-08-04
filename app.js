@@ -1017,8 +1017,7 @@ function renderVGVRankingAgent() {
   sales.forEach(s=>{ byAgent[s.agent]=(byAgent[s.agent]||0)+s.value; });
   const ranked=Object.entries(byAgent).sort((a,b)=>b[1]-a[1]);
   const total=ranked.reduce((s,[,v])=>s+v,0);
-  const PODIUM_CLS={1:'badge-gold',2:'badge-silver',3:'badge-bronze'};
-  const PODIUM_LBL={1:'🥇',2:'🥈',3:'🥉'};
+  const posColor={1:'#f0c040',2:'#b8b8b8',3:'#cd7f32'};
   if (!ranked.length) { wrap.innerHTML='<div style="color:var(--text-muted);font-size:13px">Nenhuma venda registrada este mês.</div>'; return; }
   wrap.innerHTML=`
     <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--border);display:flex;justify-content:space-between">
@@ -1028,8 +1027,9 @@ function renderVGVRankingAgent() {
     ${ranked.map(([name,val],i)=>{
       const pos=i+1;
       const pct=Math.round((val/total)*100);
+      const color=posColor[pos]||'var(--text-muted)';
       return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">
-        <span class="rank-badge ${PODIUM_CLS[pos]||''}">${PODIUM_LBL[pos]||pos}</span>
+        <span style="font-size:15px;font-weight:500;color:${color};min-width:26px;text-align:center">${pos}°</span>
         <span style="flex:1;font-size:14px">${name}</span>
         <div style="text-align:right">
           <div style="font-size:14px;font-weight:500;color:#a8e63d">${formatCurrency(val)}</div>
@@ -1055,34 +1055,23 @@ function renderAgentDashboard(session, selectedDate, editing) {
   // Metas card
   const metasWrap = document.getElementById('metas-wrap');
   if (metasWrap) {
-    const wPct  = Math.min(weekDoc  / META_DOC       * 100, 100);
+    const META_VID_MONTH = 15;
+    const monthVid = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.video||0), 0);
+
     const mPct  = Math.min(monthDoc / META_DOC_MONTH * 100, 100);
-    const wOver = weekDoc  >= META_DOC;
+    const vPct  = Math.min(monthVid / META_VID_MONTH * 100, 100);
     const mOver = monthDoc >= META_DOC_MONTH;
-    const wColor  = wOver ? '#2ecc71' : weekDoc  >= META_DOC * 0.6 ? '#f0c040' : '#e74c3c';
-    const mColor  = mOver ? '#2ecc71' : monthDoc >= META_DOC_MONTH * 0.6 ? '#f0c040' : '#e74c3c';
-    const wLabel  = wOver ? `✓ Meta atingida!` : `Faltam ${META_DOC - weekDoc} DOC`;
-    const mLabel  = mOver ? `✓ Meta atingida!` : `Faltam ${META_DOC_MONTH - monthDoc} DOC`;
+    const vOver = monthVid >= META_VID_MONTH;
+    const mColor = mOver ? '#2ecc71' : monthDoc >= META_DOC_MONTH * 0.6 ? '#f0c040' : '#e74c3c';
+    const vColor = vOver ? '#2ecc71' : monthVid >= META_VID_MONTH * 0.6 ? '#f0c040' : '#e879f9';
+    const mLabel = mOver ? `✓ Meta atingida!` : `Faltam ${META_DOC_MONTH - monthDoc} DOC`;
+    const vLabel = vOver ? `✓ Meta atingida!` : `Faltam ${META_VID_MONTH - monthVid} vídeo${META_VID_MONTH - monthVid !== 1 ? 's' : ''}`;
+    const mesLabel = new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'});
     metasWrap.innerHTML = `
       <div class="meta-card">
         <div class="meta-header">
-          <span class="meta-title">Meta Semanal</span>
-          <span class="meta-period">${formatDate(wStart)} – ${formatDate(wEnd)}</span>
-        </div>
-        <div class="meta-numbers">
-          <span class="meta-done" style="color:${wColor}">${weekDoc}</span>
-          <span class="meta-sep">/</span>
-          <span class="meta-total">${META_DOC} DOC</span>
-        </div>
-        <div class="meta-bar-wrap">
-          <div class="meta-bar" style="width:${wPct}%;background:${wColor}"></div>
-        </div>
-        <div class="meta-label" style="color:${wColor}">${wLabel}</div>
-      </div>
-      <div class="meta-card">
-        <div class="meta-header">
           <span class="meta-title">Meta Mensal</span>
-          <span class="meta-period">${new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'})}</span>
+          <span class="meta-period">${mesLabel}</span>
         </div>
         <div class="meta-numbers">
           <span class="meta-done" style="color:${mColor}">${monthDoc}</span>
@@ -1093,6 +1082,21 @@ function renderAgentDashboard(session, selectedDate, editing) {
           <div class="meta-bar" style="width:${mPct}%;background:${mColor}"></div>
         </div>
         <div class="meta-label" style="color:${mColor}">${mLabel}</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-header">
+          <span class="meta-title">Meta de Vídeo</span>
+          <span class="meta-period">${mesLabel}</span>
+        </div>
+        <div class="meta-numbers">
+          <span class="meta-done" style="color:${vColor}">${monthVid}</span>
+          <span class="meta-sep">/</span>
+          <span class="meta-total">${META_VID_MONTH} vídeos</span>
+        </div>
+        <div class="meta-bar-wrap">
+          <div class="meta-bar" style="width:${vPct}%;background:${vColor}"></div>
+        </div>
+        <div class="meta-label" style="color:${vColor}">${vLabel}</div>
       </div>`;
   }
 
@@ -1652,9 +1656,49 @@ function renderGestorDashboard() {
   const byAgent=sumByAgent(entries);
 
   const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
+  const totVid=entries.reduce((s,e)=>s+(e.video||0),0);
   document.getElementById('tot-prosp').textContent=totProsp;
   document.getElementById('tot-cpd').textContent=totCpd;
   document.getElementById('tot-doc').textContent=totDoc;
+  document.getElementById('tot-vid').textContent=totVid;
+
+  // ── METAS com barras de progresso ────────────────────────
+  // Só exibe no filtro "mês"
+  const showMeta = activePeriod === 'month';
+  const META_DOC_GESTOR = 90;
+  ['prosp','cpd','doc','vid'].forEach(k => {
+    document.getElementById(`meta-${k}-bar-wrap`).style.display = showMeta ? '' : 'none';
+    document.getElementById(`meta-${k}-lbl`).textContent = '';
+  });
+  if (showMeta) {
+    // Calcula dados do mês anterior para derivar ratios
+    const team = new Set(getAgentNames());
+    const curRef = activeMonthRef || today();
+    const d = new Date(curRef + 'T12:00:00');
+    const prevMonth = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    const prevRef = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}-01`;
+    const prevEntries = filterEntries('month', prevRef).filter(e => team.has(e.agent));
+    const prevDoc  = prevEntries.reduce((s,e) => s + e.doc,   0);
+    const prevCpd  = prevEntries.reduce((s,e) => s + e.cpd,   0);
+    const prevProsp= prevEntries.reduce((s,e) => s + e.prosp, 0);
+    // Ratios do mês passado; fallback se não houver dados
+    const ratioCpd  = prevDoc > 0 ? prevCpd   / prevDoc : 22;
+    const ratioProsp= prevDoc > 0 ? prevProsp  / prevDoc : 150;
+    const metaCpd   = Math.round(ratioCpd   * META_DOC_GESTOR);
+    const metaProsp = Math.round(ratioProsp  * META_DOC_GESTOR);
+
+    const setBar = (key, atual, meta, color) => {
+      const pct = Math.min(Math.round((atual / meta) * 100), 100);
+      document.getElementById(`meta-${key}-lbl`).textContent = `/ ${meta}`;
+      document.getElementById(`meta-${key}-bar`).style.width = pct + '%';
+      document.getElementById(`meta-${key}-bar`).style.background = pct >= 100 ? '#a8e63d' : color;
+    };
+    const META_VID_GESTOR = Math.round(getAgentNames().length * 15);
+    setBar('doc',   totDoc,   META_DOC_GESTOR,  '#a8e63d');
+    setBar('cpd',   totCpd,   metaCpd,          '#6495ed');
+    setBar('prosp', totProsp, metaProsp,         '#f0c040');
+    setBar('vid',   totVid,   META_VID_GESTOR,   '#e879f9');
+  }
 
   const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
   document.getElementById('rank-body').innerHTML=ranked.map((a,i)=>{
@@ -1669,6 +1713,7 @@ function renderGestorDashboard() {
   renderStreakRanking();
   renderDocList(entries);
   renderCpdList(entries);
+  renderVisitList(entries);
   renderAnalyticsChart(allDocs);
 
   document.querySelectorAll('.analytics-btn').forEach(b=>{
@@ -1712,7 +1757,7 @@ function renderAnalyticsChart(allDocs) {
 }
 
 // ── DOC LIST (gestor — with inline nota edit) ────────────
-let activeDocAgent = '', activeCpdAgent = '';
+let activeDocAgent = '', activeCpdAgent = '', activeVisitAgent = '';
 
 function renderDocList(entries) {
   const allRows=[];
@@ -2282,6 +2327,56 @@ function renderCpdList(entries) {
       wrap.querySelector(`.cpd-edit-row[data-edit-date="${btn.dataset.date}"][data-edit-agent="${btn.dataset.agent}"][data-edit-idx="${btn.dataset.idx}"]`).style.display = 'none';
     });
   });
+}
+
+// ── VISIT LIST — VA/VR (gestor) ──────────────────────────
+function renderVisitList(entries) {
+  const wrap = document.getElementById('visit-list-wrap');
+  if (!wrap) return;
+
+  const agentNames = getAgentNames();
+  const filterHTML = `<div style="margin-bottom:12px">
+    <select id="visit-agent-filter" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;width:100%">
+      <option value="">Todos os angariadores</option>
+      ${agentNames.map(n=>`<option value="${n}" ${activeVisitAgent===n?'selected':''}>${n}</option>`).join('')}
+    </select>
+  </div>`;
+
+  const allRows = [];
+  entries.forEach(e => {
+    (e.vaDetails||[]).forEach((d,i) => allRows.push({date:e.date, agent:e.agent, tipo:'VA', idx:i, ...d}));
+    (e.vrDetails||[]).forEach((d,i) => allRows.push({date:e.date, agent:e.agent, tipo:'VR', idx:i, ...d}));
+  });
+  allRows.sort((a,b) => b.date.localeCompare(a.date) || a.tipo.localeCompare(b.tipo));
+
+  const rows = activeVisitAgent ? allRows.filter(r => r.agent === activeVisitAgent) : allRows;
+
+  if (allRows.length === 0) {
+    wrap.innerHTML = filterHTML + '<div class="empty-state">Nenhuma visita registrada no período</div>';
+    wrap.querySelector('#visit-agent-filter').addEventListener('change', function(){ activeVisitAgent=this.value; renderVisitList(entries); });
+    return;
+  }
+
+  const rowsHTML = rows.map(d => {
+    const isVA = d.tipo === 'VA';
+    const color = isVA ? '#ef4444' : '#f97316';
+    const label = isVA ? '🏎️ VA' : '🔧 VR';
+    const desc  = isVA ? 'Agendada' : 'Realizada';
+    return `<tr>
+      <td>${formatDate(d.date)}</td>
+      <td>${d.agent}</td>
+      <td><span style="font-weight:600;color:${color}">${label}</span> <span style="font-size:11px;color:var(--text-muted)">${desc}</span></td>
+      <td style="font-weight:500">${d.imovel||'—'}</td>
+      <td>${d.visitante||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = filterHTML + `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
+    <thead><tr><th>Data</th><th>Angariador</th><th>Tipo</th><th>Imóvel</th><th>Cliente</th></tr></thead>
+    <tbody>${rowsHTML || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px">Nenhuma visita para este angariador</td></tr>'}</tbody>
+  </table></div>`;
+
+  wrap.querySelector('#visit-agent-filter').addEventListener('change', function(){ activeVisitAgent=this.value; renderVisitList(entries); });
 }
 
 // ── OFERTA ATIVA SEMANAL ─────────────────────────────────

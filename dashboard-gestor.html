@@ -43,16 +43,44 @@
     <!-- Totais (full width) -->
     <div class="totals-grid">
       <div class="total-box">
-        <div class="t-val" id="tot-prosp">0</div>
+        <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
+          <div class="t-val" id="tot-prosp">0</div>
+          <div id="meta-prosp-lbl" style="font-size:13px;color:var(--text-muted);font-weight:400"></div>
+        </div>
         <div class="t-lbl">PROSP</div>
+        <div id="meta-prosp-bar-wrap" style="display:none;margin-top:8px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
+          <div id="meta-prosp-bar" style="height:100%;border-radius:3px;background:#6495ed;transition:width .4s ease"></div>
+        </div>
       </div>
       <div class="total-box">
-        <div class="t-val" id="tot-cpd">0</div>
+        <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
+          <div class="t-val" id="tot-cpd">0</div>
+          <div id="meta-cpd-lbl" style="font-size:13px;color:var(--text-muted);font-weight:400"></div>
+        </div>
         <div class="t-lbl">CP</div>
+        <div id="meta-cpd-bar-wrap" style="display:none;margin-top:8px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
+          <div id="meta-cpd-bar" style="height:100%;border-radius:3px;background:#6495ed;transition:width .4s ease"></div>
+        </div>
       </div>
       <div class="total-box">
-        <div class="t-val" id="tot-doc">0</div>
+        <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
+          <div class="t-val" id="tot-doc">0</div>
+          <div id="meta-doc-lbl" style="font-size:13px;color:var(--text-muted);font-weight:400"></div>
+        </div>
         <div class="t-lbl">DOC</div>
+        <div id="meta-doc-bar-wrap" style="display:none;margin-top:8px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
+          <div id="meta-doc-bar" style="height:100%;border-radius:3px;background:#a8e63d;transition:width .4s ease"></div>
+        </div>
+      </div>
+      <div class="total-box">
+        <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
+          <div class="t-val" id="tot-vid">0</div>
+          <div id="meta-vid-lbl" style="font-size:13px;color:var(--text-muted);font-weight:400"></div>
+        </div>
+        <div class="t-lbl" style="color:#e879f9">VÍDEO</div>
+        <div id="meta-vid-bar-wrap" style="display:none;margin-top:8px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
+          <div id="meta-vid-bar" style="height:100%;border-radius:3px;background:#e879f9;transition:width .4s ease"></div>
+        </div>
       </div>
     </div>
 
@@ -142,6 +170,16 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- Linha: Visitas VA/VR (largura total) -->
+    <div class="card collapsible-card">
+      <button class="card-title card-toggle" data-target="visit-list-body">
+        🏎️ Visitas Agendadas e Realizadas <span class="toggle-arrow">▸</span>
+      </button>
+      <div class="card-body" id="visit-list-body" style="display:none">
+        <div id="visit-list-wrap"></div>
+      </div>
     </div>
 
     <!-- Linha 4: Análise DOCs (1/2) + Sequência (1/2) -->
