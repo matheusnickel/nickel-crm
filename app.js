@@ -85,6 +85,29 @@ async function updateDocNota(date, agent, docIdx, nota) {
   await fbUpsertEntry(entry);
 }
 
+// ── VIDEO DETAILS (URL obrigatória — validação do gestor) ─
+function buildVideoDetailsHTML(count, prefill=[]) {
+  if (count === 0) return '';
+  let html = `<div class="visit-details-wrap" style="margin-top:12px">
+    <div style="background:rgba(232,121,249,0.08);border:1px solid rgba(232,121,249,0.3);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#e879f9;line-height:1.5">
+      ⚠️ <strong>Atenção:</strong> Todo vídeo precisa passar pela validação do gestor.<br>
+      Informe o link exato (Instagram ou TikTok) de cada vídeo publicado.
+    </div>`;
+  for (let i = 0; i < count; i++) {
+    const p = prefill[i] || {};
+    html += `<div class="visit-detail-item" style="background:rgba(232,121,249,0.06);border:1px solid rgba(232,121,249,0.25);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:600;color:#e879f9;margin-bottom:8px">🎬 Vídeo ${i+1}</div>
+      <input class="vid-url" data-idx="${i}" type="url" placeholder="Link do post (instagram.com/... ou tiktok.com/...)" value="${(p.url||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box">
+    </div>`;
+  }
+  return html + '</div>';
+}
+function collectVideoDetails(count) {
+  const d = [];
+  for (let i = 0; i < count; i++) d.push({ url: document.querySelector(`.vid-url[data-idx="${i}"]`)?.value.trim()||'' });
+  return d;
+}
+
 // ── VA DETAILS (Visita Agendada — Treino Livre) ──────────
 function buildVaDetailsHTML(count, prefill=[]) {
   if (count === 0) return '';
@@ -132,7 +155,7 @@ function buildCpdDetailsHTML(count, prefill=[]) {
   for (let i = 0; i < count; i++) {
     const p = prefill[i] || {};
     html += `<div class="cpd-detail-item">
-      <span class="cpd-detail-label">CP ${i+1}</span>
+      <span class="cpd-detail-label">CQ ${i+1}</span>
       <input class="cpd-nome" data-idx="${i}" type="text" placeholder="Nome do proprietário" value="${(p.nome||'').replace(/"/g,'&quot;')}">
       <input class="cpd-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone||'').replace(/"/g,'&quot;')}">
     </div>`;
@@ -646,7 +669,7 @@ function renderAgentContacts(agentName) {
       </button>
     </div>
     ${list.length === 0
-      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CP ativo':'DOC'} registrado</div>`
+      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':'DOC'} registrado</div>`
       : `<div style="overflow-x:auto;margin-top:10px">
           <table class="data-table">
             <thead><tr><th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th></tr></thead>
@@ -1157,7 +1180,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
         <div style="font-weight:600;color:#f0f0f0">Relatório de ${formatDate(date)} enviado</div>
-        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CP <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong>${sentToday.video ? ` &nbsp;·&nbsp; VÍDEO <strong style="color:#e879f9">${sentToday.video}</strong>` : ''}</div>
+        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CQ <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong>${sentToday.video ? ` &nbsp;·&nbsp; VÍDEO <strong style="color:#e879f9">${sentToday.video}</strong>` : ''}</div>
         <div class="agent-daily-score" style="--nota-color:${dsColor}">
           <span class="agent-nota-val" style="color:${dsColor}">${dailyScore.toFixed(1)}</span>
           <span class="agent-nota-label">${dsLabel}</span>
@@ -1177,7 +1200,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       // ── STEP-BY-STEP WIZARD ──────────────────────────────
       const WSTEPS = [
         { key:'prosp', label:'PROSP',  hint:'Quantos imóveis você prospectou?',                                        color:'#f0c040', pts:'+0.11 pts/unidade' },
-        { key:'cp',    label:'CP',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
+        { key:'cp',    label:'CQ',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
         { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',                                     color:'#a8e63d', pts:'6 pontos por DOC' },
         { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (Instagram | TikTok)',                      color:'#e879f9', pts:'+0.9 pts/unidade' },
         { key:'va',    label:'🏎️ TREINO LIVRE', hint:'Visitas agendadas de cliente comprador na sua captação',       color:'#ef4444', pts:'controle interno' },
@@ -1212,6 +1235,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
           <div id="wiz-details" style="display:none">
             <div id="wiz-cpd-area"></div>
             <div id="wiz-doc-area"></div>
+            <div id="wiz-video-area"></div>
             <div id="wiz-va-area"></div>
             <div id="wiz-vr-area"></div>
             <button id="wiz-submit" class="btn" style="margin-top:14px;width:100%">${sentToday ? 'Salvar correção' : 'Enviar relatório'}</button>
@@ -1246,6 +1270,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         document.getElementById('wiz-details').style.display = '';
         document.getElementById('wiz-cpd-area').innerHTML = buildCpdDetailsHTML(wVals.cp, pre.cpdDetails||[]);
         document.getElementById('wiz-doc-area').innerHTML = buildDocDetailsHTML(wVals.doc, pre.docDetails||[]);
+        document.getElementById('wiz-video-area').innerHTML = buildVideoDetailsHTML(wVals.vid, pre.videoDetails||[]);
         document.getElementById('wiz-va-area').innerHTML = buildVaDetailsHTML(wVals.va, pre.vaDetails||[]);
         document.getElementById('wiz-vr-area').innerHTML = buildVrDetailsHTML(wVals.vr, pre.vrDetails||[]);
         bindBairroSelects();
@@ -1280,9 +1305,14 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const submitBtn = document.getElementById('wiz-submit');
         submitBtn.disabled = true; submitBtn.textContent = 'Enviando...';
         const submittedDate = sentToday?.submittedDate||sentToday?.date||today();
+        const videoDetails = collectVideoDetails(wVals.vid);
+        if (wVals.vid > 0) {
+          const missing = videoDetails.findIndex(v => !v.url);
+          if (missing !== -1) { alert(`Informe o link do Vídeo ${missing+1} para continuar.`); submitBtn.disabled=false; submitBtn.textContent=sentToday?'Salvar correção':'Enviar relatório'; return; }
+        }
         const vaDetails = collectVaDetails(wVals.va);
         const vrDetails = collectVrDetails(wVals.vr);
-        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:wVals.vr, cpdDetails, docDetails, vaDetails, vrDetails, submittedDate});
+        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:wVals.vr, cpdDetails, docDetails, videoDetails, vaDetails, vrDetails, submittedDate});
         if (isEdit) incrementEditCount(session.name, date);
       });
 
@@ -2126,7 +2156,7 @@ function exportTimeline(sorted, days, t) {
         </div>
         <div style="background:#0e1218;border-radius:12px;padding:14px 18px;border:1px solid #1e2a38">
           <div style="font-size:36px;font-weight:900;color:#6495ed;line-height:1">${totCpd}</div>
-          <div style="font-size:9px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:6px">Conversas (CP)</div>
+          <div style="font-size:9px;color:#6b8299;letter-spacing:2px;text-transform:uppercase;margin-top:6px">Conversas (CQ)</div>
         </div>
         <div style="background:#0e1218;border-radius:12px;padding:14px 18px;border:1px solid #1e2a38">
           <div style="font-size:36px;font-weight:900;color:#f0c040;line-height:1">${totProsp}</div>
@@ -2215,7 +2245,7 @@ function renderDayView(dateStr) {
       <thead><tr>
         <th>Angariador</th>
         <th class="num-cell">PROSP</th>
-        <th class="num-cell">CP</th>
+        <th class="num-cell">CQ</th>
         <th class="num-cell doc-th">DOC</th>
         <th></th>
       </tr></thead>
@@ -2255,7 +2285,7 @@ function renderCpdList(entries) {
   const rows = activeCpdAgent ? allRows.filter(r => r.agent === activeCpdAgent) : allRows;
 
   if (allRows.length === 0) {
-    wrap.innerHTML = filterHTML + '<div class="empty-state">Nenhum CP com detalhes no período</div>';
+    wrap.innerHTML = filterHTML + '<div class="empty-state">Nenhum CQ com detalhes no período</div>';
     wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });
     return;
   }
@@ -2286,7 +2316,7 @@ function renderCpdList(entries) {
 
   wrap.innerHTML = filterHTML + `<div class="doc-table-wrap"><table class="data-table doc-table" style="font-size:12px">
     <thead><tr><th>Data</th><th>Angariador</th><th>Nome</th><th>Telefone</th><th>Status</th><th>Motivo</th><th></th></tr></thead>
-    <tbody>${rowsHTML || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum CP para este angariador</td></tr>'}</tbody>
+    <tbody>${rowsHTML || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum CQ para este angariador</td></tr>'}</tbody>
   </table></div>`;
 
   wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });
@@ -2354,15 +2384,18 @@ function renderVideoValidation(entries) {
 
   const rows = videoEntries.map(e => {
     const validated = e.videoValidated ?? '';
+    const links = (e.videoDetails||[]).map((v,i) =>
+      v.url ? `<div style="margin-bottom:3px"><a href="${v.url}" target="_blank" style="color:#e879f9;font-size:11px;word-break:break-all">🎬 Vídeo ${i+1}: ${v.url}</a></div>` : ''
+    ).join('');
     return `<tr>
       <td>${formatDate(e.date)}</td>
       <td>${e.agent}</td>
+      <td>${links || '<span style="color:var(--text-muted);font-size:11px">sem links</span>'}</td>
       <td class="num-cell" style="color:#e879f9">${e.video}</td>
       <td class="num-cell">
         <input class="vid-val-inp" type="number" min="0" max="${e.video}"
           data-date="${e.date}" data-agent="${e.agent}"
-          value="${validated}"
-          placeholder="0"
+          value="${validated}" placeholder="0"
           style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:#a8e63d;font-family:'DM Sans',sans-serif;font-size:13px;padding:5px 8px;text-align:center;outline:none">
       </td>
       <td><button class="vid-val-btn btn" data-date="${e.date}" data-agent="${e.agent}" style="padding:6px 14px;font-size:12px">Salvar</button></td>
@@ -2370,7 +2403,7 @@ function renderVideoValidation(entries) {
   }).join('');
 
   wrap.innerHTML = `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
-    <thead><tr><th>Data</th><th>Angariador</th><th class="num-cell">Enviados</th><th class="num-cell">Validados</th><th></th></tr></thead>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Links</th><th class="num-cell">Enviados</th><th class="num-cell">Validados</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`;
 
@@ -2643,7 +2676,7 @@ function generateReport(period) {
           </div>
           <div style="text-align:center">
             <div style="font-size:24px;font-weight:800;color:#6495ed">${a.cpd}</div>
-            <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase">CP</div>
+            <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase">CQ</div>
           </div>
           <div style="text-align:center">
             <div style="font-size:24px;font-weight:800;color:#f0c040">${a.prosp}</div>
@@ -2724,7 +2757,7 @@ function generateReport(period) {
     </div>
     <div style="flex:1;text-align:center;border-left:1px solid #e0e0e0">
       <div style="font-size:32px;font-weight:800;color:#6495ed">${totCpd}</div>
-      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">CP total</div>
+      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">CQ total</div>
     </div>
     <div style="flex:1;text-align:center;border-left:1px solid #e0e0e0">
       <div style="font-size:32px;font-weight:800;color:#f0c040">${totProsp}</div>

@@ -57,7 +57,7 @@
           <div class="t-val" id="tot-cpd">0</div>
           <div id="meta-cpd-lbl" style="font-size:13px;color:var(--text-muted);font-weight:400"></div>
         </div>
-        <div class="t-lbl">CP</div>
+        <div class="t-lbl">CQ</div>
         <div id="meta-cpd-bar-wrap" style="display:none;margin-top:8px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
           <div id="meta-cpd-bar" style="height:100%;border-radius:3px;background:#6495ed;transition:width .4s ease"></div>
         </div>
@@ -88,7 +88,7 @@
     <div class="g-row g-row-2-1">
 
       <div class="card">
-        <div class="card-title">Ranking — ordenado por DOC · CP · PROSP</div>
+        <div class="card-title">Ranking — ordenado por DOC · CQ · PROSP</div>
         <div style="overflow-x:auto">
           <table class="data-table rank-table" style="width:100%">
             <colgroup>
@@ -105,7 +105,7 @@
                 <th>#</th>
                 <th>Angariador</th>
                 <th class="num-cell doc-th">DOC</th>
-                <th class="num-cell">CP</th>
+                <th class="num-cell">CQ</th>
                 <th class="num-cell">PROSP</th>
                 <th class="num-cell" style="color:#ef4444">VA</th>
                 <th class="num-cell" style="color:#f97316">VR</th>
@@ -140,8 +140,8 @@
         </button>
         <div class="card-body" id="conv-body" style="display:none">
           <div class="conv-mode-row">
-            <button class="conv-mode-btn active" data-mode="prosp-cpd">PROSP → CP</button>
-            <button class="conv-mode-btn" data-mode="cpd-doc">CP → DOC</button>
+            <button class="conv-mode-btn active" data-mode="prosp-cpd">PROSP → CQ</button>
+            <button class="conv-mode-btn" data-mode="cpd-doc">CQ → DOC</button>
           </div>
           <div id="conv-list"></div>
         </div>
@@ -163,7 +163,7 @@
 
       <div class="card collapsible-card">
         <button class="card-title card-toggle" data-target="cpd-list-body">
-          CPs — acompanhamento <span class="toggle-arrow">▸</span>
+          CQs — acompanhamento <span class="toggle-arrow">▸</span>
         </button>
         <div class="card-body" id="cpd-list-body" style="display:none">
           <div id="cpd-list-wrap"></div>
@@ -239,7 +239,7 @@
           </div>
           <div class="fields-row" style="margin-bottom:10px">
             <div class="field-box"><label>PROSP<span class="field-hint">(Prospecção)</span></label><input type="number" id="lanc-prosp" min="0" value="0"></div>
-            <div class="field-box"><label>CP<span class="field-hint">(Nova conversa com o proprietário)</span></label><input type="number" id="lanc-cpd" min="0" value="0"></div>
+            <div class="field-box"><label>CQ<span class="field-hint">(Nova conversa com o proprietário)</span></label><input type="number" id="lanc-cpd" min="0" value="0"></div>
             <div class="field-box"><label>DOC<span class="field-hint">(Pegou Documentação)</span></label><input type="number" id="lanc-doc" min="0" value="0"></div>
           </div>
           <div class="fields-row" style="margin-bottom:10px">
