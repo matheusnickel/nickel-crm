@@ -2792,7 +2792,7 @@ function renderConversion(ranked) {
     return `<div class="conv-card">
       <div class="conv-card-header"><span class="conv-agent">${pos<=3?PODIUM_LABEL[pos]:''} ${a.agent}</span><span class="conv-pct ${pct==='—'?'muted':''}">${pct}</span></div>
       <div class="conv-bar-wrap"><div class="conv-bar" style="width:${den>0?Math.min((num/den)*100,100):0}%"></div></div>
-      <div class="conv-detail">${isProspCpd?'CP / PROSP':'DOC / CP'}: ${den>0?`${num} de ${den}`:'—'}</div>
+      <div class="conv-detail">${isProspCpd?'CQ / PROSP':'DOC / CQ'}: ${den>0?`${num} de ${den}`:'—'}</div>
     </div>`;
   }).join('');
 }
