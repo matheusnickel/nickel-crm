@@ -85,66 +85,43 @@ async function updateDocNota(date, agent, docIdx, nota) {
   await fbUpsertEntry(entry);
 }
 
-// ── VIDEO DETAILS (URL obrigatória — validação do gestor) ─
-function buildVideoDetailsHTML(count, prefill=[]) {
-  if (count === 0) return '';
-  let html = `<div class="visit-details-wrap" style="margin-top:12px">
-    <div style="background:rgba(232,121,249,0.08);border:1px solid rgba(232,121,249,0.3);border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#e879f9;line-height:1.5">
-      ⚠️ <strong>Atenção:</strong> Todo vídeo precisa passar pela validação do gestor.<br>
-      Informe o link exato (Instagram ou TikTok) de cada vídeo publicado.
-    </div>`;
-  for (let i = 0; i < count; i++) {
-    const p = prefill[i] || {};
-    html += `<div class="visit-detail-item" style="background:rgba(232,121,249,0.06);border:1px solid rgba(232,121,249,0.25);border-radius:8px;padding:10px;margin-bottom:8px">
-      <div style="font-size:12px;font-weight:600;color:#e879f9;margin-bottom:8px">🎬 Vídeo ${i+1}</div>
-      <input class="vid-url" data-idx="${i}" type="url" placeholder="Link do post (instagram.com/... ou tiktok.com/...)" value="${(p.url||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box">
-    </div>`;
-  }
-  return html + '</div>';
-}
-function collectVideoDetails(count) {
-  const d = [];
-  for (let i = 0; i < count; i++) d.push({ url: document.querySelector(`.vid-url[data-idx="${i}"]`)?.value.trim()||'' });
-  return d;
-}
-
 // ── VA DETAILS (Visita Agendada — Treino Livre) ──────────
 function buildVaDetailsHTML(count, prefill=[]) {
   if (count === 0) return '';
-  let html = '<div class="visit-details-wrap" style="margin-top:12px">';
+  let html = '<div class="cpd-details-wrap">';
   for (let i = 0; i < count; i++) {
     const p = prefill[i] || {};
-    html += `<div class="visit-detail-item" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px;margin-bottom:8px">
-      <div style="font-size:12px;font-weight:600;color:#ef4444;margin-bottom:8px">🏎️ TREINO LIVRE ${i+1} — Visita Agendada</div>
-      <input class="va-imovel" data-idx="${i}" type="text" placeholder="Nome do imóvel (ex: Apto Elos Barigui)" value="${(p.imovel||'').replace(/"/g,'&quot;')}" style="width:100%;margin-bottom:6px;box-sizing:border-box">
-      <input class="va-visitante" data-idx="${i}" type="text" placeholder="Nome do cliente comprador" value="${(p.visitante||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box">
+    html += `<div class="cpd-detail-item">
+      <span class="cpd-detail-label" style="color:#ef4444">VA ${i+1}</span>
+      <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente comprador" value="${(p.nome||'').replace(/"/g,'&quot;')}">
+      <input class="va-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone||'').replace(/"/g,'&quot;')}">
     </div>`;
   }
   return html + '</div>';
 }
 function collectVaDetails(count) {
   const d=[];
-  for (let i=0;i<count;i++) d.push({ imovel:document.querySelector(`.va-imovel[data-idx="${i}"]`)?.value.trim()||'', visitante:document.querySelector(`.va-visitante[data-idx="${i}"]`)?.value.trim()||'' });
+  for (let i=0;i<count;i++) d.push({ nome:document.querySelector(`.va-nome[data-idx="${i}"]`)?.value.trim()||'', telefone:document.querySelector(`.va-tel[data-idx="${i}"]`)?.value.trim()||'' });
   return d;
 }
 
 // ── VR DETAILS (Visita Realizada — Pit Stop) ─────────────
 function buildVrDetailsHTML(count, prefill=[]) {
   if (count === 0) return '';
-  let html = '<div class="visit-details-wrap" style="margin-top:12px">';
+  let html = '<div class="cpd-details-wrap">';
   for (let i = 0; i < count; i++) {
     const p = prefill[i] || {};
-    html += `<div class="visit-detail-item" style="background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.3);border-radius:8px;padding:10px;margin-bottom:8px">
-      <div style="font-size:12px;font-weight:600;color:#f97316;margin-bottom:8px">🔧 PIT STOP ${i+1} — Visita Realizada</div>
-      <input class="vr-imovel" data-idx="${i}" type="text" placeholder="Nome do imóvel (ex: Apto Elos Barigui)" value="${(p.imovel||'').replace(/"/g,'&quot;')}" style="width:100%;margin-bottom:6px;box-sizing:border-box">
-      <input class="vr-visitante" data-idx="${i}" type="text" placeholder="Nome do cliente comprador" value="${(p.visitante||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box">
+    html += `<div class="cpd-detail-item">
+      <span class="cpd-detail-label" style="color:#f97316">VR ${i+1}</span>
+      <input class="vr-nome" data-idx="${i}" type="text" placeholder="Nome do cliente comprador" value="${(p.nome||'').replace(/"/g,'&quot;')}">
+      <input class="vr-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone||'').replace(/"/g,'&quot;')}">
     </div>`;
   }
   return html + '</div>';
 }
 function collectVrDetails(count) {
   const d=[];
-  for (let i=0;i<count;i++) d.push({ imovel:document.querySelector(`.vr-imovel[data-idx="${i}"]`)?.value.trim()||'', visitante:document.querySelector(`.vr-visitante[data-idx="${i}"]`)?.value.trim()||'' });
+  for (let i=0;i<count;i++) d.push({ nome:document.querySelector(`.vr-nome[data-idx="${i}"]`)?.value.trim()||'', telefone:document.querySelector(`.vr-tel[data-idx="${i}"]`)?.value.trim()||'' });
   return d;
 }
 
@@ -1203,8 +1180,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
         { key:'cp',    label:'CQ',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
         { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',                                     color:'#a8e63d', pts:'6 pontos por DOC' },
         { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (Instagram | TikTok)',                      color:'#e879f9', pts:'+0.9 pts/unidade' },
-        { key:'va',    label:'🏎️ TREINO LIVRE', hint:'Visitas agendadas de cliente comprador na sua captação',       color:'#ef4444', pts:'controle interno' },
-        { key:'vr',    label:'🔧 PIT STOP',     hint:'Visitas realizadas de cliente comprador na sua captação',       color:'#f97316', pts:'controle interno' },
+        { key:'va',    label:'🏎️ TREINO LIVRE', hint:'Visitas agendadas — leva comprador à sua captação ou a qualquer imóvel', color:'#ef4444', pts:'controle interno' },
+        { key:'vr',    label:'🔧 PIT STOP',     hint:'Visitas realizadas — leva comprador à sua captação ou a qualquer imóvel',  color:'#f97316', pts:'controle interno' },
       ];
       const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0, vr: pre.vr||0 };
       let wStep = 0;
@@ -1235,7 +1212,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
           <div id="wiz-details" style="display:none">
             <div id="wiz-cpd-area"></div>
             <div id="wiz-doc-area"></div>
-            <div id="wiz-video-area"></div>
             <div id="wiz-va-area"></div>
             <div id="wiz-vr-area"></div>
             <button id="wiz-submit" class="btn" style="margin-top:14px;width:100%">${sentToday ? 'Salvar correção' : 'Enviar relatório'}</button>
@@ -1270,7 +1246,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
         document.getElementById('wiz-details').style.display = '';
         document.getElementById('wiz-cpd-area').innerHTML = buildCpdDetailsHTML(wVals.cp, pre.cpdDetails||[]);
         document.getElementById('wiz-doc-area').innerHTML = buildDocDetailsHTML(wVals.doc, pre.docDetails||[]);
-        document.getElementById('wiz-video-area').innerHTML = buildVideoDetailsHTML(wVals.vid, pre.videoDetails||[]);
         document.getElementById('wiz-va-area').innerHTML = buildVaDetailsHTML(wVals.va, pre.vaDetails||[]);
         document.getElementById('wiz-vr-area').innerHTML = buildVrDetailsHTML(wVals.vr, pre.vrDetails||[]);
         bindBairroSelects();
@@ -1305,14 +1280,9 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const submitBtn = document.getElementById('wiz-submit');
         submitBtn.disabled = true; submitBtn.textContent = 'Enviando...';
         const submittedDate = sentToday?.submittedDate||sentToday?.date||today();
-        const videoDetails = collectVideoDetails(wVals.vid);
-        if (wVals.vid > 0) {
-          const missing = videoDetails.findIndex(v => !v.url);
-          if (missing !== -1) { alert(`Informe o link do Vídeo ${missing+1} para continuar.`); submitBtn.disabled=false; submitBtn.textContent=sentToday?'Salvar correção':'Enviar relatório'; return; }
-        }
         const vaDetails = collectVaDetails(wVals.va);
         const vrDetails = collectVrDetails(wVals.vr);
-        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:wVals.vr, cpdDetails, docDetails, videoDetails, vaDetails, vrDetails, submittedDate});
+        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:wVals.vr, cpdDetails, docDetails, vaDetails, vrDetails, submittedDate});
         if (isEdit) incrementEditCount(session.name, date);
       });
 
@@ -2456,13 +2426,13 @@ function renderVisitList(entries) {
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
       <td><span style="font-weight:600;color:${color}">${label}</span> <span style="font-size:11px;color:var(--text-muted)">${desc}</span></td>
-      <td style="font-weight:500">${d.imovel||'—'}</td>
-      <td>${d.visitante||'—'}</td>
+      <td style="font-weight:500">${d.nome||'—'}</td>
+      <td>${d.telefone||'—'}</td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = filterHTML + `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
-    <thead><tr><th>Data</th><th>Angariador</th><th>Tipo</th><th>Imóvel</th><th>Cliente</th></tr></thead>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Tipo</th><th>Cliente</th><th>Telefone</th></tr></thead>
     <tbody>${rowsHTML || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px">Nenhuma visita para este angariador</td></tr>'}</tbody>
   </table></div>`;
 
