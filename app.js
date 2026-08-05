@@ -639,7 +639,7 @@ function renderAgentContacts(agentName) {
   wrap.innerHTML = `
     <div class="nota-tabs" style="position:relative">
       <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">
-        CPs (${cpds.length})
+        CQs (${cpds.length})
       </button>
       <button class="nota-tab-btn${!isCpd?' active':''}" data-ctab="doc">
         DOCs (${docs.length})
