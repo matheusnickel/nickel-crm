@@ -34,15 +34,14 @@ const STATUS_OPTIONS = [
   { value: '',      label: '—',                 color: 'var(--text-muted)' },
   { value: 'FOTOS', label: 'FOTOS',             color: '#e67e22' },
   { value: 'AVI',   label: 'AV ASSINADA',                       color: '#3498db' },
-  { value: 'AV',    label: 'FALTA ASSINAR AUTORIZAÇÃO DE VENDA', color: '#9b59b6' },
+  { value: 'AV',    label: 'FALTA ASSINAR', color: '#9b59b6' },
   { value: 'SITE',  label: 'SITE',              color: '#a8e63d' },
 ];
 const CPD_STATUS_OPTIONS = [
-  { value: '',              label: '—' },
-  { value: 'tratativa',    label: 'Em tratativa' },
-  { value: 'doc',          label: 'Virou DOC' },
-  { value: 'doc_exclusivo', label: 'Exclusivo' },
-  { value: 'descarte',     label: 'Descarte' },
+  { value: '',          label: '—' },
+  { value: 'tratativa', label: 'EM TRATATIVA' },
+  { value: 'doc',       label: 'VIROU DOC' },
+  { value: 'descarte',  label: 'DESCARTE' },
 ];
 const BAIRROS = ['Batel','Água Verde','Bigorrilho','Ecoville','Cabral','Juvevê','Mercês','Campo Comprido','Santa Felicidade','Santo Inácio','Vila Izabel'];
 const META_DOC = 3;
