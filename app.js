@@ -184,6 +184,32 @@ async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
   await fbUpsertEntry(entry);
 }
 
+function showDescarteModal(nomeLead, onConfirm, onCancel) {
+  document.getElementById('descarte-modal-overlay')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'descarte-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);border-radius:14px;padding:24px;width:100%;max-width:420px;border:1px solid var(--border)">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px;color:#ef4444">🗑 Descartar CQ</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px">${nomeLead ? `<strong style="color:var(--text)">${nomeLead}</strong> será movido para a base de descartados.` : 'O lead será movido para a base de descartados.'}</div>
+      <div class="form-group" style="margin-bottom:18px">
+        <label style="font-size:12px">Motivo do descarte</label>
+        <input id="descarte-motivo-inp" type="text" placeholder="Ex: Não tem interesse, Não atende..." style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;width:100%;outline:none;box-sizing:border-box">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button id="descarte-cancel" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px">Cancelar</button>
+        <button id="descarte-confirm" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600">Descartar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const inp = overlay.querySelector('#descarte-motivo-inp');
+  inp.focus();
+  overlay.querySelector('#descarte-cancel').addEventListener('click', () => { overlay.remove(); onCancel(); });
+  overlay.querySelector('#descarte-confirm').addEventListener('click', () => { overlay.remove(); onConfirm(inp.value.trim()); });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { overlay.remove(); onConfirm(inp.value.trim()); } });
+}
+
 function showDocFromCpdModal(cpd, onConfirm, onCancel) {
   document.getElementById('doc-modal-overlay')?.remove();
   const overlay = document.createElement('div');
@@ -558,13 +584,16 @@ function renderAgentContacts(agentName) {
   const t = today();
   const entries = getEntries().filter(e => e.agent === agentName);
 
-  // CPDs ativos (exclui os que viraram DOC — esses vão para aba DOC)
+  // CPDs ativos (exclui os que viraram DOC ou descarte)
   const cpds = [];
+  const descartados = [];
   entries.forEach(e => (e.cpdDetails||[]).forEach((d, i) => {
-    if (d.nome && d.status !== 'doc' && d.status !== 'descarte')
-      cpds.push({ ...d, entryDate: e.date, idx: i, _type: 'cpd' });
+    if (!d.nome) return;
+    if (d.status === 'descarte') descartados.push({ ...d, entryDate: e.date, idx: i });
+    else if (d.status !== 'doc') cpds.push({ ...d, entryDate: e.date, idx: i, _type: 'cpd' });
   }));
   cpds.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
+  descartados.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
   // DOCs: apenas lançamentos reais do docDetails
   const docs = [];
@@ -633,24 +662,36 @@ function renderAgentContacts(agentName) {
     }
   };
 
-  const isCpd = agentContactTab === 'cpd';
-  const list  = isCpd ? cpds : docs;
+  const tab = agentContactTab;
+  const isDesc = tab === 'descartados';
+  const isCpd  = tab === 'cpd';
+
+  const makeDescRow = (d) => `<tr>
+    <td style="font-weight:500">${d.nome}</td>
+    <td style="color:var(--text-muted);font-size:12px">${d.telefone||'—'}</td>
+    <td style="color:var(--text-muted);font-size:12px">${formatDate(d.entryDate)}</td>
+    <td style="color:#ef4444;font-size:12px">${d.motivo||'—'}</td>
+    <td><button class="cq-restore-btn btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}"
+      style="font-size:11px;padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-muted)">Restaurar</button></td>
+  </tr>`;
+
+  const list = isCpd ? cpds : isDesc ? descartados : docs;
 
   wrap.innerHTML = `
     <div class="nota-tabs" style="position:relative">
-      <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">
-        CQs (${cpds.length})
-      </button>
-      <button class="nota-tab-btn${!isCpd?' active':''}" data-ctab="doc">
-        DOCs (${docs.length})
-      </button>
+      <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">CQs (${cpds.length})</button>
+      <button class="nota-tab-btn${tab==='doc'?' active':''}" data-ctab="doc">DOCs (${docs.length})</button>
+      <button class="nota-tab-btn${isDesc?' active':''}" data-ctab="descartados" style="color:${isDesc?'inherit':'#ef4444aa'}">🗑 Descartados (${descartados.length})</button>
     </div>
     ${list.length === 0
-      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':'DOC'} registrado</div>`
+      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':isDesc?'CQ descartado':'DOC'} registrado</div>`
       : `<div style="overflow-x:auto;margin-top:10px">
           <table class="data-table">
-            <thead><tr><th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th></tr></thead>
-            <tbody>${list.map(makeRow).join('')}</tbody>
+            <thead><tr>${isDesc
+              ? '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo do Descarte</th><th></th>'
+              : `<th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th>`
+            }</tr></thead>
+            <tbody>${isDesc ? list.map(makeDescRow).join('') : list.map(makeRow).join('')}</tbody>
           </table>
         </div>`}`;
 
@@ -663,25 +704,38 @@ function renderAgentContacts(agentName) {
     sel.addEventListener('change', async () => {
       const entryDate = sel.dataset.entryDate;
       const idx = parseInt(sel.dataset.idx);
+      const entries = getEntries();
+      const entry = entries.find(e => e.date === entryDate && e.agent === agentName);
+      const cpd = entry?.cpdDetails?.[idx] || {};
 
       if (sel.value === 'doc') {
-        // revert visually while modal is open
-        const entries = getEntries();
-        const entry = entries.find(e => e.date === entryDate && e.agent === agentName);
-        const cpd = entry?.cpdDetails?.[idx] || {};
         sel.value = cpd.status || '';
-
         showDocFromCpdModal(cpd, async (docDetail) => {
           await convertCpdToDoc(entryDate, agentName, idx, docDetail);
           agentContactTab = 'doc';
           renderAgentContacts(agentName);
-        }, () => {
-          // cancelled — nothing to do, select already reverted
-        });
+        }, () => {});
+      } else if (sel.value === 'descarte') {
+        sel.value = cpd.status || '';
+        showDescarteModal(cpd.nome || '', async (motivo) => {
+          await updateCpdDetail(entryDate, agentName, idx, { status: 'descarte', motivo });
+          agentContactTab = 'descartados';
+          renderAgentContacts(agentName);
+        }, () => {});
       } else {
         await updateCpdDetail(entryDate, agentName, idx, { status: sel.value });
         renderAgentContacts(agentName);
       }
+    });
+  });
+
+  // Restaurar lead descartado
+  wrap.querySelectorAll('.cq-restore-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = '...';
+      await updateCpdDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), { status: '', motivo: '' });
+      agentContactTab = 'cpd';
+      renderAgentContacts(agentName);
     });
   });
 
