@@ -726,7 +726,9 @@ a { color: inherit; text-decoration: none; }
 .rank-table col.col-name  { width: auto; }
 .rank-table col.col-doc   { width: 60px; }
 .rank-table col.col-cpd   { width: 60px; }
-.rank-table col.col-prosp { width: 70px; }
+.rank-table col.col-prosp { width: 60px; }
+.rank-table col.col-va    { width: 60px; }
+.rank-table col.col-vr    { width: 60px; }
 
 .day-view-wrap { margin-top: 4px; overflow-x: auto; }
 
