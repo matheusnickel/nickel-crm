@@ -1370,7 +1370,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
 // ── GESTOR DASHBOARD ─────────────────────────────────────
 let evolucaoChart=null, analyticsChart=null;
-let activePeriod='week', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
+let activePeriod='today', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
 let activeMonthRef=today(); // 'YYYY-MM-DD' — referência do mês selecionado no filtro "Mês"
 let activeWeekRef=today();  // 'YYYY-MM-DD' — referência da semana selecionada no filtro "Semana"
 let gestorUnsubscribe=null;
