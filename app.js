@@ -2259,6 +2259,8 @@ function renderDayView(dateStr) {
       <td class="num-cell day-num">${has ? e.prosp : dash}</td>
       <td class="num-cell day-num">${has ? e.cpd   : dash}</td>
       <td class="num-cell day-num doc-cell">${has ? e.doc : dash}</td>
+      <td class="num-cell day-num" style="color:#ef4444">${has ? (e.va||0) : dash}</td>
+      <td class="num-cell day-num" style="color:#f97316">${has ? (e.vr||0) : dash}</td>
       <td>${has ? `<button class="del-day-btn" data-date="${dateStr}" data-agent="${name}">Remover</button>` : ''}</td>
     </tr>`;
   }).join('');
@@ -2270,6 +2272,8 @@ function renderDayView(dateStr) {
         <th class="num-cell">PROSP</th>
         <th class="num-cell">CQ</th>
         <th class="num-cell doc-th">DOC</th>
+        <th class="num-cell" style="color:#ef4444">VA</th>
+        <th class="num-cell" style="color:#f97316">VR</th>
         <th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
