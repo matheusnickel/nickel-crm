@@ -836,38 +836,39 @@ function renderAgentVisits(agentName) {
     return;
   }
 
-  const rows = allVisits.map(v => {
-    const isRealizada = !!v.realizada;
+  const items = allVisits.map(v => {
+    const isRealizada = v.realizada === true;
     const isNaoRealizada = v.realizada === false && v.dataRealizacao === 'nao';
-    const statusBadge = isRealizada
-      ? `<span style="color:#a8e63d;font-size:11px;font-weight:600">✅ Realizada em ${formatDate(v.dataRealizacao||v.entryDate)}</span>`
-      : isNaoRealizada
-        ? `<span style="color:#888;font-size:11px;font-weight:600">❌ Não realizada</span>`
-        : `<span style="color:#ef4444;font-size:11px;font-weight:600">⏳ Agendada</span>`;
+    const statusColor = isRealizada ? '#a8e63d' : isNaoRealizada ? '#888' : '#ef4444';
+    const statusText  = isRealizada
+      ? `✅ Realizada em ${formatDate(v.dataRealizacao||v.entryDate)}`
+      : isNaoRealizada ? '❌ Não realizada' : '⏳ Agendada';
+
     const actionBtns = isRealizada
       ? `<button class="va-unrealize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
-          style="font-size:11px;padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">↩ Desfazer</button>`
-      : `<div style="display:flex;gap:6px;flex-wrap:wrap">
-           <button class="va-realize-btn btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
-             style="font-size:11px;padding:4px 10px;background:none;border:1px solid #a8e63d;color:#a8e63d">✅ Realizada</button>
-           <button class="va-nao-realize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
-             style="font-size:11px;padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">❌ Não realizada</button>
-         </div>`;
-    return `<tr>
-      <td style="font-size:12px">${formatDate(v.entryDate)}</td>
-      <td style="font-weight:500">${v.nome||'—'}</td>
-      <td style="color:var(--text-muted);font-size:12px">${v.telefone||'—'}</td>
-      <td style="color:var(--text-muted);font-size:12px">${v.imovel||'—'}</td>
-      <td style="color:var(--text-muted);font-size:12px">${v.horario||'—'}</td>
-      <td>${statusBadge}</td>
-      <td style="white-space:nowrap">${actionBtns}</td>
-    </tr>`;
+           style="font-size:11px;padding:4px 12px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">↩ Desfazer</button>`
+      : `<button class="va-realize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
+           style="font-size:11px;padding:4px 12px;background:none;border:1px solid #a8e63d;color:#a8e63d;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">✅ Realizada</button>
+         <button class="va-nao-realize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
+           style="font-size:11px;padding:4px 12px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">❌ Não realizada</button>`;
+
+    return `<div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:600;font-size:14px">${v.nome||'—'}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${v.telefone||''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--text-muted)">${formatDate(v.entryDate)}${v.horario ? ' · ' + v.horario : ''}</div>
+          <div style="font-size:11px;font-weight:600;color:${statusColor};margin-top:3px">${statusText}</div>
+        </div>
+      </div>
+      ${v.imovel ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px">🏠 ${v.imovel}</div>` : ''}
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${actionBtns}</div>
+    </div>`;
   }).join('');
 
-  wrap.innerHTML = `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
-    <thead><tr><th>Data</th><th>Cliente</th><th>Telefone</th><th>Imóvel</th><th>Horário</th><th>Status</th><th></th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table></div>`;
+  wrap.innerHTML = items;
 
   wrap.querySelectorAll('.va-realize-btn').forEach(btn => {
     btn.addEventListener('click', () => {
