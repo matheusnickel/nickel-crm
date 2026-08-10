@@ -1369,7 +1369,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         { key:'cp',    label:'CQ',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
         { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',                                     color:'#a8e63d', pts:'6 pontos por DOC' },
         { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (Instagram | TikTok)',                      color:'#e879f9', pts:'+0.9 pts/unidade' },
-        { key:'va',    label:'🏎️ TREINO LIVRE', hint:'Quantas visitas agendou hoje? (informe nome, telefone, imóvel e horário)', color:'#ef4444', pts:'controle interno' },
+        { key:'va',    label:'🏎️ TREINO LIVRE — VISITA AGENDADA', hint:'Quantas visitas agendou hoje? (informe nome, telefone, imóvel e horário)', color:'#ef4444', pts:'controle interno' },
       ];
       const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0 };
       let wStep = 0;
