@@ -178,13 +178,14 @@ async function updateVideoValidated(date, agent, count) {
   await fbUpsertEntry(entry);
 }
 
-async function updateVaRealized(date, agent, vaIdx, dataRealizacao) {
+async function updateVaRealized(date, agent, vaIdx, dataRealizacao, horarioRealizacao='') {
   const entries = getEntries();
   const entry = entries.find(e => e.date === date && e.agent === agent);
   if (!entry || !entry.vaDetails?.[vaIdx]) return;
   // dataRealizacao === 'nao' → marcar como não realizada
   entry.vaDetails[vaIdx].realizada = dataRealizacao === 'nao' ? false : true;
   entry.vaDetails[vaIdx].dataRealizacao = dataRealizacao;
+  entry.vaDetails[vaIdx].horarioRealizacao = horarioRealizacao;
   localUpsert(entry);
   await fbUpsertEntry(entry);
 }
@@ -840,9 +841,10 @@ function renderAgentVisits(agentName) {
     const isRealizada = v.realizada === true;
     const isNaoRealizada = v.realizada === false && v.dataRealizacao === 'nao';
     const statusColor = isRealizada ? '#a8e63d' : isNaoRealizada ? '#888' : '#ef4444';
-    const statusText  = isRealizada
-      ? `✅ Realizada em ${formatDate(v.dataRealizacao||v.entryDate)}`
-      : isNaoRealizada ? '❌ Não realizada' : '⏳ Agendada';
+    const realizadaLabel = isRealizada
+      ? `✅ Realizada em ${formatDate(v.dataRealizacao||v.entryDate)}${v.horarioRealizacao ? ' às ' + v.horarioRealizacao : ''}`
+      : '';
+    const statusText = isRealizada ? realizadaLabel : isNaoRealizada ? '❌ Não realizada' : '⏳ Agendada';
 
     const actionBtns = isRealizada
       ? `<button class="va-unrealize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
@@ -872,8 +874,8 @@ function renderAgentVisits(agentName) {
 
   wrap.querySelectorAll('.va-realize-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      showVaRealizedModal(async (dataRealizacao) => {
-        await updateVaRealized(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), dataRealizacao);
+      showVaRealizedModal(async (dataRealizacao, horarioRealizacao) => {
+        await updateVaRealized(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), dataRealizacao, horarioRealizacao);
         renderAgentVisits(agentName);
       });
     });
@@ -906,12 +908,19 @@ function showVaRealizedModal(onConfirm) {
   const overlay = document.createElement('div');
   overlay.id = 'va-realized-modal';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px';
+  const inpStyle = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:\'DM Sans\',sans-serif;font-size:13px;padding:10px 12px;width:100%;outline:none;box-sizing:border-box';
   overlay.innerHTML = `
     <div style="background:var(--bg2);border-radius:14px;padding:24px;width:100%;max-width:380px;border:1px solid var(--border)">
       <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:#a8e63d">✅ Marcar visita como realizada</div>
-      <div class="form-group" style="margin-bottom:18px">
-        <label style="font-size:12px">Data em que a visita foi realizada</label>
-        <input id="va-realized-date" type="date" value="${today()}" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;width:100%;outline:none;box-sizing:border-box">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+        <div class="form-group" style="margin:0">
+          <label style="font-size:12px">Data da visita</label>
+          <input id="va-realized-date" type="date" value="${today()}" style="${inpStyle}">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label style="font-size:12px">Horário</label>
+          <input id="va-realized-time" type="time" style="${inpStyle}">
+        </div>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button id="va-realized-cancel" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px">Cancelar</button>
@@ -922,8 +931,9 @@ function showVaRealizedModal(onConfirm) {
   overlay.querySelector('#va-realized-cancel').addEventListener('click', () => overlay.remove());
   overlay.querySelector('#va-realized-confirm').addEventListener('click', () => {
     const date = overlay.querySelector('#va-realized-date').value;
+    const time = overlay.querySelector('#va-realized-time').value;
     overlay.remove();
-    onConfirm(date);
+    onConfirm(date, time);
   });
 }
 
@@ -2599,7 +2609,7 @@ function renderVisitList(entries) {
     const isRealizada = d.realizada === true;
     const isNaoRealizada = d.realizada === false && d.dataRealizacao === 'nao';
     const statusLabel = isRealizada
-      ? `<span style="color:#a8e63d;font-weight:600;font-size:11px">✅ Realizada ${d.dataRealizacao && d.dataRealizacao!=='nao' ? formatDate(d.dataRealizacao) : ''}</span>`
+      ? `<span style="color:#a8e63d;font-weight:600;font-size:11px">✅ Realizada ${d.dataRealizacao && d.dataRealizacao!=='nao' ? formatDate(d.dataRealizacao) : ''}${d.horarioRealizacao ? ' às ' + d.horarioRealizacao : ''}</span>`
       : isNaoRealizada
         ? `<span style="color:#888;font-weight:600;font-size:11px">❌ Não realizada</span>`
         : `<span style="color:#ef4444;font-weight:600;font-size:11px">⏳ Agendada</span>`;
