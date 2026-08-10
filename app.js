@@ -182,7 +182,8 @@ async function updateVaRealized(date, agent, vaIdx, dataRealizacao) {
   const entries = getEntries();
   const entry = entries.find(e => e.date === date && e.agent === agent);
   if (!entry || !entry.vaDetails?.[vaIdx]) return;
-  entry.vaDetails[vaIdx].realizada = true;
+  // dataRealizacao === 'nao' → marcar como não realizada
+  entry.vaDetails[vaIdx].realizada = dataRealizacao === 'nao' ? false : true;
   entry.vaDetails[vaIdx].dataRealizacao = dataRealizacao;
   localUpsert(entry);
   await fbUpsertEntry(entry);
@@ -837,12 +838,21 @@ function renderAgentVisits(agentName) {
 
   const rows = allVisits.map(v => {
     const isRealizada = !!v.realizada;
+    const isNaoRealizada = v.realizada === false && v.dataRealizacao === 'nao';
     const statusBadge = isRealizada
       ? `<span style="color:#a8e63d;font-size:11px;font-weight:600">✅ Realizada em ${formatDate(v.dataRealizacao||v.entryDate)}</span>`
-      : `<span style="color:#ef4444;font-size:11px;font-weight:600">⏳ Agendada</span>`;
-    const actionBtn = isRealizada ? '' :
-      `<button class="va-realize-btn btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
-        style="font-size:11px;padding:4px 10px;background:none;border:1px solid #a8e63d;color:#a8e63d">Marcar realizada</button>`;
+      : isNaoRealizada
+        ? `<span style="color:#888;font-size:11px;font-weight:600">❌ Não realizada</span>`
+        : `<span style="color:#ef4444;font-size:11px;font-weight:600">⏳ Agendada</span>`;
+    const actionBtns = isRealizada
+      ? `<button class="va-unrealize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
+          style="font-size:11px;padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">↩ Desfazer</button>`
+      : `<div style="display:flex;gap:6px;flex-wrap:wrap">
+           <button class="va-realize-btn btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
+             style="font-size:11px;padding:4px 10px;background:none;border:1px solid #a8e63d;color:#a8e63d">✅ Realizada</button>
+           <button class="va-nao-realize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
+             style="font-size:11px;padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">❌ Não realizada</button>
+         </div>`;
     return `<tr>
       <td style="font-size:12px">${formatDate(v.entryDate)}</td>
       <td style="font-weight:500">${v.nome||'—'}</td>
@@ -850,7 +860,7 @@ function renderAgentVisits(agentName) {
       <td style="color:var(--text-muted);font-size:12px">${v.imovel||'—'}</td>
       <td style="color:var(--text-muted);font-size:12px">${v.horario||'—'}</td>
       <td>${statusBadge}</td>
-      <td>${actionBtn}</td>
+      <td style="white-space:nowrap">${actionBtns}</td>
     </tr>`;
   }).join('');
 
@@ -861,11 +871,31 @@ function renderAgentVisits(agentName) {
 
   wrap.querySelectorAll('.va-realize-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const { entryDate, idx } = btn.dataset;
       showVaRealizedModal(async (dataRealizacao) => {
-        await updateVaRealized(entryDate, agentName, parseInt(idx), dataRealizacao);
+        await updateVaRealized(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), dataRealizacao);
         renderAgentVisits(agentName);
       });
+    });
+  });
+  wrap.querySelectorAll('.va-nao-realize-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = '...';
+      await updateVaRealized(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), 'nao');
+      renderAgentVisits(agentName);
+    });
+  });
+  wrap.querySelectorAll('.va-unrealize-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = '...';
+      const entries = getEntries();
+      const entry = entries.find(e => e.date===btn.dataset.entryDate && e.agent===agentName);
+      if (entry?.vaDetails?.[parseInt(btn.dataset.idx)]) {
+        entry.vaDetails[parseInt(btn.dataset.idx)].realizada = null;
+        entry.vaDetails[parseInt(btn.dataset.idx)].dataRealizacao = '';
+        localUpsert(entry);
+        await fbUpsertEntry(entry);
+      }
+      renderAgentVisits(agentName);
     });
   });
 }
@@ -2565,23 +2595,27 @@ function renderVisitList(entries) {
   }
 
   const rowsHTML = rows.map(d => {
-    const isRealizada = !!d.realizada;
+    const isRealizada = d.realizada === true;
+    const isNaoRealizada = d.realizada === false && d.dataRealizacao === 'nao';
     const statusLabel = isRealizada
-      ? `<span style="color:#a8e63d;font-weight:600;font-size:11px">✅ Realizada ${d.dataRealizacao ? formatDate(d.dataRealizacao) : ''}</span>`
-      : `<span style="color:#ef4444;font-weight:600;font-size:11px">⏳ Agendada</span>`;
+      ? `<span style="color:#a8e63d;font-weight:600;font-size:11px">✅ Realizada ${d.dataRealizacao && d.dataRealizacao!=='nao' ? formatDate(d.dataRealizacao) : ''}</span>`
+      : isNaoRealizada
+        ? `<span style="color:#888;font-weight:600;font-size:11px">❌ Não realizada</span>`
+        : `<span style="color:#ef4444;font-weight:600;font-size:11px">⏳ Agendada</span>`;
     return `<tr>
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
       <td style="font-weight:500">${d.nome||'—'}</td>
       <td>${d.telefone||'—'}</td>
       <td style="color:var(--text-muted)">${d.imovel||'—'}</td>
+      <td style="color:var(--text-muted);font-size:11px">${d.horario||'—'}</td>
       <td>${statusLabel}</td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = filterHTML + `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
-    <thead><tr><th>Data Agend.</th><th>Angariador</th><th>Cliente</th><th>Telefone</th><th>Imóvel</th><th>Status</th></tr></thead>
-    <tbody>${rowsHTML || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px">Nenhuma visita para este angariador</td></tr>'}</tbody>
+    <thead><tr><th>Data Agend.</th><th>Angariador</th><th>Cliente</th><th>Telefone</th><th>Imóvel</th><th>Horário</th><th>Status</th></tr></thead>
+    <tbody>${rowsHTML || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhuma visita para este angariador</td></tr>'}</tbody>
   </table></div>`;
 
   wrap.querySelector('#visit-agent-filter').addEventListener('change', function(){ activeVisitAgent=this.value; renderVisitList(entries); });
