@@ -92,15 +92,22 @@ function buildVaDetailsHTML(count, prefill=[]) {
     const p = prefill[i] || {};
     html += `<div class="cpd-detail-item">
       <span class="cpd-detail-label" style="color:#ef4444">VA ${i+1}</span>
-      <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente comprador" value="${(p.nome||'').replace(/"/g,'&quot;')}">
+      <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}">
       <input class="va-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone||'').replace(/"/g,'&quot;')}">
+      <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}">
+      <input class="va-horario" data-idx="${i}" type="time" value="${(p.horario||'')}">
     </div>`;
   }
   return html + '</div>';
 }
 function collectVaDetails(count) {
   const d=[];
-  for (let i=0;i<count;i++) d.push({ nome:document.querySelector(`.va-nome[data-idx="${i}"]`)?.value.trim()||'', telefone:document.querySelector(`.va-tel[data-idx="${i}"]`)?.value.trim()||'' });
+  for (let i=0;i<count;i++) d.push({
+    nome: document.querySelector(`.va-nome[data-idx="${i}"]`)?.value.trim()||'',
+    telefone: document.querySelector(`.va-tel[data-idx="${i}"]`)?.value.trim()||'',
+    imovel: document.querySelector(`.va-imovel[data-idx="${i}"]`)?.value.trim()||'',
+    horario: document.querySelector(`.va-horario[data-idx="${i}"]`)?.value||'',
+  });
   return d;
 }
 
@@ -167,6 +174,16 @@ async function updateVideoValidated(date, agent, count) {
   const entry = entries.find(e => e.date===date && e.agent===agent);
   if (!entry) return;
   entry.videoValidated = count;
+  localUpsert(entry);
+  await fbUpsertEntry(entry);
+}
+
+async function updateVaRealized(date, agent, vaIdx, dataRealizacao) {
+  const entries = getEntries();
+  const entry = entries.find(e => e.date === date && e.agent === agent);
+  if (!entry || !entry.vaDetails?.[vaIdx]) return;
+  entry.vaDetails[vaIdx].realizada = true;
+  entry.vaDetails[vaIdx].dataRealizacao = dataRealizacao;
   localUpsert(entry);
   await fbUpsertEntry(entry);
 }
@@ -383,7 +400,8 @@ function sumByAgent(entries) {
     if (!team.has(e.agent)) return;
     if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0,va:0,vr:0};
     map[e.agent].prosp+=e.prosp; map[e.agent].cpd+=e.cpd; map[e.agent].doc+=e.doc;
-    map[e.agent].va+=(e.va||0); map[e.agent].vr+=(e.vr||0);
+    map[e.agent].va += (e.va||0);
+    map[e.agent].vr += (e.vaDetails||[]).filter(d=>d.realizada).length;
   });
   return Object.values(map);
 }
@@ -799,6 +817,83 @@ function renderAgentContacts(agentName) {
     });
   });
 
+}
+
+function renderAgentVisits(agentName) {
+  const wrap = document.getElementById('agent-visits-wrap');
+  if (!wrap) return;
+  const entries = getEntries().filter(e => e.agent === agentName);
+
+  const allVisits = [];
+  entries.forEach(e => (e.vaDetails||[]).forEach((d,i) => {
+    if (d.nome || d.imovel) allVisits.push({ ...d, entryDate: e.date, idx: i });
+  }));
+  allVisits.sort((a,b) => b.entryDate.localeCompare(a.entryDate));
+
+  if (allVisits.length === 0) {
+    wrap.innerHTML = '<div class="empty-state">Nenhuma visita agendada registrada</div>';
+    return;
+  }
+
+  const rows = allVisits.map(v => {
+    const isRealizada = !!v.realizada;
+    const statusBadge = isRealizada
+      ? `<span style="color:#a8e63d;font-size:11px;font-weight:600">✅ Realizada em ${formatDate(v.dataRealizacao||v.entryDate)}</span>`
+      : `<span style="color:#ef4444;font-size:11px;font-weight:600">⏳ Agendada</span>`;
+    const actionBtn = isRealizada ? '' :
+      `<button class="va-realize-btn btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
+        style="font-size:11px;padding:4px 10px;background:none;border:1px solid #a8e63d;color:#a8e63d">Marcar realizada</button>`;
+    return `<tr>
+      <td style="font-size:12px">${formatDate(v.entryDate)}</td>
+      <td style="font-weight:500">${v.nome||'—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">${v.telefone||'—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">${v.imovel||'—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">${v.horario||'—'}</td>
+      <td>${statusBadge}</td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
+    <thead><tr><th>Data</th><th>Cliente</th><th>Telefone</th><th>Imóvel</th><th>Horário</th><th>Status</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+
+  wrap.querySelectorAll('.va-realize-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const { entryDate, idx } = btn.dataset;
+      showVaRealizedModal(async (dataRealizacao) => {
+        await updateVaRealized(entryDate, agentName, parseInt(idx), dataRealizacao);
+        renderAgentVisits(agentName);
+      });
+    });
+  });
+}
+
+function showVaRealizedModal(onConfirm) {
+  document.getElementById('va-realized-modal')?.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'va-realized-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML = `
+    <div style="background:var(--bg2);border-radius:14px;padding:24px;width:100%;max-width:380px;border:1px solid var(--border)">
+      <div style="font-size:15px;font-weight:700;margin-bottom:16px;color:#a8e63d">✅ Marcar visita como realizada</div>
+      <div class="form-group" style="margin-bottom:18px">
+        <label style="font-size:12px">Data em que a visita foi realizada</label>
+        <input id="va-realized-date" type="date" value="${today()}" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;width:100%;outline:none;box-sizing:border-box">
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button id="va-realized-cancel" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px">Cancelar</button>
+        <button id="va-realized-confirm" style="background:#a8e63d;color:#000;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600">Confirmar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#va-realized-cancel').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('#va-realized-confirm').addEventListener('click', () => {
+    const date = overlay.querySelector('#va-realized-date').value;
+    overlay.remove();
+    onConfirm(date);
+  });
 }
 
 // ── AGENT RANKING (Dia / Semana / Mês) ───────────────────
@@ -1233,10 +1328,9 @@ function renderAgentDashboard(session, selectedDate, editing) {
         { key:'cp',    label:'CQ',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
         { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',                                     color:'#a8e63d', pts:'6 pontos por DOC' },
         { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (Instagram | TikTok)',                      color:'#e879f9', pts:'+0.9 pts/unidade' },
-        { key:'va',    label:'🏎️ TREINO LIVRE', hint:'Visitas agendadas — leva comprador à sua captação ou a qualquer imóvel', color:'#ef4444', pts:'controle interno' },
-        { key:'vr',    label:'🔧 PIT STOP',     hint:'Visitas realizadas — leva comprador à sua captação ou a qualquer imóvel',  color:'#f97316', pts:'controle interno' },
+        { key:'va',    label:'🏎️ TREINO LIVRE', hint:'Quantas visitas agendou hoje? (informe nome, telefone, imóvel e horário)', color:'#ef4444', pts:'controle interno' },
       ];
-      const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0, vr: pre.vr||0 };
+      const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0 };
       let wStep = 0;
 
       const wizStepsHTML = WSTEPS.map((s, i) => `
@@ -1266,7 +1360,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
             <div id="wiz-cpd-area"></div>
             <div id="wiz-doc-area"></div>
             <div id="wiz-va-area"></div>
-            <div id="wiz-vr-area"></div>
             <button id="wiz-submit" class="btn" style="margin-top:14px;width:100%">${sentToday ? 'Salvar correção' : 'Enviar relatório'}</button>
             ${sentToday ? '<button type="button" class="btn btn-outline" id="wiz-cancel" style="margin-top:8px;width:100%">Cancelar</button>' : ''}
           </div>
@@ -1300,7 +1393,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
         document.getElementById('wiz-cpd-area').innerHTML = buildCpdDetailsHTML(wVals.cp, pre.cpdDetails||[]);
         document.getElementById('wiz-doc-area').innerHTML = buildDocDetailsHTML(wVals.doc, pre.docDetails||[]);
         document.getElementById('wiz-va-area').innerHTML = buildVaDetailsHTML(wVals.va, pre.vaDetails||[]);
-        document.getElementById('wiz-vr-area').innerHTML = buildVrDetailsHTML(wVals.vr, pre.vrDetails||[]);
         bindBairroSelects();
         wStep = WSTEPS.length; updateDots();
       };
@@ -1334,8 +1426,10 @@ function renderAgentDashboard(session, selectedDate, editing) {
         submitBtn.disabled = true; submitBtn.textContent = 'Enviando...';
         const submittedDate = sentToday?.submittedDate||sentToday?.date||today();
         const vaDetails = collectVaDetails(wVals.va);
-        const vrDetails = collectVrDetails(wVals.vr);
-        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:wVals.vr, cpdDetails, docDetails, vaDetails, vrDetails, submittedDate});
+        if (sentToday?.vaDetails) {
+          vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { d.realizada = sentToday.vaDetails[i].realizada||false; d.dataRealizacao = sentToday.vaDetails[i].dataRealizacao||''; } });
+        }
+        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
         if (isEdit) incrementEditCount(session.name, date);
       });
 
@@ -1345,6 +1439,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
   }
 
   renderAgentContacts(session.name);
+  renderAgentVisits(session.name);
   renderAgentDailyRanking(session.name);
 
   const historyBody=document.getElementById('history-body');
@@ -1575,9 +1670,6 @@ function initGestorLancamento() {
   document.getElementById('lanc-va').addEventListener('input',function(){
     document.getElementById('lanc-va-details').innerHTML=buildVaDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
   });
-  document.getElementById('lanc-vr').addEventListener('input',function(){
-    document.getElementById('lanc-vr-details').innerHTML=buildVrDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
-  });
 
   document.getElementById('gestor-lanc-form').addEventListener('submit',async ev=>{
     ev.preventDefault();
@@ -1592,10 +1684,8 @@ function initGestorLancamento() {
     const lancCpdVal=parseInt(document.getElementById('lanc-cpd').value)||0;
     const lancCpdDetails=collectCpdDetails(lancCpdVal);
     const lancVaVal=parseInt(document.getElementById('lanc-va').value)||0;
-    const lancVrVal=parseInt(document.getElementById('lanc-vr').value)||0;
     const vaDetails=collectVaDetails(lancVaVal);
-    const vrDetails=collectVrDetails(lancVrVal);
-    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,va:lancVaVal,vr:lancVrVal,cpdDetails:lancCpdDetails,docDetails,vaDetails,vrDetails,submittedDate});
+    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,va:lancVaVal,vr:0,cpdDetails:lancCpdDetails,docDetails,vaDetails,vrDetails:[],submittedDate});
     resetEditCount(agent,date);
     btn.disabled=false; btn.textContent='Salvar lançamento';
     // reset form
@@ -2260,7 +2350,7 @@ function renderDayView(dateStr) {
       <td class="num-cell day-num">${has ? e.cpd   : dash}</td>
       <td class="num-cell day-num doc-cell">${has ? e.doc : dash}</td>
       <td class="num-cell day-num" style="color:#ef4444">${has ? (e.va||0) : dash}</td>
-      <td class="num-cell day-num" style="color:#f97316">${has ? (e.vr||0) : dash}</td>
+      <td class="num-cell day-num" style="color:#f97316">${has ? (e.vaDetails||[]).filter(d=>d.realizada).length : dash}</td>
       <td>${has ? `<button class="del-day-btn" data-date="${dateStr}" data-agent="${name}">Remover</button>` : ''}</td>
     </tr>`;
   }).join('');
@@ -2461,11 +2551,11 @@ function renderVisitList(entries) {
 
   const allRows = [];
   entries.forEach(e => {
-    (e.vaDetails||[]).forEach((d,i) => allRows.push({date:e.date, agent:e.agent, tipo:'VA', idx:i, ...d}));
-    (e.vrDetails||[]).forEach((d,i) => allRows.push({date:e.date, agent:e.agent, tipo:'VR', idx:i, ...d}));
+    (e.vaDetails||[]).forEach((d,i) => {
+      if (d.nome || d.imovel) allRows.push({date:e.date, agent:e.agent, idx:i, ...d});
+    });
   });
-  allRows.sort((a,b) => b.date.localeCompare(a.date) || a.tipo.localeCompare(b.tipo));
-
+  allRows.sort((a,b) => b.date.localeCompare(a.date));
   const rows = activeVisitAgent ? allRows.filter(r => r.agent === activeVisitAgent) : allRows;
 
   if (allRows.length === 0) {
@@ -2475,22 +2565,23 @@ function renderVisitList(entries) {
   }
 
   const rowsHTML = rows.map(d => {
-    const isVA = d.tipo === 'VA';
-    const color = isVA ? '#ef4444' : '#f97316';
-    const label = isVA ? '🏎️ VA' : '🔧 VR';
-    const desc  = isVA ? 'Agendada' : 'Realizada';
+    const isRealizada = !!d.realizada;
+    const statusLabel = isRealizada
+      ? `<span style="color:#a8e63d;font-weight:600;font-size:11px">✅ Realizada ${d.dataRealizacao ? formatDate(d.dataRealizacao) : ''}</span>`
+      : `<span style="color:#ef4444;font-weight:600;font-size:11px">⏳ Agendada</span>`;
     return `<tr>
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
-      <td><span style="font-weight:600;color:${color}">${label}</span> <span style="font-size:11px;color:var(--text-muted)">${desc}</span></td>
       <td style="font-weight:500">${d.nome||'—'}</td>
       <td>${d.telefone||'—'}</td>
+      <td style="color:var(--text-muted)">${d.imovel||'—'}</td>
+      <td>${statusLabel}</td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = filterHTML + `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
-    <thead><tr><th>Data</th><th>Angariador</th><th>Tipo</th><th>Cliente</th><th>Telefone</th></tr></thead>
-    <tbody>${rowsHTML || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:16px">Nenhuma visita para este angariador</td></tr>'}</tbody>
+    <thead><tr><th>Data Agend.</th><th>Angariador</th><th>Cliente</th><th>Telefone</th><th>Imóvel</th><th>Status</th></tr></thead>
+    <tbody>${rowsHTML || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px">Nenhuma visita para este angariador</td></tr>'}</tbody>
   </table></div>`;
 
   wrap.querySelector('#visit-agent-filter').addEventListener('change', function(){ activeVisitAgent=this.value; renderVisitList(entries); });
