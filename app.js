@@ -96,14 +96,14 @@ function buildVaDetailsHTML(count, prefill=[]) {
   for (let i = 0; i < count; i++) {
     const p = prefill[i] || {};
     const [pH='', pMin=''] = (p.horario||'').split(':');
-    html += `<div class="cpd-detail-item">
-      <span class="cpd-detail-label" style="color:#ef4444">VA ${i+1}</span>
-      <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}" style="${inpSt}">
-      <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}" style="${inpSt}">
-      <input class="va-dataagend" data-idx="${i}" type="date" value="${p.dataAgend||''}" style="${inpSt}">
-      <div style="display:flex;gap:6px">
-        <select class="va-hour" data-idx="${i}" style="${selSt}"><option value="">Hora</option>${hours.replace(`value="${pH}"`,`value="${pH}" selected`)}</select>
-        <select class="va-min" data-idx="${i}" style="${selSt}"><option value="">Min</option>${mins.replace(`value="${pMin}"`,`value="${pMin}" selected`)}</select>
+    html += `<div class="va-detail-item">
+      <div class="va-label">🏎️ VA ${i+1}</div>
+      <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}">
+      <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}">
+      <input class="va-dataagend" data-idx="${i}" type="date" value="${p.dataAgend||''}">
+      <div class="va-row">
+        <select class="va-hour" data-idx="${i}"><option value="">Hora</option>${hours.replace(`value="${pH}"`,`value="${pH}" selected`)}</select>
+        <select class="va-min" data-idx="${i}"><option value="">Min</option>${mins.replace(`value="${pMin}"`,`value="${pMin}" selected`)}</select>
       </div>
     </div>`;
   }

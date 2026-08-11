@@ -507,6 +507,13 @@ a { color: inherit; text-decoration: none; }
 .cpd-detail-item input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 10px; outline: none; }
 .cpd-detail-item input:focus { border-color: #6495ed; }
 
+/* VA detail item — empilha em coluna no mobile */
+.va-detail-item { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--bg3); }
+.va-detail-item .va-label { font-size: 11px; font-weight: 700; color: #ef4444; margin-bottom: 2px; }
+.va-detail-item input, .va-detail-item select { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 12px; outline: none; box-sizing: border-box; }
+.va-detail-item .va-row { display: flex; gap: 8px; }
+.va-detail-item .va-row select { flex: 1; }
+
 /* ── RANK EXTRA COLS (VA / VV / FOTOS) ── */
 .rank-extra { color: #6495ed !important; font-weight: 500; }
 
