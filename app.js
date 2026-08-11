@@ -2679,7 +2679,7 @@ function renderVisitList(entries) {
       <td style="font-weight:500"><input class="vi-nome" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle};font-weight:500;color:var(--text)" readonly></td>
       <td><input class="vi-imovel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.imovel||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle}" readonly></td>
       <td><input class="vi-dataagend" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="date" value="${d.dataAgend||''}" style="${inpStyle};width:120px" readonly></td>
-      <td><input class="vi-horario" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" placeholder="HH:MM" maxlength="5" value="${d.horario||''}" style="${inpStyle};width:60px;text-align:center" readonly></td>
+      <td><button class="vi-horario" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:none;border-bottom:1px dashed var(--border);color:${d.horario?'var(--text-muted)':'var(--border)'};font-family:'DM Sans',sans-serif;font-size:12px;padding:2px 6px;cursor:pointer;min-width:52px;text-align:center">${d.horario||'—:——'}</button></td>
       <td>${statusCell}</td>
     </tr>`;
   }).join('');
@@ -2709,7 +2709,7 @@ function renderVisitList(entries) {
   // Horário — abre mini-modal com selects
   wrap.querySelectorAll('.vi-horario').forEach(inp => {
     inp.addEventListener('click', () => {
-      const [curH='', curM=''] = (inp.value||'').split(':');
+      const [curH='', curM=''] = (inp.textContent.includes(':') ? inp.textContent : '').split(':');
       const pop = document.createElement('div');
       pop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
       const selStyle = `flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;padding:10px 8px;outline:none`;
@@ -2735,7 +2735,8 @@ function renderVisitList(entries) {
         const m = pop.querySelector('#vi-h-min').value;
         const val = h && m ? `${h}:${m}` : '';
         pop.remove();
-        inp.value = val;
+        inp.textContent = val || '—:——';
+        inp.style.color = val ? 'var(--text-muted)' : 'var(--border)';
         await updateVaDetail(inp.dataset.date, inp.dataset.agent, parseInt(inp.dataset.idx), { horario: val });
       };
     });
