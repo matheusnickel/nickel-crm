@@ -1467,7 +1467,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         document.getElementById('wiz-cpd-area').innerHTML = buildCpdDetailsHTML(wVals.cp, pre.cpdDetails||[]);
         document.getElementById('wiz-doc-area').innerHTML = buildDocDetailsHTML(wVals.doc, pre.docDetails||[]);
         document.getElementById('wiz-va-area').innerHTML = buildVaDetailsHTML(wVals.va, pre.vaDetails||[]);
-        document.querySelectorAll('.cpd-tel,.va-tel,.vr-tel').forEach(applyPhoneMask);
+        document.querySelectorAll('.cpd-tel,.vr-tel').forEach(applyPhoneMask);
         bindBairroSelects();
         wStep = WSTEPS.length; updateDots();
       };
@@ -1745,7 +1745,6 @@ function initGestorLancamento() {
   });
   document.getElementById('lanc-va').addEventListener('input',function(){
     document.getElementById('lanc-va-details').innerHTML=buildVaDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
-    document.querySelectorAll('.va-tel').forEach(applyPhoneMask);
   });
 
   document.getElementById('gestor-lanc-form').addEventListener('submit',async ev=>{
