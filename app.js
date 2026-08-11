@@ -190,6 +190,15 @@ async function updateVaRealized(date, agent, vaIdx, dataRealizacao, horarioReali
   await fbUpsertEntry(entry);
 }
 
+async function updateVaDetail(date, agent, vaIdx, fields) {
+  const entries = getEntries();
+  const entry = entries.find(e => e.date === date && e.agent === agent);
+  if (!entry || !entry.vaDetails?.[vaIdx]) return;
+  Object.assign(entry.vaDetails[vaIdx], fields);
+  localUpsert(entry);
+  await fbUpsertEntry(entry);
+}
+
 async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
   const entries = getEntries();
   const entry = entries.find(e => e.date === date && e.agent === agent);
@@ -2635,6 +2644,7 @@ function renderVisitList(entries) {
     return;
   }
 
+  const inpStyle = `background:none;border:none;border-bottom:1px dashed var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;padding:2px 4px;outline:none;cursor:pointer;width:100%`;
   const rowsHTML = rows.map(d => {
     const isRealizada = d.realizada === true;
     const isNaoRealizada = d.realizada === false && d.dataRealizacao === 'nao';
@@ -2646,10 +2656,10 @@ function renderVisitList(entries) {
     return `<tr>
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
-      <td style="font-weight:500">${d.nome||'—'}</td>
-      <td>${d.telefone ? formatPhone(d.telefone) : '—'}</td>
-      <td style="color:var(--text-muted)">${d.imovel||'—'}</td>
-      <td style="color:var(--text-muted);font-size:11px">${d.horario||'—'}</td>
+      <td style="font-weight:500"><input class="vi-nome" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle};font-weight:500;color:var(--text)" readonly></td>
+      <td><input class="vi-tel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="tel" value="${d.telefone ? formatPhone(d.telefone) : ''}" placeholder="—" style="${inpStyle}" readonly></td>
+      <td><input class="vi-imovel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.imovel||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle}" readonly></td>
+      <td><input class="vi-horario" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="time" value="${d.horario||''}" style="${inpStyle};width:80px" readonly></td>
       <td>${statusLabel}</td>
     </tr>`;
   }).join('');
@@ -2660,6 +2670,22 @@ function renderVisitList(entries) {
   </table></div>`;
 
   wrap.querySelector('#visit-agent-filter').addEventListener('change', function(){ activeVisitAgent=this.value; renderVisitList(entries); });
+
+  function makeViEditable(sel, field, mask) {
+    wrap.querySelectorAll(sel).forEach(inp => {
+      if (mask) applyPhoneMask(inp);
+      inp.addEventListener('click', () => { inp.readOnly=false; inp.style.cursor='text'; inp.style.borderBottom='1px solid var(--primary)'; inp.style.color='var(--text)'; inp.select && inp.select(); });
+      inp.addEventListener('blur', async () => {
+        inp.readOnly=true; inp.style.cursor='pointer'; inp.style.borderBottom='1px dashed var(--border)'; inp.style.color= sel==='.vi-nome' ? 'var(--text)' : 'var(--text-muted)';
+        await updateVaDetail(inp.dataset.date, inp.dataset.agent, parseInt(inp.dataset.idx), { [field]: inp.value.trim() });
+      });
+      inp.addEventListener('keydown', e => { if (e.key==='Enter') inp.blur(); });
+    });
+  }
+  makeViEditable('.vi-nome',   'nome',    false);
+  makeViEditable('.vi-tel',    'telefone',true);
+  makeViEditable('.vi-imovel', 'imovel',  false);
+  makeViEditable('.vi-horario','horario', false);
 }
 
 // ── OFERTA ATIVA SEMANAL ─────────────────────────────────
