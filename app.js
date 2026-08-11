@@ -1340,7 +1340,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
   const metasWrap = document.getElementById('metas-wrap');
   if (metasWrap) {
     const META_VID_MONTH = 15;
-    const monthVid = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.videoValidated||0), 0);
+    const monthVid = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.video||0), 0);
 
     const mPct  = Math.min(monthDoc / META_DOC_MONTH * 100, 100);
     const vPct  = Math.min(monthVid / META_VID_MONTH * 100, 100);
@@ -1937,7 +1937,7 @@ function renderGestorDashboard() {
   const byAgent=sumByAgent(entries);
 
   const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
-  const totVid=entries.reduce((s,e)=>s+(e.videoValidated||0),0);
+  const totVid=entries.reduce((s,e)=>s+(e.video||0),0);
   document.getElementById('tot-prosp').textContent=totProsp;
   document.getElementById('tot-cpd').textContent=totCpd;
   document.getElementById('tot-doc').textContent=totDoc;
@@ -2631,49 +2631,59 @@ function renderVideoValidation(entries) {
   const wrap = document.getElementById('video-validation-wrap');
   if (!wrap) return;
 
+  const agentNames = getAgentNames();
   const videoEntries = entries.filter(e => (e.video||0) > 0);
-  videoEntries.sort((a,b) => b.date.localeCompare(a.date));
 
   if (!videoEntries.length) {
     wrap.innerHTML = '<div class="empty-state">Nenhum vídeo lançado no período</div>';
     return;
   }
 
-  const rows = videoEntries.map(e => {
-    const validated = e.videoValidated ?? '';
-    const links = (e.videoDetails||[]).map((v,i) =>
-      v.url ? `<div style="margin-bottom:3px"><a href="${v.url}" target="_blank" style="color:#e879f9;font-size:11px;word-break:break-all">🎬 Vídeo ${i+1}: ${v.url}</a></div>` : ''
-    ).join('');
-    return `<tr>
-      <td>${formatDate(e.date)}</td>
-      <td>${e.agent}</td>
-      <td>${links || '<span style="color:var(--text-muted);font-size:11px">sem links</span>'}</td>
-      <td class="num-cell" style="color:#e879f9">${e.video}</td>
-      <td class="num-cell">
-        <input class="vid-val-inp" type="number" min="0" max="${e.video}"
-          data-date="${e.date}" data-agent="${e.agent}"
-          value="${validated}" placeholder="0"
-          style="width:60px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:#a8e63d;font-family:'DM Sans',sans-serif;font-size:13px;padding:5px 8px;text-align:center;outline:none">
-      </td>
-      <td><button class="vid-val-btn btn" data-date="${e.date}" data-agent="${e.agent}" style="padding:6px 14px;font-size:12px">Salvar</button></td>
-    </tr>`;
+  // Datas únicas com vídeos, mais recentes primeiro
+  const dates = [...new Set(videoEntries.map(e => e.date))].sort((a,b) => b.localeCompare(a));
+
+  // Mapa date+agent → entry
+  const map = {};
+  videoEntries.forEach(e => { map[`${e.date}|${e.agent}`] = e; });
+
+  // Totais por agente
+  const agentTotals = {};
+  agentNames.forEach(a => {
+    agentTotals[a] = videoEntries.filter(e => e.agent === a).reduce((s,e) => s + (e.video||0), 0);
+  });
+
+  // Filtra só agentes que têm vídeo no período
+  const activeAgents = agentNames.filter(a => agentTotals[a] > 0);
+
+  const thStyle = `padding:10px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);text-align:center;white-space:nowrap`;
+  const tdStyle = `padding:10px 14px;text-align:center;font-variant-numeric:tabular-nums;border-bottom:1px solid rgba(255,255,255,.04)`;
+
+  const headerCols = activeAgents.map(a =>
+    `<th style="${thStyle}">${a}<div style="color:#e879f9;font-size:14px;font-weight:700;margin-top:2px">${agentTotals[a]}</div></th>`
+  ).join('');
+
+  const bodyRows = dates.map(date => {
+    const cells = activeAgents.map(agent => {
+      const e = map[`${date}|${agent}`];
+      const count = e ? (e.video||0) : 0;
+      const color = count > 0 ? '#e879f9' : 'var(--border)';
+      const bg    = count > 0 ? 'rgba(232,121,249,.08)' : 'none';
+      return `<td style="${tdStyle}background:${bg}">
+        <span style="color:${color};font-size:${count>0?'18px':'13px'};font-weight:700">${count > 0 ? count : '—'}</span>
+      </td>`;
+    }).join('');
+    return `<tr><td style="${tdStyle}padding-left:0;text-align:left;color:var(--text-muted);font-size:12px;white-space:nowrap">${formatDate(date)}</td>${cells}</tr>`;
   }).join('');
 
-  wrap.innerHTML = `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
-    <thead><tr><th>Data</th><th>Angariador</th><th>Links</th><th class="num-cell">Enviados</th><th class="num-cell">Validados</th><th></th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table></div>`;
-
-  wrap.querySelectorAll('.vid-val-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const { date, agent } = btn.dataset;
-      const inp = wrap.querySelector(`.vid-val-inp[data-date="${date}"][data-agent="${agent}"]`);
-      const count = Math.max(0, parseInt(inp.value)||0);
-      btn.textContent = '...'; btn.disabled = true;
-      await updateVideoValidated(date, agent, count);
-      btn.textContent = '✓'; btn.disabled = false;
-    });
-  });
+  wrap.innerHTML = `<div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr>
+        <th style="${thStyle}padding-left:0;text-align:left">Data</th>
+        ${headerCols}
+      </tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+  </div>`;
 }
 
 // ── VISIT LIST — VA/VR (gestor) ──────────────────────────
