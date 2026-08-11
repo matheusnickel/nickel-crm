@@ -93,8 +93,8 @@ function buildVaDetailsHTML(count, prefill=[]) {
     html += `<div class="cpd-detail-item">
       <span class="cpd-detail-label" style="color:#ef4444">VA ${i+1}</span>
       <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}">
-      <input class="va-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone ? formatPhone(p.telefone) : '').replace(/"/g,'&quot;')}">
       <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}">
+      <input class="va-dataagend" data-idx="${i}" type="date" value="${(p.dataAgend||'')}">
       <input class="va-horario" data-idx="${i}" type="time" value="${(p.horario||'')}">
     </div>`;
   }
@@ -104,8 +104,8 @@ function collectVaDetails(count) {
   const d=[];
   for (let i=0;i<count;i++) d.push({
     nome: document.querySelector(`.va-nome[data-idx="${i}"]`)?.value.trim()||'',
-    telefone: document.querySelector(`.va-tel[data-idx="${i}"]`)?.value.trim()||'',
     imovel: document.querySelector(`.va-imovel[data-idx="${i}"]`)?.value.trim()||'',
+    dataAgend: document.querySelector(`.va-dataagend[data-idx="${i}"]`)?.value||'',
     horario: document.querySelector(`.va-horario[data-idx="${i}"]`)?.value||'',
   });
   return d;
@@ -882,12 +882,11 @@ function renderAgentVisits(agentName) {
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:15px;margin-bottom:4px">${v.nome||'—'}</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap">
-            <span style="font-size:12px;color:var(--text-muted)">📞 ${v.telefone ? formatPhone(v.telefone) : '—'}</span>
             <span style="font-size:12px;color:var(--text-muted)">🏠 ${v.imovel||'—'}</span>
           </div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:11px;color:var(--text-muted)">Agendado: ${formatDate(v.entryDate)}${v.horario ? ' às ' + v.horario : ''}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${v.dataAgend ? formatDate(v.dataAgend) : formatDate(v.entryDate)}${v.horario ? ' às ' + v.horario : ''}</div>
           <div style="font-size:12px;font-weight:700;color:${statusColor};margin-top:4px">${statusText}</div>
         </div>
       </div>
@@ -1494,7 +1493,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const submittedDate = sentToday?.submittedDate||sentToday?.date||today();
         const vaDetails = collectVaDetails(wVals.va);
         if (sentToday?.vaDetails) {
-          vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { d.realizada = sentToday.vaDetails[i].realizada||false; d.dataRealizacao = sentToday.vaDetails[i].dataRealizacao||''; } });
+          vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { d.realizada = sentToday.vaDetails[i].realizada||false; d.dataRealizacao = sentToday.vaDetails[i].dataRealizacao||''; d.horarioRealizacao = sentToday.vaDetails[i].horarioRealizacao||''; } });
         }
         await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
         if (isEdit) incrementEditCount(session.name, date);
@@ -2657,15 +2656,15 @@ function renderVisitList(entries) {
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
       <td style="font-weight:500"><input class="vi-nome" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle};font-weight:500;color:var(--text)" readonly></td>
-      <td><input class="vi-tel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="tel" value="${d.telefone ? formatPhone(d.telefone) : ''}" placeholder="—" style="${inpStyle}" readonly></td>
       <td><input class="vi-imovel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.imovel||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle}" readonly></td>
+      <td><input class="vi-dataagend" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="date" value="${d.dataAgend||''}" style="${inpStyle};width:120px" readonly></td>
       <td><input class="vi-horario" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="time" value="${d.horario||''}" style="${inpStyle};width:80px" readonly></td>
       <td>${statusLabel}</td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = filterHTML + `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
-    <thead><tr><th>Data Agend.</th><th>Angariador</th><th>Cliente</th><th>Telefone</th><th>Imóvel</th><th>Horário</th><th>Status</th></tr></thead>
+    <thead><tr><th>Lançamento</th><th>Angariador</th><th>Cliente</th><th>Imóvel</th><th>Data Visita</th><th>Horário</th><th>Status</th></tr></thead>
     <tbody>${rowsHTML || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhuma visita para este angariador</td></tr>'}</tbody>
   </table></div>`;
 
@@ -2682,10 +2681,10 @@ function renderVisitList(entries) {
       inp.addEventListener('keydown', e => { if (e.key==='Enter') inp.blur(); });
     });
   }
-  makeViEditable('.vi-nome',   'nome',    false);
-  makeViEditable('.vi-tel',    'telefone',true);
-  makeViEditable('.vi-imovel', 'imovel',  false);
-  makeViEditable('.vi-horario','horario', false);
+  makeViEditable('.vi-nome',     'nome',      false);
+  makeViEditable('.vi-imovel',   'imovel',    false);
+  makeViEditable('.vi-dataagend','dataAgend', false);
+  makeViEditable('.vi-horario',  'horario',   false);
 }
 
 // ── OFERTA ATIVA SEMANAL ─────────────────────────────────
