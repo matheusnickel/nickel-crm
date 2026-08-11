@@ -87,27 +87,51 @@ async function updateDocNota(date, agent, docIdx, nota) {
 // ── VA DETAILS (Visita Agendada — Treino Livre) ──────────
 function buildVaDetailsHTML(count, prefill=[]) {
   if (count === 0) return '';
+  const selSt = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:\'DM Sans\',sans-serif;font-size:13px;padding:8px 6px;outline:none;flex:1';
+  const days   = Array.from({length:31},(_,d)=>`<option value="${String(d+1).padStart(2,'0')}">${String(d+1).padStart(2,'0')}</option>`).join('');
+  const months = ['01 Jan','02 Fev','03 Mar','04 Abr','05 Mai','06 Jun','07 Jul','08 Ago','09 Set','10 Out','11 Nov','12 Dez'].map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}">${m}</option>`).join('');
+  const curYear = new Date().getFullYear();
+  const years  = [curYear, curYear+1].map(y=>`<option value="${y}">${y}</option>`).join('');
+  const hours  = Array.from({length:24},(_,h)=>`<option value="${String(h).padStart(2,'0')}">${String(h).padStart(2,'0')}h</option>`).join('');
+  const mins   = ['00','05','10','15','20','25','30','35','40','45','50','55'].map(m=>`<option value="${m}">${m}min</option>`).join('');
+
   let html = '<div class="cpd-details-wrap">';
   for (let i = 0; i < count; i++) {
     const p = prefill[i] || {};
+    const [pY='', pM='', pD=''] = (p.dataAgend||'').split('-');
+    const [pH='', pMin=''] = (p.horario||'').split(':');
     html += `<div class="cpd-detail-item">
       <span class="cpd-detail-label" style="color:#ef4444">VA ${i+1}</span>
       <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}">
       <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}">
-      <input class="va-dataagend" data-idx="${i}" type="date" value="${(p.dataAgend||'')}">
-      <input class="va-horario" data-idx="${i}" type="time" value="${(p.horario||'')}">
+      <div class="va-data-wrap" data-idx="${i}" style="display:flex;gap:4px;align-items:center">
+        <select class="va-day" data-idx="${i}" style="${selSt}"><option value="">Dia</option>${days.replace(`value="${pD}"`,`value="${pD}" selected`)}</select>
+        <select class="va-month" data-idx="${i}" style="${selSt}"><option value="">Mês</option>${months.replace(`value="${pM}"`,`value="${pM}" selected`)}</select>
+        <select class="va-year" data-idx="${i}" style="${selSt}"><option value="">Ano</option>${years.replace(`value="${pY}"`,`value="${pY}" selected`)}</select>
+      </div>
+      <div class="va-hora-wrap" data-idx="${i}" style="display:flex;gap:4px;align-items:center">
+        <select class="va-hour" data-idx="${i}" style="${selSt}"><option value="">Hora</option>${hours.replace(`value="${pH}"`,`value="${pH}" selected`)}</select>
+        <select class="va-min" data-idx="${i}" style="${selSt}"><option value="">Min</option>${mins.replace(`value="${pMin}"`,`value="${pMin}" selected`)}</select>
+      </div>
     </div>`;
   }
   return html + '</div>';
 }
 function collectVaDetails(count) {
   const d=[];
-  for (let i=0;i<count;i++) d.push({
-    nome: document.querySelector(`.va-nome[data-idx="${i}"]`)?.value.trim()||'',
-    imovel: document.querySelector(`.va-imovel[data-idx="${i}"]`)?.value.trim()||'',
-    dataAgend: document.querySelector(`.va-dataagend[data-idx="${i}"]`)?.value||'',
-    horario: document.querySelector(`.va-horario[data-idx="${i}"]`)?.value||'',
-  });
+  for (let i=0;i<count;i++) {
+    const day   = document.querySelector(`.va-day[data-idx="${i}"]`)?.value||'';
+    const month = document.querySelector(`.va-month[data-idx="${i}"]`)?.value||'';
+    const year  = document.querySelector(`.va-year[data-idx="${i}"]`)?.value||'';
+    const hour  = document.querySelector(`.va-hour[data-idx="${i}"]`)?.value||'';
+    const min   = document.querySelector(`.va-min[data-idx="${i}"]`)?.value||'';
+    d.push({
+      nome:      document.querySelector(`.va-nome[data-idx="${i}"]`)?.value.trim()||'',
+      imovel:    document.querySelector(`.va-imovel[data-idx="${i}"]`)?.value.trim()||'',
+      dataAgend: year && month && day ? `${year}-${month}-${day}` : '',
+      horario:   hour && min ? `${hour}:${min}` : '',
+    });
+  }
   return d;
 }
 
