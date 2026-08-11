@@ -854,19 +854,21 @@ function renderAgentVisits(agentName) {
          <button class="va-nao-realize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
            style="font-size:11px;padding:4px 12px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">❌ Não realizada</button>`;
 
-    return `<div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
-        <div>
-          <div style="font-weight:600;font-size:14px">${v.nome||'—'}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${v.telefone||''}</div>
+    return `<div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px">${v.nome||'—'}</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--text-muted)">📞 ${v.telefone||'—'}</span>
+            <span style="font-size:12px;color:var(--text-muted)">🏠 ${v.imovel||'—'}</span>
+          </div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:11px;color:var(--text-muted)">${formatDate(v.entryDate)}${v.horario ? ' · ' + v.horario : ''}</div>
-          <div style="font-size:11px;font-weight:600;color:${statusColor};margin-top:3px">${statusText}</div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:11px;color:var(--text-muted)">Agendado: ${formatDate(v.entryDate)}${v.horario ? ' às ' + v.horario : ''}</div>
+          <div style="font-size:12px;font-weight:700;color:${statusColor};margin-top:4px">${statusText}</div>
         </div>
       </div>
-      ${v.imovel ? `<div style="font-size:11px;color:var(--text-muted);margin-top:6px">🏠 ${v.imovel}</div>` : ''}
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${actionBtns}</div>
+      <div style="border-top:1px solid var(--border);padding-top:10px;display:flex;gap:8px;flex-wrap:wrap">${actionBtns}</div>
     </div>`;
   }).join('');
 
