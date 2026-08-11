@@ -764,9 +764,9 @@ function renderAgentContacts(agentName) {
       <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">CQs (${cpds.length})</button>
       <button class="nota-tab-btn${tab==='doc'?' active':''}" data-ctab="doc">DOCs (${docs.length})</button>
       <button class="nota-tab-btn${isDesc?' active':''}" data-ctab="descartados" style="color:${isDesc?'inherit':'#ef4444aa'}">🗑 Desc. (${descartados.length})</button>
-      <button class="nota-tab-btn${tab==='agendadas'?' active':''}" data-ctab="agendadas" style="color:${tab==='agendadas'?'inherit':'#ef4444aa'}">⏳ (${visAgendadas.length})</button>
-      <button class="nota-tab-btn${tab==='realizadas'?' active':''}" data-ctab="realizadas" style="color:${tab==='realizadas'?'inherit':'#a8e63daa'}">✅ (${visRealizadas.length})</button>
-      <button class="nota-tab-btn${tab==='nao'?' active':''}" data-ctab="nao" style="color:${tab==='nao'?'inherit':'#888'}">❌ (${visNao.length})</button>
+      <button class="nota-tab-btn${tab==='agendadas'?' active':''}" data-ctab="agendadas" style="color:${tab==='agendadas'?'inherit':'#ef4444aa'}">⏳ Agendadas (${visAgendadas.length})</button>
+      <button class="nota-tab-btn${tab==='realizadas'?' active':''}" data-ctab="realizadas" style="color:${tab==='realizadas'?'inherit':'#a8e63daa'}">✅ Realizadas (${visRealizadas.length})</button>
+      <button class="nota-tab-btn${tab==='nao'?' active':''}" data-ctab="nao" style="color:${tab==='nao'?'inherit':'#888'}">❌ Não realizadas (${visNao.length})</button>
     </div>
     ${isVisit
       ? visitList.length === 0
