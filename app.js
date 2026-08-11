@@ -943,7 +943,14 @@ function showVaRealizedModal(onConfirm) {
         </div>
         <div class="form-group" style="margin:0">
           <label style="font-size:12px">Horário</label>
-          <input id="va-realized-time" type="time" style="${inpStyle}">
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <select id="va-realized-hour" style="${inpStyle};padding:8px 6px">
+              <option value="">Hora</option>${Array.from({length:24},(_,h)=>`<option value="${String(h).padStart(2,'0')}">${String(h).padStart(2,'0')}h</option>`).join('')}
+            </select>
+            <select id="va-realized-min" style="${inpStyle};padding:8px 6px">
+              <option value="">Min</option>${['00','05','10','15','20','25','30','35','40','45','50','55'].map(m=>`<option value="${m}">${m}</option>`).join('')}
+            </select>
+          </div>
         </div>
       </div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
@@ -955,7 +962,9 @@ function showVaRealizedModal(onConfirm) {
   overlay.querySelector('#va-realized-cancel').addEventListener('click', () => overlay.remove());
   overlay.querySelector('#va-realized-confirm').addEventListener('click', () => {
     const date = overlay.querySelector('#va-realized-date').value;
-    const time = overlay.querySelector('#va-realized-time').value;
+    const h = overlay.querySelector('#va-realized-hour').value;
+    const m = overlay.querySelector('#va-realized-min').value;
+    const time = h && m ? `${h}:${m}` : '';
     overlay.remove();
     onConfirm(date, time);
   });
@@ -2671,7 +2680,7 @@ function renderVisitList(entries) {
       <td style="font-weight:500"><input class="vi-nome" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle};font-weight:500;color:var(--text)" readonly></td>
       <td><input class="vi-imovel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.imovel||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle}" readonly></td>
       <td><input class="vi-dataagend" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="date" value="${d.dataAgend||''}" style="${inpStyle};width:120px" readonly></td>
-      <td><input class="vi-horario" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="time" value="${d.horario||''}" style="${inpStyle};width:80px" readonly></td>
+      <td><input class="vi-horario" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" placeholder="HH:MM" maxlength="5" value="${d.horario||''}" style="${inpStyle};width:60px;text-align:center" readonly></td>
       <td>${statusCell}</td>
     </tr>`;
   }).join('');
@@ -2706,7 +2715,14 @@ function renderVisitList(entries) {
       overlay.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:300px;display:flex;flex-direction:column;gap:14px">
         <div style="font-weight:700;font-size:15px">Marcar como realizada</div>
         <div><label style="font-size:11px;color:var(--text-muted)">Data de realização</label><input id="vi-real-date" type="date" value="${today()}" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;margin-top:4px;outline:none"></div>
-        <div><label style="font-size:11px;color:var(--text-muted)">Horário de realização</label><input id="vi-real-time" type="time" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;margin-top:4px;outline:none"></div>
+        <div><label style="font-size:11px;color:var(--text-muted)">Horário de realização</label><div style="display:flex;gap:8px;margin-top:4px">
+          <select id="vi-real-hour" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;outline:none">
+            <option value="">Hora</option>${Array.from({length:24},(_,h)=>`<option value="${String(h).padStart(2,'0')}">${String(h).padStart(2,'0')}h</option>`).join('')}
+          </select>
+          <select id="vi-real-min" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;outline:none">
+            <option value="">Min</option>${['00','05','10','15','20','25','30','35','40','45','50','55'].map(m=>`<option value="${m}">${m}min</option>`).join('')}
+          </select>
+        </div></div>
         <div style="display:flex;gap:8px">
           <button id="vi-real-confirm" class="btn" style="flex:1;padding:10px">Confirmar</button>
           <button id="vi-real-cancel" style="flex:1;padding:10px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">Cancelar</button>
@@ -2716,7 +2732,9 @@ function renderVisitList(entries) {
       overlay.querySelector('#vi-real-cancel').onclick = () => overlay.remove();
       overlay.querySelector('#vi-real-confirm').onclick = async () => {
         const dataRealizacao = overlay.querySelector('#vi-real-date').value || today();
-        const horarioRealizacao = overlay.querySelector('#vi-real-time').value || '';
+        const h = overlay.querySelector('#vi-real-hour').value;
+        const m = overlay.querySelector('#vi-real-min').value;
+        const horarioRealizacao = h && m ? `${h}:${m}` : '';
         overlay.remove();
         await updateVaRealized(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), dataRealizacao, horarioRealizacao);
         renderVisitList(filterEntries(activePeriod, activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined));
