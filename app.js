@@ -919,6 +919,7 @@ function renderAgentVisits(agentName) {
       if (entry?.vaDetails?.[parseInt(btn.dataset.idx)]) {
         entry.vaDetails[parseInt(btn.dataset.idx)].realizada = null;
         entry.vaDetails[parseInt(btn.dataset.idx)].dataRealizacao = '';
+        entry.vaDetails[parseInt(btn.dataset.idx)].horarioRealizacao = '';
         localUpsert(entry);
         await fbUpsertEntry(entry);
       }
