@@ -2647,11 +2647,24 @@ function renderVisitList(entries) {
   const rowsHTML = rows.map(d => {
     const isRealizada = d.realizada === true;
     const isNaoRealizada = d.realizada === false && d.dataRealizacao === 'nao';
-    const statusLabel = isRealizada
-      ? `<span style="color:#a8e63d;font-weight:600;font-size:11px">✅ Realizada ${d.dataRealizacao && d.dataRealizacao!=='nao' ? formatDate(d.dataRealizacao) : ''}${d.horarioRealizacao ? ' às ' + d.horarioRealizacao : ''}</span>`
+    const btnStyle = `font-size:11px;padding:3px 10px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap`;
+    const statusCell = isRealizada
+      ? `<div style="display:flex;flex-direction:column;gap:4px">
+           <span style="color:#a8e63d;font-weight:600;font-size:11px">✅ Realizada ${d.dataRealizacao && d.dataRealizacao!=='nao' ? formatDate(d.dataRealizacao) : ''}${d.horarioRealizacao ? ' às ' + d.horarioRealizacao : ''}</span>
+           <button class="vi-unrealize-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="${btnStyle};background:none;border:1px solid var(--border);color:var(--text-muted)">↩ Desfazer</button>
+         </div>`
       : isNaoRealizada
-        ? `<span style="color:#888;font-weight:600;font-size:11px">❌ Não realizada</span>`
-        : `<span style="color:#ef4444;font-weight:600;font-size:11px">⏳ Agendada</span>`;
+        ? `<div style="display:flex;flex-direction:column;gap:4px">
+             <span style="color:#888;font-weight:600;font-size:11px">❌ Não realizada</span>
+             <button class="vi-unrealize-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="${btnStyle};background:none;border:1px solid var(--border);color:var(--text-muted)">↩ Desfazer</button>
+           </div>`
+        : `<div style="display:flex;flex-direction:column;gap:4px">
+             <span style="color:#ef4444;font-weight:600;font-size:11px">⏳ Agendada</span>
+             <div style="display:flex;gap:4px;flex-wrap:wrap">
+               <button class="vi-realize-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="${btnStyle};background:none;border:1px solid #a8e63d;color:#a8e63d">✅ Realizada</button>
+               <button class="vi-naorealize-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="${btnStyle};background:none;border:1px solid var(--border);color:var(--text-muted)">❌ Não realizada</button>
+             </div>
+           </div>`;
     return `<tr>
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
@@ -2659,7 +2672,7 @@ function renderVisitList(entries) {
       <td><input class="vi-imovel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.imovel||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle}" readonly></td>
       <td><input class="vi-dataagend" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="date" value="${d.dataAgend||''}" style="${inpStyle};width:120px" readonly></td>
       <td><input class="vi-horario" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="time" value="${d.horario||''}" style="${inpStyle};width:80px" readonly></td>
-      <td>${statusLabel}</td>
+      <td>${statusCell}</td>
     </tr>`;
   }).join('');
 
@@ -2685,6 +2698,53 @@ function renderVisitList(entries) {
   makeViEditable('.vi-imovel',   'imovel',    false);
   makeViEditable('.vi-dataagend','dataAgend', false);
   makeViEditable('.vi-horario',  'horario',   false);
+
+  wrap.querySelectorAll('.vi-realize-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+      overlay.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:300px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-weight:700;font-size:15px">Marcar como realizada</div>
+        <div><label style="font-size:11px;color:var(--text-muted)">Data de realização</label><input id="vi-real-date" type="date" value="${today()}" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;margin-top:4px;outline:none"></div>
+        <div><label style="font-size:11px;color:var(--text-muted)">Horário de realização</label><input id="vi-real-time" type="time" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;margin-top:4px;outline:none"></div>
+        <div style="display:flex;gap:8px">
+          <button id="vi-real-confirm" class="btn" style="flex:1;padding:10px">Confirmar</button>
+          <button id="vi-real-cancel" style="flex:1;padding:10px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer">Cancelar</button>
+        </div>
+      </div>`;
+      document.body.appendChild(overlay);
+      overlay.querySelector('#vi-real-cancel').onclick = () => overlay.remove();
+      overlay.querySelector('#vi-real-confirm').onclick = async () => {
+        const dataRealizacao = overlay.querySelector('#vi-real-date').value || today();
+        const horarioRealizacao = overlay.querySelector('#vi-real-time').value || '';
+        overlay.remove();
+        await updateVaRealized(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), dataRealizacao, horarioRealizacao);
+        renderVisitList(filterEntries(activePeriod, activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined));
+      };
+    });
+  });
+
+  wrap.querySelectorAll('.vi-naorealize-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = '...';
+      await updateVaRealized(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), 'nao');
+      renderVisitList(filterEntries(activePeriod, activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined));
+    });
+  });
+
+  wrap.querySelectorAll('.vi-unrealize-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = '...';
+      const entries = getEntries();
+      const entry = entries.find(e => e.date === btn.dataset.date && e.agent === btn.dataset.agent);
+      if (entry?.vaDetails?.[parseInt(btn.dataset.idx)]) {
+        const d = entry.vaDetails[parseInt(btn.dataset.idx)];
+        d.realizada = null; d.dataRealizacao = ''; d.horarioRealizacao = '';
+        localUpsert(entry); await fbUpsertEntry(entry);
+      }
+      renderVisitList(filterEntries(activePeriod, activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined));
+    });
+  });
 }
 
 // ── OFERTA ATIVA SEMANAL ─────────────────────────────────
