@@ -2705,7 +2705,41 @@ function renderVisitList(entries) {
   makeViEditable('.vi-nome',     'nome',      false);
   makeViEditable('.vi-imovel',   'imovel',    false);
   makeViEditable('.vi-dataagend','dataAgend', false);
-  makeViEditable('.vi-horario',  'horario',   false);
+
+  // Horário — abre mini-modal com selects
+  wrap.querySelectorAll('.vi-horario').forEach(inp => {
+    inp.addEventListener('click', () => {
+      const [curH='', curM=''] = (inp.value||'').split(':');
+      const pop = document.createElement('div');
+      pop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+      const selStyle = `flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;padding:10px 8px;outline:none`;
+      pop.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:280px;display:flex;flex-direction:column;gap:16px">
+        <div style="font-weight:700;font-size:15px">Horário da visita</div>
+        <div style="display:flex;gap:10px">
+          <select id="vi-h-hour" style="${selStyle}">
+            <option value="">Hora</option>${Array.from({length:24},(_,h)=>`<option value="${String(h).padStart(2,'0')}" ${String(h).padStart(2,'0')===curH?'selected':''}>${String(h).padStart(2,'0')}h</option>`).join('')}
+          </select>
+          <select id="vi-h-min" style="${selStyle}">
+            <option value="">Min</option>${['00','05','10','15','20','25','30','35','40','45','50','55'].map(m=>`<option value="${m}" ${m===curM?'selected':''}>${m}min</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button id="vi-h-confirm" style="flex:1;background:var(--primary);color:#000;border:none;border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700">Salvar</button>
+          <button id="vi-h-cancel" style="flex:1;background:none;border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text-muted)">Cancelar</button>
+        </div>
+      </div>`;
+      document.body.appendChild(pop);
+      pop.querySelector('#vi-h-cancel').onclick = () => pop.remove();
+      pop.querySelector('#vi-h-confirm').onclick = async () => {
+        const h = pop.querySelector('#vi-h-hour').value;
+        const m = pop.querySelector('#vi-h-min').value;
+        const val = h && m ? `${h}:${m}` : '';
+        pop.remove();
+        inp.value = val;
+        await updateVaDetail(inp.dataset.date, inp.dataset.agent, parseInt(inp.dataset.idx), { horario: val });
+      };
+    });
+  });
 
   wrap.querySelectorAll('.vi-realize-btn').forEach(btn => {
     btn.addEventListener('click', () => {
