@@ -916,13 +916,14 @@ function renderAgentVisits(agentName) {
       : '';
     const statusText = isRealizada ? realizadaLabel : isNaoRealizada ? '❌ Não realizada' : '⏳ Agendada';
 
+    const btnBase = `border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 16px;font-weight:600;`;
     const actionBtns = isRealizada
       ? `<button class="va-unrealize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
-           style="font-size:11px;padding:4px 12px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">↩ Desfazer</button>`
+           style="${btnBase}background:none;border:1px solid var(--border);color:var(--text-muted)">↩ Desfazer</button>`
       : `<button class="va-realize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
-           style="font-size:11px;padding:4px 12px;background:none;border:1px solid #a8e63d;color:#a8e63d;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">✅ Realizada</button>
+           style="${btnBase}background:#a8e63d;border:1px solid #a8e63d;color:#000">✅ Realizada</button>
          <button class="va-nao-realize-btn" data-entry-date="${v.entryDate}" data-idx="${v.idx}"
-           style="font-size:11px;padding:4px 12px;background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif">❌ Não realizada</button>`;
+           style="${btnBase}background:none;border:1px solid var(--border);color:var(--text-muted)">❌ Não realizada</button>`;
 
     return `<div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">

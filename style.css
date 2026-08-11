@@ -521,8 +521,13 @@ a { color: inherit; text-decoration: none; }
 .nota-tabs {
   display: flex;
   gap: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
 }
+.nota-tabs::-webkit-scrollbar { display: none; }
 .nota-tab-btn {
   background: var(--bg3);
   border: 1px solid var(--border);
@@ -530,10 +535,13 @@ a { color: inherit; text-decoration: none; }
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 500;
-  padding: 6px 16px;
+  padding: 10px 16px;
   border-radius: 20px;
   cursor: pointer;
   transition: all .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 40px;
 }
 .nota-tab-btn.active {
   background: var(--gold);
@@ -1067,3 +1075,15 @@ tr.podium-3 td { background: rgba(180,100,40,.04); }
 .tipo-studio    { background: rgba(155,89,182,.15);  color: #9b59b6; }
 .tipo-terreno   { background: rgba(46,204,113,.15);  color: #2ecc71; }
 .tipo-comercial { background: rgba(230,126,34,.15);  color: #e67e22; }
+
+/* ── MOBILE (≤480px) ── */
+@media (max-width: 480px) {
+  .card { padding: 14px 12px; }
+
+  .va-detail-item input,
+  .va-detail-item select { font-size: 16px; padding: 12px 14px; }
+
+  .nota-tab-btn { padding: 10px 12px; font-size: 11px; }
+
+  .data-table td, .data-table th { padding: 10px 6px; font-size: 11px; }
+}
