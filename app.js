@@ -88,28 +88,20 @@ async function updateDocNota(date, agent, docIdx, nota) {
 function buildVaDetailsHTML(count, prefill=[]) {
   if (count === 0) return '';
   const selSt = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:\'DM Sans\',sans-serif;font-size:13px;padding:8px 6px;outline:none;flex:1';
-  const days   = Array.from({length:31},(_,d)=>`<option value="${String(d+1).padStart(2,'0')}">${String(d+1).padStart(2,'0')}</option>`).join('');
-  const months = ['01 Jan','02 Fev','03 Mar','04 Abr','05 Mai','06 Jun','07 Jul','08 Ago','09 Set','10 Out','11 Nov','12 Dez'].map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}">${m}</option>`).join('');
-  const curYear = new Date().getFullYear();
-  const years  = [curYear, curYear+1].map(y=>`<option value="${y}">${y}</option>`).join('');
-  const hours  = Array.from({length:24},(_,h)=>`<option value="${String(h).padStart(2,'0')}">${String(h).padStart(2,'0')}h</option>`).join('');
-  const mins   = ['00','05','10','15','20','25','30','35','40','45','50','55'].map(m=>`<option value="${m}">${m}min</option>`).join('');
+  const inpSt = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:\'DM Sans\',sans-serif;font-size:13px;padding:8px 10px;outline:none;width:100%';
+  const hours = Array.from({length:24},(_,h)=>`<option value="${String(h).padStart(2,'0')}">${String(h).padStart(2,'0')}h</option>`).join('');
+  const mins  = ['00','05','10','15','20','25','30','35','40','45','50','55'].map(m=>`<option value="${m}">${m}min</option>`).join('');
 
   let html = '<div class="cpd-details-wrap">';
   for (let i = 0; i < count; i++) {
     const p = prefill[i] || {};
-    const [pY='', pM='', pD=''] = (p.dataAgend||'').split('-');
     const [pH='', pMin=''] = (p.horario||'').split(':');
     html += `<div class="cpd-detail-item">
       <span class="cpd-detail-label" style="color:#ef4444">VA ${i+1}</span>
-      <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}">
-      <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}">
-      <div class="va-data-wrap" data-idx="${i}" style="display:flex;gap:4px;align-items:center">
-        <select class="va-day" data-idx="${i}" style="${selSt}"><option value="">Dia</option>${days.replace(`value="${pD}"`,`value="${pD}" selected`)}</select>
-        <select class="va-month" data-idx="${i}" style="${selSt}"><option value="">Mês</option>${months.replace(`value="${pM}"`,`value="${pM}" selected`)}</select>
-        <select class="va-year" data-idx="${i}" style="${selSt}"><option value="">Ano</option>${years.replace(`value="${pY}"`,`value="${pY}" selected`)}</select>
-      </div>
-      <div class="va-hora-wrap" data-idx="${i}" style="display:flex;gap:4px;align-items:center">
+      <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}" style="${inpSt}">
+      <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}" style="${inpSt}">
+      <input class="va-dataagend" data-idx="${i}" type="date" value="${p.dataAgend||''}" style="${inpSt}">
+      <div style="display:flex;gap:6px">
         <select class="va-hour" data-idx="${i}" style="${selSt}"><option value="">Hora</option>${hours.replace(`value="${pH}"`,`value="${pH}" selected`)}</select>
         <select class="va-min" data-idx="${i}" style="${selSt}"><option value="">Min</option>${mins.replace(`value="${pMin}"`,`value="${pMin}" selected`)}</select>
       </div>
@@ -120,15 +112,12 @@ function buildVaDetailsHTML(count, prefill=[]) {
 function collectVaDetails(count) {
   const d=[];
   for (let i=0;i<count;i++) {
-    const day   = document.querySelector(`.va-day[data-idx="${i}"]`)?.value||'';
-    const month = document.querySelector(`.va-month[data-idx="${i}"]`)?.value||'';
-    const year  = document.querySelector(`.va-year[data-idx="${i}"]`)?.value||'';
-    const hour  = document.querySelector(`.va-hour[data-idx="${i}"]`)?.value||'';
-    const min   = document.querySelector(`.va-min[data-idx="${i}"]`)?.value||'';
+    const hour = document.querySelector(`.va-hour[data-idx="${i}"]`)?.value||'';
+    const min  = document.querySelector(`.va-min[data-idx="${i}"]`)?.value||'';
     d.push({
       nome:      document.querySelector(`.va-nome[data-idx="${i}"]`)?.value.trim()||'',
       imovel:    document.querySelector(`.va-imovel[data-idx="${i}"]`)?.value.trim()||'',
-      dataAgend: year && month && day ? `${year}-${month}-${day}` : '',
+      dataAgend: document.querySelector(`.va-dataagend[data-idx="${i}"]`)?.value||'',
       horario:   hour && min ? `${hour}:${min}` : '',
     });
   }
@@ -668,6 +657,16 @@ function renderAgentContacts(agentName) {
   }));
   docs.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
+  // Visitas por status
+  const allVisits = [];
+  entries.forEach(e => (e.vaDetails||[]).forEach((d, i) => {
+    if (d.nome || d.imovel) allVisits.push({ ...d, entryDate: e.date, idx: i });
+  }));
+  allVisits.sort((a,b) => b.entryDate.localeCompare(a.entryDate));
+  const visAgendadas  = allVisits.filter(v => v.realizada !== true && !(v.realizada === false && v.dataRealizacao === 'nao'));
+  const visRealizadas = allVisits.filter(v => v.realizada === true);
+  const visNao        = allVisits.filter(v => v.realizada === false && v.dataRealizacao === 'nao');
+
   const makeRow = (d) => {
     const dates = d.contactDates || (d.lastContact ? [d.lastContact] : []);
     const histLabel = dates.length === 0 ? '—'
@@ -741,25 +740,49 @@ function renderAgentContacts(agentName) {
       style="font-size:11px;padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-muted)">Restaurar</button></td>
   </tr>`;
 
-  const list = isCpd ? cpds : isDesc ? descartados : docs;
+  const isVisit = ['agendadas','realizadas','nao'].includes(tab);
+  const list = isCpd ? cpds : isDesc ? descartados : isVisit ? [] : docs;
+
+  const makeVisitRow = (v) => {
+    const statusTxt = v.realizada === true
+      ? `<span style="color:#a8e63d;font-size:11px">✅ ${v.dataRealizacao && v.dataRealizacao!=='nao' ? formatDate(v.dataRealizacao) : ''}${v.horarioRealizacao ? ' às '+v.horarioRealizacao : ''}</span>`
+      : v.realizada === false && v.dataRealizacao === 'nao'
+        ? `<span style="color:#888;font-size:11px">❌ Não realizada</span>`
+        : `<span style="color:#ef4444;font-size:11px">⏳ Agendada</span>`;
+    return `<tr>
+      <td style="font-weight:500">${v.nome||'—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">${v.imovel||'—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">${v.dataAgend ? formatDate(v.dataAgend) : '—'}${v.horario ? ' às '+v.horario : ''}</td>
+      <td>${statusTxt}</td>
+    </tr>`;
+  };
+
+  const visitList = tab==='agendadas' ? visAgendadas : tab==='realizadas' ? visRealizadas : tab==='nao' ? visNao : [];
 
   wrap.innerHTML = `
-    <div class="nota-tabs" style="position:relative">
+    <div class="nota-tabs" style="position:relative;flex-wrap:wrap;gap:4px">
       <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">CQs (${cpds.length})</button>
       <button class="nota-tab-btn${tab==='doc'?' active':''}" data-ctab="doc">DOCs (${docs.length})</button>
-      <button class="nota-tab-btn${isDesc?' active':''}" data-ctab="descartados" style="color:${isDesc?'inherit':'#ef4444aa'}">🗑 Descartados (${descartados.length})</button>
+      <button class="nota-tab-btn${isDesc?' active':''}" data-ctab="descartados" style="color:${isDesc?'inherit':'#ef4444aa'}">🗑 Desc. (${descartados.length})</button>
+      <button class="nota-tab-btn${tab==='agendadas'?' active':''}" data-ctab="agendadas" style="color:${tab==='agendadas'?'inherit':'#ef4444aa'}">⏳ (${visAgendadas.length})</button>
+      <button class="nota-tab-btn${tab==='realizadas'?' active':''}" data-ctab="realizadas" style="color:${tab==='realizadas'?'inherit':'#a8e63daa'}">✅ (${visRealizadas.length})</button>
+      <button class="nota-tab-btn${tab==='nao'?' active':''}" data-ctab="nao" style="color:${tab==='nao'?'inherit':'#888'}">❌ (${visNao.length})</button>
     </div>
-    ${list.length === 0
-      ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':isDesc?'CQ descartado':'DOC'} registrado</div>`
-      : `<div style="overflow-x:auto;margin-top:10px">
-          <table class="data-table">
-            <thead><tr>${isDesc
-              ? '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo do Descarte</th><th></th>'
-              : `<th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th>`
-            }</tr></thead>
-            <tbody>${isDesc ? list.map(makeDescRow).join('') : list.map(makeRow).join('')}</tbody>
-          </table>
-        </div>`}`;
+    ${isVisit
+      ? visitList.length === 0
+        ? `<div class="empty-state" style="margin-top:12px">Nenhuma visita neste filtro</div>`
+        : `<div style="overflow-x:auto;margin-top:10px"><table class="data-table"><thead><tr><th>Cliente</th><th>Imóvel</th><th>Data/Hora</th><th>Status</th></tr></thead><tbody>${visitList.map(makeVisitRow).join('')}</tbody></table></div>`
+      : list.length === 0
+        ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':isDesc?'CQ descartado':'DOC'} registrado</div>`
+        : `<div style="overflow-x:auto;margin-top:10px">
+            <table class="data-table">
+              <thead><tr>${isDesc
+                ? '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo do Descarte</th><th></th>'
+                : `<th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th>`
+              }</tr></thead>
+              <tbody>${isDesc ? list.map(makeDescRow).join('') : list.map(makeRow).join('')}</tbody>
+            </table>
+          </div>`}`;
 
   wrap.querySelectorAll('[data-ctab]').forEach(btn =>
     btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; renderAgentContacts(agentName); })
@@ -921,11 +944,15 @@ function renderAgentVisits(agentName) {
   wrap.innerHTML = items;
 
   wrap.querySelectorAll('.va-realize-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      showVaRealizedModal(async (dataRealizacao, horarioRealizacao) => {
-        await updateVaRealized(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), dataRealizacao, horarioRealizacao);
-        renderAgentVisits(agentName);
-      });
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; btn.textContent = '...';
+      const entries = getEntries();
+      const entry = entries.find(e => e.date === btn.dataset.entryDate && e.agent === agentName);
+      const v = entry?.vaDetails?.[parseInt(btn.dataset.idx)];
+      const dataRealizacao = v?.dataAgend || today();
+      const horarioRealizacao = v?.horario || '';
+      await updateVaRealized(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), dataRealizacao, horarioRealizacao);
+      renderAgentVisits(agentName);
     });
   });
   wrap.querySelectorAll('.va-nao-realize-btn').forEach(btn => {
