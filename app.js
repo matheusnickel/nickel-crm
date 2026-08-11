@@ -2011,7 +2011,7 @@ function renderAnalyticsChart(allDocs) {
 }
 
 // ── DOC LIST (gestor — with inline nota edit) ────────────
-let activeDocAgent = '', activeCpdAgent = '', activeVisitAgent = '';
+let activeDocAgent = '', activeCpdAgent = '', activeVisitAgent = '', activeVisitStatus = 'todas';
 
 function renderDocList(entries) {
   const allRows=[];
@@ -2654,12 +2654,24 @@ function renderVisitList(entries) {
   if (!wrap) return;
 
   const agentNames = getAgentNames();
-  const filterHTML = `<div style="margin-bottom:12px">
-    <select id="visit-agent-filter" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;width:100%">
-      <option value="">Todos os angariadores</option>
-      ${agentNames.map(n=>`<option value="${n}" ${activeVisitAgent===n?'selected':''}>${n}</option>`).join('')}
-    </select>
-  </div>`;
+  const tabBtnStyle = (key) => {
+    const active = activeVisitStatus === key;
+    const colors = { todas:'var(--text-muted)', agendadas:'#ef4444', realizadas:'#a8e63d', nao:'#888' };
+    return `background:${active ? colors[key] : 'none'};border:1px solid ${colors[key]};color:${active ? (key==='realizadas'?'#000':'#fff') : colors[key]};border-radius:20px;padding:5px 14px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;white-space:nowrap`;
+  };
+  const filterHTML = `
+    <div style="margin-bottom:10px">
+      <select id="visit-agent-filter" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;width:100%">
+        <option value="">Todos os angariadores</option>
+        ${agentNames.map(n=>`<option value="${n}" ${activeVisitAgent===n?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <button class="visit-status-tab" data-status="todas"      style="${tabBtnStyle('todas')}">Todas</button>
+      <button class="visit-status-tab" data-status="agendadas"  style="${tabBtnStyle('agendadas')}">⏳ Agendadas</button>
+      <button class="visit-status-tab" data-status="realizadas" style="${tabBtnStyle('realizadas')}">✅ Realizadas</button>
+      <button class="visit-status-tab" data-status="nao"        style="${tabBtnStyle('nao')}">❌ Não realizadas</button>
+    </div>`;
 
   const allRows = [];
   entries.forEach(e => {
@@ -2668,11 +2680,19 @@ function renderVisitList(entries) {
     });
   });
   allRows.sort((a,b) => b.date.localeCompare(a.date));
-  const rows = activeVisitAgent ? allRows.filter(r => r.agent === activeVisitAgent) : allRows;
+
+  const byAgent = activeVisitAgent ? allRows.filter(r => r.agent === activeVisitAgent) : allRows;
+  const rows = byAgent.filter(d => {
+    if (activeVisitStatus === 'agendadas')  return d.realizada !== true && !(d.realizada === false && d.dataRealizacao === 'nao');
+    if (activeVisitStatus === 'realizadas') return d.realizada === true;
+    if (activeVisitStatus === 'nao')        return d.realizada === false && d.dataRealizacao === 'nao';
+    return true;
+  });
 
   if (allRows.length === 0) {
     wrap.innerHTML = filterHTML + '<div class="empty-state">Nenhuma visita registrada no período</div>';
     wrap.querySelector('#visit-agent-filter').addEventListener('change', function(){ activeVisitAgent=this.value; renderVisitList(entries); });
+    wrap.querySelectorAll('.visit-status-tab').forEach(btn => { btn.addEventListener('click', () => { activeVisitStatus=btn.dataset.status; renderVisitList(entries); }); });
     return;
   }
 
@@ -2715,6 +2735,9 @@ function renderVisitList(entries) {
   </table></div>`;
 
   wrap.querySelector('#visit-agent-filter').addEventListener('change', function(){ activeVisitAgent=this.value; renderVisitList(entries); });
+  wrap.querySelectorAll('.visit-status-tab').forEach(btn => {
+    btn.addEventListener('click', () => { activeVisitStatus = btn.dataset.status; renderVisitList(entries); });
+  });
 
   function makeViEditable(sel, field, mask) {
     wrap.querySelectorAll(sel).forEach(inp => {
