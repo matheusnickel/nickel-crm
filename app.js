@@ -2474,7 +2474,7 @@ function renderCpdList(entries) {
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
       <td style="font-weight:500">${d.nome||'—'}</td>
-      <td style="color:var(--text-muted)">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
+      <td><input class="cpd-tel-inline" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="tel" value="${d.telefone ? formatPhone(d.telefone) : ''}" placeholder="—" style="background:none;border:none;border-bottom:1px dashed var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;width:110px;padding:2px 4px;outline:none;cursor:pointer" readonly></td>
       <td><select class="cpd-status-sel nota-select">${selOpts}</select></td>
       <td><input class="cpd-motivo-inp" type="text" placeholder="Motivo" value="${(d.motivo||'').replace(/"/g,'&quot;')}" style="display:${isDescarte?'block':'none'};background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 8px;width:100%;outline:none"></td>
       <td><button class="cpd-edit-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px 6px">✏️</button></td>
@@ -2516,6 +2516,17 @@ function renderCpdList(entries) {
       const { cpdDate:date, cpdAgent:agent, cpdIdx:idx } = tr.dataset;
       await updateCpdDetail(date, agent, parseInt(idx), { motivo: inp.value });
     });
+  });
+
+  wrap.querySelectorAll('.cpd-tel-inline').forEach(inp => {
+    applyPhoneMask(inp);
+    inp.addEventListener('click', () => { inp.readOnly = false; inp.style.cursor='text'; inp.style.borderBottom='1px solid var(--primary)'; inp.style.color='var(--text)'; inp.select(); });
+    inp.addEventListener('blur', async () => {
+      inp.readOnly = true; inp.style.cursor='pointer'; inp.style.borderBottom='1px dashed var(--border)'; inp.style.color='var(--text-muted)';
+      const raw = inp.value.trim();
+      await updateCpdDetail(inp.dataset.date, inp.dataset.agent, parseInt(inp.dataset.idx), { telefone: raw });
+    });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') inp.blur(); });
   });
 
   wrap.querySelectorAll('.cpd-edit-btn').forEach(btn => {
