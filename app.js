@@ -93,7 +93,7 @@ function buildVaDetailsHTML(count, prefill=[]) {
     html += `<div class="cpd-detail-item">
       <span class="cpd-detail-label" style="color:#ef4444">VA ${i+1}</span>
       <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}">
-      <input class="va-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone||'').replace(/"/g,'&quot;')}">
+      <input class="va-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone ? formatPhone(p.telefone) : '').replace(/"/g,'&quot;')}">
       <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}">
       <input class="va-horario" data-idx="${i}" type="time" value="${(p.horario||'')}">
     </div>`;
@@ -120,7 +120,7 @@ function buildVrDetailsHTML(count, prefill=[]) {
     html += `<div class="cpd-detail-item">
       <span class="cpd-detail-label" style="color:#f97316">VR ${i+1}</span>
       <input class="vr-nome" data-idx="${i}" type="text" placeholder="Nome do cliente comprador" value="${(p.nome||'').replace(/"/g,'&quot;')}">
-      <input class="vr-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone||'').replace(/"/g,'&quot;')}">
+      <input class="vr-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone ? formatPhone(p.telefone) : '').replace(/"/g,'&quot;')}">
     </div>`;
   }
   return html + '</div>';
@@ -140,7 +140,7 @@ function buildCpdDetailsHTML(count, prefill=[]) {
     html += `<div class="cpd-detail-item">
       <span class="cpd-detail-label">CQ ${i+1}</span>
       <input class="cpd-nome" data-idx="${i}" type="text" placeholder="Nome do proprietário" value="${(p.nome||'').replace(/"/g,'&quot;')}">
-      <input class="cpd-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone||'').replace(/"/g,'&quot;')}">
+      <input class="cpd-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone ? formatPhone(p.telefone) : '').replace(/"/g,'&quot;')}">
     </div>`;
   }
   html += '</div>';
@@ -349,6 +349,20 @@ function isoWeekToDateStr(weekStr) {
 }
 function inRange(s,a,b)   { return s>=a && s<=b; }
 function formatDate(s)    { const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
+function formatPhone(v) {
+  const d = v.replace(/\D/g,'');
+  if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
+  return d.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
+}
+function applyPhoneMask(el) {
+  el.addEventListener('input', () => {
+    const pos = el.selectionStart;
+    const prev = el.value;
+    el.value = formatPhone(prev);
+    const diff = el.value.length - prev.length;
+    el.setSelectionRange(pos+diff, pos+diff);
+  });
+}
 function formatCurrency(v){ return (v&&v>0)?'R$ '+Number(v).toLocaleString('pt-BR'):'—'; }
 function getSalesMonth(monthRef) {
   const ym = (monthRef || today()).slice(0, 7);
@@ -634,7 +648,7 @@ function renderAgentContacts(agentName) {
         `<option value="${o.value}" ${d.status===o.value?'selected':''}>${o.label}</option>`).join('');
       return `<tr data-entry-date="${d.entryDate}" data-idx="${d.idx}">
         <td style="font-weight:500">${d.nome}</td>
-        <td style="color:var(--text-muted);font-size:12px">${d.telefone||'—'}</td>
+        <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
         <td><select class="cpd-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${statusSelOpts}</select></td>
         <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
         <td style="white-space:nowrap">
@@ -645,7 +659,7 @@ function renderAgentContacts(agentName) {
         <td colspan="5" style="padding:8px 0">
           <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:end">
             <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="ac-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="ac-ef-tel" type="text" value="${(d.telefone||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="ac-ef-tel" type="text" value="${(d.telefone ? formatPhone(d.telefone) : '').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
             <button class="ac-ef-save btn" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Salvar</button>
             <button class="ac-ef-cancel" data-edit-type="cpd" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="${cancelBtnStyle}">Cancelar</button>
           </div>
@@ -687,7 +701,7 @@ function renderAgentContacts(agentName) {
 
   const makeDescRow = (d) => `<tr>
     <td style="font-weight:500">${d.nome}</td>
-    <td style="color:var(--text-muted);font-size:12px">${d.telefone||'—'}</td>
+    <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
     <td style="color:var(--text-muted);font-size:12px">${formatDate(d.entryDate)}</td>
     <td style="color:#ef4444;font-size:12px">${d.motivo||'—'}</td>
     <td><button class="cq-restore-btn btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}"
@@ -788,7 +802,7 @@ function renderAgentContacts(agentName) {
       const editRow = wrap.querySelector(`.ac-edit-row[data-edit-type="${btn.dataset.type}"][data-edit-date="${btn.dataset.entryDate}"][data-edit-idx="${btn.dataset.idx}"]`);
       const isOpen = editRow.style.display !== 'none';
       wrap.querySelectorAll('.ac-edit-row').forEach(r => r.style.display = 'none');
-      if (!isOpen) editRow.style.display = '';
+      if (!isOpen) { editRow.style.display = ''; const telEl = editRow.querySelector('.ac-ef-tel'); if (telEl) applyPhoneMask(telEl); }
     });
   });
 
@@ -859,7 +873,7 @@ function renderAgentVisits(agentName) {
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:15px;margin-bottom:4px">${v.nome||'—'}</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap">
-            <span style="font-size:12px;color:var(--text-muted)">📞 ${v.telefone||'—'}</span>
+            <span style="font-size:12px;color:var(--text-muted)">📞 ${v.telefone ? formatPhone(v.telefone) : '—'}</span>
             <span style="font-size:12px;color:var(--text-muted)">🏠 ${v.imovel||'—'}</span>
           </div>
         </div>
@@ -1436,6 +1450,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         document.getElementById('wiz-cpd-area').innerHTML = buildCpdDetailsHTML(wVals.cp, pre.cpdDetails||[]);
         document.getElementById('wiz-doc-area').innerHTML = buildDocDetailsHTML(wVals.doc, pre.docDetails||[]);
         document.getElementById('wiz-va-area').innerHTML = buildVaDetailsHTML(wVals.va, pre.vaDetails||[]);
+        document.querySelectorAll('.cpd-tel,.va-tel,.vr-tel').forEach(applyPhoneMask);
         bindBairroSelects();
         wStep = WSTEPS.length; updateDots();
       };
@@ -1705,6 +1720,7 @@ function initGestorLancamento() {
 
   document.getElementById('lanc-cpd').addEventListener('input',function(){
     document.getElementById('lanc-cpd-details').innerHTML=buildCpdDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+    document.querySelectorAll('.cpd-tel').forEach(applyPhoneMask);
   });
   document.getElementById('lanc-doc').addEventListener('input',function(){
     document.getElementById('lanc-doc-details').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
@@ -1712,6 +1728,7 @@ function initGestorLancamento() {
   });
   document.getElementById('lanc-va').addEventListener('input',function(){
     document.getElementById('lanc-va-details').innerHTML=buildVaDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+    document.querySelectorAll('.va-tel').forEach(applyPhoneMask);
   });
 
   document.getElementById('gestor-lanc-form').addEventListener('submit',async ev=>{
@@ -2457,7 +2474,7 @@ function renderCpdList(entries) {
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
       <td style="font-weight:500">${d.nome||'—'}</td>
-      <td style="color:var(--text-muted)">${d.telefone||'—'}</td>
+      <td style="color:var(--text-muted)">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
       <td><select class="cpd-status-sel nota-select">${selOpts}</select></td>
       <td><input class="cpd-motivo-inp" type="text" placeholder="Motivo" value="${(d.motivo||'').replace(/"/g,'&quot;')}" style="display:${isDescarte?'block':'none'};background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 8px;width:100%;outline:none"></td>
       <td><button class="cpd-edit-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px 6px">✏️</button></td>
@@ -2466,7 +2483,7 @@ function renderCpdList(entries) {
       <td colspan="7" style="padding:8px 4px">
         <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:end">
           <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="cpd-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none"></div>
-          <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="cpd-ef-tel" type="text" value="${(d.telefone||'').replace(/"/g,'&quot;')}" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none"></div>
+          <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="cpd-ef-tel" type="text" value="${(d.telefone ? formatPhone(d.telefone) : '').replace(/"/g,'&quot;')}" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none"></div>
           <button class="cpd-ef-save btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Salvar</button>
           <button class="cpd-ef-cancel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:8px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;white-space:nowrap">Cancelar</button>
         </div>
@@ -2506,7 +2523,7 @@ function renderCpdList(entries) {
       const editRow = wrap.querySelector(`.cpd-edit-row[data-edit-date="${btn.dataset.date}"][data-edit-agent="${btn.dataset.agent}"][data-edit-idx="${btn.dataset.idx}"]`);
       const isOpen = editRow.style.display !== 'none';
       wrap.querySelectorAll('.cpd-edit-row').forEach(r => r.style.display = 'none');
-      if (!isOpen) editRow.style.display = '';
+      if (!isOpen) { editRow.style.display = ''; const telEl = editRow.querySelector('.cpd-ef-tel'); if (telEl) applyPhoneMask(telEl); }
     });
   });
 
@@ -2619,7 +2636,7 @@ function renderVisitList(entries) {
       <td>${formatDate(d.date)}</td>
       <td>${d.agent}</td>
       <td style="font-weight:500">${d.nome||'—'}</td>
-      <td>${d.telefone||'—'}</td>
+      <td>${d.telefone ? formatPhone(d.telefone) : '—'}</td>
       <td style="color:var(--text-muted)">${d.imovel||'—'}</td>
       <td style="color:var(--text-muted);font-size:11px">${d.horario||'—'}</td>
       <td>${statusLabel}</td>
