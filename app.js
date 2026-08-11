@@ -2703,7 +2703,7 @@ function renderVisitList(entries) {
       <td>${d.agent}</td>
       <td style="font-weight:500"><input class="vi-nome" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle};font-weight:500;color:var(--text)" readonly></td>
       <td><input class="vi-imovel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="text" value="${(d.imovel||'').replace(/"/g,'&quot;')}" placeholder="—" style="${inpStyle}" readonly></td>
-      <td><input class="vi-dataagend" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="date" value="${d.dataAgend||''}" style="${inpStyle};width:120px" readonly></td>
+      <td><button class="vi-dataagend" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" data-val="${d.dataAgend||''}" style="background:none;border:none;border-bottom:1px dashed var(--border);color:${d.dataAgend?'var(--text-muted)':'var(--border)'};font-family:'DM Sans',sans-serif;font-size:12px;padding:2px 6px;cursor:pointer;min-width:80px;text-align:center">${d.dataAgend ? formatDate(d.dataAgend) : 'dd/mm/aaaa'}</button></td>
       <td><button class="vi-horario" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:none;border-bottom:1px dashed var(--border);color:${d.horario?'var(--text-muted)':'var(--border)'};font-family:'DM Sans',sans-serif;font-size:12px;padding:2px 6px;cursor:pointer;min-width:52px;text-align:center">${d.horario||'—:——'}</button></td>
       <td>${statusCell}</td>
     </tr>`;
@@ -2727,9 +2727,47 @@ function renderVisitList(entries) {
       inp.addEventListener('keydown', e => { if (e.key==='Enter') inp.blur(); });
     });
   }
-  makeViEditable('.vi-nome',     'nome',      false);
-  makeViEditable('.vi-imovel',   'imovel',    false);
-  makeViEditable('.vi-dataagend','dataAgend', false);
+  makeViEditable('.vi-nome',   'nome',   false);
+  makeViEditable('.vi-imovel', 'imovel', false);
+
+  // Data Visita — abre mini-modal com selects dia/mês/ano
+  wrap.querySelectorAll('.vi-dataagend').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [curY='', curM='', curD=''] = (btn.dataset.val||'').split('-');
+      const pop = document.createElement('div');
+      pop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+      const selStyle = `flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 6px;outline:none`;
+      const days   = Array.from({length:31},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}" ${String(i+1).padStart(2,'0')===curD?'selected':''}>${String(i+1).padStart(2,'0')}</option>`).join('');
+      const months = ['01 Jan','02 Fev','03 Mar','04 Abr','05 Mai','06 Jun','07 Jul','08 Ago','09 Set','10 Out','11 Nov','12 Dez'].map((m,i)=>`<option value="${String(i+1).padStart(2,'0')}" ${String(i+1).padStart(2,'0')===curM?'selected':''}>${m}</option>`).join('');
+      const cy = new Date().getFullYear();
+      const years = [cy,cy+1].map(y=>`<option value="${y}" ${String(y)===curY?'selected':''}>${y}</option>`).join('');
+      pop.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:320px;display:flex;flex-direction:column;gap:16px">
+        <div style="font-weight:700;font-size:15px">Data da visita</div>
+        <div style="display:flex;gap:8px">
+          <select id="vi-d-day" style="${selStyle}"><option value="">Dia</option>${days}</select>
+          <select id="vi-d-month" style="${selStyle}"><option value="">Mês</option>${months}</select>
+          <select id="vi-d-year" style="${selStyle}"><option value="">Ano</option>${years}</select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button id="vi-d-confirm" style="flex:1;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700">Salvar</button>
+          <button id="vi-d-cancel" style="flex:1;background:none;border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text-muted)">Cancelar</button>
+        </div>
+      </div>`;
+      document.body.appendChild(pop);
+      pop.querySelector('#vi-d-cancel').onclick = () => pop.remove();
+      pop.querySelector('#vi-d-confirm').onclick = async () => {
+        const d = pop.querySelector('#vi-d-day').value;
+        const m = pop.querySelector('#vi-d-month').value;
+        const y = pop.querySelector('#vi-d-year').value;
+        const val = y && m && d ? `${y}-${m}-${d}` : '';
+        pop.remove();
+        btn.dataset.val = val;
+        btn.textContent = val ? formatDate(val) : 'dd/mm/aaaa';
+        btn.style.color = val ? 'var(--text-muted)' : 'var(--border)';
+        await updateVaDetail(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), { dataAgend: val });
+      };
+    });
+  });
 
   // Horário — abre mini-modal com selects
   wrap.querySelectorAll('.vi-horario').forEach(inp => {
@@ -2749,7 +2787,7 @@ function renderVisitList(entries) {
           </select>
         </div>
         <div style="display:flex;gap:8px">
-          <button id="vi-h-confirm" style="flex:1;background:var(--primary);color:#000;border:none;border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700">Salvar</button>
+          <button id="vi-h-confirm" style="flex:1;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700">Salvar</button>
           <button id="vi-h-cancel" style="flex:1;background:none;border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text-muted)">Cancelar</button>
         </div>
       </div>`;
