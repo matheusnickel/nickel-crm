@@ -1381,8 +1381,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
   // Metas card
   const metasWrap = document.getElementById('metas-wrap');
   if (metasWrap) {
-    const META_VID_MONTH = 15;
-    const monthVid  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.video||0), 0);
     const monthCpd  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpd||0), 0);
     const monthProsp= entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.prosp||0), 0);
 
@@ -1407,19 +1405,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const dayOfMonth  = tDate.getDate();
     const daysRemaining = daysInMonth - dayOfMonth; // dias que ainda faltam (não conta hoje)
 
-    // ── Médias do time neste mês ─────────────────────────
-    const teamNames   = new Set(getAgentNames());
-    const allMonthE   = getEntries().filter(e => teamNames.has(e.agent) && inRange(e.date, mStart, mEnd));
-    const activeAgents= Math.max(new Set(allMonthE.map(e=>e.agent)).size, 1);
-    const teamAvgDoc  = allMonthE.reduce((s,e)=>s+e.doc,0)          / activeAgents;
-    const teamAvgCpd  = allMonthE.reduce((s,e)=>s+(e.cpd||0),0)     / activeAgents;
-    const teamAvgProsp= allMonthE.reduce((s,e)=>s+(e.prosp||0),0)   / activeAgents;
-    const teamAvgVid  = allMonthE.reduce((s,e)=>s+(e.video||0),0)   / activeAgents;
-
-    // ── Projeção de fim de mês ───────────────────────────
-    // ritmo = val / dias decorridos; projeta = ritmo * total dias do mês
-    const project = (val) => dayOfMonth > 0 ? Math.round(val / dayOfMonth * daysInMonth) : 0;
-
     const mkBar = (val, meta, color) => {
       const pct  = Math.min(val / meta * 100, 100);
       const over = val >= meta;
@@ -1431,7 +1416,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const doc   = mkBar(monthDoc,   META_DOC_MONTH, '#e74c3c');
     const cq    = mkBar(monthCpd,   META_CQ,        '#6495ed');
     const prosp = mkBar(monthProsp, META_PROSP,     '#f0c040');
-    const vid   = mkBar(monthVid,   META_VID_MONTH, '#e879f9');
 
     // ── Ritmo esperado até hoje (meta proporcional ao dia) ──
     // Ex: meta 128 PROSP, dia 15 de 31 → esperado = round(128 * 15/31) = 62
