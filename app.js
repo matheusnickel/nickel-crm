@@ -846,7 +846,7 @@ function renderAgentContacts(agentName) {
     btn.addEventListener('click', async () => {
       const entryDate = btn.dataset.entry;
       const idx = parseInt(btn.dataset.idx);
-      const hora = prompt('Horário que aconteceu (ex: 16:30):', btn.closest('tr').querySelector('[data-idx]')?.dataset?.horario || '') ?? '';
+      const hora = prompt('Horário que aconteceu (ex: 16:30):', '') ?? '';
       await updateVaRealized(entryDate, agentName, idx, today(), hora.trim());
       agentContactTab = 'realizadas';
       renderAgentContacts(agentName);
