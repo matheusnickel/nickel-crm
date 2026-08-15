@@ -1382,47 +1382,61 @@ function renderAgentDashboard(session, selectedDate, editing) {
   const metasWrap = document.getElementById('metas-wrap');
   if (metasWrap) {
     const META_VID_MONTH = 15;
-    const monthVid = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.video||0), 0);
+    const monthVid  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.video||0), 0);
+    const monthCpd  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpd||0), 0);
+    const monthProsp= entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.prosp||0), 0);
 
-    const mPct  = Math.min(monthDoc / META_DOC_MONTH * 100, 100);
-    const vPct  = Math.min(monthVid / META_VID_MONTH * 100, 100);
-    const mOver = monthDoc >= META_DOC_MONTH;
-    const vOver = monthVid >= META_VID_MONTH;
-    const mColor = mOver ? '#2ecc71' : monthDoc >= META_DOC_MONTH * 0.6 ? '#f0c040' : '#e74c3c';
-    const vColor = vOver ? '#2ecc71' : monthVid >= META_VID_MONTH * 0.6 ? '#f0c040' : '#e879f9';
-    const mLabel = mOver ? `✓ Meta atingida!` : `Faltam ${META_DOC_MONTH - monthDoc} DOC`;
-    const vLabel = vOver ? `✓ Meta atingida!` : `Faltam ${META_VID_MONTH - monthVid} vídeo${META_VID_MONTH - monthVid !== 1 ? 's' : ''}`;
+    // Ratios do mês anterior do próprio agente; fallback nas taxas reais da equipe
+    const prevMonthD = new Date(t+'T12:00:00'); prevMonthD.setDate(1); prevMonthD.setMonth(prevMonthD.getMonth()-1);
+    const prevRef = toDateStr(prevMonthD);
+    const { start:pStart, end:pEnd } = monthRange(prevRef);
+    const prevE = entries.filter(e => inRange(e.date, pStart, pEnd));
+    const prevDoc   = prevE.reduce((s,e)=>s+e.doc,0);
+    const prevCpd   = prevE.reduce((s,e)=>s+(e.cpd||0),0);
+    const prevProsp = prevE.reduce((s,e)=>s+(e.prosp||0),0);
+    const ratioCpd   = prevDoc > 1 ? prevCpd   / prevDoc : 4.5;
+    const ratioProsp = prevDoc > 1 ? prevProsp  / prevDoc : 37;
+    const META_CQ    = Math.round(ratioCpd   * META_DOC_MONTH);
+    const META_PROSP = Math.round(ratioProsp  * META_DOC_MONTH);
+
     const mesLabel = new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'});
+
+    const mkBar = (val, meta, color) => {
+      const pct = Math.min(val / meta * 100, 100);
+      const over = val >= meta;
+      const c = over ? '#2ecc71' : val >= meta * 0.6 ? '#f0c040' : color;
+      const falta = Math.max(meta - val, 0);
+      return { pct, over, c, falta };
+    };
+
+    const doc   = mkBar(monthDoc,   META_DOC_MONTH, '#e74c3c');
+    const cq    = mkBar(monthCpd,   META_CQ,        '#6495ed');
+    const prosp = mkBar(monthProsp, META_PROSP,     '#f0c040');
+    const vid   = mkBar(monthVid,   META_VID_MONTH, '#e879f9');
+
+    const mkMetaRow = (label, val, meta, unit, b) => `
+      <div class="agent-meta-row">
+        <div class="agent-meta-head">
+          <span class="agent-meta-lbl">${label}</span>
+          <span class="agent-meta-nums" style="color:${b.c}">
+            <strong>${val}</strong><span style="color:var(--text-muted);font-weight:400"> / ${meta} ${unit}</span>
+          </span>
+        </div>
+        <div class="agent-meta-bar-wrap">
+          <div class="agent-meta-bar" style="width:${b.pct}%;background:${b.c}"></div>
+        </div>
+        <div class="agent-meta-status" style="color:${b.c}">
+          ${b.over ? '✓ Meta atingida!' : `Faltam <strong>${b.falta} ${unit}</strong>`}
+        </div>
+      </div>`;
+
     metasWrap.innerHTML = `
-      <div class="meta-card">
-        <div class="meta-header">
-          <span class="meta-title">Meta Mensal</span>
-          <span class="meta-period">${mesLabel}</span>
-        </div>
-        <div class="meta-numbers">
-          <span class="meta-done" style="color:${mColor}">${monthDoc}</span>
-          <span class="meta-sep">/</span>
-          <span class="meta-total">${META_DOC_MONTH} DOC</span>
-        </div>
-        <div class="meta-bar-wrap">
-          <div class="meta-bar" style="width:${mPct}%;background:${mColor}"></div>
-        </div>
-        <div class="meta-label" style="color:${mColor}">${mLabel}</div>
-      </div>
-      <div class="meta-card">
-        <div class="meta-header">
-          <span class="meta-title">Meta de Vídeo</span>
-          <span class="meta-period">${mesLabel}</span>
-        </div>
-        <div class="meta-numbers">
-          <span class="meta-done" style="color:${vColor}">${monthVid}</span>
-          <span class="meta-sep">/</span>
-          <span class="meta-total">${META_VID_MONTH} vídeos</span>
-        </div>
-        <div class="meta-bar-wrap">
-          <div class="meta-bar" style="width:${vPct}%;background:${vColor}"></div>
-        </div>
-        <div class="meta-label" style="color:${vColor}">${vLabel}</div>
+      <div class="agent-meta-card">
+        <div class="agent-meta-period">${mesLabel}</div>
+        ${mkMetaRow('Angariações (DOC)', monthDoc,   META_DOC_MONTH, 'DOC',  doc)}
+        ${mkMetaRow('Conversas Qualif. (CQ)', monthCpd, META_CQ,   'CQ',   cq)}
+        ${mkMetaRow('Prospecções', monthProsp, META_PROSP, 'PROSP', prosp)}
+        ${mkMetaRow('Vídeos', monthVid, META_VID_MONTH, 'vídeos', vid)}
       </div>`;
   }
 
