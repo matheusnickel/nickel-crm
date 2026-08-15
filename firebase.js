@@ -43,6 +43,16 @@ export function fbListen(callback) {
   });
 }
 
+// ── VIDEO AUTH ──────────────────────────────────────────
+export async function fbGetVideoAuth() {
+  const snap = await getDoc(doc(db, '_meta', 'videoAuth'));
+  return snap.exists() ? snap.data() : {};
+}
+
+export async function fbSaveVideoAuth(data) {
+  await setDoc(doc(db, '_meta', 'videoAuth'), data);
+}
+
 // ── OFERTAS ATIVAS ──────────────────────────────────────
 export async function fbGetOfertas() {
   const snap = await getDocs(collection(db, 'ofertas'));

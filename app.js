@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
@@ -73,6 +73,36 @@ function localUpsert(entry) {
 async function upsertEntry(entry) {
   localUpsert(entry);
   await fbUpsertEntry(entry);
+}
+
+// ── VIDEO AUTH STATE ────────────────────────────────────
+// videoAuthData: { "Agent_YYYY-MM": [{ts, count}], ... }
+let videoAuthData = {};
+
+async function loadVideoAuth() {
+  try { videoAuthData = await fbGetVideoAuth(); } catch(e) { videoAuthData = {}; }
+}
+
+function videoAuthKey(agent, period) { return `${agent}_${period}`; }
+
+function getAuthorizedTotal(agent, period) {
+  const recs = videoAuthData[videoAuthKey(agent, period)] || [];
+  return recs.reduce((s, r) => s + r.count, 0);
+}
+
+function hasAnyAuth(agent, period) {
+  return (videoAuthData[videoAuthKey(agent, period)] || []).length > 0;
+}
+
+async function addVideoAuthorization(agent, period, count) {
+  const key = videoAuthKey(agent, period);
+  if (!videoAuthData[key]) videoAuthData[key] = [];
+  videoAuthData[key].push({ ts: new Date().toISOString(), count });
+  await fbSaveVideoAuth(videoAuthData);
+}
+
+function effectiveVideo(e) {
+  return typeof e.videoApproved === 'number' ? e.videoApproved : (e.video || 0);
 }
 
 async function updateDocNota(date, agent, docIdx, nota) {
@@ -431,16 +461,25 @@ function filterEntries(period, ref) {
   if (period==='month') { const r=monthRange(t); return entries.filter(e=>inRange(e.date,r.start,r.end)); }
   return entries;
 }
-function sumByAgent(entries) {
+function sumByAgent(entries, period) {
   const map={};
   const team = new Set(getAgentNames());
   entries.forEach(e=>{
     if (!team.has(e.agent)) return;
-    if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0,va:0,vr:0};
+    if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0,va:0,vr:0,vidSubmitted:0};
     map[e.agent].prosp+=e.prosp; map[e.agent].cpd+=e.cpd; map[e.agent].doc+=e.doc;
     map[e.agent].va += (e.va||0);
     map[e.agent].vr += (e.vaDetails||[]).filter(d=>d.realizada).length;
+    map[e.agent].vidSubmitted += (e.video||0);
   });
+  // Apply video authorizations: if any auth exists for the period, use authorized total; else submitted
+  if (period) {
+    Object.values(map).forEach(a => {
+      a.vid = hasAnyAuth(a.agent, period) ? getAuthorizedTotal(a.agent, period) : a.vidSubmitted;
+    });
+  } else {
+    Object.values(map).forEach(a => { a.vid = a.vidSubmitted; });
+  }
   return Object.values(map);
 }
 // Um lançamento só conta para a sequência se foi enviado no próprio dia
@@ -490,7 +529,7 @@ function calcDailyScore(entry) {
   // A partir do mínimo 3.0, cada atividade extra sobe a nota
   // Sem DOC: teto 7.9 (azul é exclusivo de quem captou DOC)
   // Com DOC: base 8.0 + bônus de esforço até 10.0
-  const vid = entry.video || 0;
+  const vid = effectiveVideo(entry);
   const effort = entry.cpd * 1.0 + vid * 1.0 + entry.prosp * 0.025;
 
   if (entry.doc > 0) {
@@ -500,7 +539,7 @@ function calcDailyScore(entry) {
   }
 
   // Sem DOC: verifica se atinge o piso amarelo
-  const meetsFloor = entry.cpd > 0 || vid > 0 || entry.prosp > 30;
+  const meetsFloor = entry.cpd > 0 || vid > 0 || entry.prosp > 30; // vid já usa effectiveVideo
   if (!meetsFloor) {
     // Vermelho: só prosp baixo ou nada — mostra valor pequeno mas fica vermelho
     return parseFloat(Math.min(entry.prosp * 0.025, 2.9).toFixed(1));
@@ -512,7 +551,7 @@ function calcWeeklyScore(agentName, weekEntries) {
   const mine  = weekEntries.filter(e => e.agent === agentName);
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
-  const vid   = mine.reduce((s, e) => s + (e.video||0), 0);
+  const vid   = mine.reduce((s, e) => s + effectiveVideo(e), 0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
   // Meta semanal: 3 DOC = azul (8.0+). Sem DOC: máx 7.9
   const effort = cpd * 1.0 + vid * 1.0 + prosp * 0.025;
@@ -631,7 +670,7 @@ function renderNotasRanking() {
 }
 
 // ── AGENT CONTACTS (CPDs & DOCs) ─────────────────────────
-let agentContactTab = 'cpd';
+let agentContactTab = '';
 
 function renderAgentContacts(agentName) {
   const wrap = document.getElementById('agent-contacts-wrap');
@@ -730,6 +769,7 @@ function renderAgentContacts(agentName) {
   const tab = agentContactTab;
   const isDesc = tab === 'descartados';
   const isCpd  = tab === 'cpd';
+  const isNone = tab === '';
 
   const makeDescRow = (d) => `<tr>
     <td style="font-weight:500">${d.nome}</td>
@@ -768,21 +808,23 @@ function renderAgentContacts(agentName) {
       <button class="nota-tab-btn${tab==='realizadas'?' active':''}" data-ctab="realizadas" style="color:${tab==='realizadas'?'inherit':'#a8e63daa'}">✅ Realizadas (${visRealizadas.length})</button>
       <button class="nota-tab-btn${tab==='nao'?' active':''}" data-ctab="nao" style="color:${tab==='nao'?'inherit':'#888'}">❌ Não realizadas (${visNao.length})</button>
     </div>
-    ${isVisit
-      ? visitList.length === 0
-        ? `<div class="empty-state" style="margin-top:12px">Nenhuma visita neste filtro</div>`
-        : `<div style="overflow-x:auto;margin-top:10px"><table class="data-table"><thead><tr><th>Cliente</th><th>Imóvel</th><th>Data/Hora</th><th>Status</th></tr></thead><tbody>${visitList.map(makeVisitRow).join('')}</tbody></table></div>`
-      : list.length === 0
-        ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':isDesc?'CQ descartado':'DOC'} registrado</div>`
-        : `<div style="overflow-x:auto;margin-top:10px">
-            <table class="data-table">
-              <thead><tr>${isDesc
-                ? '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo do Descarte</th><th></th>'
-                : `<th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th>`
-              }</tr></thead>
-              <tbody>${isDesc ? list.map(makeDescRow).join('') : list.map(makeRow).join('')}</tbody>
-            </table>
-          </div>`}`;
+    ${isNone
+      ? `<div class="empty-state" style="margin-top:14px;color:var(--text-muted);font-size:13px">Selecione uma aba para visualizar</div>`
+      : isVisit
+        ? visitList.length === 0
+          ? `<div class="empty-state" style="margin-top:12px">Nenhuma visita neste filtro</div>`
+          : `<div style="overflow-x:auto;margin-top:10px"><table class="data-table"><thead><tr><th>Cliente</th><th>Imóvel</th><th>Data/Hora</th><th>Status</th></tr></thead><tbody>${visitList.map(makeVisitRow).join('')}</tbody></table></div>`
+        : list.length === 0
+          ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':isDesc?'CQ descartado':'DOC'} registrado</div>`
+          : `<div style="overflow-x:auto;margin-top:10px">
+              <table class="data-table">
+                <thead><tr>${isDesc
+                  ? '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo do Descarte</th><th></th>'
+                  : `<th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th>`
+                }</tr></thead>
+                <tbody>${isDesc ? list.map(makeDescRow).join('') : list.map(makeRow).join('')}</tbody>
+              </table>
+            </div>`}`;
 
   wrap.querySelectorAll('[data-ctab]').forEach(btn =>
     btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; renderAgentContacts(agentName); })
@@ -1642,6 +1684,7 @@ async function initGestorDashboard() {
   const wpWrapInit=document.getElementById('week-picker-wrap');
   if (wpWrapInit) wpWrapInit.style.display = activePeriod==='week' ? 'block' : 'none';
   await loadTeam();
+  await loadVideoAuth();
   gestorUnsubscribe=fbListen(entries=>{
     saveEntries(entries);
     renderGestorDashboard();
@@ -1934,10 +1977,13 @@ function renderGestorDashboard() {
   const ref = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
   const team=new Set(getAgentNames());
   const entries=filterEntries(activePeriod, ref).filter(e=>team.has(e.agent));
-  const byAgent=sumByAgent(entries);
+  const periodKey = activePeriod === 'month'
+    ? (activeMonthRef || today()).slice(0, 7)
+    : activePeriod === 'week' ? activeWeekRef || today().slice(0, 7) : today().slice(0, 7);
+  const byAgent=sumByAgent(entries, periodKey);
 
   const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
-  const totVid=entries.reduce((s,e)=>s+(e.video||0),0);
+  const totVid=byAgent.reduce((s,a)=>s+(a.vid||0),0);
   document.getElementById('tot-prosp').textContent=totProsp;
   document.getElementById('tot-cpd').textContent=totCpd;
   document.getElementById('tot-doc').textContent=totDoc;
@@ -2627,63 +2673,140 @@ function renderCpdList(entries) {
 }
 
 // ── VIDEO VALIDATION (gestor) ────────────────────────────
+let vidValPeriod = today().slice(0, 7); // "YYYY-MM"
+
 function renderVideoValidation(entries) {
   const wrap = document.getElementById('video-validation-wrap');
   if (!wrap) return;
 
-  const agentNames = getAgentNames();
-  const videoEntries = entries.filter(e => (e.video||0) > 0);
+  // Período visível: respeita filtro ativo do gestor
+  const periodRef = activePeriod === 'month' ? (activeMonthRef || today()) : today();
+  vidValPeriod = periodRef.slice(0, 7);
+  const period = vidValPeriod;
 
-  if (!videoEntries.length) {
+  // Agrupa por agente
+  const agentMap = {};
+  entries.forEach(e => {
+    if ((e.video || 0) === 0) return;
+    if (!agentMap[e.agent]) agentMap[e.agent] = 0;
+    agentMap[e.agent] += e.video || 0;
+  });
+
+  const agents = Object.keys(agentMap).sort();
+
+  if (!agents.length) {
     wrap.innerHTML = '<div class="empty-state">Nenhum vídeo lançado no período</div>';
     return;
   }
 
-  // Datas únicas com vídeos, mais recentes primeiro
-  const dates = [...new Set(videoEntries.map(e => e.date))].sort((a,b) => b.localeCompare(a));
+  // Mês por extenso
+  const [yr, mo] = period.split('-');
+  const monthLabel = new Date(`${yr}-${mo}-15`).toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
 
-  // Mapa date+agent → entry
-  const map = {};
-  videoEntries.forEach(e => { map[`${e.date}|${e.agent}`] = e; });
+  const rows = agents.map(agent => {
+    const submitted   = agentMap[agent];
+    const authRecs    = videoAuthData[videoAuthKey(agent, period)] || [];
+    const authorized  = authRecs.reduce((s, r) => s + r.count, 0);
+    const remaining   = submitted - authorized;
 
-  // Totais por agente
-  const agentTotals = {};
-  agentNames.forEach(a => {
-    agentTotals[a] = videoEntries.filter(e => e.agent === a).reduce((s,e) => s + (e.video||0), 0);
-  });
+    const histHTML = authRecs.length
+      ? authRecs.map((r, i) => {
+          const d = new Date(r.ts);
+          const label = d.toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}) + ' ' +
+                        d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+          const runSum = authRecs.slice(0, i + 1).reduce((s, x) => s + x.count, 0);
+          return `<div class="va-hist-item">
+            <span class="va-hist-time">${label}</span>
+            <span class="va-hist-cnt">+${r.count}</span>
+            <span class="va-hist-sum">= ${runSum} total</span>
+          </div>`;
+        }).join('')
+      : `<div class="va-hist-empty">Nenhuma autorização ainda</div>`;
 
-  // Filtra só agentes que têm vídeo no período
-  const activeAgents = agentNames.filter(a => agentTotals[a] > 0);
-
-  const thStyle = `padding:10px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);border-bottom:1px solid var(--border);text-align:center;white-space:nowrap`;
-  const tdStyle = `padding:10px 14px;text-align:center;font-variant-numeric:tabular-nums;border-bottom:1px solid rgba(255,255,255,.04)`;
-
-  const headerCols = activeAgents.map(a =>
-    `<th style="${thStyle}">${a}<div style="color:#e879f9;font-size:14px;font-weight:700;margin-top:2px">${agentTotals[a]}</div></th>`
-  ).join('');
-
-  const bodyRows = dates.map(date => {
-    const cells = activeAgents.map(agent => {
-      const e = map[`${date}|${agent}`];
-      const count = e ? (e.video||0) : 0;
-      const color = count > 0 ? '#e879f9' : 'var(--border)';
-      const bg    = count > 0 ? 'rgba(232,121,249,.08)' : 'none';
-      return `<td style="${tdStyle}background:${bg}">
-        <span style="color:${color};font-size:${count>0?'18px':'13px'};font-weight:700">${count > 0 ? count : '—'}</span>
-      </td>`;
-    }).join('');
-    return `<tr><td style="${tdStyle}padding-left:0;text-align:left;color:var(--text-muted);font-size:12px;white-space:nowrap">${formatDate(date)}</td>${cells}</tr>`;
+    return `<div class="va-agent-card" data-agent="${agent}">
+      <div class="va-agent-header" data-toggle="${agent}">
+        <div class="va-agent-name">${agent}</div>
+        <div class="va-agent-nums">
+          <div class="va-num-block">
+            <span class="va-num">${submitted}</span>
+            <span class="va-num-lbl">enviado</span>
+          </div>
+          <div class="va-num-divider"></div>
+          <div class="va-num-block">
+            <span class="va-num authorized">${authorized}</span>
+            <span class="va-num-lbl">autorizado</span>
+          </div>
+          ${remaining > 0 ? `<span class="va-pending-chip">+${remaining} pendente${remaining>1?'s':''}</span>` : `<span class="va-ok-chip">✓</span>`}
+        </div>
+        <span class="va-chevron" id="chv-${agent}">▾</span>
+      </div>
+      <div class="va-agent-body" id="vab-${agent}" style="display:none">
+        <div class="va-hist-wrap">${histHTML}</div>
+        <div class="va-auth-form">
+          <span class="va-auth-label">Autorizar</span>
+          <div class="vid-stepper">
+            <button class="vid-step-btn va-minus" data-agent="${agent}">−</button>
+            <span class="vid-step-val va-inp-val" data-agent="${agent}">1</span>
+            <button class="vid-step-btn va-plus"  data-agent="${agent}">+</button>
+          </div>
+          <button class="va-confirm-btn" data-agent="${agent}" data-period="${period}">Confirmar</button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 
-  wrap.innerHTML = `<div style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <thead><tr>
-        <th style="${thStyle}padding-left:0;text-align:left">Data</th>
-        ${headerCols}
-      </tr></thead>
-      <tbody>${bodyRows}</tbody>
-    </table>
-  </div>`;
+  const pendingCount = agents.filter(a => {
+    const sub = agentMap[a];
+    const auth = (videoAuthData[videoAuthKey(a, period)] || []).reduce((s,r)=>s+r.count,0);
+    return auth < sub;
+  }).length;
+
+  wrap.innerHTML = `
+    <div class="va-period-label">${monthLabel}</div>
+    <div class="va-summary-chip ${pendingCount > 0 ? 'pending' : 'ok'}">
+      ${pendingCount > 0 ? `⏳ ${pendingCount} corretor${pendingCount>1?'es':''} com vídeos pendentes` : '✅ Todos os vídeos validados'}
+    </div>
+    <div class="va-agent-list">${rows}</div>`;
+
+  // Expand/collapse
+  wrap.querySelectorAll('[data-toggle]').forEach(hdr => {
+    hdr.addEventListener('click', () => {
+      const agent = hdr.dataset.toggle;
+      const body  = document.getElementById(`vab-${agent}`);
+      const chv   = document.getElementById(`chv-${agent}`);
+      const open  = body.style.display === 'none';
+      body.style.display = open ? '' : 'none';
+      chv.textContent = open ? '▴' : '▾';
+    });
+  });
+
+  // Stepper
+  const tempVals = {};
+  agents.forEach(a => { tempVals[a] = 1; });
+
+  wrap.querySelectorAll('.va-minus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tempVals[btn.dataset.agent] = Math.max(1, (tempVals[btn.dataset.agent] || 1) - 1);
+      wrap.querySelector(`.va-inp-val[data-agent="${btn.dataset.agent}"]`).textContent = tempVals[btn.dataset.agent];
+    });
+  });
+  wrap.querySelectorAll('.va-plus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      tempVals[btn.dataset.agent] = (tempVals[btn.dataset.agent] || 1) + 1;
+      wrap.querySelector(`.va-inp-val[data-agent="${btn.dataset.agent}"]`).textContent = tempVals[btn.dataset.agent];
+    });
+  });
+
+  wrap.querySelectorAll('.va-confirm-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const agent  = btn.dataset.agent;
+      const period = btn.dataset.period;
+      const count  = tempVals[agent] || 1;
+      btn.disabled = true; btn.textContent = '...';
+      await addVideoAuthorization(agent, period, count);
+      renderVideoValidation(entries);
+    });
+  });
 }
 
 // ── VISIT LIST — VA/VR (gestor) ──────────────────────────
@@ -2764,12 +2887,13 @@ function renderVisitList(entries) {
       <td><button class="vi-dataagend" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" data-val="${d.dataAgend||''}" style="background:none;border:none;border-bottom:1px dashed var(--border);color:${d.dataAgend?'var(--text-muted)':'var(--border)'};font-family:'DM Sans',sans-serif;font-size:12px;padding:2px 6px;cursor:pointer;min-width:80px;text-align:center">${d.dataAgend ? formatDate(d.dataAgend) : 'dd/mm/aaaa'}</button></td>
       <td><button class="vi-horario" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:none;border-bottom:1px dashed var(--border);color:${d.horario?'var(--text-muted)':'var(--border)'};font-family:'DM Sans',sans-serif;font-size:12px;padding:2px 6px;cursor:pointer;min-width:52px;text-align:center">${d.horario||'—:——'}</button></td>
       <td>${statusCell}</td>
+      <td><button class="vi-del-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" title="Excluir agendamento" style="background:none;border:none;color:#444;font-size:16px;cursor:pointer;padding:4px 8px;border-radius:6px;line-height:1" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#444'">✕</button></td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = filterHTML + `<div style="overflow-x:auto"><table class="data-table" style="font-size:12px">
-    <thead><tr><th>Lançamento</th><th>Angariador</th><th>Cliente</th><th>Imóvel</th><th>Data Visita</th><th>Horário</th><th>Status</th></tr></thead>
-    <tbody>${rowsHTML || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhuma visita para este angariador</td></tr>'}</tbody>
+    <thead><tr><th>Lançamento</th><th>Angariador</th><th>Cliente</th><th>Imóvel</th><th>Data Visita</th><th>Horário</th><th>Status</th><th></th></tr></thead>
+    <tbody>${rowsHTML || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:16px">Nenhuma visita para este angariador</td></tr>'}</tbody>
   </table></div>`;
 
   wrap.querySelector('#visit-agent-filter').addEventListener('change', function(){ activeVisitAgent=this.value; renderVisitList(entries); });
@@ -2918,6 +3042,18 @@ function renderVisitList(entries) {
         d.realizada = null; d.dataRealizacao = ''; d.horarioRealizacao = '';
         localUpsert(entry); await fbUpsertEntry(entry);
       }
+      renderVisitList(filterEntries(activePeriod, activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined));
+    });
+  });
+
+  wrap.querySelectorAll('.vi-del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const entries = getEntries();
+      const entry = entries.find(e => e.date === btn.dataset.date && e.agent === btn.dataset.agent);
+      if (!entry?.vaDetails) return;
+      entry.vaDetails.splice(parseInt(btn.dataset.idx), 1);
+      entry.va = entry.vaDetails.length;
+      localUpsert(entry); await fbUpsertEntry(entry);
       renderVisitList(filterEntries(activePeriod, activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined));
     });
   });
@@ -3250,6 +3386,19 @@ function renderConversion(ranked) {
     </div>`;
   }).join('');
 }
+
+// ── ADMIN UTILS ─────────────────────────────────────────
+window.adminClearVideoLink = async function(date, agent) {
+  const entries = getEntries();
+  const entry = entries.find(e => e.date === date && e.agent === agent);
+  if (!entry) { console.warn('Entry not found'); return; }
+  if (entry.vrDetails) entry.vrDetails = entry.vrDetails.map(v => { const c = {...v}; delete c.url; return c; });
+  delete entry.videoUrl; delete entry.vidUrl; delete entry.videoLink;
+  if (Array.isArray(entry.videoLinks)) entry.videoLinks = [];
+  localUpsert(entry);
+  await fbUpsertEntry(entry);
+  console.log('Cleared video links for', agent, date);
+};
 
 // ── PAGE DETECTION ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', ()=>{
