@@ -1100,59 +1100,80 @@ function showVaRealizedModal(onConfirm) {
   });
 }
 
-// ── AGENT RANKING (Dia / Semana / Mês) ───────────────────
-let activeAgentRankTab = 'dia';
+// ── AGENT RANKING (mesmo ranking do gestor: DOC·CQ·PROSP·VA·VR) ──
+let activeAgentRankTab = 'mes';
 
 function renderAgentDailyRanking(currentAgentName) {
   const wrap = document.getElementById('agent-daily-ranking');
   if (!wrap) return;
   const t = today();
   const names = getAgentNames();
-  const medals = ['🥇', '🥈', '🥉'];
+  const PODIUM = { 1:'gold-badge', 2:'silver-badge', 3:'bronze-badge' };
+  const PODIUM_LABEL = { 1:'🥇', 2:'🥈', 3:'🥉' };
 
-  let rows;
+  const allEntries = getEntries();
+  let periodEntries;
   if (activeAgentRankTab === 'dia') {
-    const dayEntries = filterEntries('today', t);
-    rows = names.map(name => {
-      const e = dayEntries.find(x => x.agent === name);
-      const streak = calcStreak(name);
-      return { name, score: calcDailyScore(e || null), sent: !!e, streak };
-    });
-    rows.sort((a, b) => { if (a.sent !== b.sent) return a.sent ? -1 : 1; return b.score - a.score; });
+    periodEntries = filterEntries('today', t);
+  } else if (activeAgentRankTab === 'semana') {
+    periodEntries = filterEntries('week', t);
   } else {
-    const monthEntries = filterEntries('month', t);
-    rows = names.map(name => {
-      const streak = calcStreak(name);
-      return { name, score: calcMonthlyScore(name, monthEntries), sent: true, streak };
-    });
-    rows.sort((a, b) => b.score - a.score);
+    periodEntries = filterEntries('month', t);
   }
 
-  const rowsHTML = rows.map((r, i) => {
-    const isMe = r.name === currentAgentName;
-    const isDia = activeAgentRankTab === 'dia';
-    const notSent = isDia && !r.sent;
-    const col = notSent ? '#e74c3c' : scoreColor(r.score);
-    const medal = notSent ? '💀' : (i < 3 ? medals[i] : `${i + 1}`);
-    const scoreStr = notSent ? '0.0' : r.score.toFixed(1);
-    const streakBadge = r.streak >= 3 ? `<span style="font-size:11px;color:#f0c040;margin-left:6px">🔥${r.streak}d</span>` : '';
-    const rowBg = isMe ? 'background:rgba(168,230,61,0.07);' : notSent ? 'background:rgba(231,76,60,0.05);' : '';
-    return `<tr style="${rowBg}">
-      <td style="font-size:15px;text-align:center;width:36px">${medal}</td>
-      <td style="${isMe ? 'font-weight:700;color:#f0f0f0' : notSent ? 'color:var(--text-muted)' : ''}">${r.name}${isMe ? ' 👤' : ''}${streakBadge}</td>
-      <td class="num-cell nota-score" style="color:${col};font-weight:700">${scoreStr}</td>
-      <td class="num-cell" style="color:var(--text-muted);font-size:12px">${notSent ? 'Sem envio' : scoreLabel(r.score)}</td>
+  const byAgent = names.map(name => {
+    const agentE = periodEntries.filter(e => e.agent === name);
+    const streak = calcStreak(name);
+    return {
+      agent: name,
+      doc:   agentE.reduce((s,e)=>s+e.doc,0),
+      cpd:   agentE.reduce((s,e)=>s+(e.cpd||0),0),
+      prosp: agentE.reduce((s,e)=>s+(e.prosp||0),0),
+      va:    agentE.reduce((s,e)=>s+(e.va||0),0),
+      vr:    agentE.reduce((s,e)=>s+(e.vaDetails||[]).filter(d=>d.realizada).length,0),
+      streak,
+    };
+  });
+
+  byAgent.sort((a,b) => b.doc!==a.doc ? b.doc-a.doc : b.cpd!==a.cpd ? b.cpd-a.cpd : b.prosp-a.prosp);
+
+  const rowsHTML = byAgent.map((a, i) => {
+    const pos = i + 1;
+    const isMe = a.agent === currentAgentName;
+    const streakBadge = a.streak >= 3 ? ` <span style="font-size:10px;color:#f0c040">🔥${a.streak}d</span>` : '';
+    const rowBg = isMe ? 'background:rgba(168,230,61,0.08);' : '';
+    const nameTxt = `${a.agent}${isMe?' 👤':''}${streakBadge}`;
+    const badge = pos <= 3
+      ? `<span class="rank-badge ${PODIUM[pos]}">${PODIUM_LABEL[pos]}</span>`
+      : pos;
+    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}" style="${rowBg}">
+      <td><span>${badge}</span></td>
+      <td style="${isMe?'font-weight:700;color:#f0f0f0':''}">${nameTxt}</td>
+      <td class="num-cell doc-cell">${a.doc}</td>
+      <td class="num-cell">${a.cpd}</td>
+      <td class="num-cell dim-cell">${a.prosp}</td>
+      <td class="num-cell dim-cell" style="color:#ef4444">${a.va}</td>
+      <td class="num-cell dim-cell" style="color:#f97316">${a.vr}</td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = `
     <div class="nota-tabs">
       <button class="nota-tab-btn${activeAgentRankTab==='dia'?' active':''}" data-tab="dia">Dia</button>
+      <button class="nota-tab-btn${activeAgentRankTab==='semana'?' active':''}" data-tab="semana">Semana</button>
       <button class="nota-tab-btn${activeAgentRankTab==='mes'?' active':''}" data-tab="mes">Mês</button>
     </div>
-    <div style="overflow-x:auto">
-      <table class="data-table rank-table" style="margin-top:10px;min-width:280px">
-        <thead><tr><th style="width:36px">#</th><th>Angariador</th><th class="num-cell">Nota</th><th class="num-cell">Nível</th></tr></thead>
+    <div style="overflow-x:auto;margin-top:10px">
+      <table class="data-table rank-table" style="min-width:320px">
+        <thead><tr>
+          <th style="width:36px">#</th>
+          <th>Angariador</th>
+          <th class="num-cell" style="color:#a8e63d">DOC</th>
+          <th class="num-cell">CQ</th>
+          <th class="num-cell dim-cell">PROSP</th>
+          <th class="num-cell dim-cell" style="color:#ef4444">VA</th>
+          <th class="num-cell dim-cell" style="color:#f97316">VR</th>
+        </tr></thead>
         <tbody>${rowsHTML}</tbody>
       </table>
     </div>`;
