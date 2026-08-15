@@ -1433,72 +1433,59 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const prosp = mkBar(monthProsp, META_PROSP,     '#f0c040');
     const vid   = mkBar(monthVid,   META_VID_MONTH, '#e879f9');
 
-    // ── Identifica gargalo no funil PROSP → CQ → DOC ───────
-    const neededPerDay = (val, meta) => daysRemaining > 0 ? Math.max(meta - val, 0) / daysRemaining : 0;
-    const currentPerDay = (val) => dayOfMonth > 0 ? val / dayOfMonth : 0;
-    // gap = quantas vezes precisa aumentar o ritmo atual para bater
+    // ── Ritmo esperado até hoje (meta proporcional ao dia) ──
+    // Ex: meta 128 PROSP, dia 15 de 31 → esperado = round(128 * 15/31) = 62
+    const expectedToday = (meta) => Math.round(meta * dayOfMonth / daysInMonth);
+    const onPace        = (val, meta) => val >= expectedToday(meta);
+    const paceChip      = (val, meta, unit) => {
+      const exp  = expectedToday(meta);
+      const ahead = val - exp;
+      if (val >= meta) return { html: '', ok: true };
+      if (ahead >= 0) {
+        return { html: `<span class="pace-chip ok">▲ ${ahead} ${unit} à frente do ritmo</span>`, ok: true };
+      } else {
+        return { html: `<span class="pace-chip warn">▼ ${Math.abs(ahead)} ${unit} abaixo do ritmo</span>`, ok: false };
+      }
+    };
+
+    // ── Identifica gargalo no funil PROSP → CQ → DOC ────
     const gap = (val, meta) => {
-      const cur = currentPerDay(val);
-      const need = neededPerDay(val, meta);
+      const exp = expectedToday(meta);
       if (val >= meta) return 0;
-      if (cur === 0) return 99;
-      return need / cur;
+      if (exp === 0) return val === 0 ? 99 : 0;
+      return Math.max(exp - val, 0) / exp; // % abaixo do esperado
     };
 
     const gapDoc   = gap(monthDoc,   META_DOC_MONTH);
     const gapCpd   = gap(monthCpd,   META_CQ);
     const gapProsp = gap(monthProsp, META_PROSP);
 
-    // Gargalo = maior gap no funil (só DOC, CQ, PROSP — não vídeo)
-    // Se todos os gaps são 0, todas as metas foram batidas → sem gargalo
     const bottleneck = (gapProsp === 0 && gapCpd === 0 && gapDoc === 0) ? null
                      : gapProsp >= gapCpd && gapProsp >= gapDoc          ? 'prosp'
                      : gapCpd  >= gapDoc                                  ? 'cq'
                      : 'doc';
 
-    const ndProsp = Math.ceil(neededPerDay(monthProsp, META_PROSP));
-    const ndCpd   = Math.ceil(neededPerDay(monthCpd,   META_CQ));
-    const ndDoc   = Math.ceil(neededPerDay(monthDoc,   META_DOC_MONTH));
-    const cdProsp = Math.round(currentPerDay(monthProsp) * 10) / 10;
-    const cdCpd   = Math.round(currentPerDay(monthCpd) * 10) / 10;
+    const ndProsp = Math.ceil(Math.max(META_PROSP - monthProsp, 0) / Math.max(daysRemaining, 1));
+    const ndCpd   = Math.ceil(Math.max(META_CQ    - monthCpd,   0) / Math.max(daysRemaining, 1));
 
     const bottleneckHTML = (() => {
-      if (!bottleneck) return `<div class="agent-gargalo ok">🏆 No ritmo certo para bater todas as metas!</div>`;
+      if (!bottleneck) return `<div class="agent-gargalo ok">🏆 Você está no ritmo para bater todas as metas. Continue assim!</div>`;
       if (bottleneck === 'prosp') return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-title">🚨 Gargalo: Prospecção</div>
-          <div class="agent-gargalo-msg">Você faz <strong>${cdProsp}/dia</strong> atualmente. Precisa de <strong>${ndProsp}/dia</strong> nos próximos ${daysRemaining} dias para bater a meta.</div>
-          <div class="agent-gargalo-tip">Mais prospecção → mais CQ → mais DOC. Esse é o ponto que desbloqueia tudo.</div>
+          <div class="agent-gargalo-msg">Sua prospecção está baixa — no ritmo atual, você não vai bater os 12 DOCs. Aumente para <strong>~${ndProsp} prospecções/dia</strong> e o resto vai se encaixar.</div>
         </div>`;
       if (bottleneck === 'cq') return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-title">🚨 Gargalo: Conversas Qualificadas</div>
-          <div class="agent-gargalo-msg">Você fecha <strong>${cdCpd}/dia</strong> em CQ. Precisa de <strong>${ndCpd}/dia</strong> nos próximos ${daysRemaining} dias.</div>
-          <div class="agent-gargalo-tip">Qualifique melhor seus contatos — converter PROSP em CQ vai abrir caminho para o DOC.</div>
+          <div class="agent-gargalo-msg">Você está prospectando bem, mas precisa converter mais em CQ. Foque em qualificar seus contatos — <strong>~${ndCpd} CQs/dia</strong> para bater a meta.</div>
         </div>`;
       return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-title">🚨 Gargalo: Angariações (DOC)</div>
-          <div class="agent-gargalo-msg">Faltam <strong>${ndDoc}/dia</strong> em angariações pelos próximos ${daysRemaining} dias.</div>
-          <div class="agent-gargalo-tip">CQ e PROSP estão no ritmo — foque em fechar as conversas que já estão em andamento.</div>
+          <div class="agent-gargalo-msg">Suas prospecções e CQs estão no ritmo. O foco agora é fechar angariações — as conversas já estão abertas, é hora de finalizar.</div>
         </div>`;
     })();
 
-    const mkMetaRow = (label, val, meta, unit, b, teamAvg, isBottleneck) => {
-      const proj      = project(val);
-      const onTrack   = proj >= meta;
-      const projColor = onTrack ? '#2ecc71' : '#ef4444';
-      const projIcon  = onTrack ? '🎯' : '⚠️';
-      const projLabel = b.over
-        ? ''
-        : `<span class="agent-meta-proj" style="color:${projColor}">${projIcon} Projeta <strong>${proj} ${unit}</strong> até dia ${daysInMonth} · ${daysRemaining} dia${daysRemaining!==1?'s':''} restante${daysRemaining!==1?'s':''}</span>`;
-
-      const avgRounded = Math.round(teamAvg * 10) / 10;
-      const aboveAvg   = val >= teamAvg;
-      const avgLabel   = `<span class="agent-meta-avg" style="color:${aboveAvg?'#a8e63d':'#f0c040'}">
-        ${aboveAvg ? '⬆ Acima' : '⬇ Abaixo'} da média do time <span style="color:var(--text-muted)">(média: ${avgRounded} ${unit})</span>
-      </span>`;
-
+    const mkMetaRow = (label, val, meta, unit, b, isBottleneck) => {
+      const chip = paceChip(val, meta, unit);
       return `
       <div class="agent-meta-row${isBottleneck ? ' is-bottleneck' : ''}">
         <div class="agent-meta-head">
@@ -1510,24 +1497,22 @@ function renderAgentDashboard(session, selectedDate, editing) {
         <div class="agent-meta-bar-wrap">
           <div class="agent-meta-bar" style="width:${b.pct}%;background:${b.c}"></div>
         </div>
-        <div class="agent-meta-status" style="color:${b.c}">
-          ${b.over ? '✓ Meta atingida!' : `Faltam <strong>${b.falta} ${unit}</strong>`}
-        </div>
-        <div class="agent-meta-insights">
-          ${projLabel}
-          ${avgLabel}
+        <div class="agent-meta-foot">
+          <span class="agent-meta-status" style="color:${b.c}">
+            ${b.over ? '✓ Meta atingida!' : `Faltam <strong>${b.falta} ${unit}</strong>`}
+          </span>
+          ${chip.html}
         </div>
       </div>`;
     };
 
     metasWrap.innerHTML = `
       <div class="agent-meta-card">
-        <div class="agent-meta-period">${mesLabel} · dia ${dayOfMonth} de ${daysInMonth}</div>
+        <div class="agent-meta-period">${mesLabel} · dia ${dayOfMonth} de ${daysInMonth} · ${daysRemaining} dias restantes</div>
         ${bottleneckHTML}
-        ${mkMetaRow('Angariações (DOC)', monthDoc,   META_DOC_MONTH, 'DOC',    doc,   teamAvgDoc,   bottleneck==='doc')}
-        ${mkMetaRow('Conversas Qualif. (CQ)', monthCpd, META_CQ,   'CQ',     cq,    teamAvgCpd,   bottleneck==='cq')}
-        ${mkMetaRow('Prospecções',       monthProsp, META_PROSP,    'PROSP',  prosp, teamAvgProsp, bottleneck==='prosp')}
-        ${mkMetaRow('Vídeos',            monthVid,   META_VID_MONTH,'vídeos', vid,   teamAvgVid,   false)}
+        ${mkMetaRow('Angariações (DOC)',     monthDoc,   META_DOC_MONTH, 'DOC',   doc,   bottleneck==='doc')}
+        ${mkMetaRow('Conversas Qualif. (CQ)',monthCpd,   META_CQ,        'CQ',    cq,    bottleneck==='cq')}
+        ${mkMetaRow('Prospecções',           monthProsp, META_PROSP,     'PROSP', prosp, bottleneck==='prosp')}
       </div>`;
   }
 
