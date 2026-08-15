@@ -784,16 +784,27 @@ function renderAgentContacts(agentName) {
   const list = isCpd ? cpds : isDesc ? descartados : isVisit ? [] : docs;
 
   const makeVisitRow = (v) => {
+    const isAgendada = v.realizada !== true && !(v.realizada === false && v.dataRealizacao === 'nao');
     const statusTxt = v.realizada === true
       ? `<span style="color:#a8e63d;font-size:11px">✅ ${v.dataRealizacao && v.dataRealizacao!=='nao' ? formatDate(v.dataRealizacao) : ''}${v.horarioRealizacao ? ' às '+v.horarioRealizacao : ''}</span>`
       : v.realizada === false && v.dataRealizacao === 'nao'
         ? `<span style="color:#888;font-size:11px">❌ Não realizada</span>`
         : `<span style="color:#ef4444;font-size:11px">⏳ Agendada</span>`;
+    const actionBtns = isAgendada
+      ? `<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+           <button class="va-confirm-btn" data-entry="${v.entryDate}" data-idx="${v.idx}"
+             style="flex:1;padding:8px 4px;background:#a8e63d22;border:1px solid #a8e63d66;color:#a8e63d;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✅ Confirmar</button>
+           <button class="va-cancel-btn" data-entry="${v.entryDate}" data-idx="${v.idx}"
+             style="flex:1;padding:8px 4px;background:#ef444422;border:1px solid #ef444466;color:#ef4444;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">❌ Desmarcar</button>
+         </div>`
+      : '';
     return `<tr>
-      <td style="font-weight:500">${v.nome||'—'}</td>
-      <td style="color:var(--text-muted);font-size:12px">${v.imovel||'—'}</td>
-      <td style="color:var(--text-muted);font-size:12px">${v.dataAgend ? formatDate(v.dataAgend) : '—'}${v.horario ? ' às '+v.horario : ''}</td>
-      <td>${statusTxt}</td>
+      <td colspan="4" style="padding:10px 6px">
+        <div style="font-weight:600;font-size:13px">${v.nome||'—'}</div>
+        <div style="color:var(--text-muted);font-size:12px;margin-top:2px">${v.imovel||'—'} · ${v.dataAgend ? formatDate(v.dataAgend) : '—'}${v.horario ? ' às '+v.horario : ''}</div>
+        <div style="margin-top:4px">${statusTxt}</div>
+        ${actionBtns}
+      </td>
     </tr>`;
   };
 
@@ -813,7 +824,7 @@ function renderAgentContacts(agentName) {
       : isVisit
         ? visitList.length === 0
           ? `<div class="empty-state" style="margin-top:12px">Nenhuma visita neste filtro</div>`
-          : `<div style="overflow-x:auto;margin-top:10px"><table class="data-table"><thead><tr><th>Cliente</th><th>Imóvel</th><th>Data/Hora</th><th>Status</th></tr></thead><tbody>${visitList.map(makeVisitRow).join('')}</tbody></table></div>`
+          : `<div style="margin-top:10px"><table class="data-table" style="table-layout:fixed;width:100%"><tbody>${visitList.map(makeVisitRow).join('')}</tbody></table></div>`
         : list.length === 0
           ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':isDesc?'CQ descartado':'DOC'} registrado</div>`
           : `<div style="overflow-x:auto;margin-top:10px">
@@ -829,6 +840,30 @@ function renderAgentContacts(agentName) {
   wrap.querySelectorAll('[data-ctab]').forEach(btn =>
     btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; renderAgentContacts(agentName); })
   );
+
+  // Confirmar visita realizada
+  wrap.querySelectorAll('.va-confirm-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const entryDate = btn.dataset.entry;
+      const idx = parseInt(btn.dataset.idx);
+      const hora = prompt('Horário que aconteceu (ex: 16:30):', btn.closest('tr').querySelector('[data-idx]')?.dataset?.horario || '') ?? '';
+      await updateVaRealized(entryDate, agentName, idx, today(), hora.trim());
+      agentContactTab = 'realizadas';
+      renderAgentContacts(agentName);
+    });
+  });
+
+  // Marcar visita como não realizada / desmarcada
+  wrap.querySelectorAll('.va-cancel-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const entryDate = btn.dataset.entry;
+      const idx = parseInt(btn.dataset.idx);
+      if (!confirm('Marcar esta visita como não realizada?')) return;
+      await updateVaRealized(entryDate, agentName, idx, 'nao', '');
+      agentContactTab = 'nao';
+      renderAgentContacts(agentName);
+    });
+  });
 
   // Status change (CPD tracker)
   wrap.querySelectorAll('.cpd-tracker-status').forEach(sel => {
