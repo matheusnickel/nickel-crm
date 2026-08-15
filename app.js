@@ -1433,7 +1433,57 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const prosp = mkBar(monthProsp, META_PROSP,     '#f0c040');
     const vid   = mkBar(monthVid,   META_VID_MONTH, '#e879f9');
 
-    const mkMetaRow = (label, val, meta, unit, b, teamAvg) => {
+    // ── Identifica gargalo no funil PROSP → CQ → DOC ───────
+    const neededPerDay = (val, meta) => daysRemaining > 0 ? Math.max(meta - val, 0) / daysRemaining : 0;
+    const currentPerDay = (val) => dayOfMonth > 0 ? val / dayOfMonth : 0;
+    // gap = quantas vezes precisa aumentar o ritmo atual para bater
+    const gap = (val, meta) => {
+      const cur = currentPerDay(val);
+      const need = neededPerDay(val, meta);
+      if (val >= meta) return 0;
+      if (cur === 0) return 99;
+      return need / cur;
+    };
+
+    const gapDoc   = gap(monthDoc,   META_DOC_MONTH);
+    const gapCpd   = gap(monthCpd,   META_CQ);
+    const gapProsp = gap(monthProsp, META_PROSP);
+
+    // Gargalo = maior gap no funil (só DOC, CQ, PROSP — não vídeo)
+    const bottleneck = gapProsp >= gapCpd && gapProsp >= gapDoc ? 'prosp'
+                     : gapCpd  >= gapDoc                         ? 'cq'
+                     : gapDoc  > 0                               ? 'doc'
+                     : null;
+
+    const ndProsp = Math.ceil(neededPerDay(monthProsp, META_PROSP));
+    const ndCpd   = Math.ceil(neededPerDay(monthCpd,   META_CQ));
+    const ndDoc   = Math.ceil(neededPerDay(monthDoc,   META_DOC_MONTH));
+    const cdProsp = Math.round(currentPerDay(monthProsp) * 10) / 10;
+    const cdCpd   = Math.round(currentPerDay(monthCpd) * 10) / 10;
+
+    const bottleneckHTML = (() => {
+      if (!bottleneck) return `<div class="agent-gargalo ok">🏆 No ritmo certo para bater todas as metas!</div>`;
+      if (bottleneck === 'prosp') return `
+        <div class="agent-gargalo warn">
+          <div class="agent-gargalo-title">🚨 Gargalo: Prospecção</div>
+          <div class="agent-gargalo-msg">Você faz <strong>${cdProsp}/dia</strong> atualmente. Precisa de <strong>${ndProsp}/dia</strong> nos próximos ${daysRemaining} dias para bater a meta.</div>
+          <div class="agent-gargalo-tip">Mais prospecção → mais CQ → mais DOC. Esse é o ponto que desbloqueia tudo.</div>
+        </div>`;
+      if (bottleneck === 'cq') return `
+        <div class="agent-gargalo warn">
+          <div class="agent-gargalo-title">🚨 Gargalo: Conversas Qualificadas</div>
+          <div class="agent-gargalo-msg">Você fecha <strong>${cdCpd}/dia</strong> em CQ. Precisa de <strong>${ndCpd}/dia</strong> nos próximos ${daysRemaining} dias.</div>
+          <div class="agent-gargalo-tip">Qualifique melhor seus contatos — converter PROSP em CQ vai abrir caminho para o DOC.</div>
+        </div>`;
+      return `
+        <div class="agent-gargalo warn">
+          <div class="agent-gargalo-title">🚨 Gargalo: Angariações (DOC)</div>
+          <div class="agent-gargalo-msg">Faltam <strong>${ndDoc}/dia</strong> em angariações pelos próximos ${daysRemaining} dias.</div>
+          <div class="agent-gargalo-tip">CQ e PROSP estão no ritmo — foque em fechar as conversas que já estão em andamento.</div>
+        </div>`;
+    })();
+
+    const mkMetaRow = (label, val, meta, unit, b, teamAvg, isBottleneck) => {
       const proj      = project(val);
       const onTrack   = proj >= meta;
       const projColor = onTrack ? '#2ecc71' : '#ef4444';
@@ -1443,16 +1493,15 @@ function renderAgentDashboard(session, selectedDate, editing) {
         : `<span class="agent-meta-proj" style="color:${projColor}">${projIcon} Projeta <strong>${proj} ${unit}</strong> até dia ${daysInMonth} · ${daysRemaining} dia${daysRemaining!==1?'s':''} restante${daysRemaining!==1?'s':''}</span>`;
 
       const avgRounded = Math.round(teamAvg * 10) / 10;
-      const vsAvg      = val - teamAvg;
-      const aboveAvg   = vsAvg >= 0;
+      const aboveAvg   = val >= teamAvg;
       const avgLabel   = `<span class="agent-meta-avg" style="color:${aboveAvg?'#a8e63d':'#f0c040'}">
         ${aboveAvg ? '⬆ Acima' : '⬇ Abaixo'} da média do time <span style="color:var(--text-muted)">(média: ${avgRounded} ${unit})</span>
       </span>`;
 
       return `
-      <div class="agent-meta-row">
+      <div class="agent-meta-row${isBottleneck ? ' is-bottleneck' : ''}">
         <div class="agent-meta-head">
-          <span class="agent-meta-lbl">${label}</span>
+          <span class="agent-meta-lbl">${label}${isBottleneck ? ' <span class="bottleneck-tag">gargalo</span>' : ''}</span>
           <span class="agent-meta-nums" style="color:${b.c}">
             <strong>${val}</strong><span style="color:var(--text-muted);font-weight:400"> / ${meta} ${unit}</span>
           </span>
@@ -1473,10 +1522,11 @@ function renderAgentDashboard(session, selectedDate, editing) {
     metasWrap.innerHTML = `
       <div class="agent-meta-card">
         <div class="agent-meta-period">${mesLabel} · dia ${dayOfMonth} de ${daysInMonth}</div>
-        ${mkMetaRow('Angariações (DOC)', monthDoc,   META_DOC_MONTH, 'DOC',    doc,   teamAvgDoc)}
-        ${mkMetaRow('Conversas Qualif. (CQ)', monthCpd, META_CQ,   'CQ',     cq,    teamAvgCpd)}
-        ${mkMetaRow('Prospecções',       monthProsp, META_PROSP,    'PROSP',  prosp, teamAvgProsp)}
-        ${mkMetaRow('Vídeos',            monthVid,   META_VID_MONTH,'vídeos', vid,   teamAvgVid)}
+        ${bottleneckHTML}
+        ${mkMetaRow('Angariações (DOC)', monthDoc,   META_DOC_MONTH, 'DOC',    doc,   teamAvgDoc,   bottleneck==='doc')}
+        ${mkMetaRow('Conversas Qualif. (CQ)', monthCpd, META_CQ,   'CQ',     cq,    teamAvgCpd,   bottleneck==='cq')}
+        ${mkMetaRow('Prospecções',       monthProsp, META_PROSP,    'PROSP',  prosp, teamAvgProsp, bottleneck==='prosp')}
+        ${mkMetaRow('Vídeos',            monthVid,   META_VID_MONTH,'vídeos', vid,   teamAvgVid,   false)}
       </div>`;
   }
 

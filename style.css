@@ -362,6 +362,61 @@ a { color: inherit; text-decoration: none; }
 }
 .agent-meta-proj strong, .agent-meta-avg strong { font-weight: 700; }
 
+/* ── GARGALO ── */
+.agent-gargalo {
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.agent-gargalo.ok {
+  background: rgba(168,230,61,.1);
+  border: 1px solid rgba(168,230,61,.25);
+  color: #a8e63d;
+  font-size: 13px;
+  font-weight: 700;
+}
+.agent-gargalo.warn {
+  background: rgba(239,68,68,.08);
+  border: 1px solid rgba(239,68,68,.25);
+}
+.agent-gargalo-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ef4444;
+}
+.agent-gargalo-msg {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.agent-gargalo-msg strong { font-weight: 700; color: #fff; }
+.agent-gargalo-tip {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.agent-meta-row.is-bottleneck {
+  background: rgba(239,68,68,.04);
+  border-radius: 8px;
+  padding: 8px;
+  margin: 0 -8px;
+}
+.bottleneck-tag {
+  display: inline-block;
+  background: rgba(239,68,68,.15);
+  color: #ef4444;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
 .meta-card {
   background: var(--bg3);
   border: 1px solid var(--border);
