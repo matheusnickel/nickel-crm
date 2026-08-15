@@ -1440,7 +1440,9 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const monthCpd  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpd||0), 0);
     const monthProsp= entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.prosp||0), 0);
 
-    // Ratios do time (mês anterior de todos os angariadores) → aplicados à meta individual de 12 DOC
+    // Targets do time: mesmos do painel gestor (mês anterior, todos os angariadores)
+    // Primeiro calcula o target para META_DOC_GESTOR (80), depois escala para 12 DOC
+    // Isso garante que a proporção bate exatamente com o que o gestor vê (ex: 281 CQ / 80 DOC × 12 = 42)
     const prevMonthD = new Date(t+'T12:00:00'); prevMonthD.setDate(1); prevMonthD.setMonth(prevMonthD.getMonth()-1);
     const prevRef = toDateStr(prevMonthD);
     const { start:pStart, end:pEnd } = monthRange(prevRef);
@@ -1450,8 +1452,11 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const allPrevProsp= allPrevE.reduce((s,e)=>s+(e.prosp||0),0);
     const ratioCpd   = allPrevDoc > 0 ? allPrevCpd   / allPrevDoc : 3.51;
     const ratioProsp = allPrevDoc > 0 ? allPrevProsp / allPrevDoc : 32;
-    const META_CQ    = Math.round(ratioCpd   * META_DOC_MONTH);
-    const META_PROSP = Math.round(ratioProsp * META_DOC_MONTH);
+    // Arredonda igual ao gestor (para 80 DOC) e depois divide proporcionalmente para 12
+    const META_CQ_GESTOR    = Math.round(ratioCpd   * META_DOC_GESTOR);
+    const META_PROSP_GESTOR = Math.round(ratioProsp * META_DOC_GESTOR);
+    const META_CQ    = Math.round(META_CQ_GESTOR    / META_DOC_GESTOR * META_DOC_MONTH);
+    const META_PROSP = Math.round(META_PROSP_GESTOR / META_DOC_GESTOR * META_DOC_MONTH);
 
     const mesLabel = new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'});
 
