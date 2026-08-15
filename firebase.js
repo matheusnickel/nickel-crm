@@ -83,8 +83,8 @@ export async function fbRenameAgent(oldName, newName) {
   const toRename = snap.docs.filter(d => d.data().agent === oldName);
   if (toRename.length === 0) { console.log(`Nenhuma entrada encontrada para "${oldName}"`); }
 
-  // Processa em lotes de 500 (limite do Firestore)
-  const chunkSize = 400;
+  // Cada entrada gera 2 ops (set + delete) → max 200 por batch (limite é 500 ops)
+  const chunkSize = 200;
   for (let i = 0; i < toRename.length; i += chunkSize) {
     const batch = writeBatch(db);
     toRename.slice(i, i + chunkSize).forEach(d => {
