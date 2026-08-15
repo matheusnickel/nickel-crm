@@ -77,6 +77,38 @@ export async function fbSaveTeam(agents) {
   await setDoc(doc(db, '_meta', 'team'), { agents });
 }
 
+// Renomeia um angariador: atualiza todas as entradas e o videoAuth
+export async function fbRenameAgent(oldName, newName) {
+  const snap = await getDocs(collection(db, 'entries'));
+  const toRename = snap.docs.filter(d => d.data().agent === oldName);
+  if (toRename.length === 0) { console.log(`Nenhuma entrada encontrada para "${oldName}"`); }
+
+  // Processa em lotes de 500 (limite do Firestore)
+  const chunkSize = 400;
+  for (let i = 0; i < toRename.length; i += chunkSize) {
+    const batch = writeBatch(db);
+    toRename.slice(i, i + chunkSize).forEach(d => {
+      const entry = { ...d.data(), agent: newName };
+      batch.set(doc(db, 'entries', entryId(entry.date, newName)), entry);
+      batch.delete(d.ref);
+    });
+    await batch.commit();
+  }
+
+  // Atualiza chaves no videoAuth
+  const authSnap = await getDoc(doc(db, '_meta', 'videoAuth'));
+  if (authSnap.exists()) {
+    const data = authSnap.data();
+    const updated = {};
+    Object.entries(data).forEach(([k, v]) => {
+      updated[k.startsWith(oldName + '_') ? k.replace(oldName + '_', newName + '_') : k] = v;
+    });
+    await setDoc(doc(db, '_meta', 'videoAuth'), updated);
+  }
+
+  console.log(`✅ "${oldName}" renomeado para "${newName}" (${toRename.length} entradas)`);
+}
+
 // ── VENDAS ──────────────────────────────────────────────
 export async function fbSaveSale(sale) {
   await addDoc(collection(db, 'sales'), sale);

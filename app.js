@@ -1,16 +1,16 @@
-import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth, fbRenameAgent } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
-  bruna:      { name: 'Bruna',      role: 'agent', password: 'nickel123' },
-  deisy:      { name: 'Deisy',      role: 'agent', password: 'nickel123' },
-  rian:       { name: 'Rian',       role: 'agent', password: 'nickel123' },
-  luis:       { name: 'Luís',       role: 'agent', password: 'nickel123' },
-  jhonnathan: { name: 'Jhonnathan', role: 'agent', password: 'nickel123' },
-  joao:       { name: 'João',       role: 'agent', password: 'nickel123' },
-  felipe:     { name: 'Felipe',     role: 'agent', password: 'nickel123' },
-  karen:      { name: 'Karen',      role: 'agent', password: 'nickel123' },
-  matheus:    { name: 'Matheus',    role: 'gestor', password: 'nickel123' },
+  bruna:      { name: 'Bruna',               role: 'agent',  password: 'nickel123' },
+  deisy:      { name: 'Deyse Brito',         role: 'agent',  password: 'nickel123' },
+  rian:       { name: 'Rian',                role: 'agent',  password: 'nickel123' },
+  luis:       { name: 'Luiz Davaro',         role: 'agent',  password: 'nickel123' },
+  jhonnathan: { name: 'Jhonnathan Pinheiro', role: 'agent',  password: 'nickel123' },
+  joao:       { name: 'João Andrade',        role: 'agent',  password: 'nickel123' },
+  felipe:     { name: 'Felipe Moreira',      role: 'agent',  password: 'nickel123' },
+  karen:      { name: 'Karen Abreu',         role: 'agent',  password: 'nickel123' },
+  matheus:    { name: 'Matheus',             role: 'gestor', password: 'nickel123' },
 };
 
 // ── TEAM (após USERS) ────────────────────────────────────
@@ -3472,6 +3472,16 @@ window.adminClearVideoLink = async function(date, agent) {
   localUpsert(entry);
   await fbUpsertEntry(entry);
   console.log('Cleared video links for', agent, date);
+};
+
+// Uso: await adminRenameAgent('Alex', 'Aleksander Vaz')
+window.adminRenameAgent = async function(oldName, newName) {
+  console.log(`Renomeando "${oldName}" → "${newName}"...`);
+  await fbRenameAgent(oldName, newName);
+  // Atualiza TEAM no Firestore
+  const updatedTeam = TEAM.map(a => a.name === oldName ? { ...a, name: newName } : a);
+  await fbSaveTeam(updatedTeam);
+  console.log('✅ TEAM atualizado. Recarregue a página.');
 };
 
 // ── PAGE DETECTION ───────────────────────────────────────
