@@ -1,4 +1,4 @@
-const CACHE = 'nickel-crm-v90';
+const CACHE = 'nickel-crm-v91';
 const ASSETS = [
   '/nickel-crm/',
   '/nickel-crm/index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   '/nickel-crm/firebase.js',
   '/nickel-crm/style.css',
   '/nickel-crm/manifest.json',
+  '/nickel-crm/icon.svg',
 ];
 
 self.addEventListener('install', e => {

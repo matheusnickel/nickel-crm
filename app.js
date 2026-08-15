@@ -44,7 +44,6 @@ const CPD_STATUS_OPTIONS = [
   { value: 'descarte',  label: 'DESCARTE' },
 ];
 const BAIRROS = ['Batel','Água Verde','Bigorrilho','Ecoville','Cabral','Juvevê','Mercês','Campo Comprido','Santa Felicidade','Santo Inácio','Vila Izabel'];
-const META_DOC = 3;
 const META_DOC_MONTH = 12;
 const META_DOC_GESTOR = 80;
 const TIPO_COLORS = {
@@ -548,26 +547,6 @@ function calcDailyScore(entry) {
   return parseFloat(Math.min(3.0 + effort, 7.9).toFixed(1));
 }
 
-function calcWeeklyScore(agentName, weekEntries) {
-  const mine  = weekEntries.filter(e => e.agent === agentName);
-  const doc   = mine.reduce((s, e) => s + e.doc,   0);
-  const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
-  const vid   = mine.reduce((s, e) => s + effectiveVideo(e), 0);
-  const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta semanal: 3 DOC = azul (8.0+). Sem DOC: máx 7.9
-  const effort = cpd * 1.0 + vid * 1.0 + prosp * 0.025;
-  const anyActivity = cpd + vid + prosp + doc > 0;
-  if (doc >= 3) {
-    const base  = Math.min(8.0 + (doc - 3) * 1.0, 10);
-    const bonus = Math.min(effort * 0.05, 0.9);
-    return parseFloat(Math.min(base + bonus, 10).toFixed(1));
-  }
-  if (!anyActivity) return 0;
-  const base = doc > 0 ? doc * 2.5 : 0;
-  const pipeline = Math.min(effort * 0.1, 2.0);
-  const floor = anyActivity ? 3.0 : 0;
-  return parseFloat(Math.min(Math.max(floor, base + pipeline), 7.9).toFixed(1));
-}
 
 function calcMonthlyScore(agentName, monthEntries) {
   const mine  = monthEntries.filter(e => e.agent === agentName);
@@ -842,15 +821,16 @@ function renderAgentContacts(agentName) {
     btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; renderAgentContacts(agentName); })
   );
 
-  // Confirmar visita realizada
+  // Confirmar visita realizada (abre modal com data + hora)
   wrap.querySelectorAll('.va-confirm-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const entryDate = btn.dataset.entry;
       const idx = parseInt(btn.dataset.idx);
-      const hora = prompt('Horário que aconteceu (ex: 16:30):', '') ?? '';
-      await updateVaRealized(entryDate, agentName, idx, today(), hora.trim());
-      agentContactTab = 'realizadas';
-      renderAgentContacts(agentName);
+      showVaRealizedModal(async (date, time) => {
+        await updateVaRealized(entryDate, agentName, idx, date || today(), time);
+        agentContactTab = 'realizadas';
+        renderAgentContacts(agentName);
+      });
     });
   });
 
@@ -2039,20 +2019,6 @@ function renderEvolucaoDiaria(entries) {
       }
     }
   });
-}
-
-// ── TEAM MANAGEMENT ──────────────────────────────────────
-async function limparJulhoSemDoc() {
-  const julho = '2026-07';
-  const entries = getEntries();
-  const paraApagar = entries.filter(e => e.date.startsWith(julho) && e.doc === 0);
-  if (paraApagar.length === 0) { alert('Nenhum lançamento sem DOC em julho para apagar.'); return; }
-  if (!confirm(`Apagar ${paraApagar.length} lançamento(s) de julho sem DOC?\n\nDOCs registrados serão mantidos.`)) return;
-  for (const e of paraApagar) {
-    saveEntries(getEntries().filter(x => !(x.date === e.date && x.agent === e.agent)));
-    await fbDeleteEntry(e.date, e.agent);
-  }
-  alert('Pronto! Lançamentos sem DOC de julho apagados.');
 }
 
 function initTeamManagement() {
