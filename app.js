@@ -1394,8 +1394,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const prevDoc   = prevE.reduce((s,e)=>s+e.doc,0);
     const prevCpd   = prevE.reduce((s,e)=>s+(e.cpd||0),0);
     const prevProsp = prevE.reduce((s,e)=>s+(e.prosp||0),0);
-    const ratioCpd   = prevDoc > 1 ? prevCpd   / prevDoc : 4.5;
-    const ratioProsp = prevDoc > 1 ? prevProsp  / prevDoc : 37;
+    const ratioCpd   = prevDoc > 0 ? prevCpd   / prevDoc : 4.5;
+    const ratioProsp = prevDoc > 0 ? prevProsp  / prevDoc : 37;
     const META_CQ    = Math.round(ratioCpd   * META_DOC_MONTH);
     const META_PROSP = Math.round(ratioProsp  * META_DOC_MONTH);
 
