@@ -46,6 +46,7 @@ const CPD_STATUS_OPTIONS = [
 const BAIRROS = ['Batel','Água Verde','Bigorrilho','Ecoville','Cabral','Juvevê','Mercês','Campo Comprido','Santa Felicidade','Santo Inácio','Vila Izabel'];
 const META_DOC = 3;
 const META_DOC_MONTH = 12;
+const META_DOC_GESTOR = 80;
 const TIPO_COLORS = {
   Casa:      { bg:'rgba(168,230,61,.8)',  border:'#a8e63d' },
   Apto:      { bg:'rgba(100,149,237,.8)', border:'#6495ed' },
@@ -2127,7 +2128,7 @@ function renderGestorDashboard() {
   // ── METAS com barras de progresso ────────────────────────
   // Só exibe no filtro "mês"
   const showMeta = activePeriod === 'month';
-  const META_DOC_GESTOR = 80;
+  // META_DOC_GESTOR is a global constant (defined at top of file)
   ['prosp','cpd','doc','vid'].forEach(k => {
     document.getElementById(`meta-${k}-bar-wrap`).style.display = showMeta ? '' : 'none';
     document.getElementById(`meta-${k}-lbl`).textContent = '';
