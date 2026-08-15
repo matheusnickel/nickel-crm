@@ -1401,11 +1401,30 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
     const mesLabel = new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'});
 
+    // ── Dias do mês ──────────────────────────────────────
+    const tDate       = new Date(t+'T12:00:00');
+    const daysInMonth = new Date(tDate.getFullYear(), tDate.getMonth()+1, 0).getDate();
+    const dayOfMonth  = tDate.getDate();
+    const daysRemaining = daysInMonth - dayOfMonth; // dias que ainda faltam (não conta hoje)
+
+    // ── Médias do time neste mês ─────────────────────────
+    const teamNames   = new Set(getAgentNames());
+    const allMonthE   = getEntries().filter(e => teamNames.has(e.agent) && inRange(e.date, mStart, mEnd));
+    const activeAgents= Math.max(new Set(allMonthE.map(e=>e.agent)).size, 1);
+    const teamAvgDoc  = allMonthE.reduce((s,e)=>s+e.doc,0)          / activeAgents;
+    const teamAvgCpd  = allMonthE.reduce((s,e)=>s+(e.cpd||0),0)     / activeAgents;
+    const teamAvgProsp= allMonthE.reduce((s,e)=>s+(e.prosp||0),0)   / activeAgents;
+    const teamAvgVid  = allMonthE.reduce((s,e)=>s+(e.video||0),0)   / activeAgents;
+
+    // ── Projeção de fim de mês ───────────────────────────
+    // ritmo = val / dias decorridos; projeta = ritmo * total dias do mês
+    const project = (val) => dayOfMonth > 0 ? Math.round(val / dayOfMonth * daysInMonth) : 0;
+
     const mkBar = (val, meta, color) => {
-      const pct = Math.min(val / meta * 100, 100);
+      const pct  = Math.min(val / meta * 100, 100);
       const over = val >= meta;
-      const c = over ? '#2ecc71' : val >= meta * 0.6 ? '#f0c040' : color;
-      const falta = Math.max(meta - val, 0);
+      const c    = over ? '#2ecc71' : val >= meta * 0.6 ? '#f0c040' : color;
+      const falta= Math.max(meta - val, 0);
       return { pct, over, c, falta };
     };
 
@@ -1414,7 +1433,23 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const prosp = mkBar(monthProsp, META_PROSP,     '#f0c040');
     const vid   = mkBar(monthVid,   META_VID_MONTH, '#e879f9');
 
-    const mkMetaRow = (label, val, meta, unit, b) => `
+    const mkMetaRow = (label, val, meta, unit, b, teamAvg) => {
+      const proj      = project(val);
+      const onTrack   = proj >= meta;
+      const projColor = onTrack ? '#2ecc71' : '#ef4444';
+      const projIcon  = onTrack ? '🎯' : '⚠️';
+      const projLabel = b.over
+        ? ''
+        : `<span class="agent-meta-proj" style="color:${projColor}">${projIcon} Projeta <strong>${proj} ${unit}</strong> até dia ${daysInMonth} · ${daysRemaining} dia${daysRemaining!==1?'s':''} restante${daysRemaining!==1?'s':''}</span>`;
+
+      const avgRounded = Math.round(teamAvg * 10) / 10;
+      const vsAvg      = val - teamAvg;
+      const aboveAvg   = vsAvg >= 0;
+      const avgLabel   = `<span class="agent-meta-avg" style="color:${aboveAvg?'#a8e63d':'#f0c040'}">
+        ${aboveAvg ? '⬆ Acima' : '⬇ Abaixo'} da média do time <span style="color:var(--text-muted)">(média: ${avgRounded} ${unit})</span>
+      </span>`;
+
+      return `
       <div class="agent-meta-row">
         <div class="agent-meta-head">
           <span class="agent-meta-lbl">${label}</span>
@@ -1428,15 +1463,20 @@ function renderAgentDashboard(session, selectedDate, editing) {
         <div class="agent-meta-status" style="color:${b.c}">
           ${b.over ? '✓ Meta atingida!' : `Faltam <strong>${b.falta} ${unit}</strong>`}
         </div>
+        <div class="agent-meta-insights">
+          ${projLabel}
+          ${avgLabel}
+        </div>
       </div>`;
+    };
 
     metasWrap.innerHTML = `
       <div class="agent-meta-card">
-        <div class="agent-meta-period">${mesLabel}</div>
-        ${mkMetaRow('Angariações (DOC)', monthDoc,   META_DOC_MONTH, 'DOC',  doc)}
-        ${mkMetaRow('Conversas Qualif. (CQ)', monthCpd, META_CQ,   'CQ',   cq)}
-        ${mkMetaRow('Prospecções', monthProsp, META_PROSP, 'PROSP', prosp)}
-        ${mkMetaRow('Vídeos', monthVid, META_VID_MONTH, 'vídeos', vid)}
+        <div class="agent-meta-period">${mesLabel} · dia ${dayOfMonth} de ${daysInMonth}</div>
+        ${mkMetaRow('Angariações (DOC)', monthDoc,   META_DOC_MONTH, 'DOC',    doc,   teamAvgDoc)}
+        ${mkMetaRow('Conversas Qualif. (CQ)', monthCpd, META_CQ,   'CQ',     cq,    teamAvgCpd)}
+        ${mkMetaRow('Prospecções',       monthProsp, META_PROSP,    'PROSP',  prosp, teamAvgProsp)}
+        ${mkMetaRow('Vídeos',            monthVid,   META_VID_MONTH,'vídeos', vid,   teamAvgVid)}
       </div>`;
   }
 
