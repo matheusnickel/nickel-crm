@@ -1450,10 +1450,11 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const gapProsp = gap(monthProsp, META_PROSP);
 
     // Gargalo = maior gap no funil (só DOC, CQ, PROSP — não vídeo)
-    const bottleneck = gapProsp >= gapCpd && gapProsp >= gapDoc ? 'prosp'
-                     : gapCpd  >= gapDoc                         ? 'cq'
-                     : gapDoc  > 0                               ? 'doc'
-                     : null;
+    // Se todos os gaps são 0, todas as metas foram batidas → sem gargalo
+    const bottleneck = (gapProsp === 0 && gapCpd === 0 && gapDoc === 0) ? null
+                     : gapProsp >= gapCpd && gapProsp >= gapDoc          ? 'prosp'
+                     : gapCpd  >= gapDoc                                  ? 'cq'
+                     : 'doc';
 
     const ndProsp = Math.ceil(neededPerDay(monthProsp, META_PROSP));
     const ndCpd   = Math.ceil(neededPerDay(monthCpd,   META_CQ));
