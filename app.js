@@ -1092,7 +1092,6 @@ function renderAgentDailyRanking(currentAgentName) {
   const PODIUM = { 1:'gold-badge', 2:'silver-badge', 3:'bronze-badge' };
   const PODIUM_LABEL = { 1:'🥇', 2:'🥈', 3:'🥉' };
 
-  const allEntries = getEntries();
   let periodEntries;
   if (activeAgentRankTab === 'dia') {
     periodEntries = filterEntries('today', t);
