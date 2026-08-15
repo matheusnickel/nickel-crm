@@ -1384,18 +1384,18 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const monthCpd  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpd||0), 0);
     const monthProsp= entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.prosp||0), 0);
 
-    // Ratios do mês anterior do próprio agente; fallback nas taxas reais da equipe
+    // Ratios do time (mês anterior de todos os angariadores) → aplicados à meta individual de 12 DOC
     const prevMonthD = new Date(t+'T12:00:00'); prevMonthD.setDate(1); prevMonthD.setMonth(prevMonthD.getMonth()-1);
     const prevRef = toDateStr(prevMonthD);
     const { start:pStart, end:pEnd } = monthRange(prevRef);
-    const prevE = entries.filter(e => inRange(e.date, pStart, pEnd));
-    const prevDoc   = prevE.reduce((s,e)=>s+e.doc,0);
-    const prevCpd   = prevE.reduce((s,e)=>s+(e.cpd||0),0);
-    const prevProsp = prevE.reduce((s,e)=>s+(e.prosp||0),0);
-    const ratioCpd   = prevDoc > 0 ? prevCpd   / prevDoc : 4.5;
-    const ratioProsp = prevDoc > 0 ? prevProsp  / prevDoc : 37;
+    const allPrevE    = getEntries().filter(e => inRange(e.date, pStart, pEnd));
+    const allPrevDoc  = allPrevE.reduce((s,e)=>s+e.doc,0);
+    const allPrevCpd  = allPrevE.reduce((s,e)=>s+(e.cpd||0),0);
+    const allPrevProsp= allPrevE.reduce((s,e)=>s+(e.prosp||0),0);
+    const ratioCpd   = allPrevDoc > 0 ? allPrevCpd   / allPrevDoc : 3.51;
+    const ratioProsp = allPrevDoc > 0 ? allPrevProsp / allPrevDoc : 32;
     const META_CQ    = Math.round(ratioCpd   * META_DOC_MONTH);
-    const META_PROSP = Math.round(ratioProsp  * META_DOC_MONTH);
+    const META_PROSP = Math.round(ratioProsp * META_DOC_MONTH);
 
     const mesLabel = new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'});
 
@@ -2066,7 +2066,7 @@ function renderGestorDashboard() {
   // ── METAS com barras de progresso ────────────────────────
   // Só exibe no filtro "mês"
   const showMeta = activePeriod === 'month';
-  const META_DOC_GESTOR = 90;
+  const META_DOC_GESTOR = 80;
   ['prosp','cpd','doc','vid'].forEach(k => {
     document.getElementById(`meta-${k}-bar-wrap`).style.display = showMeta ? '' : 'none';
     document.getElementById(`meta-${k}-lbl`).textContent = '';
