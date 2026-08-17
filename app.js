@@ -72,7 +72,7 @@ function localUpsert(entry) {
 
 async function upsertEntry(entry) {
   localUpsert(entry);
-  await fbUpsertEntry(entry);
+  await fbUpsertEntry(entry); // throws on network error → caller must catch
 }
 
 // ── VIDEO AUTH STATE ────────────────────────────────────
@@ -225,12 +225,21 @@ async function updateVaRealized(date, agent, vaIdx, dataRealizacao, horarioReali
   const entries = getEntries();
   const entry = entries.find(e => e.date === date && e.agent === agent);
   if (!entry || !entry.vaDetails?.[vaIdx]) return;
-  // dataRealizacao === 'nao' → marcar como não realizada
   entry.vaDetails[vaIdx].realizada = dataRealizacao === 'nao' ? false : true;
   entry.vaDetails[vaIdx].dataRealizacao = dataRealizacao;
   entry.vaDetails[vaIdx].horarioRealizacao = horarioRealizacao;
   localUpsert(entry);
-  await fbUpsertEntry(entry);
+  try {
+    await fbUpsertEntry(entry);
+  } catch(err) {
+    alert('❌ Erro ao salvar visita. Verifique sua conexão e tente novamente.');
+    // reverte estado local
+    entry.vaDetails[vaIdx].realizada = undefined;
+    entry.vaDetails[vaIdx].dataRealizacao = '';
+    entry.vaDetails[vaIdx].horarioRealizacao = '';
+    localUpsert(entry);
+    throw err;
+  }
 }
 
 async function updateVaDetail(date, agent, vaIdx, fields) {
@@ -1714,8 +1723,14 @@ function renderAgentDashboard(session, selectedDate, editing) {
         if (sentToday?.vaDetails) {
           vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { d.realizada = sentToday.vaDetails[i].realizada||false; d.dataRealizacao = sentToday.vaDetails[i].dataRealizacao||''; d.horarioRealizacao = sentToday.vaDetails[i].horarioRealizacao||''; } });
         }
-        await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
-        if (isEdit) incrementEditCount(session.name, date);
+        try {
+          await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
+          if (isEdit) incrementEditCount(session.name, date);
+        } catch(err) {
+          submitBtn.disabled = false; submitBtn.textContent = isEdit ? 'Salvar edição' : 'Enviar lançamento';
+          alert('❌ Erro ao salvar. Verifique sua conexão e tente novamente.\n\n' + (err?.message || err));
+          return;
+        }
       });
 
       const cancelBtn = document.getElementById('wiz-cancel');
