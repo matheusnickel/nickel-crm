@@ -1,4 +1,4 @@
-const CACHE = 'nickel-crm-v92';
+const CACHE = 'nickel-crm-v93';
 const ASSETS = [
   '/nickel-crm/',
   '/nickel-crm/index.html',
@@ -24,11 +24,15 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Always fetch from network for Firebase/CDN requests
+  // Firebase/CDN: sem cache, direto na rede
   if (e.request.url.includes('firebase') || e.request.url.includes('googleapis') || e.request.url.includes('gstatic') || e.request.url.includes('jsdelivr')) {
     return;
   }
+  // Rede com timeout de 4s; cai no cache se lenta ou offline
   e.respondWith(
-    fetch(e.request).catch(() => caches.match(e.request))
+    Promise.race([
+      fetch(e.request),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]).catch(() => caches.match(e.request))
   );
 });

@@ -111,7 +111,7 @@ async function updateDocNota(date, agent, docIdx, nota) {
   if (!entry || !entry.docDetails[docIdx]) return;
   entry.docDetails[docIdx].nota = nota;
   localUpsert(entry);
-  await fbUpsertEntry(entry);
+  try { await fbUpsertEntry(entry); } catch(e) { alert('❌ Erro ao salvar nota. Verifique sua conexão.'); }
 }
 
 // ── VA DETAILS (Visita Agendada — Treino Livre) ──────────
@@ -209,7 +209,7 @@ async function updateCpdDetail(date, agent, cpdIdx, fields) {
   if (!entry || !(entry.cpdDetails||[])[cpdIdx]) return;
   Object.assign(entry.cpdDetails[cpdIdx], fields);
   localUpsert(entry);
-  await fbUpsertEntry(entry);
+  try { await fbUpsertEntry(entry); } catch(e) { alert('❌ Erro ao salvar CQ. Verifique sua conexão.'); }
 }
 
 async function updateVideoValidated(date, agent, count) {
@@ -218,7 +218,7 @@ async function updateVideoValidated(date, agent, count) {
   if (!entry) return;
   entry.videoValidated = count;
   localUpsert(entry);
-  await fbUpsertEntry(entry);
+  try { await fbUpsertEntry(entry); } catch(e) { alert('❌ Erro ao salvar vídeo. Verifique sua conexão.'); }
 }
 
 async function updateVaRealized(date, agent, vaIdx, dataRealizacao, horarioRealizacao='') {
@@ -248,19 +248,33 @@ async function updateVaDetail(date, agent, vaIdx, fields) {
   if (!entry || !entry.vaDetails?.[vaIdx]) return;
   Object.assign(entry.vaDetails[vaIdx], fields);
   localUpsert(entry);
-  await fbUpsertEntry(entry);
+  try { await fbUpsertEntry(entry); } catch(e) { alert('❌ Erro ao salvar visita. Verifique sua conexão.'); }
 }
 
 async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
   const entries = getEntries();
   const entry = entries.find(e => e.date === date && e.agent === agent);
   if (!entry) return;
+  // Salva estado anterior para reverter se falhar
+  const prevStatus = entry.cpdDetails?.[cpdIdx]?.status;
+  const prevDocDetails = [...(entry.docDetails||[])];
+  const prevDoc = entry.doc;
   if (entry.cpdDetails?.[cpdIdx]) entry.cpdDetails[cpdIdx].status = 'doc';
   if (!entry.docDetails) entry.docDetails = [];
   entry.docDetails.push(docDetail);
   entry.doc = entry.docDetails.length;
   localUpsert(entry);
-  await fbUpsertEntry(entry);
+  try {
+    await fbUpsertEntry(entry);
+  } catch(e) {
+    // Reverte para não ficar inconsistente
+    if (entry.cpdDetails?.[cpdIdx]) entry.cpdDetails[cpdIdx].status = prevStatus;
+    entry.docDetails = prevDocDetails;
+    entry.doc = prevDoc;
+    localUpsert(entry);
+    alert('❌ Erro ao converter CQ em DOC. Verifique sua conexão e tente novamente.');
+    throw e;
+  }
 }
 
 function showDescarteModal(nomeLead, onConfirm, onCancel) {
@@ -340,10 +354,19 @@ async function deleteDocDetail(date, agent, docIdx) {
   const entries = getEntries();
   const entry = entries.find(e => e.date === date && e.agent === agent);
   if (!entry || !entry.docDetails[docIdx]) return;
-  entry.docDetails.splice(docIdx, 1);
+  const removed = entry.docDetails.splice(docIdx, 1);
   entry.doc = entry.docDetails.length;
   localUpsert(entry);
-  await fbUpsertEntry(entry);
+  try {
+    await fbUpsertEntry(entry);
+  } catch(e) {
+    // Reverte deleção local
+    entry.docDetails.splice(docIdx, 0, removed[0]);
+    entry.doc = entry.docDetails.length;
+    localUpsert(entry);
+    alert('❌ Erro ao excluir DOC. Verifique sua conexão.');
+    throw e;
+  }
 }
 
 async function updateDocDetail(date, agent, docIdx, fields) {
@@ -352,7 +375,7 @@ async function updateDocDetail(date, agent, docIdx, fields) {
   if (!entry || !entry.docDetails[docIdx]) return;
   Object.assign(entry.docDetails[docIdx], fields);
   localUpsert(entry);
-  await fbUpsertEntry(entry);
+  try { await fbUpsertEntry(entry); } catch(e) { alert('❌ Erro ao salvar DOC. Verifique sua conexão.'); }
 }
 
 // ── EDIT COUNT ───────────────────────────────────────────
@@ -1726,6 +1749,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
         try {
           await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
           if (isEdit) incrementEditCount(session.name, date);
+          submitBtn.textContent = '✅ Enviado!';
+          setTimeout(() => { submitBtn.textContent = isEdit ? 'Salvar edição' : 'Enviar lançamento'; submitBtn.disabled = false; }, 2500);
         } catch(err) {
           submitBtn.disabled = false; submitBtn.textContent = isEdit ? 'Salvar edição' : 'Enviar lançamento';
           alert('❌ Erro ao salvar. Verifique sua conexão e tente novamente.\n\n' + (err?.message || err));
@@ -1987,9 +2012,16 @@ function initGestorLancamento() {
     const lancCpdDetails=collectCpdDetails(lancCpdVal);
     const lancVaVal=parseInt(document.getElementById('lanc-va').value)||0;
     const vaDetails=collectVaDetails(lancVaVal);
-    await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,va:lancVaVal,vr:0,cpdDetails:lancCpdDetails,docDetails,vaDetails,vrDetails:[],submittedDate});
-    resetEditCount(agent,date);
-    btn.disabled=false; btn.textContent='Salvar lançamento';
+    try {
+      await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,va:lancVaVal,vr:0,cpdDetails:lancCpdDetails,docDetails,vaDetails,vrDetails:[],submittedDate});
+      resetEditCount(agent,date);
+      btn.textContent='✅ Salvo!';
+      setTimeout(() => { btn.disabled=false; btn.textContent='Salvar lançamento'; }, 2000);
+    } catch(err) {
+      btn.disabled=false; btn.textContent='Salvar lançamento';
+      alert('❌ Erro ao salvar. Verifique sua conexão e tente novamente.');
+      return;
+    }
     // reset form
     document.getElementById('lanc-prosp').value=0;
     document.getElementById('lanc-cpd').value=0;
