@@ -1059,11 +1059,23 @@ function renderAgentVisits(agentName) {
       const entries = getEntries();
       const entry = entries.find(e => e.date===btn.dataset.entryDate && e.agent===agentName);
       if (entry?.vaDetails?.[parseInt(btn.dataset.idx)]) {
-        entry.vaDetails[parseInt(btn.dataset.idx)].realizada = null;
-        entry.vaDetails[parseInt(btn.dataset.idx)].dataRealizacao = '';
-        entry.vaDetails[parseInt(btn.dataset.idx)].horarioRealizacao = '';
+        const idx = parseInt(btn.dataset.idx);
+        const prev = { ...entry.vaDetails[idx] };
+        entry.vaDetails[idx].realizada = null;
+        entry.vaDetails[idx].dataRealizacao = '';
+        entry.vaDetails[idx].horarioRealizacao = '';
         localUpsert(entry);
-        await fbUpsertEntry(entry);
+        try {
+          await fbUpsertEntry(entry);
+        } catch(e) {
+          entry.vaDetails[idx].realizada = prev.realizada;
+          entry.vaDetails[idx].dataRealizacao = prev.dataRealizacao;
+          entry.vaDetails[idx].horarioRealizacao = prev.horarioRealizacao;
+          localUpsert(entry);
+          alert('❌ Erro ao desfazer visita. Verifique sua conexão.');
+          btn.disabled = false; btn.textContent = 'Desfazer';
+          return;
+        }
       }
       renderAgentVisits(agentName);
     });
@@ -1509,7 +1521,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const gap = (val, meta) => {
       const exp = expectedToday(meta);
       if (val >= meta) return 0;
-      if (exp === 0) return val === 0 ? 99 : 0;
+      if (exp === 0) return 0; // início do mês: sem expectativa ainda, sem gargalo
       return Math.max(exp - val, 0) / exp; // % abaixo do esperado
     };
 
@@ -1744,7 +1756,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const submittedDate = sentToday?.submittedDate||sentToday?.date||today();
         const vaDetails = collectVaDetails(wVals.va);
         if (sentToday?.vaDetails) {
-          vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { d.realizada = sentToday.vaDetails[i].realizada||false; d.dataRealizacao = sentToday.vaDetails[i].dataRealizacao||''; d.horarioRealizacao = sentToday.vaDetails[i].horarioRealizacao||''; } });
+          vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { const s=sentToday.vaDetails[i]; d.realizada = s.realizada!=null ? s.realizada : false; d.dataRealizacao = s.dataRealizacao||''; d.horarioRealizacao = s.horarioRealizacao||''; } });
         }
         try {
           await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
@@ -2697,9 +2709,17 @@ function renderDayView(dateStr) {
       const { date, agent } = btn.dataset;
       if (!confirm(`Remover lançamento de ${agent} em ${formatDate(date)}?\nO angariador poderá relançar.`)) return;
       btn.disabled = true; btn.textContent = '...';
-      saveEntries(getEntries().filter(e => !(e.date===date && e.agent===agent)));
-      await fbDeleteEntry(date, agent);
-      resetEditCount(agent, date);
+      const snapshot = getEntries();
+      saveEntries(snapshot.filter(e => !(e.date===date && e.agent===agent)));
+      try {
+        await fbDeleteEntry(date, agent);
+        resetEditCount(agent, date);
+      } catch(e) {
+        saveEntries(snapshot);
+        alert('❌ Erro ao remover lançamento. Verifique sua conexão.');
+        btn.disabled = false; btn.textContent = '🗑';
+        return;
+      }
       renderDayView(date);
     });
   });
