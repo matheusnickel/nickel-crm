@@ -3188,7 +3188,8 @@ function renderVisitList(entries) {
       if (entry?.vaDetails?.[parseInt(btn.dataset.idx)]) {
         const d = entry.vaDetails[parseInt(btn.dataset.idx)];
         d.realizada = null; d.dataRealizacao = ''; d.horarioRealizacao = '';
-        localUpsert(entry); await fbUpsertEntry(entry);
+        localUpsert(entry);
+        try { await fbUpsertEntry(entry); } catch(e) { alert('❌ Erro ao desfazer visita. Verifique sua conexão.'); btn.disabled=false; btn.textContent='Desfazer'; return; }
       }
       renderVisitList(filterEntries(activePeriod, activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined));
     });
@@ -3199,9 +3200,15 @@ function renderVisitList(entries) {
       const entries = getEntries();
       const entry = entries.find(e => e.date === btn.dataset.date && e.agent === btn.dataset.agent);
       if (!entry?.vaDetails) return;
-      entry.vaDetails.splice(parseInt(btn.dataset.idx), 1);
+      const removed = entry.vaDetails.splice(parseInt(btn.dataset.idx), 1);
       entry.va = entry.vaDetails.length;
-      localUpsert(entry); await fbUpsertEntry(entry);
+      localUpsert(entry);
+      try { await fbUpsertEntry(entry); } catch(e) {
+        entry.vaDetails.splice(parseInt(btn.dataset.idx), 0, removed[0]);
+        entry.va = entry.vaDetails.length;
+        localUpsert(entry);
+        alert('❌ Erro ao excluir visita. Verifique sua conexão.'); return;
+      }
       renderVisitList(filterEntries(activePeriod, activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined));
     });
   });
