@@ -2238,9 +2238,10 @@ function renderGestorDashboard() {
     b.onclick=()=>{ activeAnalyticsMode=b.dataset.mode; document.querySelectorAll('.analytics-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderAnalyticsChart(allDocs); };
     b.classList.toggle('active',b.dataset.mode===activeAnalyticsMode);
   });
-  renderConversion(ranked);
+  const convRanked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
+  renderConversion(convRanked);
   document.querySelectorAll('.conv-mode-btn').forEach(b=>{
-    b.onclick=()=>{ activeConvMode=b.dataset.mode; document.querySelectorAll('.conv-mode-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderConversion(ranked); };
+    b.onclick=()=>{ activeConvMode=b.dataset.mode; document.querySelectorAll('.conv-mode-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderConversion(convRanked); };
     b.classList.toggle('active',b.dataset.mode===activeConvMode);
   });
   renderNotasRanking();
