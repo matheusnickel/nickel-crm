@@ -83,7 +83,15 @@
     <div class="g-row g-row-2-1">
 
       <div class="card">
-        <div class="card-title">Ranking — ordenado por DOC · CQ · PROSP</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <div class="card-title" style="margin-bottom:0">Ranking — DOC · CQ · PROSP</div>
+          <div style="display:flex;gap:4px">
+            <button class="rank-period-btn active" data-rp="week"     style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text-muted);cursor:pointer">Semana</button>
+            <button class="rank-period-btn"        data-rp="month"    style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text-muted);cursor:pointer">Mês</button>
+            <button class="rank-period-btn"        data-rp="quarter"  style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text-muted);cursor:pointer">Trimestre</button>
+            <button class="rank-period-btn"        data-rp="year"     style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text-muted);cursor:pointer">Ano</button>
+          </div>
+        </div>
         <div style="overflow-x:auto">
           <table class="data-table rank-table" style="width:100%">
             <colgroup>

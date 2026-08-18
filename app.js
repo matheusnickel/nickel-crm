@@ -488,9 +488,19 @@ function weekDaysBefore(ref) {
 // ── FILTER / AGGREGATE ───────────────────────────────────
 function filterEntries(period, ref) {
   const entries=getEntries(), t=ref||today();
-  if (period==='today') return entries.filter(e=>e.date===t);
-  if (period==='week')  { const r=weekRange(t);  return entries.filter(e=>inRange(e.date,r.start,r.end)); }
-  if (period==='month') { const r=monthRange(t); return entries.filter(e=>inRange(e.date,r.start,r.end)); }
+  if (period==='today')   return entries.filter(e=>e.date===t);
+  if (period==='week')    { const r=weekRange(t);  return entries.filter(e=>inRange(e.date,r.start,r.end)); }
+  if (period==='month')   { const r=monthRange(t); return entries.filter(e=>inRange(e.date,r.start,r.end)); }
+  if (period==='quarter') {
+    const d=new Date(t+'T12:00:00');
+    const qStart=new Date(d.getFullYear(), Math.floor(d.getMonth()/3)*3, 1);
+    const qEnd=new Date(qStart.getFullYear(), qStart.getMonth()+3, 0);
+    return entries.filter(e=>inRange(e.date, toDateStr(qStart), toDateStr(qEnd)));
+  }
+  if (period==='year') {
+    const y=t.slice(0,4);
+    return entries.filter(e=>e.date.slice(0,4)===y);
+  }
   return entries;
 }
 function sumByAgent(entries, period) {
@@ -1803,6 +1813,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
 // ── GESTOR DASHBOARD ─────────────────────────────────────
 let evolucaoChart=null, analyticsChart=null;
 let activePeriod='today', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
+let activeRankingPeriod='week';
 let activeMonthRef=today(); // 'YYYY-MM-DD' — referência do mês selecionado no filtro "Mês"
 let activeWeekRef=today();  // 'YYYY-MM-DD' — referência da semana selecionada no filtro "Semana"
 let gestorUnsubscribe=null;
@@ -1826,6 +1837,12 @@ async function initGestorDashboard() {
       const wpWrap=document.getElementById('week-picker-wrap');
       if (wpWrap) wpWrap.style.display = activePeriod==='week' ? 'block' : 'none';
       renderGestorDashboard();
+    });
+  });
+  document.querySelectorAll('.rank-period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeRankingPeriod = btn.dataset.rp;
+      renderGestorRanking();
     });
   });
   const monthPicker=document.getElementById('month-picker');
@@ -2133,6 +2150,23 @@ function streakTier(streak) {
 
 function renderStreakRanking() { renderTimeline(); }
 
+function renderGestorRanking() {
+  const t = today();
+  const rankEntries = filterEntries(activeRankingPeriod, t).filter(e => new Set(getAgentNames()).has(e.agent));
+  const periodKey = activeRankingPeriod === 'month' ? t.slice(0,7) : t.slice(0,7);
+  const rankByAgent = sumByAgent(rankEntries, periodKey);
+  const ranked = [...rankByAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
+  const body = document.getElementById('rank-body');
+  if (body) {
+    body.innerHTML = ranked.map((a,i) => {
+      const pos = i+1;
+      return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td><td class="num-cell dim-cell" style="color:#ef4444">${a.va||0}</td><td class="num-cell dim-cell" style="color:#f97316">${a.vr||0}</td></tr>`;
+    }).join('');
+  }
+  // Highlight active ranking filter btn
+  document.querySelectorAll('.rank-period-btn').forEach(b => b.classList.toggle('active', b.dataset.rp === activeRankingPeriod));
+}
+
 function renderGestorDashboard() {
   const ref = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
   const team=new Set(getAgentNames());
@@ -2187,11 +2221,7 @@ function renderGestorDashboard() {
     setBar('vid',   totVid,   META_VID_GESTOR,   '#e879f9');
   }
 
-  const ranked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
-  document.getElementById('rank-body').innerHTML=ranked.map((a,i)=>{
-    const pos=i+1;
-    return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td><td class="num-cell dim-cell" style="color:#ef4444">${a.va||0}</td><td class="num-cell dim-cell" style="color:#f97316">${a.vr||0}</td></tr>`;
-  }).join('');
+  renderGestorRanking();
 
   // Evolução diária de DOC
   renderEvolucaoDiaria(entries);

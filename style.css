@@ -1041,6 +1041,15 @@ a { color: inherit; text-decoration: none; }
   color: var(--gold);
 }
 
+.rank-period-btn {
+  transition: .2s;
+}
+.rank-period-btn.active {
+  background: rgba(168,230,61,.10) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+}
+
 .totals-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
