@@ -485,6 +485,32 @@ function weekDaysBefore(ref) {
   return days;
 }
 
+// ── RATIOS DO TIME (mês anterior) ────────────────────────
+// Fonte única de verdade para META_CQ e META_PROSP usados em AMBOS os painéis.
+function getTeamRatios(refDate) {
+  const t = refDate || today();
+  const prevMonthD = new Date(t + 'T12:00:00');
+  prevMonthD.setDate(1);
+  prevMonthD.setMonth(prevMonthD.getMonth() - 1);
+  const prevRef = toDateStr(prevMonthD);
+  const { start: pStart, end: pEnd } = monthRange(prevRef);
+  const teamSet = new Set(getAgentNames());
+  const prevE = getEntries().filter(e => inRange(e.date, pStart, pEnd) && teamSet.has(e.agent));
+  const prevDoc   = prevE.reduce((s, e) => s + (e.doc  || 0), 0);
+  const prevCpd   = prevE.reduce((s, e) => s + (e.cpd  || 0), 0);
+  const prevProsp = prevE.reduce((s, e) => s + (e.prosp || 0), 0);
+  // Fallback: ratios aproximados caso não haja dados do mês anterior
+  const ratioCpd   = prevDoc > 0 ? prevCpd   / prevDoc : 3.5;
+  const ratioProsp = prevDoc > 0 ? prevProsp / prevDoc : 32;
+  // Metas do time para META_DOC_GESTOR DOCs
+  const metaCqGestor    = Math.round(ratioCpd   * META_DOC_GESTOR);
+  const metaProspGestor = Math.round(ratioProsp * META_DOC_GESTOR);
+  // Metas individuais escalonadas para META_DOC_MONTH DOCs (mesma proporção, mesmo arredondamento)
+  const metaCqMonth    = Math.round(metaCqGestor    / META_DOC_GESTOR * META_DOC_MONTH);
+  const metaProspMonth = Math.round(metaProspGestor / META_DOC_GESTOR * META_DOC_MONTH);
+  return { metaCqGestor, metaProspGestor, metaCqMonth, metaProspMonth };
+}
+
 // ── FILTER / AGGREGATE ───────────────────────────────────
 function filterEntries(period, ref) {
   const entries=getEntries(), t=ref||today();
@@ -1474,24 +1500,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const monthCpd  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpd||0), 0);
     const monthProsp= entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.prosp||0), 0);
 
-    // Targets do time: mesmos do painel gestor (mês anterior, todos os angariadores)
-    // Primeiro calcula o target para META_DOC_GESTOR (80), depois escala para 12 DOC
-    // Isso garante que a proporção bate exatamente com o que o gestor vê (ex: 281 CQ / 80 DOC × 12 = 42)
-    const prevMonthD = new Date(t+'T12:00:00'); prevMonthD.setDate(1); prevMonthD.setMonth(prevMonthD.getMonth()-1);
-    const prevRef = toDateStr(prevMonthD);
-    const { start:pStart, end:pEnd } = monthRange(prevRef);
-    const teamSet = new Set(getAgentNames());
-    const allPrevE    = getEntries().filter(e => inRange(e.date, pStart, pEnd) && teamSet.has(e.agent));
-    const allPrevDoc  = allPrevE.reduce((s,e)=>s+e.doc,0);
-    const allPrevCpd  = allPrevE.reduce((s,e)=>s+(e.cpd||0),0);
-    const allPrevProsp= allPrevE.reduce((s,e)=>s+(e.prosp||0),0);
-    const ratioCpd   = allPrevDoc > 0 ? allPrevCpd   / allPrevDoc : 3.51;
-    const ratioProsp = allPrevDoc > 0 ? allPrevProsp / allPrevDoc : 32;
-    // Arredonda igual ao gestor (para 80 DOC) e depois divide proporcionalmente para 12
-    const META_CQ_GESTOR    = Math.round(ratioCpd   * META_DOC_GESTOR);
-    const META_PROSP_GESTOR = Math.round(ratioProsp * META_DOC_GESTOR);
-    const META_CQ    = Math.round(META_CQ_GESTOR    / META_DOC_GESTOR * META_DOC_MONTH);
-    const META_PROSP = Math.round(META_PROSP_GESTOR / META_DOC_GESTOR * META_DOC_MONTH);
+    const { metaCqMonth: META_CQ, metaProspMonth: META_PROSP } = getTeamRatios(t);
 
     const mesLabel = new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'});
 
@@ -2193,21 +2202,7 @@ function renderGestorDashboard() {
     document.getElementById(`meta-${k}-lbl`).textContent = '';
   });
   if (showMeta) {
-    // Calcula dados do mês anterior para derivar ratios
-    const team = new Set(getAgentNames());
-    const curRef = activeMonthRef || today();
-    const d = new Date(curRef + 'T12:00:00');
-    const prevMonth = new Date(d.getFullYear(), d.getMonth() - 1, 1);
-    const prevRef = `${prevMonth.getFullYear()}-${String(prevMonth.getMonth()+1).padStart(2,'0')}-01`;
-    const prevEntries = filterEntries('month', prevRef).filter(e => team.has(e.agent));
-    const prevDoc  = prevEntries.reduce((s,e) => s + e.doc,   0);
-    const prevCpd  = prevEntries.reduce((s,e) => s + e.cpd,   0);
-    const prevProsp= prevEntries.reduce((s,e) => s + e.prosp, 0);
-    // Ratios do mês passado; fallback se não houver dados
-    const ratioCpd  = prevDoc > 0 ? prevCpd   / prevDoc : 22;
-    const ratioProsp= prevDoc > 0 ? prevProsp  / prevDoc : 150;
-    const metaCpd   = Math.round(ratioCpd   * META_DOC_GESTOR);
-    const metaProsp = Math.round(ratioProsp  * META_DOC_GESTOR);
+    const { metaCqGestor: metaCpd, metaProspGestor: metaProsp } = getTeamRatios(activeMonthRef || today());
 
     const setBar = (key, atual, meta, color) => {
       const pct = Math.min(Math.round((atual / meta) * 100), 100);
