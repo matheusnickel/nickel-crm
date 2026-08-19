@@ -3616,6 +3616,18 @@ window.adminRenameAgent = async function(oldName, newName) {
   console.log('✅ TEAM atualizado. Recarregue a página.');
 };
 
+window.adminClearAgent = async function(name) {
+  const entries = getEntries().filter(e => e.agent === name);
+  if (entries.length === 0) { console.log(`Nenhuma entrada encontrada para "${name}".`); return; }
+  if (!confirm(`Apagar TODAS as ${entries.length} entradas de "${name}"? Isso não pode ser desfeito.`)) return;
+  for (const e of entries) {
+    await fbDeleteEntry(e.date, e.agent);
+    console.log(`Deletado: ${e.date}`);
+  }
+  saveEntries(getEntries().filter(e => e.agent !== name));
+  console.log(`✅ Dados de "${name}" apagados. Recarregue a página.`);
+};
+
 // ── PAGE DETECTION ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', ()=>{
   if      (document.getElementById('login-form'))  initLogin();
