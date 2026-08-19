@@ -1480,7 +1480,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const prevMonthD = new Date(t+'T12:00:00'); prevMonthD.setDate(1); prevMonthD.setMonth(prevMonthD.getMonth()-1);
     const prevRef = toDateStr(prevMonthD);
     const { start:pStart, end:pEnd } = monthRange(prevRef);
-    const allPrevE    = getEntries().filter(e => inRange(e.date, pStart, pEnd));
+    const teamSet = new Set(getAgentNames());
+    const allPrevE    = getEntries().filter(e => inRange(e.date, pStart, pEnd) && teamSet.has(e.agent));
     const allPrevDoc  = allPrevE.reduce((s,e)=>s+e.doc,0);
     const allPrevCpd  = allPrevE.reduce((s,e)=>s+(e.cpd||0),0);
     const allPrevProsp= allPrevE.reduce((s,e)=>s+(e.prosp||0),0);
