@@ -2134,8 +2134,26 @@ function renderTeamList() {
     <div class="team-row">
       <span class="team-name">${a.name}</span>
       <span class="team-pass" style="color:var(--text-muted);font-size:12px">${a.password}</span>
+      <button class="clear-agent-btn" data-idx="${i}" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">Zerar dados</button>
       <button class="del-agent-btn" data-idx="${i}">Remover</button>
     </div>`).join('');
+  list.querySelectorAll('.clear-agent-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const name = TEAM[parseInt(btn.dataset.idx)].name;
+      const entries = getEntries().filter(e => e.agent === name);
+      if (entries.length === 0) { alert(`${name} não tem nenhum lançamento.`); return; }
+      if (!confirm(`Apagar todos os ${entries.length} lançamentos de ${name}?\n\nEssa ação não pode ser desfeita.`)) return;
+      btn.disabled = true; btn.textContent = 'Apagando...';
+      try {
+        for (const e of entries) await fbDeleteEntry(e.date, e.agent);
+        saveEntries(getEntries().filter(e => e.agent !== name));
+        alert(`✅ Dados de ${name} apagados com sucesso.`);
+      } catch(err) {
+        alert('❌ Erro ao apagar dados. Verifique sua conexão.');
+      }
+      btn.disabled = false; btn.textContent = 'Zerar dados';
+    });
+  });
   list.querySelectorAll('.del-agent-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const name = TEAM[parseInt(btn.dataset.idx)].name;
