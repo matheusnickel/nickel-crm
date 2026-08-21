@@ -1561,18 +1561,18 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
     const ndDoc = Math.ceil(Math.max(META_DOC_MONTH - monthDoc, 0) / Math.max(daysRemaining, 1));
     const bottleneckHTML = (() => {
-      if (!bottleneck) return `<div class="agent-gargalo ok">🏆 TUDO NO RITMO! Mantém esse padrão e vai ser difícil te parar esse mês.</div>`;
+      if (!bottleneck) return `<div class="agent-gargalo ok">🏆 É isso. Não inventa moda. Continua fazendo o que você está fazendo, mantém esse ritmo todos os dias e vai ser difícil alguém te alcançar.</div>`;
       if (bottleneck === 'prosp') return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">🔥 <strong>Prospecção travada!</strong> No ritmo atual você NÃO bate os ${META_DOC_MONTH} DOCs. Precisa de <strong>${ndProsp} prospecções por dia</strong> — sem desculpa, bora pra rua!</div>
+          <div class="agent-gargalo-msg">🔥 <strong>PROSP baixa</strong><br>Você está falando com poucos possíveis proprietários. Aumente sua prospecção, gere mais conversas e crie mais chances de encontrar boas oportunidades.</div>
         </div>`;
       if (bottleneck === 'cq') return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">💥 <strong>Você prospecta mas não converte!</strong> Cada contato que você deixa escapar sem qualificar é dinheiro jogado fora. Fecha <strong>${ndCpd} CQs por dia</strong> — qualifica mais, angaria mais.</div>
+          <div class="agent-gargalo-msg">💥 <strong>CQ baixo</strong><br>Você está com poucos CQs. Aumente suas conversas qualificadas e gere mais oportunidades para avançar até a documentação.</div>
         </div>`;
       return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">🚨 <strong>Fecha os contratos!</strong> Você tem as conversas abertas — agora é hora de assinar. Precisa de <strong>${ndDoc} DOC${ndDoc > 1 ? 's' : ''} por dia</strong>. Cada dia sem fechar é oportunidade pro concorrente.</div>
+          <div class="agent-gargalo-msg">🚨 <strong>DOC baixo</strong><br>Você precisa transformar mais CQs em documentação. Avance melhor cada oportunidade, conduza as conversas e puxe mais documentos.</div>
         </div>`;
     })();
 
