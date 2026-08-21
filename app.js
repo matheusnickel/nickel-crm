@@ -1572,7 +1572,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         </div>`;
       return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">🚨 <strong>Angariações são o gargalo!</strong> Você tem as conversas abertas — agora fecha os contratos. Precisa de <strong>${ndDoc} DOC${ndDoc > 1 ? 's' : ''} por dia</strong>. Cada dia sem assinar é oportunidade pro concorrente.</div>
+          <div class="agent-gargalo-msg">🚨 <strong>Fecha os contratos!</strong> Você tem as conversas abertas — agora é hora de assinar. Precisa de <strong>${ndDoc} DOC${ndDoc > 1 ? 's' : ''} por dia</strong>. Cada dia sem fechar é oportunidade pro concorrente.</div>
         </div>`;
     })();
 
@@ -1581,7 +1581,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       return `
       <div class="agent-meta-row${isBottleneck ? ' is-bottleneck' : ''}">
         <div class="agent-meta-head">
-          <span class="agent-meta-lbl">${label}${isBottleneck ? ' <span class="bottleneck-tag">gargalo</span>' : ''}</span>
+          <span class="agent-meta-lbl">${label}${isBottleneck ? ' <span class="bottleneck-tag">⚠ foco aqui</span>' : ''}</span>
           <span class="agent-meta-nums" style="color:${b.c}">
             <strong>${val}</strong><span style="color:var(--text-muted);font-weight:400"> / ${meta} ${unit}</span>
           </span>
