@@ -1560,28 +1560,30 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const ndCpd   = Math.ceil(Math.max(META_CQ    - monthCpd,   0) / Math.max(daysRemaining, 1));
 
     const ndDoc = Math.ceil(Math.max(META_DOC_MONTH - monthDoc, 0) / Math.max(daysRemaining, 1));
-    const bottleneckHTML = (() => {
-      if (!bottleneck) return `<div class="agent-gargalo ok">🏆 É isso. Não inventa moda. Continua fazendo o que você está fazendo, mantém esse ritmo todos os dias e vai ser difícil alguém te alcançar.</div>`;
-      if (bottleneck === 'prosp') return `
-        <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">🔥 <strong>PROSP baixa</strong><br>Você está falando com poucos possíveis proprietários. Aumente sua prospecção, gere mais conversas e crie mais chances de encontrar boas oportunidades.</div>
-        </div>`;
-      if (bottleneck === 'cq') return `
-        <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">💥 <strong>CQ baixo</strong><br>Você está com poucos CQs. Aumente suas conversas qualificadas e gere mais oportunidades para avançar até a documentação.</div>
-        </div>`;
-      return `
-        <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">🚨 <strong>DOC baixo</strong><br>Você precisa transformar mais CQs em documentação. Avance melhor cada oportunidade, conduza as conversas e puxe mais documentos.</div>
-        </div>`;
-    })();
+    const okProsp = onPace(monthProsp, META_PROSP);
+    const okCpd   = onPace(monthCpd,   META_CQ);
+    const okDoc   = onPace(monthDoc,   META_DOC_MONTH);
+    const key = `${okProsp?1:0}${okCpd?1:0}${okDoc?1:0}`; // 000..111
+    const MSGS = {
+      '000': ['🔥', 'Tudo está abaixo do ritmo. Aumente a prospecção, gere mais CQs e volte a colocar documentação na mesa.'],
+      '100': ['🔥', 'Você está prospectando, mas isso não está virando CQ. Revise sua abordagem e gere mais conversas qualificadas.'],
+      '110': ['💥', 'CQ você tem. Agora faça essas oportunidades avançarem. Conduza as conversas e transforme CQ em DOC.'],
+      '010': ['💥', 'Você está qualificando bem, mas precisa avançar esses CQs. Trabalhe as oportunidades abertas e puxe documentação.'],
+      '001': ['🚨', 'Os DOCs estão saindo, mas a entrada está enfraquecendo. Volte a prospectar e gere novos CQs para manter o ritmo.'],
+      '101': ['🚨', 'Os DOCs estão vindo, mas seus CQs estão baixos. Melhore a qualidade das conversas para sustentar esse resultado.'],
+      '011': ['🔥', 'Você está convertendo bem, mas prospectando pouco. Aumente a entrada para não deixar o ritmo cair.'],
+      '111': ['🏆', 'É isso. Não inventa moda. Mantém esse ritmo e vai ser difícil alguém te alcançar.'],
+    };
+    const [icon, msg] = MSGS[key];
+    const isOk = key === '111';
+    const bottleneckHTML = `<div class="agent-gargalo ${isOk ? 'ok' : 'warn'}"><div class="agent-gargalo-msg">${icon} ${isOk ? `<strong>${msg}</strong>` : msg}</div></div>`;
 
     const mkMetaRow = (label, val, meta, unit, b, isBottleneck) => {
       const chip = paceChip(val, meta, unit);
       return `
       <div class="agent-meta-row${isBottleneck ? ' is-bottleneck' : ''}">
         <div class="agent-meta-head">
-          <span class="agent-meta-lbl">${label}${isBottleneck ? ' <span class="bottleneck-tag">⚠ foco aqui</span>' : ''}</span>
+          <span class="agent-meta-lbl">${label}${isBottleneck ? ' <span class="bottleneck-tag">⚠ abaixo</span>' : ''}</span>
           <span class="agent-meta-nums" style="color:${b.c}">
             <strong>${val}</strong><span style="color:var(--text-muted);font-weight:400"> / ${meta} ${unit}</span>
           </span>
