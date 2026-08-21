@@ -2,21 +2,23 @@ import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, f
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
-  bruna:      { name: 'Bruna',               role: 'agent',  password: 'nickel123' },
   deisy:      { name: 'Deyse Brito',         role: 'agent',  password: 'nickel123' },
-  rian:       { name: 'Rian',                role: 'agent',  password: 'nickel123' },
   luis:       { name: 'Luiz Davaro',         role: 'agent',  password: 'nickel123' },
   jhonnathan: { name: 'Jhonnathan Pinheiro', role: 'agent',  password: 'nickel123' },
   joao:       { name: 'João Andrade',        role: 'agent',  password: 'nickel123' },
   felipe:     { name: 'Felipe Moreira',      role: 'agent',  password: 'nickel123' },
   karen:      { name: 'Karen Abreu',         role: 'agent',  password: 'nickel123' },
+  alex:       { name: 'Aleksander Vaz',      role: 'agent',  password: 'nickel123' },
+  konrad:     { name: 'Konrad Horst',        role: 'agent',  password: 'nickel123' },
+  fernanda:   { name: 'Fernanda Prochnow',   role: 'agent',  password: 'nickel123' },
   matheus:    { name: 'Matheus',             role: 'gestor', password: 'nickel123' },
 };
 
 // ── TEAM (após USERS) ────────────────────────────────────
+// username = chave curta de login; name = nome completo exibido no sistema
 let TEAM = Object.keys(USERS)
   .filter(k => USERS[k].role === 'agent')
-  .map(k => ({ name: USERS[k].name, password: USERS[k].password }));
+  .map(k => ({ username: k, name: USERS[k].name, password: USERS[k].password }));
 
 function getAgentNames() { return TEAM.map(a => a.name); }
 
@@ -1403,7 +1405,7 @@ async function initLogin() {
   sel.innerHTML = '<option value="">Selecione...</option>';
   TEAM.forEach(a => {
     const o = document.createElement('option');
-    o.value = a.name.toLowerCase();
+    o.value = a.username || a.name.toLowerCase();
     o.textContent = a.name;
     sel.appendChild(o);
   });
@@ -1422,7 +1424,7 @@ async function initLogin() {
       setSession({ username, name:'Matheus', role:'gestor' });
       window.location.href='dashboard-gestor.html'; return;
     }
-    const agent = TEAM.find(a => a.name.toLowerCase() === username);
+    const agent = TEAM.find(a => (a.username || a.name.toLowerCase()) === username);
     if (!agent || agent.password !== password) { errEl.textContent='Usuário ou senha incorretos.'; return; }
     setSession({ username, name:agent.name, role:'agent' });
     window.location.href='dashboard-agente.html';
@@ -2110,6 +2112,15 @@ function initTeamManagement() {
   const wrap = document.getElementById('team-mgmt');
   if (!wrap) return;
   renderTeamList();
+
+  const renameAllBtn = document.getElementById('rename-all-btn');
+  if (renameAllBtn) {
+    renameAllBtn.addEventListener('click', async () => {
+      renameAllBtn.disabled = true; renameAllBtn.textContent = '🔄 Atualizando...';
+      await adminRenameAll();
+      renameAllBtn.disabled = false; renameAllBtn.textContent = '🔄 Atualizar todos os nomes no sistema';
+    });
+  }
 
   document.getElementById('add-agent-form').addEventListener('submit', async ev => {
     ev.preventDefault();
@@ -3640,6 +3651,46 @@ window.adminClearAgent = async function(name) {
   }
   saveEntries(getEntries().filter(e => e.agent !== name));
   console.log(`✅ Dados de "${name}" apagados. Recarregue a página.`);
+};
+
+// Renames conhecidos: nome antigo no Firestore → nome novo correto
+const AGENT_RENAMES = [
+  ['Deisy',       'Deyse Brito'],
+  ['Bruna',       'Deyse Brito'],   // caso 'Bruna' seja alias antigo
+  ['Luís',        'Luiz Davaro'],
+  ['Luis',        'Luiz Davaro'],
+  ['Jhonnathan',  'Jhonnathan Pinheiro'],
+  ['João',        'João Andrade'],
+  ['Joao',        'João Andrade'],
+  ['Felipe',      'Felipe Moreira'],
+  ['Karen',       'Karen Abreu'],
+  ['Alex',        'Aleksander Vaz'],
+  ['Aleksander',  'Aleksander Vaz'],
+  ['Konrad',      'Konrad Horst'],
+  ['Rian',        'Rian'],           // sem sobrenome confirmado — mantém
+  ['fernandaprochnw', 'Fernanda Prochnow'],
+  ['Fernanda',    'Fernanda Prochnow'],
+];
+
+window.adminRenameAll = async function() {
+  const allNames = [...new Set(getEntries().map(e => e.agent))];
+  console.log('Nomes encontrados no Firestore:', allNames);
+  for (const [oldName, newName] of AGENT_RENAMES) {
+    if (oldName === newName) continue;
+    const has = getEntries().some(e => e.agent === oldName);
+    if (!has) { console.log(`⏭ "${oldName}" — sem entradas, pulando`); continue; }
+    console.log(`🔄 Renomeando "${oldName}" → "${newName}"...`);
+    await fbRenameAgent(oldName, newName);
+    saveEntries(getEntries().map(e => e.agent === oldName ? {...e, agent: newName} : e));
+    console.log(`✅ "${oldName}" → "${newName}" concluído`);
+  }
+  // Salva TEAM atualizado no Firestore
+  const updatedTeam = Object.keys(USERS)
+    .filter(k => USERS[k].role === 'agent')
+    .map(k => ({ username: k, name: USERS[k].name, password: USERS[k].password }));
+  await fbSaveTeam(updatedTeam);
+  console.log('✅ TEAM atualizado. Recarregue a página.');
+  alert('✅ Todos os nomes foram atualizados. Recarregue a página.');
 };
 
 // ── PAGE DETECTION ───────────────────────────────────────
