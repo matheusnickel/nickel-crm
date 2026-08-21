@@ -1604,9 +1604,9 @@ function renderAgentDashboard(session, selectedDate, editing) {
       <div class="agent-meta-card">
         <div class="agent-meta-period">${mesLabel} · dia ${dayOfMonth} de ${daysInMonth} · ${daysRemaining} dias restantes</div>
         ${bottleneckHTML}
-        ${mkMetaRow('Angariações (DOC)',     monthDoc,   META_DOC_MONTH, 'DOC',   doc,   bottleneck==='doc')}
-        ${mkMetaRow('Conversas Qualif. (CQ)',monthCpd,   META_CQ,        'CQ',    cq,    bottleneck==='cq')}
-        ${mkMetaRow('Prospecções',           monthProsp, META_PROSP,     'PROSP', prosp, bottleneck==='prosp')}
+        ${mkMetaRow('Angariações (DOC)',     monthDoc,   META_DOC_MONTH, 'DOC',   doc,   !okDoc)}
+        ${mkMetaRow('Conversas Qualif. (CQ)',monthCpd,   META_CQ,        'CQ',    cq,    !okCpd)}
+        ${mkMetaRow('Prospecções',           monthProsp, META_PROSP,     'PROSP', prosp, !okProsp)}
       </div>`;
   }
 
