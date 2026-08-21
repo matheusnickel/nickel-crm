@@ -1559,19 +1559,20 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const ndProsp = Math.ceil(Math.max(META_PROSP - monthProsp, 0) / Math.max(daysRemaining, 1));
     const ndCpd   = Math.ceil(Math.max(META_CQ    - monthCpd,   0) / Math.max(daysRemaining, 1));
 
+    const ndDoc = Math.ceil(Math.max(META_DOC_MONTH - monthDoc, 0) / Math.max(daysRemaining, 1));
     const bottleneckHTML = (() => {
-      if (!bottleneck) return `<div class="agent-gargalo ok">🏆 Você está no ritmo para bater todas as metas. Continue assim!</div>`;
+      if (!bottleneck) return `<div class="agent-gargalo ok">🏆 TUDO NO RITMO! Mantém esse padrão e vai ser difícil te parar esse mês.</div>`;
       if (bottleneck === 'prosp') return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">Sua prospecção está baixa — no ritmo atual, você não vai bater os 12 DOCs. Aumente para <strong>~${ndProsp} prospecções/dia</strong> e o resto vai se encaixar.</div>
+          <div class="agent-gargalo-msg">🔥 <strong>Prospecção travada!</strong> No ritmo atual você NÃO bate os ${META_DOC_MONTH} DOCs. Precisa de <strong>${ndProsp} prospecções por dia</strong> — sem desculpa, bora pra rua!</div>
         </div>`;
       if (bottleneck === 'cq') return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">Você está prospectando bem, mas precisa converter mais em CQ. Foque em qualificar seus contatos — <strong>~${ndCpd} CQs/dia</strong> para bater a meta.</div>
+          <div class="agent-gargalo-msg">💥 <strong>Você prospecta mas não converte!</strong> Cada contato que você deixa escapar sem qualificar é dinheiro jogado fora. Fecha <strong>${ndCpd} CQs por dia</strong> — qualifica mais, angaria mais.</div>
         </div>`;
       return `
         <div class="agent-gargalo warn">
-          <div class="agent-gargalo-msg">Suas prospecções e CQs estão no ritmo. O foco agora é fechar angariações — as conversas já estão abertas, é hora de finalizar.</div>
+          <div class="agent-gargalo-msg">🚨 <strong>Angariações são o gargalo!</strong> Você tem as conversas abertas — agora fecha os contratos. Precisa de <strong>${ndDoc} DOC${ndDoc > 1 ? 's' : ''} por dia</strong>. Cada dia sem assinar é oportunidade pro concorrente.</div>
         </div>`;
     })();
 

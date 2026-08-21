@@ -311,20 +311,20 @@ a { color: inherit; text-decoration: none; }
 .agent-meta-card {
   background: var(--bg3);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 .agent-meta-period {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: .1em;
   color: var(--text-muted);
 }
-.agent-meta-row { display: flex; flex-direction: column; gap: 5px; }
+.agent-meta-row { display: flex; flex-direction: column; gap: 7px; }
 .agent-meta-head {
   display: flex;
   justify-content: space-between;
@@ -332,88 +332,94 @@ a { color: inherit; text-decoration: none; }
   gap: 8px;
 }
 .agent-meta-lbl {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: .05em;
+  letter-spacing: .1em;
 }
-.agent-meta-nums { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.agent-meta-nums { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .agent-meta-bar-wrap {
-  background: var(--bg2);
-  border-radius: 4px;
-  height: 5px;
+  background: rgba(255,255,255,.07);
+  border-radius: 6px;
+  height: 8px;
   overflow: hidden;
 }
-.agent-meta-bar { height: 100%; border-radius: 4px; transition: width .5s ease; }
-.agent-meta-status { font-size: 12px; color: var(--text-muted); }
-.agent-meta-status strong { font-weight: 700; }
+.agent-meta-bar { height: 100%; border-radius: 6px; transition: width .6s ease; box-shadow: 0 0 8px currentColor; }
+.agent-meta-status { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.agent-meta-status strong { font-weight: 800; }
 .agent-meta-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
+  margin-top: 2px;
   gap: 8px;
 }
 .pace-chip {
   font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
+  font-weight: 700;
+  padding: 3px 10px;
   border-radius: 20px;
   white-space: nowrap;
+  letter-spacing: .02em;
 }
 .pace-chip.ok {
-  background: rgba(168,230,61,.15);
+  background: rgba(168,230,61,.18);
   color: #a8e63d;
+  border: 1px solid rgba(168,230,61,.3);
 }
 .pace-chip.warn {
-  background: rgba(239,68,68,.12);
-  color: #ef4444;
+  background: rgba(239,68,68,.18);
+  color: #ff6b6b;
+  border: 1px solid rgba(239,68,68,.35);
 }
 
 /* ── GARGALO ── */
 .agent-gargalo {
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 12px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 .agent-gargalo.ok {
-  background: rgba(168,230,61,.1);
-  border: 1px solid rgba(168,230,61,.25);
+  background: linear-gradient(135deg, rgba(168,230,61,.15), rgba(46,204,113,.1));
+  border: 1px solid rgba(168,230,61,.4);
   color: #a8e63d;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
 }
 .agent-gargalo.warn {
-  background: rgba(239,68,68,.08);
-  border: 1px solid rgba(239,68,68,.25);
+  background: linear-gradient(135deg, rgba(239,68,68,.15), rgba(249,115,22,.08));
+  border: 1px solid rgba(239,68,68,.4);
 }
 .agent-gargalo-msg {
-  font-size: 13px;
-  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  color: #f0f0f0;
   line-height: 1.6;
 }
-.agent-gargalo-msg strong { font-weight: 700; color: #fff; }
+.agent-gargalo-msg strong { font-weight: 900; color: #fff; font-size: 15px; }
 .agent-meta-row.is-bottleneck {
-  background: rgba(239,68,68,.04);
-  border-radius: 8px;
-  padding: 8px;
-  margin: 0 -8px;
+  background: rgba(239,68,68,.07);
+  border: 1px solid rgba(239,68,68,.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 -4px;
 }
 .bottleneck-tag {
   display: inline-block;
-  background: rgba(239,68,68,.15);
-  color: #ef4444;
+  background: rgba(239,68,68,.25);
+  color: #ff6b6b;
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: .08em;
-  padding: 1px 6px;
+  letter-spacing: .1em;
+  padding: 2px 7px;
   border-radius: 4px;
   vertical-align: middle;
-  margin-left: 4px;
+  margin-left: 6px;
+  border: 1px solid rgba(239,68,68,.4);
 }
 
 .meta-card {
