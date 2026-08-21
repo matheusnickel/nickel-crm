@@ -2111,6 +2111,35 @@ function renderEvolucaoDiaria(entries) {
   });
 }
 
+async function exportBackup() {
+  const btn = document.getElementById('export-backup-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Exportando...'; }
+  try {
+    const backup = {
+      exportedAt: new Date().toISOString(),
+      version: 'nickel-crm-v107',
+      entries: getEntries(),
+      team: TEAM,
+      sales: SALES,
+    };
+    const json = JSON.stringify(backup, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href     = url;
+    a.download = `nickel-crm-backup-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (btn) { btn.textContent = '✅ Backup baixado!'; setTimeout(() => { btn.disabled = false; btn.textContent = '💾 Exportar backup completo'; }, 3000); }
+  } catch(e) {
+    alert('❌ Erro ao exportar. Verifique sua conexão.');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Exportar backup completo'; }
+  }
+}
+
 function initTeamManagement() {
   const wrap = document.getElementById('team-mgmt');
   if (!wrap) return;
@@ -2124,6 +2153,8 @@ function initTeamManagement() {
       renameAllBtn.disabled = false; renameAllBtn.textContent = '🔄 Atualizar todos os nomes no sistema';
     });
   }
+  const exportBtn = document.getElementById('export-backup-btn');
+  if (exportBtn) exportBtn.addEventListener('click', exportBackup);
 
   document.getElementById('add-agent-form').addEventListener('submit', async ev => {
     ev.preventDefault();
