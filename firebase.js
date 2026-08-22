@@ -16,16 +16,65 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const db    = getFirestore(fbApp);
 
-export function entryId(date, agent) {
-  return `${date}_${agent.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'_')}`;
+// doc ID: uid-based when entry has uid field (stable), name-based for legacy entries
+export function entryId(dateOrEntry, agentName) {
+  if (typeof dateOrEntry === 'object') {
+    const e = dateOrEntry;
+    if (e.uid) return `${e.date}_${e.uid}`;
+    return `${e.date}_${e.agent.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'_')}`;
+  }
+  return `${dateOrEntry}_${agentName.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'_')}`;
 }
 
 export async function fbUpsertEntry(entry) {
-  await setDoc(doc(db, 'entries', entryId(entry.date, entry.agent)), entry);
+  await setDoc(doc(db, 'entries', entryId(entry)), entry);
 }
 
-export async function fbDeleteEntry(date, agent) {
-  await deleteDoc(doc(db, 'entries', entryId(date, agent)));
+// Accepts entry object (preferred) or legacy (date, agentName) signature
+export async function fbDeleteEntry(entryOrDate, agentName) {
+  const id = typeof entryOrDate === 'object'
+    ? entryId(entryOrDate)
+    : entryId(entryOrDate, agentName);
+  await deleteDoc(doc(db, 'entries', id));
+}
+
+// Migrate all entries: add uid field + new uid-based doc ID; returns { migrated, skipped, ambiguous }
+export async function fbMigrateToUid(nameToUid) {
+  const snap = await getDocs(collection(db, 'entries'));
+  let migrated = 0, skipped = 0;
+  const ambiguous = [];
+  const chunkSize = 200;
+  const docs = snap.docs;
+
+  for (let i = 0; i < docs.length; i += chunkSize) {
+    const batch = writeBatch(db);
+    for (const d of docs.slice(i, i + chunkSize)) {
+      const e = d.data();
+      if (e.uid) { skipped++; continue; }
+      const uid = nameToUid[e.agent];
+      if (!uid) { ambiguous.push(e.agent); continue; }
+      const newEntry = { ...e, uid };
+      const newId = `${e.date}_${uid}`;
+      batch.set(doc(db, 'entries', newId), newEntry);
+      if (d.id !== newId) batch.delete(d.ref);
+      migrated++;
+    }
+    await batch.commit();
+  }
+  return { migrated, skipped, ambiguous: [...new Set(ambiguous)] };
+}
+
+// Update display name on all entries for a uid (without changing doc IDs)
+export async function fbUpdateAgentDisplayName(uid, newName) {
+  const snap = await getDocs(collection(db, 'entries'));
+  const toUpdate = snap.docs.filter(d => d.data().uid === uid);
+  const chunkSize = 400;
+  for (let i = 0; i < toUpdate.length; i += chunkSize) {
+    const batch = writeBatch(db);
+    toUpdate.slice(i, i + chunkSize).forEach(d => batch.update(d.ref, { agent: newName }));
+    await batch.commit();
+  }
+  return toUpdate.length;
 }
 
 export async function fbSeedIfFirstTime(seedData) {

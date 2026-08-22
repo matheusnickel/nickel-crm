@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth, fbRenameAgent } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth, fbRenameAgent, fbMigrateToUid, fbUpdateAgentDisplayName } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
@@ -1444,7 +1444,7 @@ async function initLogin() {
     }
     const agent = TEAM.find(a => (a.username || a.name.toLowerCase()) === username);
     if (!agent || agent.password !== password) { errEl.textContent='Usuário ou senha incorretos.'; return; }
-    setSession({ username, name:agent.name, role:'agent' });
+    setSession({ uid: agent.username || username, username, name:agent.name, role:'agent' });
     window.location.href='dashboard-agente.html';
   });
 }
@@ -1505,10 +1505,10 @@ function renderAgentDashboard(session, selectedDate, editing) {
   const t=today();
   const date = selectedDate || t;
   const { start:wStart, end:wEnd }=weekRange(t);
-  const entries=getEntries().filter(e=>e.agent===session.name);
+  const entries=getEntries().filter(e=> session.uid ? (e.uid===session.uid || e.agent===session.name) : e.agent===session.name);
   const weekDoc=entries.filter(e=>inRange(e.date,wStart,wEnd)).reduce((s,e)=>s+e.doc,0);
   const sentToday=entries.find(e=>e.date===date);
-  const editCount=getEditCount(session.name,date);
+  const editCount=getEditCount(session.uid||session.name,date);
   const canEdit=editCount<2;
 
   const { start:mStart, end:mEnd } = monthRange(t);
@@ -1802,8 +1802,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
           vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { const s=sentToday.vaDetails[i]; d.realizada = s.realizada!=null ? s.realizada : false; d.dataRealizacao = s.dataRealizacao||''; d.horarioRealizacao = s.horarioRealizacao||''; } });
         }
         try {
-          await upsertEntry({date, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
-          if (isEdit) incrementEditCount(session.name, date);
+          await upsertEntry({date, uid:session.uid, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
+          if (isEdit) incrementEditCount(session.uid||session.name, date);
           submitBtn.textContent = '✅ Enviado!';
           setTimeout(() => { submitBtn.textContent = isEdit ? 'Salvar edição' : 'Enviar lançamento'; submitBtn.disabled = false; }, 2500);
         } catch(err) {
@@ -2074,9 +2074,10 @@ function initGestorLancamento() {
     const lancCpdDetails=collectCpdDetails(lancCpdVal);
     const lancVaVal=parseInt(document.getElementById('lanc-va').value)||0;
     const vaDetails=collectVaDetails(lancVaVal);
+    const agentUid = (TEAM.find(a=>a.name===agent))?.username || null;
     try {
-      await upsertEntry({date,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,va:lancVaVal,vr:0,cpdDetails:lancCpdDetails,docDetails,vaDetails,vrDetails:[],submittedDate});
-      resetEditCount(agent,date);
+      await upsertEntry({date,uid:agentUid,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,va:lancVaVal,vr:0,cpdDetails:lancCpdDetails,docDetails,vaDetails,vrDetails:[],submittedDate});
+      resetEditCount(agentUid||agent,date);
       btn.textContent='✅ Salvo!';
       setTimeout(() => { btn.disabled=false; btn.textContent='Salvar lançamento'; }, 2000);
     } catch(err) {
@@ -2174,6 +2175,15 @@ function initTeamManagement() {
   const exportBtn = document.getElementById('export-backup-btn');
   if (exportBtn) exportBtn.addEventListener('click', exportBackup);
 
+  const migrateBtn = document.getElementById('migrate-uid-btn');
+  if (migrateBtn) {
+    migrateBtn.addEventListener('click', async () => {
+      migrateBtn.disabled = true; migrateBtn.textContent = '⏳ Migrando...';
+      await adminMigrateToUid();
+      migrateBtn.disabled = false; migrateBtn.textContent = '🔑 Migrar dados para UID permanente';
+    });
+  }
+
   document.getElementById('add-agent-form').addEventListener('submit', async ev => {
     ev.preventDefault();
     const name = document.getElementById('new-agent-name').value.trim();
@@ -2208,7 +2218,7 @@ function renderTeamList() {
       if (!confirm(`Apagar todos os ${entries.length} lançamentos de ${name}?\n\nEssa ação não pode ser desfeita.`)) return;
       btn.disabled = true; btn.textContent = 'Apagando...';
       try {
-        for (const e of entries) await fbDeleteEntry(e.date, e.agent);
+        for (const e of entries) await fbDeleteEntry(e);
         saveEntries(getEntries().filter(e => e.agent !== name));
         alert(`✅ Dados de ${name} apagados com sucesso.`);
       } catch(err) {
@@ -2794,7 +2804,7 @@ function renderDayView(dateStr) {
       <td class="num-cell day-num doc-cell">${has ? e.doc : dash}</td>
       <td class="num-cell day-num" style="color:#ef4444">${has ? (e.va||0) : dash}</td>
       <td class="num-cell day-num" style="color:#f97316">${has ? (e.vaDetails||[]).filter(d=>d.realizada).length : dash}</td>
-      <td>${has ? `<button class="del-day-btn" data-date="${dateStr}" data-agent="${name}">Remover</button>` : ''}</td>
+      <td>${has ? `<button class="del-day-btn" data-date="${dateStr}" data-agent="${name}" data-uid="${e.uid||''}">Remover</button>` : ''}</td>
     </tr>`;
   }).join('');
 
@@ -2814,14 +2824,17 @@ function renderDayView(dateStr) {
 
   wrap.querySelectorAll('.del-day-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const { date, agent } = btn.dataset;
+      const { date, agent, uid } = btn.dataset;
       if (!confirm(`Remover lançamento de ${agent} em ${formatDate(date)}?\nO angariador poderá relançar.`)) return;
       btn.disabled = true; btn.textContent = '...';
       const snapshot = getEntries();
+      const entryToDelete = uid
+        ? snapshot.find(e => e.date===date && (e.uid===uid || e.agent===agent))
+        : snapshot.find(e => e.date===date && e.agent===agent);
       saveEntries(snapshot.filter(e => !(e.date===date && e.agent===agent)));
       try {
-        await fbDeleteEntry(date, agent);
-        resetEditCount(agent, date);
+        await fbDeleteEntry(entryToDelete || {date, agent});
+        resetEditCount(uid||agent, date);
       } catch(e) {
         saveEntries(snapshot);
         alert('❌ Erro ao remover lançamento. Verifique sua conexão.');
@@ -3698,7 +3711,7 @@ window.adminClearAgent = async function(name) {
   if (entries.length === 0) { console.log(`Nenhuma entrada encontrada para "${name}".`); return; }
   if (!confirm(`Apagar TODAS as ${entries.length} entradas de "${name}"? Isso não pode ser desfeito.`)) return;
   for (const e of entries) {
-    await fbDeleteEntry(e.date, e.agent);
+    await fbDeleteEntry(e);
     console.log(`Deletado: ${e.date}`);
   }
   saveEntries(getEntries().filter(e => e.agent !== name));
@@ -3726,6 +3739,47 @@ const AGENT_RENAMES = [
 // Alias map: old name → canonical name (built from AGENT_RENAMES)
 const _ALIAS_MAP = Object.fromEntries(AGENT_RENAMES.map(([o,n])=>[o,n]));
 function normalizeAgentName(name) { return _ALIAS_MAP[name] || name; }
+
+// Migração estrutural: adiciona uid em todos os lançamentos históricos e muda doc IDs para uid-based
+window.adminMigrateToUid = async function() {
+  const needsMigration = getEntries().filter(e => !e.uid);
+  if (needsMigration.length === 0) { alert('✅ Todos os lançamentos já estão com UID. Nenhuma migração necessária.'); return; }
+
+  if (!confirm(`Migrar ${needsMigration.length} lançamentos para usar UID permanente?\n\nUm backup será baixado automaticamente antes.`)) return;
+
+  // Backup automático antes de migrar
+  try { exportBackup(); } catch(e) { console.warn('Backup falhou:', e); }
+  await new Promise(r => setTimeout(r, 800));
+
+  // Mapa: nome canônico → uid (chave de login)
+  const nameToUid = {};
+  Object.entries(USERS).forEach(([uid, u]) => { if (u.role === 'agent') nameToUid[u.name] = uid; });
+  AGENT_RENAMES.forEach(([oldName, newName]) => {
+    const uid = nameToUid[newName];
+    if (uid) nameToUid[oldName] = uid;
+  });
+
+  // Roda migração no Firestore (batch)
+  const result = await fbMigrateToUid(nameToUid);
+
+  // Atualiza cache local
+  const updatedLocal = getEntries().map(e => {
+    if (e.uid) return e;
+    const uid = nameToUid[e.agent] || nameToUid[normalizeAgentName(e.agent)];
+    return uid ? { ...e, uid, agent: USERS[uid].name } : e;
+  });
+  saveEntries(updatedLocal);
+
+  // Atualiza TEAM no Firestore com formato correto
+  const updatedTeam = Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>({username:k,name:USERS[k].name,password:USERS[k].password}));
+  await fbSaveTeam(updatedTeam);
+
+  const msg = result.ambiguous.length > 0
+    ? `✅ Migração concluída!\n${result.migrated} migrados, ${result.skipped} já OK.\n\n⚠ Não identificados (veja console): ${result.ambiguous.join(', ')}`
+    : `✅ Migração concluída!\n${result.migrated} lançamentos agora usam UID permanente.\nA partir de agora, trocar nomes não quebra mais nenhum dado.`;
+  alert(msg);
+  if (result.ambiguous.length > 0) console.warn('Entradas sem UID (nomes não mapeados):', result.ambiguous);
+};
 
 window.adminRenameAll = async function() {
   const allNames = [...new Set(getEntries().map(e => e.agent))];
