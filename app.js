@@ -574,11 +574,15 @@ function sumByAgent(entries, period) {
 // (submittedDate === date). Lançamentos retroativos (enviados depois) não
 // contam — o dia perdido não volta, mas não trava o envio dos dias seguintes.
 function isOnTime(e) { return (e.submittedDate||e.date)===e.date; }
-function getOnTimeDates(agentName) {
-  return [...new Set(getEntries().filter(e=>e.agent===agentName && isOnTime(e)).map(e=>e.date))];
+function getOnTimeDates(agentName, uid) {
+  return [...new Set(getEntries().filter(e => {
+    const match = uid ? (e.uid===uid || normalizeAgentName(e.agent)===agentName)
+                      : (normalizeAgentName(e.agent)===agentName || e.agent===agentName);
+    return match && isOnTime(e);
+  }).map(e=>e.date))];
 }
-function calcStreak(agentName) {
-  const days=getOnTimeDates(agentName).sort().reverse();
+function calcStreak(agentName, uid) {
+  const days=getOnTimeDates(agentName, uid).sort().reverse();
   if (days.length===0) return 0;
   const t=today();
   const yest=new Date(t+'T12:00:00'); yest.setDate(yest.getDate()-1);
@@ -1202,8 +1206,9 @@ function renderAgentDailyRanking(currentAgentName) {
   }
 
   const byAgent = names.map(name => {
-    const agentE = periodEntries.filter(e => e.agent === name);
-    const streak = calcStreak(name);
+    const memberUid = TEAM.find(a=>a.name===name)?.username;
+    const agentE = periodEntries.filter(e => memberUid ? (e.uid===memberUid || normalizeAgentName(e.agent)===name) : e.agent===name);
+    const streak = calcStreak(name, memberUid);
     return {
       agent: name,
       doc:   agentE.reduce((s,e)=>s+e.doc,0),
@@ -1264,9 +1269,11 @@ function renderAgentDailyRanking(currentAgentName) {
 }
 
 // ── STREAK VISUAL ────────────────────────────────────────
-function renderStreak(agentName) {
+function renderStreak(agentName, uid) {
   const t = today();
-  const entries = getEntries().filter(e => e.agent === agentName);
+  const entries = getEntries().filter(e =>
+    uid ? (e.uid===uid || normalizeAgentName(e.agent)===agentName)
+        : (normalizeAgentName(e.agent)===agentName || e.agent===agentName));
 
   // Build last 7 calendar days
   const days = [];
@@ -1282,7 +1289,7 @@ function renderStreak(agentName) {
     days.push({ ds, entry, score, isToday, label: `${dd}/${mm}` });
   }
 
-  const streak = calcStreak(agentName);
+  const streak = calcStreak(agentName, uid);
   let streakColor = '#555';
   if (streak >= 30) streakColor = '#2ecc71';
   else if (streak >= 14) streakColor = '#6495ed';
@@ -1640,7 +1647,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
   }
 
 
-  renderStreak(session.name);
+  renderStreak(session.name, session.uid);
 
   // Banner agressivo — não enviou hoje
   const noSendBanner = document.getElementById('no-send-banner');
