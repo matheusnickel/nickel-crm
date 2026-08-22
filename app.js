@@ -514,7 +514,7 @@ function getTeamRatios(refDate) {
   const prevRef = toDateStr(prevMonthD);
   const { start: pStart, end: pEnd } = monthRange(prevRef);
   const teamSet = new Set(getAgentNames());
-  const prevE = getEntries().filter(e => inRange(e.date, pStart, pEnd) && teamSet.has(e.agent));
+  const prevE = getEntries().filter(e => inRange(e.date, pStart, pEnd) && teamSet.has(normalizeAgentName(e.agent)));
   const prevDoc   = prevE.reduce((s, e) => s + (e.doc  || 0), 0);
   const prevCpd   = prevE.reduce((s, e) => s + (e.cpd  || 0), 0);
   const prevProsp = prevE.reduce((s, e) => s + (e.prosp || 0), 0);
@@ -641,7 +641,7 @@ function calcDailyScore(entry) {
 
 
 function calcMonthlyScore(agentName, monthEntries) {
-  const mine  = monthEntries.filter(e => e.agent === agentName);
+  const mine  = monthEntries.filter(e => normalizeAgentName(e.agent) === agentName || e.agent === agentName);
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
@@ -687,12 +687,14 @@ function renderNotasRanking() {
   let rows;
   if (activeNotaTab === 'dia') {
     rows = names.map(name => {
-      const e = dayE.find(x => x.agent === name);
+      const uid = TEAM.find(a=>a.name===name)?.username;
+      const e = dayE.find(x => uid ? (x.uid===uid || normalizeAgentName(x.agent)===name) : normalizeAgentName(x.agent)===name || x.agent===name);
       return { name, score: calcDailyScore(e || null), doc: e?.doc || 0, sent: !!e };
     });
   } else {
     rows = names.map(name => {
-      const doc = monthE.filter(x => x.agent === name).reduce((s, e) => s + e.doc, 0);
+      const uid = TEAM.find(a=>a.name===name)?.username;
+      const doc = monthE.filter(x => uid ? (x.uid===uid || normalizeAgentName(x.agent)===name) : normalizeAgentName(x.agent)===name || x.agent===name).reduce((s, e) => s + e.doc, 0);
       return { name, score: calcMonthlyScore(name, monthE), doc, sent: true };
     });
   }
@@ -748,7 +750,8 @@ function renderAgentContacts(agentName) {
   const wrap = document.getElementById('agent-contacts-wrap');
   if (!wrap) return;
   const t = today();
-  const entries = getEntries().filter(e => e.agent === agentName);
+  const agentUid = TEAM.find(a=>a.name===agentName)?.username;
+  const entries = getEntries().filter(e => agentUid ? (e.uid===agentUid || normalizeAgentName(e.agent)===agentName) : normalizeAgentName(e.agent)===agentName || e.agent===agentName);
 
   // CPDs ativos (exclui os que viraram DOC ou descarte)
   const cpds = [];
@@ -1044,7 +1047,8 @@ function renderAgentContacts(agentName) {
 function renderAgentVisits(agentName) {
   const wrap = document.getElementById('agent-visits-wrap');
   if (!wrap) return;
-  const entries = getEntries().filter(e => e.agent === agentName);
+  const agentUidV = TEAM.find(a=>a.name===agentName)?.username;
+  const entries = getEntries().filter(e => agentUidV ? (e.uid===agentUidV || normalizeAgentName(e.agent)===agentName) : normalizeAgentName(e.agent)===agentName || e.agent===agentName);
 
   const allVisits = [];
   entries.forEach(e => (e.vaDetails||[]).forEach((d,i) => {
@@ -1514,7 +1518,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
   const t=today();
   const date = selectedDate || t;
   const { start:wStart, end:wEnd }=weekRange(t);
-  const entries=getEntries().filter(e=> session.uid ? (e.uid===session.uid || e.agent===session.name) : e.agent===session.name);
+  const entries=getEntries().filter(e=> session.uid ? (e.uid===session.uid || normalizeAgentName(e.agent)===session.name) : normalizeAgentName(e.agent)===session.name || e.agent===session.name);
   const weekDoc=entries.filter(e=>inRange(e.date,wStart,wEnd)).reduce((s,e)=>s+e.doc,0);
   const sentToday=entries.find(e=>e.date===date);
   const editCount=getEditCount(session.uid||session.name,date);
@@ -2121,7 +2125,7 @@ function renderEvolucaoDiaria(entries) {
   const colors = ['#a8e63d','#6495ed','#2ecc71','#e67e22','#e74c3c','#9b59b6','#1abc9c','#f1c40f'];
   const datasets = agentNames.map((name,i) => ({
     label: name,
-    data: dates.map(d => { const e=entries.find(x=>x.date===d&&x.agent===name); return e?e.doc:0; }),
+    data: dates.map(d => { const uid=TEAM.find(a=>a.name===name)?.username; const e=entries.find(x=>x.date===d&&(uid?(x.uid===uid||normalizeAgentName(x.agent)===name):(normalizeAgentName(x.agent)===name||x.agent===name))); return e?e.doc:0; }),
     borderColor: colors[i%colors.length],
     backgroundColor: colors[i%colors.length]+'33',
     borderWidth: 2, pointRadius: 4, tension: .3, fill: false,
@@ -2223,14 +2227,16 @@ function renderTeamList() {
     </div>`).join('');
   list.querySelectorAll('.clear-agent-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const name = TEAM[parseInt(btn.dataset.idx)].name;
-      const entries = getEntries().filter(e => e.agent === name);
+      const member = TEAM[parseInt(btn.dataset.idx)];
+      const name = member.name;
+      const memberUid = member.username;
+      const entries = getEntries().filter(e => memberUid ? (e.uid===memberUid || normalizeAgentName(e.agent)===name) : normalizeAgentName(e.agent)===name || e.agent===name);
       if (entries.length === 0) { alert(`${name} não tem nenhum lançamento.`); return; }
       if (!confirm(`Apagar todos os ${entries.length} lançamentos de ${name}?\n\nEssa ação não pode ser desfeita.`)) return;
       btn.disabled = true; btn.textContent = 'Apagando...';
       try {
         for (const e of entries) await fbDeleteEntry(e);
-        saveEntries(getEntries().filter(e => e.agent !== name));
+        saveEntries(getEntries().filter(e => !(memberUid ? (e.uid===memberUid || normalizeAgentName(e.agent)===name) : normalizeAgentName(e.agent)===name || e.agent===name)));
         alert(`✅ Dados de ${name} apagados com sucesso.`);
       } catch(err) {
         alert('❌ Erro ao apagar dados. Verifique sua conexão.');
@@ -3523,7 +3529,8 @@ function generateReport(period) {
   // Per-agent cards
   const agentCards = ranked.map((a, i) => {
     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
-    const agentEntries = allEntries.filter(e => e.agent === a.agent);
+    const aUid = TEAM.find(t=>t.name===a.agent)?.username;
+    const agentEntries = allEntries.filter(e => aUid ? (e.uid===aUid || normalizeAgentName(e.agent)===a.agent) : normalizeAgentName(e.agent)===a.agent || e.agent===a.agent);
     const entryMap = {};
     agentEntries.forEach(e => { entryMap[e.date] = e; });
 
@@ -3542,7 +3549,7 @@ function generateReport(period) {
 
     // DOCs do período
     const docs = periodEntries
-      .filter(e => e.agent === a.agent)
+      .filter(e => aUid ? (e.uid===aUid || normalizeAgentName(e.agent)===a.agent) : normalizeAgentName(e.agent)===a.agent || e.agent===a.agent)
       .flatMap(e => (e.docDetails||[]).map(d => ({...d, date: e.date})))
       .filter(d => d.nome);
 
@@ -3727,14 +3734,15 @@ window.adminRenameAgent = async function(oldName, newName) {
 };
 
 window.adminClearAgent = async function(name) {
-  const entries = getEntries().filter(e => e.agent === name);
+  const uid = Object.keys(USERS).find(k=>USERS[k].name===name);
+  const entries = getEntries().filter(e => uid ? (e.uid===uid || normalizeAgentName(e.agent)===name) : normalizeAgentName(e.agent)===name || e.agent===name);
   if (entries.length === 0) { console.log(`Nenhuma entrada encontrada para "${name}".`); return; }
   if (!confirm(`Apagar TODAS as ${entries.length} entradas de "${name}"? Isso não pode ser desfeito.`)) return;
   for (const e of entries) {
     await fbDeleteEntry(e);
     console.log(`Deletado: ${e.date}`);
   }
-  saveEntries(getEntries().filter(e => e.agent !== name));
+  saveEntries(getEntries().filter(e => !(uid ? (e.uid===uid || normalizeAgentName(e.agent)===name) : normalizeAgentName(e.agent)===name || e.agent===name)));
   console.log(`✅ Dados de "${name}" apagados. Recarregue a página.`);
 };
 
