@@ -597,7 +597,19 @@ function calcStreak(agentName, uid) {
   else if (days[0]===yesterdayStr) cursor=new Date(yesterdayStr+'T12:00:00');
   else return 0;
   let streak=0;
-  for (const d of days) { if(d===toDateStr(cursor)){streak++;cursor.setDate(cursor.getDate()-1);}else break; }
+  let skipped=0; // dias sem envio tolerados consecutivamente
+  for (const d of days) {
+    const cur=toDateStr(cursor);
+    if(d===cur){ streak++; skipped=0; cursor.setDate(cursor.getDate()-1); }
+    else {
+      // verificar quantos dias foram pulados
+      const dDate=new Date(d+'T12:00:00');
+      const gap=Math.round((cursor-dDate)/(86400000));
+      if(gap===2){ // 1 dia sem envio — tolerado
+        streak++; skipped=0; cursor=dDate; cursor.setDate(cursor.getDate()-1);
+      } else break; // 2+ dias sem envio — zera
+    }
+  }
   return streak;
 }
 
