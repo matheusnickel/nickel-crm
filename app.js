@@ -1460,6 +1460,7 @@ async function initLogin() {
 let agentUnsubscribe=null;
 let histExpanded=false;
 let agentEditing=false;
+let wizardInProgress=false; // true enquanto o agente está preenchendo o wizard
 
 async function initAgentDashboard() {
   const session=getSession();
@@ -1471,6 +1472,7 @@ async function initAgentDashboard() {
 
   agentUnsubscribe=fbListen(entries=>{
     saveEntries(entries);
+    if (wizardInProgress) return; // não interrompe preenchimento em andamento
     const dp=document.getElementById('selected-date');
     renderAgentDashboard(session, dp?.value||today(), agentEditing);
   });
@@ -1642,7 +1644,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     if (datePicker.value !== date) datePicker.value = date;
     if (!datePicker._bound) {
       datePicker._bound = true;
-      datePicker.addEventListener('change', () => { agentEditing=false; renderAgentDashboard(session, datePicker.value); });
+      datePicker.addEventListener('change', () => { agentEditing=false; wizardInProgress=false; renderAgentDashboard(session, datePicker.value); });
     }
   }
 
@@ -1752,6 +1754,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
       formWrap.querySelectorAll('.wiz-adj').forEach(btn => {
         btn.addEventListener('click', () => {
+          wizardInProgress = true; // agente começou a preencher
           const i = parseInt(btn.dataset.step);
           const key = WSTEPS[i].key;
           wVals[key] = Math.max(0, wVals[key] + parseInt(btn.dataset.d));
@@ -1809,6 +1812,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
           vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { const s=sentToday.vaDetails[i]; d.realizada = s.realizada!=null ? s.realizada : false; d.dataRealizacao = s.dataRealizacao||''; d.horarioRealizacao = s.horarioRealizacao||''; } });
         }
         try {
+          wizardInProgress = false; // libera re-render após submit
           await upsertEntry({date, uid:session.uid, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
           if (isEdit) incrementEditCount(session.uid||session.name, date);
           submitBtn.textContent = '✅ Enviado!';
@@ -1821,7 +1825,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       });
 
       const cancelBtn = document.getElementById('wiz-cancel');
-      if (cancelBtn) cancelBtn.addEventListener('click', () => { agentEditing=false; renderAgentDashboard(session, date); });
+      if (cancelBtn) cancelBtn.addEventListener('click', () => { agentEditing=false; wizardInProgress=false; renderAgentDashboard(session, date); });
     }
   }
 
