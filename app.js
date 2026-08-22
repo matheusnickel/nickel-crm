@@ -2544,13 +2544,21 @@ function renderTimeline() {
   const endD = new Date(tlEnd+'T12:00:00');
   while (cur <= endD) { days.push(toDateStr(cur)); cur.setDate(cur.getDate()+1); }
 
-  // entry lookup per agent+date
+  // entry lookup per agent+date — index by canonical name AND uid-based name
   const entryMap = {};
-  entries.forEach(e => { entryMap[e.agent+'|'+e.date] = e; });
+  entries.forEach(e => {
+    entryMap[e.agent+'|'+e.date] = e;
+    const canon = normalizeAgentName(e.agent);
+    if (canon !== e.agent) entryMap[canon+'|'+e.date] = e;
+    if (e.uid) {
+      const member = TEAM.find(a => a.username === e.uid);
+      if (member && member.name !== e.agent && member.name !== canon) entryMap[member.name+'|'+e.date] = e;
+    }
+  });
 
   // sort by streak desc, filter by selected agent
   const sorted = agentNames
-    .map(name => ({ name, streak: calcStreak(name) }))
+    .map(name => { const uid = TEAM.find(a=>a.name===name)?.username; return { name, uid, streak: calcStreak(name, uid) }; })
     .sort((a, b) => b.streak - a.streak)
     .filter(r => !tlAgent || r.name === tlAgent);
 
@@ -2802,7 +2810,8 @@ function renderDayView(dateStr) {
   const wrap=document.getElementById('day-view-wrap');
 
   const rows = agentNames.map(name => {
-    const e=entries.find(x=>x.date===dateStr&&x.agent===name), has=!!e;
+    const memberUid = TEAM.find(a=>a.name===name)?.username;
+    const e=entries.find(x=>x.date===dateStr&&(x.agent===name || normalizeAgentName(x.agent)===name || (memberUid && x.uid===memberUid))), has=!!e;
     const dash='<span class="day-empty">—</span>';
     return `<tr>
       <td class="day-agent-name">${name}</td>
