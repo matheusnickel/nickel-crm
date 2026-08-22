@@ -574,12 +574,7 @@ function sumByAgent(entries, period) {
 // (submittedDate === date). Lançamentos retroativos (enviados depois) não
 // contam — o dia perdido não volta, mas não trava o envio dos dias seguintes.
 function isOnTime(e) {
-  const submitted = e.submittedDate || e.date;
-  if (submitted === e.date) return true;
-  // Tolerância: enviou até o dia seguinte (madrugada ou esquecimento curto)
-  const nextDay = new Date(e.date + 'T12:00:00');
-  nextDay.setDate(nextDay.getDate() + 1);
-  return submitted <= toDateStr(nextDay);
+  return true; // sequência conta qualquer dia com lançamento, independente do horário de envio
 }
 function getOnTimeDates(agentName, uid) {
   return [...new Set(getEntries().filter(e => {
