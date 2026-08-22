@@ -25,8 +25,25 @@ function getAgentNames() { return TEAM.map(a => a.name); }
 async function loadTeam() {
   try {
     const remote = await fbGetTeam();
-    if (remote && remote.length > 0) TEAM = remote;
-    else await fbSaveTeam(TEAM);
+    if (remote && remote.length > 0) {
+      const needsUpgrade = remote.some(a => !a.username);
+      if (needsUpgrade) {
+        // Upgrade: add username fields using USERS map
+        const byName = Object.fromEntries(Object.entries(USERS).map(([k,v])=>[v.name, k]));
+        TEAM = remote.map(a => {
+          const canonName = normalizeAgentName(a.name);
+          const ukey = byName[canonName];
+          return ukey ? { username: ukey, name: USERS[ukey].name, password: a.password || USERS[ukey].password } : null;
+        }).filter(Boolean);
+        if (TEAM.length === 0) TEAM = Object.keys(USERS).filter(k=>USERS[k].role==='agent').map(k=>({username:k,name:USERS[k].name,password:USERS[k].password}));
+        await fbSaveTeam(TEAM);
+        console.log('✅ TEAM atualizado com campos username');
+      } else {
+        TEAM = remote;
+      }
+    } else {
+      await fbSaveTeam(TEAM);
+    }
   } catch(e) { console.warn('loadTeam error, using defaults', e); }
 }
 
@@ -535,12 +552,13 @@ function sumByAgent(entries, period) {
   const map={};
   const team = new Set(getAgentNames());
   entries.forEach(e=>{
-    if (!team.has(e.agent)) return;
-    if(!map[e.agent]) map[e.agent]={agent:e.agent,prosp:0,cpd:0,doc:0,va:0,vr:0,vidSubmitted:0};
-    map[e.agent].prosp+=e.prosp; map[e.agent].cpd+=e.cpd; map[e.agent].doc+=e.doc;
-    map[e.agent].va += (e.va||0);
-    map[e.agent].vr += (e.vaDetails||[]).filter(d=>d.realizada).length;
-    map[e.agent].vidSubmitted += (e.video||0);
+    const name = normalizeAgentName(e.agent);
+    if (!team.has(name)) return;
+    if(!map[name]) map[name]={agent:name,prosp:0,cpd:0,doc:0,va:0,vr:0,vidSubmitted:0};
+    map[name].prosp+=e.prosp; map[name].cpd+=e.cpd; map[name].doc+=e.doc;
+    map[name].va += (e.va||0);
+    map[name].vr += (e.vaDetails||[]).filter(d=>d.realizada).length;
+    map[name].vidSubmitted += (e.video||0);
   });
   // Apply video authorizations: if any auth exists for the period, use authorized total; else submitted
   if (period) {
@@ -2225,7 +2243,7 @@ function renderStreakRanking() { renderTimeline(); }
 
 function renderGestorRanking() {
   const t = today();
-  const rankEntries = filterEntries(activeRankingPeriod, t).filter(e => new Set(getAgentNames()).has(e.agent));
+  const rankEntries = filterEntries(activeRankingPeriod, t).filter(e => new Set(getAgentNames()).has(normalizeAgentName(e.agent)));
   const periodKey = activeRankingPeriod === 'month' ? t.slice(0,7) : t.slice(0,7);
   const rankByAgent = sumByAgent(rankEntries, periodKey);
   const ranked = [...rankByAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
@@ -2243,7 +2261,7 @@ function renderGestorRanking() {
 function renderGestorDashboard() {
   const ref = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
   const team=new Set(getAgentNames());
-  const entries=filterEntries(activePeriod, ref).filter(e=>team.has(e.agent));
+  const entries=filterEntries(activePeriod, ref).filter(e=>team.has(normalizeAgentName(e.agent)));
   const periodKey = activePeriod === 'month'
     ? (activeMonthRef || today()).slice(0, 7)
     : activePeriod === 'week' ? activeWeekRef || today().slice(0, 7) : today().slice(0, 7);
@@ -3438,7 +3456,7 @@ function generateReport(period) {
   const ref = period==='month' ? activeMonthRef : period==='week' ? activeWeekRef : t;
   const team = getAgentNames();
   const allEntries = getEntries();
-  const periodEntries = filterEntries(period, ref).filter(e => new Set(team).has(e.agent));
+  const periodEntries = filterEntries(period, ref).filter(e => new Set(team).has(normalizeAgentName(e.agent)));
   const periodLabel = getPeriodLabel(period, ref);
 
   // Build date range for daily timeline
@@ -3690,7 +3708,7 @@ window.adminClearAgent = async function(name) {
 // Renames conhecidos: nome antigo no Firestore → nome novo correto
 const AGENT_RENAMES = [
   ['Deisy',       'Deyse Brito'],
-  ['Bruna',       'Deyse Brito'],   // caso 'Bruna' seja alias antigo
+  ['Bruna',       'Deyse Brito'],
   ['Luís',        'Luiz Davaro'],
   ['Luis',        'Luiz Davaro'],
   ['Jhonnathan',  'Jhonnathan Pinheiro'],
@@ -3701,10 +3719,13 @@ const AGENT_RENAMES = [
   ['Alex',        'Aleksander Vaz'],
   ['Aleksander',  'Aleksander Vaz'],
   ['Konrad',      'Konrad Horst'],
-  ['Rian',        'Rian'],           // sem sobrenome confirmado — mantém
+  ['Rian',        'Rian'],
   ['fernandaprochnw', 'Fernanda Prochnow'],
   ['Fernanda',    'Fernanda Prochnow'],
 ];
+// Alias map: old name → canonical name (built from AGENT_RENAMES)
+const _ALIAS_MAP = Object.fromEntries(AGENT_RENAMES.map(([o,n])=>[o,n]));
+function normalizeAgentName(name) { return _ALIAS_MAP[name] || name; }
 
 window.adminRenameAll = async function() {
   const allNames = [...new Set(getEntries().map(e => e.agent))];
