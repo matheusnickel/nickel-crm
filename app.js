@@ -570,9 +570,11 @@ function sumByAgent(entries, period) {
   }
   return Object.values(map);
 }
-// Um lançamento só conta para a sequência se foi enviado no próprio dia
-// (submittedDate === date). Lançamentos retroativos (enviados depois) não
-// contam — o dia perdido não volta, mas não trava o envio dos dias seguintes.
+// Data de reset das sequências — só contam envios a partir daqui
+const STREAK_START_DATE = '2026-08-22';
+
+// Um lançamento conta para a sequência se foi enviado no próprio dia ou no dia seguinte.
+// Envios com 2+ dias de atraso (retroativos) não contam — impedem streak inflada artificialmente.
 function isOnTime(e) {
   // conta para a sequência se foi enviado no próprio dia ou no dia seguinte (atraso de até 1 dia)
   if (!e.submittedDate) return true; // entradas antigas sem submittedDate sempre contam
@@ -582,6 +584,7 @@ function isOnTime(e) {
 }
 function getOnTimeDates(agentName, uid) {
   return [...new Set(getEntries().filter(e => {
+    if (e.date < STREAK_START_DATE) return false; // só conta a partir do reset
     const match = uid ? (e.uid===uid || normalizeAgentName(e.agent)===agentName)
                       : (normalizeAgentName(e.agent)===agentName || e.agent===agentName);
     return match && isOnTime(e);
@@ -2262,14 +2265,23 @@ function renderTeamList() {
   });
 }
 
-// Visual da ofensiva (emoji + cor) reutilizado no ranking de sequência e no resumo p/ compartilhar
+// Visual da ofensiva — muda a cada 5 dias de sequência
 function streakTier(streak) {
-  if      (streak === 0) return { emoji:'💤', color:'#555' };
-  else if (streak < 3)   return { emoji:'🔥', color:'#cd7f32' };
-  else if (streak < 7)   return { emoji:'🔥', color:'#ff7a00' };
-  else if (streak < 14)  return { emoji:'🔥', color:'#a8e63d' };
-  else if (streak < 30)  return { emoji:'🔥', color:'#6495ed' };
-  else                   return { emoji:'🏆', color:'#2ecc71' };
+  if (streak === 0) return { emoji:'💤', color:'#555' };
+  const tiers = [
+    { emoji:'🔥', color:'#cd7f32' }, // 1–4d   bronze
+    { emoji:'🔥', color:'#ff7a00' }, // 5–9d   laranja
+    { emoji:'🔥', color:'#facc15' }, // 10–14d  amarelo
+    { emoji:'🔥', color:'#a8e63d' }, // 15–19d  verde-limão
+    { emoji:'🔥', color:'#22d3ee' }, // 20–24d  ciano
+    { emoji:'🔥', color:'#818cf8' }, // 25–29d  roxo
+    { emoji:'🏆', color:'#f59e0b' }, // 30–34d  ouro
+    { emoji:'🏆', color:'#2ecc71' }, // 35–39d  esmeralda
+    { emoji:'🏆', color:'#e879f9' }, // 40–44d  rosa
+    { emoji:'👑', color:'#ffd700' }, // 45d+    coroa dourada
+  ];
+  const idx = Math.min(Math.floor((streak - 1) / 5), tiers.length - 1);
+  return tiers[idx];
 }
 
 function renderStreakRanking() { renderTimeline(); }
