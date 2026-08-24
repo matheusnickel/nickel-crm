@@ -2447,7 +2447,7 @@ function renderAnalyticsChart(allDocs) {
 }
 
 // ── DOC LIST (gestor — with inline nota edit) ────────────
-let activeDocAgent = '', activeCpdAgent = '', activeVisitAgent = '', activeVisitStatus = 'todas';
+let activeDocAgent = '', activeCpdAgent = '', activeCpdStatus = '', activeVisitAgent = '', activeVisitStatus = 'todas';
 
 function renderDocList(entries) {
   const allRows=[];
@@ -2945,22 +2945,44 @@ function renderCpdList(entries) {
   if (!wrap) return;
 
   const agentNames = getAgentNames();
-  const filterHTML = `<div style="margin-bottom:12px">
-    <select id="cpd-agent-filter" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none;width:100%">
-      <option value="">Todos os angariadores</option>
-      ${agentNames.map(n=>`<option value="${n}" ${activeCpdAgent===n?'selected':''}>${n}</option>`).join('')}
-    </select>
-  </div>`;
+
+  // categorias de status para filtro rápido
+  const STATUS_CATS = [
+    { v: '',           label: 'Todos' },
+    { v: 'tratativa',  label: 'Em Tratativa' },
+    ...DESCARTE_MOTIVOS.map(m => ({ v: 'desc_'+m, label: m })),
+  ];
+
+  const filterHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+      <select id="cpd-agent-filter" style="flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;outline:none">
+        <option value="">Todos os angariadores</option>
+        ${agentNames.map(n=>`<option value="${n}" ${activeCpdAgent===n?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      ${STATUS_CATS.map(({v,label}) =>
+        `<button class="cpd-status-filter-btn" data-sv="${v}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid ${activeCpdStatus===v?'var(--accent)':'var(--border)'};background:${activeCpdStatus===v?'var(--accent)':'var(--bg3)'};color:${activeCpdStatus===v?'#000':'var(--text-muted)'};cursor:pointer;font-family:'DM Sans',sans-serif">${label}</button>`
+      ).join('')}
+    </div>`;
 
   const allRows = [];
-  entries.forEach(e => (e.cpdDetails||[]).forEach((d,i) => allRows.push({date:e.date, agent:e.agent, idx:i, ...d})));
+  entries.forEach(e => (e.cpdDetails||[]).forEach((d,i) => { if (d.nome) allRows.push({date:e.date, agent:e.agent, uid:e.uid, idx:i, ...d}); }));
   allRows.sort((a,b) => b.date.localeCompare(a.date));
 
-  const rows = activeCpdAgent ? allRows.filter(r => r.agent === activeCpdAgent) : allRows;
+  let rows = activeCpdAgent
+    ? allRows.filter(r => r.agent===activeCpdAgent || normalizeAgentName(r.agent)===activeCpdAgent)
+    : allRows;
+  if (activeCpdStatus === 'tratativa') rows = rows.filter(r => r.status !== 'descarte' && r.status !== 'doc');
+  else if (activeCpdStatus.startsWith('desc_')) {
+    const motivo = activeCpdStatus.slice(5);
+    rows = rows.filter(r => r.status === 'descarte' && r.motivo === motivo);
+  }
 
   if (allRows.length === 0) {
     wrap.innerHTML = filterHTML + '<div class="empty-state">Nenhum CQ com detalhes no período</div>';
     wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });
+    wrap.querySelectorAll('.cpd-status-filter-btn').forEach(btn => btn.addEventListener('click', () => { activeCpdStatus=btn.dataset.sv; renderCpdList(entries); }));
     return;
   }
 
@@ -2994,6 +3016,7 @@ function renderCpdList(entries) {
   </table></div>`;
 
   wrap.querySelector('#cpd-agent-filter').addEventListener('change', function(){ activeCpdAgent=this.value; renderCpdList(entries); });
+  wrap.querySelectorAll('.cpd-status-filter-btn').forEach(btn => btn.addEventListener('click', () => { activeCpdStatus=btn.dataset.sv; renderCpdList(entries); }));
 
   wrap.querySelectorAll('.cpd-status-sel').forEach(sel => {
     sel.addEventListener('change', async () => {
