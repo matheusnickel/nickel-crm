@@ -1807,6 +1807,10 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
       document.getElementById('wiz-submit').addEventListener('click', async () => {
         const cpdDetails = collectCpdDetails(wVals.cp);
+        for (let i=0;i<cpdDetails.length;i++) {
+          if (!cpdDetails[i].nome) { alert(`CQ ${i+1}: preencha o nome do proprietário.`); return; }
+          if (!cpdDetails[i].telefone) { alert(`CQ ${i+1}: preencha o telefone.`); return; }
+        }
         if (sentToday?.cpdDetails) {
           cpdDetails.forEach((d,i) => { if (sentToday.cpdDetails[i]) { const s=sentToday.cpdDetails[i]; d.status=s.status||''; d.motivo=s.motivo||''; d.lastContact=s.lastContact||''; d.contactDates=s.contactDates||[]; } });
         }
@@ -1825,6 +1829,12 @@ function renderAgentDashboard(session, selectedDate, editing) {
         submitBtn.disabled = true; submitBtn.textContent = 'Enviando...';
         const submittedDate = sentToday?.submittedDate||sentToday?.date||today();
         const vaDetails = collectVaDetails(wVals.va);
+        for (let i=0;i<vaDetails.length;i++) {
+          if (!vaDetails[i].nome)      { alert(`VA ${i+1}: preencha o nome do cliente.`); return; }
+          if (!vaDetails[i].imovel)    { alert(`VA ${i+1}: preencha o imóvel.`); return; }
+          if (!vaDetails[i].dataAgend) { alert(`VA ${i+1}: preencha a data da visita.`); return; }
+          if (!vaDetails[i].horario)   { alert(`VA ${i+1}: preencha o horário.`); return; }
+        }
         if (sentToday?.vaDetails) {
           vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { const s=sentToday.vaDetails[i]; d.realizada = s.realizada!=null ? s.realizada : false; d.dataRealizacao = s.dataRealizacao||''; d.horarioRealizacao = s.horarioRealizacao||''; } });
         }
