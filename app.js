@@ -759,13 +759,18 @@ function renderNotasRanking() {
 // ── AGENT CONTACTS (CPDs & DOCs) ─────────────────────────
 let agentContactTab = '';
 let agentDescFilter = ''; // sub-filtro motivo dentro de descartados
+let agentContactMonth = ''; // '' = todos os meses
 
 function renderAgentContacts(agentName) {
   const wrap = document.getElementById('agent-contacts-wrap');
   if (!wrap) return;
   const t = today();
   const agentUid = TEAM.find(a=>a.name===agentName)?.username;
-  const entries = getEntries().filter(e => agentUid ? (e.uid===agentUid || normalizeAgentName(e.agent)===agentName) : normalizeAgentName(e.agent)===agentName || e.agent===agentName);
+  const allEntries = getEntries().filter(e => agentUid ? (e.uid===agentUid || normalizeAgentName(e.agent)===agentName) : normalizeAgentName(e.agent)===agentName || e.agent===agentName);
+
+  // meses disponíveis para o seletor
+  const availMonths = [...new Set(allEntries.map(e => e.date.slice(0,7)))].sort().reverse();
+  const entries = agentContactMonth ? allEntries.filter(e => e.date.startsWith(agentContactMonth)) : allEntries;
 
   // CPDs ativos (exclui os que viraram DOC ou descarte)
   const cpds = [];
@@ -915,8 +920,16 @@ function renderAgentContacts(agentName) {
 
   const visitList = tab==='agendadas' ? visAgendadas : tab==='realizadas' ? visRealizadas : tab==='nao' ? visNao : [];
 
+  const monthLabel = m => { const [y,mo]=m.split('-'); return `${['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+mo-1]}/${y.slice(2)}`; };
+
   const totalCqs = cpds.length + descartados.length;
   wrap.innerHTML = `
+    <div style="margin-bottom:10px">
+      <select id="ac-month-filter" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 12px;outline:none;width:100%">
+        <option value="">Todos os meses</option>
+        ${availMonths.map(m=>`<option value="${m}" ${agentContactMonth===m?'selected':''}>${monthLabel(m)}</option>`).join('')}
+      </select>
+    </div>
     <div class="nota-tabs" style="position:relative;flex-wrap:wrap;gap:4px">
       <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">CQs (${totalCqs})</button>
       <button class="nota-tab-btn${tab==='doc'?' active':''}" data-ctab="doc">DOCs (${docs.length})</button>
@@ -950,6 +963,7 @@ function renderAgentContacts(agentName) {
               </table>
             </div>`}`;
 
+  wrap.querySelector('#ac-month-filter')?.addEventListener('change', function(){ agentContactMonth=this.value; renderAgentContacts(agentName); });
   wrap.querySelectorAll('[data-ctab]').forEach(btn =>
     btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; agentDescFilter = ''; renderAgentContacts(agentName); })
   );
