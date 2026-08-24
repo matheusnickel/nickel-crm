@@ -2988,7 +2988,7 @@ function renderCpdList(entries) {
     const isDescarte = d.status === 'descarte';
     return `<tr data-cpd-date="${d.date}" data-cpd-agent="${d.agent}" data-cpd-idx="${d.idx}">
       <td>${formatDate(d.date)}</td>
-      <td>${d.agent}</td>
+      <td>${normalizeAgentName(d.agent)}</td>
       <td style="font-weight:500">${d.nome||'—'}</td>
       <td><input class="cpd-tel-inline" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="tel" value="${d.telefone ? formatPhone(d.telefone) : ''}" placeholder="—" style="background:none;border:none;border-bottom:1px dashed var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;width:110px;padding:2px 4px;outline:none;cursor:pointer" readonly></td>
       <td><select class="cpd-status-sel nota-select">${selOpts}</select></td>
