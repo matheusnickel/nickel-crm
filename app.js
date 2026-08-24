@@ -926,7 +926,7 @@ function renderAgentContacts(agentName) {
     </div>
     ${isCpd ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
       ${CQ_SUB_FILTERS.map(({f,label,cnt}) =>
-        `<button class="cq-sub-filter-btn" data-filter="${f}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid ${agentDescFilter===f?'var(--accent)':'var(--border)'};background:${agentDescFilter===f?'var(--accent)':'var(--bg3)'};color:${agentDescFilter===f?'#000':'var(--text-muted)'};cursor:pointer;font-family:'DM Sans',sans-serif">${label} (${cnt})</button>`
+        `<button class="cq-sub-filter-btn" data-filter="${f}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid ${agentDescFilter===f?'var(--accent)':'var(--border)'};background:${agentDescFilter===f?'var(--accent)':'var(--bg3)'};color:${agentDescFilter===f?'#111':'var(--text)'};cursor:pointer;font-family:'DM Sans',sans-serif">${label} (${cnt})</button>`
       ).join('')}
     </div>` : ''}
     ${isNone
@@ -2959,7 +2959,7 @@ function renderCpdList(entries) {
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
       ${STATUS_CATS.map(({v,label}) =>
-        `<button class="cpd-status-filter-btn" data-sv="${v}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid ${activeCpdStatus===v?'var(--accent)':'var(--border)'};background:${activeCpdStatus===v?'var(--accent)':'var(--bg3)'};color:${activeCpdStatus===v?'#000':'var(--text-muted)'};cursor:pointer;font-family:'DM Sans',sans-serif">${label}</button>`
+        `<button class="cpd-status-filter-btn" data-sv="${v}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid ${activeCpdStatus===v?'var(--accent)':'var(--border)'};background:${activeCpdStatus===v?'var(--accent)':'var(--bg3)'};color:${activeCpdStatus===v?'#111':'var(--text)'};cursor:pointer;font-family:'DM Sans',sans-serif">${label}</button>`
       ).join('')}
     </div>`;
 
