@@ -938,7 +938,7 @@ function renderAgentContacts(agentName) {
     </div>
     ${isCpd ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
       ${CQ_SUB_FILTERS.map(({f,label,cnt}) =>
-        `<button class="cq-sub-filter-btn" data-filter="${f}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid ${agentDescFilter===f?'var(--accent)':'var(--border)'};background:${agentDescFilter===f?'var(--accent)':'var(--bg3)'};color:${agentDescFilter===f?'#111':'var(--text)'};cursor:pointer;font-family:'DM Sans',sans-serif">${label} (${cnt})</button>`
+        `<button class="cq-sub-filter-btn" data-filter="${f}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:2px solid ${agentDescFilter===f?'var(--accent)':'var(--border)'};background:${agentDescFilter===f?'var(--accent)':'var(--bg3)'};color:${agentDescFilter===f?'#111':'var(--text)'};cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:${agentDescFilter===f?'700':'400'}">${label} (${cnt})</button>`
       ).join('')}
     </div>` : ''}
     ${isNone
@@ -1582,7 +1582,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
   // Metas card
   const metasWrap = document.getElementById('metas-wrap');
   if (metasWrap) {
-    const monthCpd  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpd||0), 0);
+    const monthCpd  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
     const monthProsp= entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.prosp||0), 0);
 
     const { metaCqMonth: META_CQ, metaProspMonth: META_PROSP } = getTeamRatios(t);
