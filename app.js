@@ -773,13 +773,30 @@ function renderAgentContacts(agentName) {
   const entries = agentContactMonth ? allEntries.filter(e => e.date.startsWith(agentContactMonth)) : allEntries;
 
   // CPDs ativos (exclui os que viraram DOC ou descarte)
-  const cpds = [];
-  const descartados = [];
+  const cpdsRaw = [], descartados = [];
+  const docNames = new Set(), descartadosNames = new Set();
+  // Primeira passagem: coleta nomes que viraram DOC ou foram descartados
+  entries.forEach(e => (e.cpdDetails||[]).forEach(d => {
+    if (!d.nome) return;
+    if (d.status === 'doc') docNames.add(d.nome.trim().toLowerCase());
+    if (d.status === 'descarte') descartadosNames.add(d.nome.trim().toLowerCase());
+  }));
+  // Segunda passagem: monta listas excluindo duplicatas
   entries.forEach(e => (e.cpdDetails||[]).forEach((d, i) => {
     if (!d.nome) return;
+    const key = d.nome.trim().toLowerCase();
     if (d.status === 'descarte') descartados.push({ ...d, entryDate: e.date, idx: i });
-    else if (d.status !== 'doc') cpds.push({ ...d, entryDate: e.date, idx: i, _type: 'cpd' });
+    else if (d.status !== 'doc' && !docNames.has(key) && !descartadosNames.has(key))
+      cpdsRaw.push({ ...d, entryDate: e.date, idx: i, _type: 'cpd' });
   }));
+  // Deduplica por nome: mantém só a entrada mais recente por pessoa
+  const cpds = Object.values(
+    cpdsRaw.reduce((acc, d) => {
+      const key = d.nome.trim().toLowerCase();
+      if (!acc[key] || d.entryDate > acc[key].entryDate) acc[key] = d;
+      return acc;
+    }, {})
+  );
   cpds.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
   descartados.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
@@ -2975,8 +2992,24 @@ function renderCpdList(entries) {
       ).join('')}
     </div>`;
 
-  const allRows = [];
-  entries.forEach(e => (e.cpdDetails||[]).forEach((d,i) => { if (d.nome) allRows.push({date:e.date, agent:e.agent, uid:e.uid, idx:i, ...d}); }));
+  const allRowsRaw = [];
+  entries.forEach(e => (e.cpdDetails||[]).forEach((d,i) => { if (d.nome) allRowsRaw.push({date:e.date, agent:e.agent, uid:e.uid, idx:i, ...d}); }));
+  allRowsRaw.sort((a,b) => b.date.localeCompare(a.date));
+  // Nomes que viraram DOC ou foram descartados — excluir de Em Tratativa
+  const _docN = new Set(allRowsRaw.filter(r=>r.status==='doc').map(r=>r.nome.trim().toLowerCase()));
+  const _descN = new Set(allRowsRaw.filter(r=>r.status==='descarte').map(r=>r.nome.trim().toLowerCase()));
+  // Deduplica Em Tratativa por nome (mais recente por pessoa), exclui os que viraram DOC/descarte
+  const _tratMap = {};
+  allRowsRaw.forEach(r => {
+    if (r.status === 'doc' || r.status === 'descarte') return;
+    const key = r.nome.trim().toLowerCase();
+    if (_docN.has(key) || _descN.has(key)) return;
+    if (!_tratMap[key] || r.date > _tratMap[key].date) _tratMap[key] = r;
+  });
+  const allRows = [
+    ...Object.values(_tratMap),
+    ...allRowsRaw.filter(r => r.status === 'descarte'),
+  ];
   allRows.sort((a,b) => b.date.localeCompare(a.date));
 
   let rows = activeCpdAgent
@@ -2985,8 +3018,6 @@ function renderCpdList(entries) {
         return allRows.filter(r => r.agent===activeCpdAgent || normalizeAgentName(r.agent)===activeCpdAgent || (agentUid && r.uid===agentUid));
       })()
     : allRows;
-  // CQs que viraram DOC pertencem à aba DOC — nunca mostrar aqui
-  rows = rows.filter(r => r.status !== 'doc');
   if (activeCpdStatus === 'tratativa') rows = rows.filter(r => r.status !== 'descarte');
   else if (activeCpdStatus.startsWith('desc_')) {
     const motivo = activeCpdStatus.slice(5);
