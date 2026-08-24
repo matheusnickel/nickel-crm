@@ -224,7 +224,11 @@ function collectCpdDetails(count) {
 
 async function updateCpdDetail(date, agent, cpdIdx, fields) {
   const entries = getEntries();
-  const entry = entries.find(e => e.date===date && e.agent===agent);
+  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
+  const entry = entries.find(e => e.date===date && (
+    e.agent===agent || normalizeAgentName(e.agent)===agent ||
+    (agentUid && e.uid===agentUid)
+  ));
   if (!entry || !(entry.cpdDetails||[])[cpdIdx]) return;
   Object.assign(entry.cpdDetails[cpdIdx], fields);
   localUpsert(entry);
@@ -2952,7 +2956,7 @@ function renderCpdList(entries) {
       <td style="font-weight:500">${d.nome||'—'}</td>
       <td><input class="cpd-tel-inline" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="tel" value="${d.telefone ? formatPhone(d.telefone) : ''}" placeholder="—" style="background:none;border:none;border-bottom:1px dashed var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;width:110px;padding:2px 4px;outline:none;cursor:pointer" readonly></td>
       <td><select class="cpd-status-sel nota-select">${selOpts}</select></td>
-      <td><input class="cpd-motivo-inp" type="text" placeholder="Motivo" value="${(d.motivo||'').replace(/"/g,'&quot;')}" style="display:${isDescarte?'block':'none'};background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 8px;width:100%;outline:none"></td>
+      <td><select class="cpd-motivo-inp nota-select" style="display:${isDescarte?'block':'none'};font-size:12px;padding:4px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)"><option value="">—</option>${DESCARTE_MOTIVOS.map(m=>`<option value="${m}" ${d.motivo===m?'selected':''}>${m}</option>`).join('')}</select></td>
       <td><button class="cpd-edit-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:14px;padding:2px 6px">✏️</button></td>
     </tr>
     <tr class="cpd-edit-row" data-edit-date="${d.date}" data-edit-agent="${d.agent}" data-edit-idx="${d.idx}" style="display:none">
