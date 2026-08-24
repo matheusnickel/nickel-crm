@@ -1001,22 +1001,25 @@ function renderAgentContacts(agentName) {
     sel.addEventListener('change', async () => {
       const entryDate = sel.dataset.entryDate;
       const idx = parseInt(sel.dataset.idx);
-      const entries = getEntries();
-      const entry = entries.find(e => e.date === entryDate && e.agent === agentName);
+      const agentUidLocal = TEAM.find(a=>a.name===agentName)?.username;
+      const allE = getEntries();
+      const entry = allE.find(e => e.date===entryDate && (
+        e.agent===agentName || normalizeAgentName(e.agent)===agentName || (agentUidLocal && e.uid===agentUidLocal)
+      ));
       const cpd = entry?.cpdDetails?.[idx] || {};
 
       if (sel.value === 'doc') {
         sel.value = cpd.status || '';
         showDocFromCpdModal(cpd, async (docDetail) => {
           await convertCpdToDoc(entryDate, agentName, idx, docDetail);
-          agentContactTab = 'doc';
+          agentContactTab = 'doc'; agentDescFilter = '';
           renderAgentContacts(agentName);
         }, () => {});
       } else if (sel.value === 'descarte') {
         sel.value = cpd.status || '';
         showDescarteModal(cpd.nome || '', async (motivo) => {
           await updateCpdDetail(entryDate, agentName, idx, { status: 'descarte', motivo });
-          agentContactTab = 'descartados';
+          agentContactTab = 'cpd'; agentDescFilter = motivo;
           renderAgentContacts(agentName);
         }, () => {});
       } else {
@@ -1031,7 +1034,7 @@ function renderAgentContacts(agentName) {
     btn.addEventListener('click', async () => {
       btn.disabled = true; btn.textContent = '...';
       await updateCpdDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), { status: '', motivo: '' });
-      agentContactTab = 'cpd';
+      agentContactTab = 'cpd'; agentDescFilter = 'tratativa';
       renderAgentContacts(agentName);
     });
   });
