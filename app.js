@@ -921,7 +921,7 @@ function renderAgentContacts(agentName) {
 
   const monthLabel = m => { const [y,mo]=m.split('-'); return `${['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+mo-1]}/${y.slice(2)}`; };
 
-  const totalCqs = cpds.length + descartados.length;
+  const totalCqs = cpds.length;
   wrap.innerHTML = `
     <div style="margin-bottom:10px">
       <select id="ac-month-filter" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 12px;outline:none;width:100%">
@@ -1899,6 +1899,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     }
   }
 
+  if (!agentContactTab) { agentContactTab = 'cpd'; agentDescFilter = 'tratativa'; }
   renderAgentContacts(session.name);
   renderAgentVisits(session.name);
   renderAgentDailyRanking(session.name);
