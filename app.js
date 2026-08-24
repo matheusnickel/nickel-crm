@@ -856,14 +856,20 @@ function renderAgentContacts(agentName) {
   };
 
   const tab = agentContactTab;
-  const isDesc = tab === 'descartados';
   const isCpd  = tab === 'cpd';
   const isNone = tab === '';
 
-  // Sub-filtro dentro de descartados por motivo
-  const descFiltrados = isDesc && agentDescFilter
-    ? descartados.filter(d => d.motivo === agentDescFilter)
-    : descartados;
+  // Sub-filtros dentro da aba CQs: "tratativa" | motivo de descarte | '' = todos
+  const CQ_SUB_FILTERS = [
+    { f: '',           label: 'Todos',               cnt: cpds.length + descartados.length },
+    { f: 'tratativa',  label: 'Em Tratativa',         cnt: cpds.length },
+    ...DESCARTE_MOTIVOS.map(m => ({ f: m, label: m, cnt: descartados.filter(d => d.motivo===m).length })),
+  ];
+  const cqListFiltered = isCpd
+    ? (agentDescFilter === ''         ? [...cpds, ...descartados]
+      : agentDescFilter === 'tratativa' ? cpds
+      : descartados.filter(d => d.motivo === agentDescFilter))
+    : [];
 
   const makeDescRow = (d) => `<tr>
     <td style="font-weight:500">${d.nome}</td>
@@ -874,8 +880,10 @@ function renderAgentContacts(agentName) {
       style="font-size:11px;padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-muted)">Restaurar</button></td>
   </tr>`;
 
+  const makeAnyRow = (d) => d._type === 'cpd' ? makeRow(d) : makeDescRow(d);
+
   const isVisit = ['agendadas','realizadas','nao'].includes(tab);
-  const list = isCpd ? cpds : isDesc ? descFiltrados : isVisit ? [] : docs;
+  const list = isCpd ? cqListFiltered : isVisit ? [] : docs;
 
   const makeVisitRow = (v) => {
     const isAgendada = v.realizada !== true && !(v.realizada === false && v.dataRealizacao === 'nao');
@@ -904,18 +912,18 @@ function renderAgentContacts(agentName) {
 
   const visitList = tab==='agendadas' ? visAgendadas : tab==='realizadas' ? visRealizadas : tab==='nao' ? visNao : [];
 
+  const totalCqs = cpds.length + descartados.length;
   wrap.innerHTML = `
     <div class="nota-tabs" style="position:relative;flex-wrap:wrap;gap:4px">
-      <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">CQs (${cpds.length})</button>
+      <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">CQs (${totalCqs})</button>
       <button class="nota-tab-btn${tab==='doc'?' active':''}" data-ctab="doc">DOCs (${docs.length})</button>
-      <button class="nota-tab-btn${isDesc?' active':''}" data-ctab="descartados" style="color:${isDesc?'inherit':'#ef4444aa'}">🗑 Desc. (${descartados.length})</button>
       <button class="nota-tab-btn${tab==='agendadas'?' active':''}" data-ctab="agendadas" style="color:${tab==='agendadas'?'inherit':'#ef4444aa'}">⏳ Agendadas (${visAgendadas.length})</button>
       <button class="nota-tab-btn${tab==='realizadas'?' active':''}" data-ctab="realizadas" style="color:${tab==='realizadas'?'inherit':'#a8e63daa'}">✅ Realizadas (${visRealizadas.length})</button>
       <button class="nota-tab-btn${tab==='nao'?' active':''}" data-ctab="nao" style="color:${tab==='nao'?'inherit':'#888'}">❌ Não realizadas (${visNao.length})</button>
     </div>
-    ${isDesc ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-      ${[{f:'',label:'Todos',cnt:descartados.length}, ...DESCARTE_MOTIVOS.map(m=>({f:m,label:m,cnt:descartados.filter(d=>d.motivo===m).length}))].map(({f,label,cnt}) =>
-        `<button class="desc-filter-btn" data-filter="${f}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid ${agentDescFilter===f?'var(--accent)':'var(--border)'};background:${agentDescFilter===f?'var(--accent)':'var(--bg3)'};color:${agentDescFilter===f?'#000':'var(--text-muted)'};cursor:pointer;font-family:'DM Sans',sans-serif">${label} (${cnt})</button>`
+    ${isCpd ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      ${CQ_SUB_FILTERS.map(({f,label,cnt}) =>
+        `<button class="cq-sub-filter-btn" data-filter="${f}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid ${agentDescFilter===f?'var(--accent)':'var(--border)'};background:${agentDescFilter===f?'var(--accent)':'var(--bg3)'};color:${agentDescFilter===f?'#000':'var(--text-muted)'};cursor:pointer;font-family:'DM Sans',sans-serif">${label} (${cnt})</button>`
       ).join('')}
     </div>` : ''}
     ${isNone
@@ -925,21 +933,30 @@ function renderAgentContacts(agentName) {
           ? `<div class="empty-state" style="margin-top:12px">Nenhuma visita neste filtro</div>`
           : `<div style="margin-top:10px"><table class="data-table" style="table-layout:fixed;width:100%"><tbody>${visitList.map(makeVisitRow).join('')}</tbody></table></div>`
         : list.length === 0
-          ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':isDesc?'CQ descartado neste filtro':'DOC'} registrado</div>`
+          ? `<div class="empty-state" style="margin-top:12px">Nenhum CQ neste filtro</div>`
           : `<div style="overflow-x:auto;margin-top:10px">
               <table class="data-table">
-                <thead><tr>${isDesc
-                  ? '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo</th><th></th>'
-                  : `<th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th>`
+                <thead><tr>${isCpd
+                  ? (agentDescFilter===''||agentDescFilter==='tratativa'
+                      ? '<th>Nome</th><th>Telefone</th><th>Status</th><th>Histórico</th><th></th>'
+                      : '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo</th><th></th>')
+                  : `<th>Nome</th><th>Imóvel</th><th>Status</th><th></th>`
                 }</tr></thead>
-                <tbody>${isDesc ? list.map(makeDescRow).join('') : list.map(makeRow).join('')}</tbody>
+                <tbody>${isCpd
+                  ? (agentDescFilter===''
+                      ? [...cpds.map(makeRow), ...descartados.map(makeDescRow)].join('')
+                      : agentDescFilter==='tratativa'
+                        ? list.map(makeRow).join('')
+                        : list.map(makeDescRow).join(''))
+                  : list.map(makeRow).join('')
+                }</tbody>
               </table>
             </div>`}`;
 
   wrap.querySelectorAll('[data-ctab]').forEach(btn =>
     btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; agentDescFilter = ''; renderAgentContacts(agentName); })
   );
-  wrap.querySelectorAll('.desc-filter-btn').forEach(btn =>
+  wrap.querySelectorAll('.cq-sub-filter-btn').forEach(btn =>
     btn.addEventListener('click', () => { agentDescFilter = btn.dataset.filter; renderAgentContacts(agentName); })
   );
 
