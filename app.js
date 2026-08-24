@@ -550,6 +550,12 @@ function filterEntries(period, ref) {
     const y=t.slice(0,4);
     return entries.filter(e=>e.date.slice(0,4)===y);
   }
+  if (period==='custom') {
+    const s=activeCustomStart, e2=activeCustomEnd;
+    if (s && e2) return entries.filter(e=>inRange(e.date,s,e2));
+    if (s) return entries.filter(e=>e.date>=s);
+    return entries;
+  }
   return entries;
 }
 function sumByAgent(entries, period) {
@@ -1948,6 +1954,7 @@ let activePeriod='today', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo'
 let activeRankingPeriod='week';
 let activeMonthRef=today(); // 'YYYY-MM-DD' — referência do mês selecionado no filtro "Mês"
 let activeWeekRef=today();  // 'YYYY-MM-DD' — referência da semana selecionada no filtro "Semana"
+let activeCustomStart='', activeCustomEnd=''; // período personalizado
 let gestorUnsubscribe=null;
 let salesUnsubscribe=null;
 let SALES=[];
@@ -1968,6 +1975,10 @@ async function initGestorDashboard() {
       if (mpWrap) mpWrap.style.display = activePeriod==='month' ? 'block' : 'none';
       const wpWrap=document.getElementById('week-picker-wrap');
       if (wpWrap) wpWrap.style.display = activePeriod==='week' ? 'block' : 'none';
+      const ypWrap=document.getElementById('year-picker-wrap');
+      if (ypWrap) ypWrap.style.display = activePeriod==='year' ? 'block' : 'none';
+      const cpWrap=document.getElementById('custom-picker-wrap');
+      if (cpWrap) cpWrap.style.display = activePeriod==='custom' ? 'block' : 'none';
       renderGestorDashboard();
     });
   });
@@ -1996,6 +2007,25 @@ async function initGestorDashboard() {
       activeWeekRef=isoWeekToDateStr(weekPicker.value);
       renderGestorDashboard();
     });
+  }
+  // Year picker
+  const yearPicker=document.getElementById('year-picker');
+  if (yearPicker) {
+    const curYear=new Date().getFullYear();
+    yearPicker.innerHTML=[curYear,curYear-1,curYear-2].map(y=>`<option value="${y}">${y}</option>`).join('');
+    yearPicker.addEventListener('change',()=>{ activeMonthRef=yearPicker.value+'-01-01'; renderGestorDashboard(); });
+  }
+  // Custom period pickers
+  const customStart=document.getElementById('custom-start');
+  const customEnd=document.getElementById('custom-end');
+  if (customStart) {
+    customStart.value=activeCustomStart||today().slice(0,8)+'01';
+    customStart.addEventListener('change',()=>{ activeCustomStart=customStart.value; renderGestorDashboard(); });
+  }
+  if (customEnd) {
+    customEnd.value=activeCustomEnd||today();
+    customEnd.max=today();
+    customEnd.addEventListener('change',()=>{ activeCustomEnd=customEnd.value; renderGestorDashboard(); });
   }
   const wpWrapInit=document.getElementById('week-picker-wrap');
   if (wpWrapInit) wpWrapInit.style.display = activePeriod==='week' ? 'block' : 'none';
@@ -2379,7 +2409,7 @@ function renderGestorRanking() {
 }
 
 function renderGestorDashboard() {
-  const ref = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
+  const ref = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : activePeriod==='year' ? activeMonthRef : undefined;
   const team=new Set(getAgentNames());
   const entries=filterEntries(activePeriod, ref).filter(e=>team.has(normalizeAgentName(e.agent)));
   const periodKey = activePeriod === 'month'
