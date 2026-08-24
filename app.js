@@ -866,7 +866,6 @@ function renderAgentContacts(agentName) {
 
   // Sub-filtros dentro da aba CQs: "tratativa" | motivo de descarte | '' = todos
   const CQ_SUB_FILTERS = [
-    { f: '',           label: 'Todos',               cnt: cpds.length + descartados.length },
     { f: 'tratativa',  label: 'Em Tratativa',         cnt: cpds.length },
     ...DESCARTE_MOTIVOS.map(m => ({ f: m, label: m, cnt: descartados.filter(d => d.motivo===m).length })),
   ];
@@ -965,7 +964,7 @@ function renderAgentContacts(agentName) {
 
   wrap.querySelector('#ac-month-filter')?.addEventListener('change', function(){ agentContactMonth=this.value; renderAgentContacts(agentName); });
   wrap.querySelectorAll('[data-ctab]').forEach(btn =>
-    btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; agentDescFilter = ''; renderAgentContacts(agentName); })
+    btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; agentDescFilter = btn.dataset.ctab === 'cpd' ? 'tratativa' : ''; renderAgentContacts(agentName); })
   );
   wrap.querySelectorAll('.cq-sub-filter-btn').forEach(btn =>
     btn.addEventListener('click', () => { agentDescFilter = btn.dataset.filter; renderAgentContacts(agentName); })
