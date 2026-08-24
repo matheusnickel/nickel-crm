@@ -559,7 +559,7 @@ function sumByAgent(entries, period) {
     const name = normalizeAgentName(e.agent);
     if (!team.has(name)) return;
     if(!map[name]) map[name]={agent:name,prosp:0,cpd:0,doc:0,va:0,vr:0,vidSubmitted:0};
-    map[name].prosp+=e.prosp; map[name].cpd+=e.cpd; map[name].doc+=e.doc;
+    map[name].prosp+=e.prosp; map[name].cpd+=(e.cpdDetails||[]).filter(d=>d.nome).length; map[name].doc+=e.doc;
     map[name].va += (e.va||0);
     map[name].vr += (e.vaDetails||[]).filter(d=>d.realizada).length;
     map[name].vidSubmitted += (e.video||0);
@@ -1273,7 +1273,7 @@ function renderAgentDailyRanking(currentAgentName) {
     return {
       agent: name,
       doc:   agentE.reduce((s,e)=>s+e.doc,0),
-      cpd:   agentE.reduce((s,e)=>s+(e.cpd||0),0),
+      cpd:   agentE.reduce((s,e)=>s+(e.cpdDetails||[]).filter(d=>d.nome).length,0),
       prosp: agentE.reduce((s,e)=>s+(e.prosp||0),0),
       va:    agentE.reduce((s,e)=>s+(e.va||0),0),
       vr:    agentE.reduce((s,e)=>s+(e.vaDetails||[]).filter(d=>d.realizada).length,0),
