@@ -2979,7 +2979,10 @@ function renderCpdList(entries) {
   allRows.sort((a,b) => b.date.localeCompare(a.date));
 
   let rows = activeCpdAgent
-    ? allRows.filter(r => r.agent===activeCpdAgent || normalizeAgentName(r.agent)===activeCpdAgent)
+    ? (() => {
+        const agentUid = TEAM.find(a => a.name === activeCpdAgent)?.username;
+        return allRows.filter(r => r.agent===activeCpdAgent || normalizeAgentName(r.agent)===activeCpdAgent || (agentUid && r.uid===agentUid));
+      })()
     : allRows;
   // CQs que viraram DOC pertencem à aba DOC — nunca mostrar aqui
   rows = rows.filter(r => r.status !== 'doc');
