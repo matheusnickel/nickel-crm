@@ -296,6 +296,8 @@ async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
   }
 }
 
+const DESCARTE_MOTIVOS = ['Exclusivo', 'Vendeu', 'Não está vendendo'];
+
 function showDescarteModal(nomeLead, onConfirm, onCancel) {
   document.getElementById('descarte-modal-overlay')?.remove();
   const overlay = document.createElement('div');
@@ -304,22 +306,20 @@ function showDescarteModal(nomeLead, onConfirm, onCancel) {
   overlay.innerHTML = `
     <div style="background:var(--bg2);border-radius:14px;padding:24px;width:100%;max-width:420px;border:1px solid var(--border)">
       <div style="font-size:15px;font-weight:700;margin-bottom:4px;color:#ef4444">🗑 Descartar CQ</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px">${nomeLead ? `<strong style="color:var(--text)">${nomeLead}</strong> será movido para a base de descartados.` : 'O lead será movido para a base de descartados.'}</div>
-      <div class="form-group" style="margin-bottom:18px">
-        <label style="font-size:12px">Motivo do descarte</label>
-        <input id="descarte-motivo-inp" type="text" placeholder="Ex: Não tem interesse, Não atende..." style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;width:100%;outline:none;box-sizing:border-box">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px">${nomeLead ? `<strong style="color:var(--text)">${nomeLead}</strong> será movido para descartados.` : 'O lead será movido para descartados.'}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600;letter-spacing:.5px">MOTIVO</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+        ${DESCARTE_MOTIVOS.map(m => `<button class="desc-motivo-btn" data-motivo="${m}" style="text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:12px 16px;cursor:pointer;transition:all .15s">${m}</button>`).join('')}
       </div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button id="descarte-cancel" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px">Cancelar</button>
-        <button id="descarte-confirm" style="background:#ef4444;color:#fff;border:none;border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600">Descartar</button>
-      </div>
+      <button id="descarte-cancel" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;width:100%">Cancelar</button>
     </div>`;
   document.body.appendChild(overlay);
-  const inp = overlay.querySelector('#descarte-motivo-inp');
-  inp.focus();
+  overlay.querySelectorAll('.desc-motivo-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => { btn.style.background='var(--accent)'; btn.style.color='#000'; btn.style.borderColor='var(--accent)'; });
+    btn.addEventListener('mouseleave', () => { btn.style.background='var(--bg3)'; btn.style.color='var(--text)'; btn.style.borderColor='var(--border)'; });
+    btn.addEventListener('click', () => { overlay.remove(); onConfirm(btn.dataset.motivo); });
+  });
   overlay.querySelector('#descarte-cancel').addEventListener('click', () => { overlay.remove(); onCancel(); });
-  overlay.querySelector('#descarte-confirm').addEventListener('click', () => { overlay.remove(); onConfirm(inp.value.trim()); });
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { overlay.remove(); onConfirm(inp.value.trim()); } });
 }
 
 function showDocFromCpdModal(cpd, onConfirm, onCancel) {
@@ -754,6 +754,7 @@ function renderNotasRanking() {
 
 // ── AGENT CONTACTS (CPDs & DOCs) ─────────────────────────
 let agentContactTab = '';
+let agentDescFilter = ''; // sub-filtro motivo dentro de descartados
 
 function renderAgentContacts(agentName) {
   const wrap = document.getElementById('agent-contacts-wrap');
@@ -855,6 +856,11 @@ function renderAgentContacts(agentName) {
   const isCpd  = tab === 'cpd';
   const isNone = tab === '';
 
+  // Sub-filtro dentro de descartados por motivo
+  const descFiltrados = isDesc && agentDescFilter
+    ? descartados.filter(d => d.motivo === agentDescFilter)
+    : descartados;
+
   const makeDescRow = (d) => `<tr>
     <td style="font-weight:500">${d.nome}</td>
     <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
@@ -865,7 +871,7 @@ function renderAgentContacts(agentName) {
   </tr>`;
 
   const isVisit = ['agendadas','realizadas','nao'].includes(tab);
-  const list = isCpd ? cpds : isDesc ? descartados : isVisit ? [] : docs;
+  const list = isCpd ? cpds : isDesc ? descFiltrados : isVisit ? [] : docs;
 
   const makeVisitRow = (v) => {
     const isAgendada = v.realizada !== true && !(v.realizada === false && v.dataRealizacao === 'nao');
@@ -903,6 +909,11 @@ function renderAgentContacts(agentName) {
       <button class="nota-tab-btn${tab==='realizadas'?' active':''}" data-ctab="realizadas" style="color:${tab==='realizadas'?'inherit':'#a8e63daa'}">✅ Realizadas (${visRealizadas.length})</button>
       <button class="nota-tab-btn${tab==='nao'?' active':''}" data-ctab="nao" style="color:${tab==='nao'?'inherit':'#888'}">❌ Não realizadas (${visNao.length})</button>
     </div>
+    ${isDesc ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      ${[{f:'',label:'Todos',cnt:descartados.length}, ...DESCARTE_MOTIVOS.map(m=>({f:m,label:m,cnt:descartados.filter(d=>d.motivo===m).length}))].map(({f,label,cnt}) =>
+        `<button class="desc-filter-btn" data-filter="${f}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid ${agentDescFilter===f?'var(--accent)':'var(--border)'};background:${agentDescFilter===f?'var(--accent)':'var(--bg3)'};color:${agentDescFilter===f?'#000':'var(--text-muted)'};cursor:pointer;font-family:'DM Sans',sans-serif">${label} (${cnt})</button>`
+      ).join('')}
+    </div>` : ''}
     ${isNone
       ? `<div class="empty-state" style="margin-top:14px;color:var(--text-muted);font-size:13px">Selecione uma aba para visualizar</div>`
       : isVisit
@@ -910,11 +921,11 @@ function renderAgentContacts(agentName) {
           ? `<div class="empty-state" style="margin-top:12px">Nenhuma visita neste filtro</div>`
           : `<div style="margin-top:10px"><table class="data-table" style="table-layout:fixed;width:100%"><tbody>${visitList.map(makeVisitRow).join('')}</tbody></table></div>`
         : list.length === 0
-          ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':isDesc?'CQ descartado':'DOC'} registrado</div>`
+          ? `<div class="empty-state" style="margin-top:12px">Nenhum ${isCpd?'CQ ativo':isDesc?'CQ descartado neste filtro':'DOC'} registrado</div>`
           : `<div style="overflow-x:auto;margin-top:10px">
               <table class="data-table">
                 <thead><tr>${isDesc
-                  ? '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo do Descarte</th><th></th>'
+                  ? '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo</th><th></th>'
                   : `<th>Nome</th><th>${isCpd?'Telefone':'Imóvel'}</th><th>Status</th>${isCpd?'<th>Histórico</th>':''}<th></th>`
                 }</tr></thead>
                 <tbody>${isDesc ? list.map(makeDescRow).join('') : list.map(makeRow).join('')}</tbody>
@@ -922,7 +933,10 @@ function renderAgentContacts(agentName) {
             </div>`}`;
 
   wrap.querySelectorAll('[data-ctab]').forEach(btn =>
-    btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; renderAgentContacts(agentName); })
+    btn.addEventListener('click', () => { agentContactTab = btn.dataset.ctab; agentDescFilter = ''; renderAgentContacts(agentName); })
+  );
+  wrap.querySelectorAll('.desc-filter-btn').forEach(btn =>
+    btn.addEventListener('click', () => { agentDescFilter = btn.dataset.filter; renderAgentContacts(agentName); })
   );
 
   // Confirmar visita realizada (abre modal com data + hora)
