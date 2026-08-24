@@ -1352,12 +1352,7 @@ function renderStreak(agentName, uid) {
   }
 
   const streak = calcStreak(agentName, uid);
-  let streakColor = '#555';
-  if (streak >= 30) streakColor = '#2ecc71';
-  else if (streak >= 14) streakColor = '#6495ed';
-  else if (streak >= 7)  streakColor = '#a8e63d';
-  else if (streak >= 3)  streakColor = '#ff7a00';
-  else if (streak >= 1)  streakColor = '#cd7f32';
+  const { color: streakColor } = streakTier(streak);
 
   const barsHTML = days.map(d => {
     const hasSent = d.score !== null;
