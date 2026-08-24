@@ -871,16 +871,19 @@ function renderAgentContacts(agentName) {
       : descartados.filter(d => d.motivo === agentDescFilter))
     : [];
 
-  const makeDescRow = (d) => `<tr>
-    <td style="font-weight:500">${d.nome}</td>
-    <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
-    <td style="color:var(--text-muted);font-size:12px">${formatDate(d.entryDate)}</td>
-    <td style="color:#ef4444;font-size:12px">${d.motivo||'—'}</td>
-    <td><button class="cq-restore-btn btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}"
-      style="font-size:11px;padding:4px 10px;background:none;border:1px solid var(--border);color:var(--text-muted)">Restaurar</button></td>
-  </tr>`;
-
-  const makeAnyRow = (d) => d._type === 'cpd' ? makeRow(d) : makeDescRow(d);
+  // linha unificada para qualquer CQ (tratativa ou descarte) — mesmas colunas
+  const makeUnifiedRow = (d) => {
+    if (d._type === 'cpd') return makeRow(d);
+    // descartado: mostra motivo no lugar do status, restaurar no lugar do histórico
+    return `<tr data-entry-date="${d.entryDate}" data-idx="${d.idx}">
+      <td style="font-weight:500">${d.nome}</td>
+      <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
+      <td><span style="color:#ef4444;font-size:11px;font-weight:600">🗑 ${d.motivo||'Descarte'}</span></td>
+      <td style="color:var(--text-muted);font-size:11px">${formatDate(d.entryDate)}</td>
+      <td><button class="cq-restore-btn btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}"
+        style="font-size:11px;padding:3px 8px;background:none;border:1px solid var(--border);color:var(--text-muted)">Restaurar</button></td>
+    </tr>`;
+  };
 
   const isVisit = ['agendadas','realizadas','nao'].includes(tab);
   const list = isCpd ? cqListFiltered : isVisit ? [] : docs;
@@ -937,17 +940,11 @@ function renderAgentContacts(agentName) {
           : `<div style="overflow-x:auto;margin-top:10px">
               <table class="data-table">
                 <thead><tr>${isCpd
-                  ? (agentDescFilter===''||agentDescFilter==='tratativa'
-                      ? '<th>Nome</th><th>Telefone</th><th>Status</th><th>Histórico</th><th></th>'
-                      : '<th>Nome</th><th>Telefone</th><th>Data</th><th>Motivo</th><th></th>')
-                  : `<th>Nome</th><th>Imóvel</th><th>Status</th><th></th>`
+                  ? '<th>Nome</th><th>Telefone</th><th>Status / Motivo</th><th>Histórico / Data</th><th></th>'
+                  : '<th>Nome</th><th>Imóvel</th><th>Status</th><th></th>'
                 }</tr></thead>
                 <tbody>${isCpd
-                  ? (agentDescFilter===''
-                      ? [...cpds.map(makeRow), ...descartados.map(makeDescRow)].join('')
-                      : agentDescFilter==='tratativa'
-                        ? list.map(makeRow).join('')
-                        : list.map(makeDescRow).join(''))
+                  ? list.map(makeUnifiedRow).join('')
                   : list.map(makeRow).join('')
                 }</tbody>
               </table>
