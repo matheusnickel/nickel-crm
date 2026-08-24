@@ -2982,7 +2982,9 @@ function renderCpdList(entries) {
   let rows = activeCpdAgent
     ? allRows.filter(r => r.agent===activeCpdAgent || normalizeAgentName(r.agent)===activeCpdAgent)
     : allRows;
-  if (activeCpdStatus === 'tratativa') rows = rows.filter(r => r.status !== 'descarte' && r.status !== 'doc');
+  // CQs que viraram DOC pertencem à aba DOC — nunca mostrar aqui
+  rows = rows.filter(r => r.status !== 'doc');
+  if (activeCpdStatus === 'tratativa') rows = rows.filter(r => r.status !== 'descarte');
   else if (activeCpdStatus.startsWith('desc_')) {
     const motivo = activeCpdStatus.slice(5);
     rows = rows.filter(r => r.status === 'descarte' && r.motivo === motivo);
