@@ -1550,8 +1550,16 @@ async function initAgentDashboard() {
   await loadTeam();
 
   agentUnsubscribe=fbListen(entries=>{
+    if (wizardInProgress) {
+      // Agente está preenchendo — atualiza apenas as entradas de outros agentes
+      // para não sobrescrever o estado local do formulário em curso
+      const uid = session.uid || TEAM.find(a=>a.name===session.name)?.username;
+      const existing = getEntries().filter(e => e.uid===uid || normalizeAgentName(e.agent)===session.name || e.agent===session.name);
+      const others = entries.filter(e => e.uid!==uid && normalizeAgentName(e.agent)!==session.name && e.agent!==session.name);
+      saveEntries([...existing, ...others]);
+      return;
+    }
     saveEntries(entries);
-    if (wizardInProgress) return; // não interrompe preenchimento em andamento
     const dp=document.getElementById('selected-date');
     renderAgentDashboard(session, dp?.value||today(), agentEditing);
   });
