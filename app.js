@@ -664,9 +664,12 @@ function calcMonthlyScore(agentName, monthEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta: 12 DOC = 8.0, 14 DOC = 10.0
+  // Escala: 0–12 DOC → 0–8.0 | 12–14 DOC → 8.0–10.0
   // CP e PROSP são desempate mínimo apenas.
-  const base    = Math.min((doc / 14) * 10, 10);
+  let base;
+  if (doc >= 14)      base = 10.0;
+  else if (doc >= 12) base = 8.0 + ((doc - 12) / 2) * 2.0;
+  else                base = (doc / 12) * 8.0;
   const bonusCp = Math.min(cpd * 0.004, 0.2);
   const bonusPr = Math.min(prosp * 0.0001, 0.05);
   return parseFloat(Math.min(base + bonusCp + bonusPr, 10).toFixed(1));
