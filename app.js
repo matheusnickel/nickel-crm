@@ -641,7 +641,7 @@ function calcDailyScore(entry) {
   // Sem DOC: teto 7.9 (azul é exclusivo de quem captou DOC)
   // Com DOC: base 8.0 + bônus de esforço até 10.0
   const vid = effectiveVideo(entry);
-  const effort = entry.cpd * 1.0 + vid * 1.0 + entry.prosp * 0.025;
+  const effort = entry.cpd * 1.0 + vid * 0.5 + entry.prosp * 0.025;
 
   if (entry.doc > 0) {
     const base  = Math.min(entry.doc * 8.0, 10);
@@ -664,9 +664,9 @@ function calcMonthlyScore(agentName, monthEntries) {
   const doc   = mine.reduce((s, e) => s + e.doc,   0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Meta: 12 DOC = 10.0 — nota é quase 100% proporcional ao DOC.
+  // Meta: 12 DOC = 8.0, 14 DOC = 10.0
   // CP e PROSP são desempate mínimo apenas.
-  const base    = (doc / 12) * 10;
+  const base    = Math.min((doc / 14) * 10, 10);
   const bonusCp = Math.min(cpd * 0.004, 0.2);
   const bonusPr = Math.min(prosp * 0.0001, 0.05);
   return parseFloat(Math.min(base + bonusCp + bonusPr, 10).toFixed(1));
