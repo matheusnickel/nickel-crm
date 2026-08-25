@@ -1886,8 +1886,15 @@ function renderAgentDashboard(session, selectedDate, editing) {
           docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) { const s=sentToday.docDetails[i]; d.nota=s.nota||''; d.lastContact=s.lastContact||''; d.contactDates=s.contactDates||[]; } });
         }
         if (!session.uid) {
-          alert('Sessão inválida. Faça logout e login novamente.');
-          clearSession(); location.href='index.html'; return;
+          // Sessão antiga sem uid — resolve pelo nome do agente no TEAM
+          const member = TEAM.find(a => a.name === session.name || normalizeAgentName(a.name) === session.name);
+          if (member) {
+            session.uid = member.username;
+            localStorage.setItem('nickel_session', JSON.stringify(session));
+          } else {
+            alert('Sessão inválida. Faça logout e login novamente.');
+            clearSession(); location.href='index.html'; return;
+          }
         }
         const isEdit = !!sentToday;
         agentEditing = false;
