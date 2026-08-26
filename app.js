@@ -203,6 +203,7 @@ function buildCpdDetailsHTML(count, prefill=[]) {
       <span class="cpd-detail-label">CQ ${i+1}</span>
       <input class="cpd-nome" data-idx="${i}" type="text" placeholder="Nome do proprietário" value="${(p.nome||'').replace(/"/g,'&quot;')}">
       <input class="cpd-tel" data-idx="${i}" type="tel" placeholder="Telefone" value="${(p.telefone ? formatPhone(p.telefone) : '').replace(/"/g,'&quot;')}">
+      <input class="cpd-condo" data-idx="${i}" type="text" placeholder="Nome do condomínio (opcional)" value="${(p.condominio||'').replace(/"/g,'&quot;')}" style="margin-top:4px">
     </div>`;
   }
   html += '</div>';
@@ -213,8 +214,9 @@ function collectCpdDetails(count) {
   const details = [];
   for (let i = 0; i < count; i++) {
     details.push({
-      nome:     document.querySelector(`.cpd-nome[data-idx="${i}"]`)?.value.trim() || '',
-      telefone: document.querySelector(`.cpd-tel[data-idx="${i}"]`)?.value.trim() || '',
+      nome:       document.querySelector(`.cpd-nome[data-idx="${i}"]`)?.value.trim() || '',
+      telefone:   document.querySelector(`.cpd-tel[data-idx="${i}"]`)?.value.trim() || '',
+      condominio: document.querySelector(`.cpd-condo[data-idx="${i}"]`)?.value.trim() || '',
       status: '',
       motivo: '',
     });
@@ -333,11 +335,14 @@ function showDocFromCpdModal(cpd, onConfirm, onCancel) {
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px';
   const bairrosOpts = BAIRROS.map(b=>`<option value="${b}">${b}</option>`).join('');
   const tiposOpts   = TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('');
+  const telPre = cpd.telefone ? formatPhone(cpd.telefone) : '';
   overlay.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
-      <div style="font-size:14px;font-weight:700;color:#f0f0f0;margin-bottom:6px">📋 Preencher dados do DOC</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px"><strong>${cpd.nome||''}</strong> está virando DOC — preencha as informações:</div>
+      <div style="font-size:14px;font-weight:700;color:#f0f0f0;margin-bottom:6px">📋 Converter CQ em DOC</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px"><strong>${cpd.nome||''}</strong> está virando DOC — histórico do CQ será preservado.</div>
       <div class="form-group"><label>Nome do proprietário</label><input type="text" id="md-nome" value="${(cpd.nome||'').replace(/"/g,'&quot;')}" required></div>
+      <div class="form-group"><label>Telefone</label><input type="tel" id="md-tel" value="${telPre}" placeholder="(41) 99999-9999"></div>
+      <div class="form-group"><label>Condomínio</label><input type="text" id="md-condo" value="${(cpd.condominio||'').replace(/"/g,'&quot;')}" placeholder="Nome do condomínio"></div>
       <div class="form-group"><label>Tipo</label><select id="md-tipo"><option value="">Selecione</option>${tiposOpts}</select></div>
       <div class="form-group"><label>Bairro</label>
         <select id="md-bairro"><option value="">Selecione</option>${bairrosOpts}<option value="__outro__">Outro...</option></select>
@@ -352,6 +357,7 @@ function showDocFromCpdModal(cpd, onConfirm, onCancel) {
       </div>
     </div>`;
   document.body.appendChild(overlay);
+  applyPhoneMask(document.getElementById('md-tel'));
   document.getElementById('md-bairro').addEventListener('change', function() {
     document.getElementById('md-bairro-outro').style.display = this.value==='__outro__' ? 'block' : 'none';
   });
@@ -361,6 +367,8 @@ function showDocFromCpdModal(cpd, onConfirm, onCancel) {
   document.getElementById('md-cancel').addEventListener('click', () => { overlay.remove(); onCancel(); });
   document.getElementById('md-confirm').addEventListener('click', () => {
     const nome      = document.getElementById('md-nome').value.trim();
+    const telefone  = document.getElementById('md-tel').value.trim();
+    const condominio= document.getElementById('md-condo').value.trim();
     const tipo      = document.getElementById('md-tipo').value;
     const bairroSel = document.getElementById('md-bairro').value;
     const bairro    = bairroSel==='__outro__' ? document.getElementById('md-bairro-outro').value.trim() : bairroSel;
@@ -369,7 +377,7 @@ function showDocFromCpdModal(cpd, onConfirm, onCancel) {
     const indicador = document.getElementById('md-indicador').value.trim();
     if (!nome || !tipo || !bairro) { alert('Preencha nome, tipo e bairro.'); return; }
     overlay.remove();
-    onConfirm({ nome, tipo, bairro, valor, indicacao, indicador, nota:'', lastContact:'', contactDates:[] });
+    onConfirm({ nome, telefone, condominio, tipo, bairro, valor, indicacao, indicador, nota:'', lastContact:'', contactDates:[] });
   });
 }
 
@@ -460,6 +468,36 @@ function formatPhone(v) {
   const d = v.replace(/\D/g,'');
   if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
   return d.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
+}
+// Normaliza telefone para comparação: remove formatação, descarta prefixo 55 se número >11 dígitos
+function normalizePhone(v) {
+  if (!v) return '';
+  let d = v.replace(/\D/g,'');
+  if (d.length > 11 && d.startsWith('55')) d = d.slice(2);
+  return d;
+}
+// Verifica conflitos de telefone em toda a base antes de criar/editar DOC
+// Retorna array de conflitos: {type:'own_cq'|'other_cq'|'own_doc'|'other_doc', nome, agent, date, condominio}
+function checkPhoneConflicts(telefone, currentUid, currentAgentName) {
+  const norm = normalizePhone(telefone);
+  if (!norm || norm.length < 10) return [];
+  const all = getEntries();
+  const conflicts = [];
+  all.forEach(e => {
+    const isOwn = currentUid ? (e.uid===currentUid) : normalizeAgentName(e.agent)===currentAgentName;
+    const agentDisp = normalizeAgentName(e.agent);
+    (e.cpdDetails||[]).forEach(d => {
+      if (!d.nome || d.status==='descarte') return;
+      if (normalizePhone(d.telefone) !== norm) return;
+      conflicts.push({ type: isOwn ? 'own_cq' : 'other_cq', nome: d.nome, agent: agentDisp, date: e.date, condominio: d.condominio||'', status: d.status, entryDate: e.date, cpdStatus: d.status });
+    });
+    (e.docDetails||[]).forEach(d => {
+      if (!d.nome) return;
+      if (normalizePhone(d.telefone) !== norm) return;
+      conflicts.push({ type: isOwn ? 'own_doc' : 'other_doc', nome: d.nome, agent: agentDisp, date: e.date, condominio: d.condominio||'' });
+    });
+  });
+  return conflicts;
 }
 function applyPhoneMask(el) {
   el.addEventListener('input', () => {
@@ -853,7 +891,7 @@ function renderAgentContacts(agentName) {
       const statusSelOpts = CPD_STATUS_OPTIONS.map(o =>
         `<option value="${o.value}" ${d.status===o.value?'selected':''}>${o.label}</option>`).join('');
       return `<tr data-entry-date="${d.entryDate}" data-idx="${d.idx}">
-        <td style="font-weight:500">${d.nome}</td>
+        <td style="font-weight:500">${d.nome}<br><span style="font-size:11px;color:var(--text-muted)">${d.condominio||''}</span></td>
         <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
         <td><select class="cpd-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${statusSelOpts}</select></td>
         <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
@@ -863,9 +901,10 @@ function renderAgentContacts(agentName) {
       </tr>
       <tr class="ac-edit-row" data-edit-type="cpd" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="display:none">
         <td colspan="5" style="padding:8px 0">
-          <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:end">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:8px;align-items:end">
             <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="ac-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
             <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="ac-ef-tel" type="text" value="${(d.telefone ? formatPhone(d.telefone) : '').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Condomínio</label><input class="ac-ef-condo" type="text" value="${(d.condominio||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
             <button class="ac-ef-save btn" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Salvar</button>
             <button class="ac-ef-cancel" data-edit-type="cpd" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="${cancelBtnStyle}">Cancelar</button>
           </div>
@@ -878,8 +917,8 @@ function renderAgentContacts(agentName) {
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
          </select>`;
       return `<tr data-entry-date="${d.entryDate}" data-idx="${d.idx}">
-        <td style="font-weight:500">${d.nome}</td>
-        <td style="color:var(--text-muted);font-size:12px">${d.tipo||'—'} · ${d.bairro||'—'}</td>
+        <td style="font-weight:500">${d.nome}<br><span style="font-size:11px;color:var(--text-muted)">${d.condominio||''}</span></td>
+        <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}<br>${d.tipo||'—'} · ${d.bairro||'—'}</td>
         <td>${statusCell}</td>
         <td style="white-space:nowrap">
           <button class="ac-edit-btn" data-type="doc" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">✏️</button>
@@ -888,8 +927,10 @@ function renderAgentContacts(agentName) {
       </tr>
       <tr class="ac-edit-row" data-edit-type="doc" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="display:none">
         <td colspan="4" style="padding:8px 0">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:8px;align-items:end">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:8px;align-items:end">
             <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="ac-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="ac-ef-tel" type="tel" value="${(d.telefone ? formatPhone(d.telefone) : '').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
+            <div class="form-group" style="margin:0"><label style="font-size:11px">Condomínio</label><input class="ac-ef-condo" type="text" value="${(d.condominio||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
             <div class="form-group" style="margin:0"><label style="font-size:11px">Tipo</label><select class="ac-ef-tipo" style="${inpStyle}"><option value="">Selecione</option>${tiposOpts}</select></div>
             <div class="form-group" style="margin:0"><label style="font-size:11px">Bairro</label><select class="ac-ef-bairro" style="${inpStyle}"><option value="">Selecione</option>${bairrosOpts}${d.bairro&&!BAIRROS.includes(d.bairro)?`<option value="${d.bairro}" selected>${d.bairro}</option>`:''}</select></div>
             <div class="form-group" style="margin:0"><label style="font-size:11px">Valor</label><input class="ac-ef-valor" type="number" min="0" value="${d.valor||0}" style="${inpStyle}"></div>
@@ -1109,7 +1150,7 @@ function renderAgentContacts(agentName) {
       const editRow = wrap.querySelector(`.ac-edit-row[data-edit-type="${btn.dataset.type}"][data-edit-date="${btn.dataset.entryDate}"][data-edit-idx="${btn.dataset.idx}"]`);
       const isOpen = editRow.style.display !== 'none';
       wrap.querySelectorAll('.ac-edit-row').forEach(r => r.style.display = 'none');
-      if (!isOpen) { editRow.style.display = ''; const telEl = editRow.querySelector('.ac-ef-tel'); if (telEl) applyPhoneMask(telEl); }
+      if (!isOpen) { editRow.style.display = ''; editRow.querySelectorAll('.ac-ef-tel').forEach(applyPhoneMask); }
     });
   });
 
@@ -1119,15 +1160,18 @@ function renderAgentContacts(agentName) {
       const editRow = wrap.querySelector(`.ac-edit-row[data-edit-type="${btn.dataset.type}"][data-edit-date="${btn.dataset.entryDate}"][data-edit-idx="${btn.dataset.idx}"]`);
       btn.textContent = 'Salvando...'; btn.disabled = true;
       if (btn.dataset.type === 'cpd') {
-        const nome = editRow.querySelector('.ac-ef-nome').value.trim();
-        const telefone = editRow.querySelector('.ac-ef-tel').value.trim();
-        await updateCpdDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), { nome, telefone });
+        const nome       = editRow.querySelector('.ac-ef-nome').value.trim();
+        const telefone   = editRow.querySelector('.ac-ef-tel').value.trim();
+        const condominio = editRow.querySelector('.ac-ef-condo')?.value.trim()||'';
+        await updateCpdDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), { nome, telefone, condominio });
       } else {
-        const nome  = editRow.querySelector('.ac-ef-nome').value.trim();
-        const tipo  = editRow.querySelector('.ac-ef-tipo').value;
-        const bairro = editRow.querySelector('.ac-ef-bairro').value;
-        const valor = parseFloat(editRow.querySelector('.ac-ef-valor').value) || 0;
-        await updateDocDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), { nome, tipo, bairro, valor });
+        const nome       = editRow.querySelector('.ac-ef-nome').value.trim();
+        const telefone   = editRow.querySelector('.ac-ef-tel')?.value.trim()||'';
+        const condominio = editRow.querySelector('.ac-ef-condo')?.value.trim()||'';
+        const tipo       = editRow.querySelector('.ac-ef-tipo').value;
+        const bairro     = editRow.querySelector('.ac-ef-bairro').value;
+        const valor      = parseFloat(editRow.querySelector('.ac-ef-valor').value) || 0;
+        await updateDocDetail(btn.dataset.entryDate, agentName, parseInt(btn.dataset.idx), { nome, telefone, condominio, tipo, bairro, valor });
       }
       renderAgentContacts(agentName);
     });
@@ -1444,14 +1488,24 @@ function buildDocDetailsHTML(count, prefill) {
   if (count===0) return '';
   let html=`<div class="doc-details-wrap"><div class="doc-details-title">Detalhes dos ${count} DOC${count>1?'s':''}</div>`;
   for (let i=0; i<count; i++) {
-    const pre=(prefill&&prefill[i])?prefill[i]:{nome:'',valor:'',bairro:'',tipo:'',indicacao:'',indicador:''};
+    const pre=(prefill&&prefill[i])?prefill[i]:{nome:'',telefone:'',condominio:'',valor:'',bairro:'',tipo:'',indicacao:'',indicador:''};
     const isIndicacao=pre.indicacao==='sim';
     html+=`
     <div class="doc-detail-card">
       <div class="doc-detail-num">DOC ${i+1}</div>
+      <div class="doc-detail-row2">
+        <div class="form-group">
+          <label>Nome do proprietário</label>
+          <input type="text" class="doc-nome" data-idx="${i}" placeholder="Ex: João Silva" value="${(pre.nome||'').replace(/"/g,'&quot;')}" required>
+        </div>
+        <div class="form-group">
+          <label>Telefone do proprietário</label>
+          <input type="tel" class="doc-tel" data-idx="${i}" placeholder="(41) 99999-9999" value="${pre.telefone ? formatPhone(pre.telefone) : ''}">
+        </div>
+      </div>
       <div class="form-group">
-        <label>Nome do proprietário</label>
-        <input type="text" class="doc-nome" data-idx="${i}" placeholder="Ex: João Silva" value="${pre.nome||''}" required>
+        <label>Nome do condomínio</label>
+        <input type="text" class="doc-condo" data-idx="${i}" placeholder="Ex: Residencial das Flores" value="${(pre.condominio||'').replace(/"/g,'&quot;')}">
       </div>
       <div class="doc-detail-row2">
         <div class="form-group">
@@ -1487,7 +1541,7 @@ function buildDocDetailsHTML(count, prefill) {
         </div>
         <div class="form-group doc-indicador-wrap" data-idx="${i}" style="display:${isIndicacao?'block':'none'}">
           <label>Nome do indicador</label>
-          <input type="text" class="doc-indicador" data-idx="${i}" placeholder="Ex: Maria Souza" value="${pre.indicador||''}">
+          <input type="text" class="doc-indicador" data-idx="${i}" placeholder="Ex: Maria Souza" value="${(pre.indicador||'').replace(/"/g,'&quot;')}">
         </div>
       </div>
     </div>`;
@@ -1502,7 +1556,9 @@ function collectDocDetails(count) {
     const outro=document.querySelector(`.doc-bairro-outro[data-idx="${i}"]`);
     const bairro=sel?.value==='__outro__'?(outro?.value.trim()||''):(sel?.value||'');
     details.push({
-      nome:  document.querySelector(`.doc-nome[data-idx="${i}"]`)?.value.trim()||'',
+      nome:       document.querySelector(`.doc-nome[data-idx="${i}"]`)?.value.trim()||'',
+      telefone:   document.querySelector(`.doc-tel[data-idx="${i}"]`)?.value.trim()||'',
+      condominio: document.querySelector(`.doc-condo[data-idx="${i}"]`)?.value.trim()||'',
       valor: parseFloat(document.querySelector(`.doc-valor[data-idx="${i}"]`)?.value)||0,
       bairro,
       tipo:  document.querySelector(`.doc-tipo[data-idx="${i}"]`)?.value||'',
@@ -1881,7 +1937,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         document.getElementById('wiz-cpd-area').innerHTML = buildCpdDetailsHTML(wVals.cp, pre.cpdDetails||[]);
         document.getElementById('wiz-doc-area').innerHTML = buildDocDetailsHTML(wVals.doc, pre.docDetails||[]);
         document.getElementById('wiz-va-area').innerHTML = buildVaDetailsHTML(wVals.va, pre.vaDetails||[]);
-        document.querySelectorAll('.cpd-tel,.vr-tel').forEach(applyPhoneMask);
+        document.querySelectorAll('.cpd-tel,.vr-tel,.doc-tel').forEach(applyPhoneMask);
         bindBairroSelects();
         wStep = WSTEPS.length; updateDots();
       };
@@ -1910,6 +1966,25 @@ function renderAgentDashboard(session, selectedDate, editing) {
         }
         const docDetails = collectDocDetails(wVals.doc);
         for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
+        // Validação de telefone duplicado nos DOCs
+        for (let i=0;i<docDetails.length;i++) {
+          const tel = docDetails[i].telefone;
+          if (!tel) continue;
+          const conflicts = checkPhoneConflicts(tel, session.uid, session.name);
+          const blocked = conflicts.filter(c => c.type==='own_doc' || c.type==='other_doc');
+          const warn    = conflicts.filter(c => c.type==='own_cq');
+          if (blocked.length > 0) {
+            const c = blocked[0];
+            const who = c.type==='own_doc' ? 'Você já possui' : `O angariador ${c.agent} possui`;
+            alert(`⚠️ DOC ${i+1} (${docDetails[i].nome}): ${who} um DOC cadastrado com este telefone — ${c.nome}${c.condominio?' · '+c.condominio:''}. Verifique antes de continuar.`);
+            return;
+          }
+          if (warn.length > 0) {
+            const c = warn[0];
+            const ok = confirm(`ℹ️ DOC ${i+1}: O telefone de ${docDetails[i].nome} já está cadastrado como CQ seu (${c.nome}${c.condominio?' · '+c.condominio:''}). Para preservar o histórico, converta o CQ para DOC em vez de criar um novo registro.\n\nDeseja continuar mesmo assim?`);
+            if (!ok) return;
+          }
+        }
         if (sentToday?.docDetails) {
           docDetails.forEach((d,i) => { if (sentToday.docDetails[i]) { const s=sentToday.docDetails[i]; d.nota=s.nota||''; d.lastContact=s.lastContact||''; d.contactDates=s.contactDates||[]; } });
         }
@@ -2218,6 +2293,7 @@ function initGestorLancamento() {
   });
   document.getElementById('lanc-doc').addEventListener('input',function(){
     document.getElementById('lanc-doc-details').innerHTML=buildDocDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
+    document.querySelectorAll('.doc-tel').forEach(applyPhoneMask);
     bindBairroSelects();
   });
   document.getElementById('lanc-va').addEventListener('input',function(){
@@ -2231,6 +2307,26 @@ function initGestorLancamento() {
     const docVal=parseInt(document.getElementById('lanc-doc').value)||0;
     const docDetails=collectDocDetails(docVal);
     for (let i=0;i<docDetails.length;i++) { if(!docDetails[i].nome||!docDetails[i].bairro||!docDetails[i].tipo){alert(`Preencha todos os campos obrigatórios do DOC ${i+1}.`);return;} }
+    // Validação de telefone duplicado
+    const agentUidCheck = TEAM.find(a=>a.name===agent)?.username;
+    for (let i=0;i<docDetails.length;i++) {
+      const tel = docDetails[i].telefone;
+      if (!tel) continue;
+      const conflicts = checkPhoneConflicts(tel, agentUidCheck, agent);
+      const blocked = conflicts.filter(c => c.type==='own_doc' || c.type==='other_doc');
+      const warn    = conflicts.filter(c => c.type==='own_cq');
+      if (blocked.length > 0) {
+        const c = blocked[0];
+        const who = c.type==='own_doc' ? `${agent} já possui` : `O angariador ${c.agent} possui`;
+        alert(`⚠️ DOC ${i+1} (${docDetails[i].nome}): ${who} um DOC cadastrado com este telefone — ${c.nome}${c.condominio?' · '+c.condominio:''}. Verifique antes de continuar.`);
+        return;
+      }
+      if (warn.length > 0) {
+        const c = warn[0];
+        const ok = confirm(`ℹ️ DOC ${i+1}: O telefone de ${docDetails[i].nome} já está cadastrado como CQ de ${agent} (${c.nome}${c.condominio?' · '+c.condominio:''}). Recomendamos converter o CQ em DOC para preservar o histórico.\n\nDeseja continuar mesmo assim?`);
+        if (!ok) return;
+      }
+    }
     const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Salvando...';
     const existing=getEntries().find(e=>e.date===date&&e.agent===agent);
     const submittedDate=existing?.submittedDate||existing?.date||today();
@@ -2570,14 +2666,14 @@ function renderDocList(entries) {
       <col style="width:10%"><col style="width:10%"><col style="width:8%"><col style="width:11%">
       <col style="width:13%"><col style="width:8%"><col style="width:11%"><col style="width:11%"><col style="width:9%"><col style="width:9%">
     </colgroup>
-    <thead><tr><th>Data</th><th>Angariador</th><th>Indicação</th><th>Indicador</th><th>Proprietário</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th><th></th></tr></thead>
+    <thead><tr><th>Data</th><th>Angariador</th><th>Proprietário</th><th>Telefone</th><th>Condomínio</th><th>Tipo</th><th>Bairro</th><th class="num-cell">Valor</th><th>Status</th><th></th></tr></thead>
     <tbody>${rows.map(d=>`
     <tr data-row-date="${d.date}" data-row-agent="${d.agent}" data-row-idx="${d.idx}">
       <td>${formatDate(d.date)}</td>
-      <td>${d.agent}</td>
-      <td>${d.indicacao==='sim'?'Sim':'Não'}</td>
-      <td>${d.indicacao==='sim'?(d.indicador||'—'):'—'}</td>
+      <td>${normalizeAgentName(d.agent)}</td>
       <td style="font-weight:500">${d.nome||'—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${d.condominio||'—'}</td>
       <td>${d.tipo?`<span class="tipo-tag tipo-${d.tipo.toLowerCase()}">${d.tipo}</span>`:'—'}</td>
       <td>${d.bairro||'—'}</td>
       <td class="num-cell" style="padding-right:28px">${formatCurrency(d.valor)}</td>
@@ -2596,6 +2692,8 @@ function renderDocList(entries) {
         <div class="doc-edit-form">
           <div class="doc-edit-fields">
             <div class="form-group" style="margin:0"><label>Proprietário</label><input class="ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}"></div>
+            <div class="form-group" style="margin:0"><label>Telefone</label><input class="ef-tel" type="tel" value="${d.telefone ? formatPhone(d.telefone) : ''}"></div>
+            <div class="form-group" style="margin:0"><label>Condomínio</label><input class="ef-condo" type="text" value="${(d.condominio||'').replace(/"/g,'&quot;')}"></div>
             <div class="form-group" style="margin:0"><label>Valor</label><input class="ef-valor" type="number" min="0" value="${d.valor||0}"></div>
             <div class="form-group" style="margin:0"><label>Tipo</label><select class="ef-tipo"><option value="">Selecione</option>${tiposOpts}</select></div>
             <div class="form-group" style="margin:0"><label>Bairro</label><select class="ef-bairro"><option value="">Selecione</option>${bairrosOpts}<option value="__outro__">Outro...</option></select><input type="text" class="ef-bairro-outro" placeholder="Digite o bairro" style="margin-top:6px;display:none"></div>
@@ -2648,7 +2746,7 @@ function renderDocList(entries) {
       // close all others
       wrap.querySelectorAll('.doc-edit-row').forEach(r=>r.style.display='none');
       wrap.querySelectorAll('.doc-edit-btn').forEach(b=>b.classList.remove('active'));
-      if (!isOpen) { editRow.style.display=''; btn.classList.add('active'); }
+      if (!isOpen) { editRow.style.display=''; btn.classList.add('active'); const telEl=editRow.querySelector('.ef-tel'); if(telEl) applyPhoneMask(telEl); }
     });
   });
 
@@ -2657,12 +2755,14 @@ function renderDocList(entries) {
     btn.addEventListener('click', async ()=>{
       const row = findEditRow(btn.dataset.date, btn.dataset.agent, btn.dataset.idx);
       const fields = {
-        nome:      row.querySelector('.ef-nome').value.trim(),
-        valor:     parseFloat(row.querySelector('.ef-valor').value)||0,
-        tipo:      row.querySelector('.ef-tipo').value,
-        bairro:    row.querySelector('.ef-bairro').value === '__outro__' ? row.querySelector('.ef-bairro-outro').value.trim() : row.querySelector('.ef-bairro').value,
-        indicacao: row.querySelector('.ef-indicacao').value,
-        indicador: row.querySelector('.ef-indicador').value.trim(),
+        nome:       row.querySelector('.ef-nome').value.trim(),
+        telefone:   row.querySelector('.ef-tel')?.value.trim()||'',
+        condominio: row.querySelector('.ef-condo')?.value.trim()||'',
+        valor:      parseFloat(row.querySelector('.ef-valor').value)||0,
+        tipo:       row.querySelector('.ef-tipo').value,
+        bairro:     row.querySelector('.ef-bairro').value === '__outro__' ? row.querySelector('.ef-bairro-outro').value.trim() : row.querySelector('.ef-bairro').value,
+        indicacao:  row.querySelector('.ef-indicacao').value,
+        indicador:  row.querySelector('.ef-indicador').value.trim(),
       };
       btn.textContent='Salvando...'; btn.disabled=true;
       await updateDocDetail(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), fields);
@@ -3103,7 +3203,7 @@ function renderCpdList(entries) {
     return `<tr data-cpd-date="${d.date}" data-cpd-agent="${d.agent}" data-cpd-idx="${d.idx}">
       <td>${formatDate(d.date)}</td>
       <td>${normalizeAgentName(d.agent)}</td>
-      <td style="font-weight:500">${d.nome||'—'}</td>
+      <td style="font-weight:500">${d.nome||'—'}<br><span style="font-size:11px;color:var(--text-muted)">${d.condominio||''}</span></td>
       <td><input class="cpd-tel-inline" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" type="tel" value="${d.telefone ? formatPhone(d.telefone) : ''}" placeholder="—" style="background:none;border:none;border-bottom:1px dashed var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;width:110px;padding:2px 4px;outline:none;cursor:pointer" readonly></td>
       <td><select class="cpd-status-sel nota-select">${selOpts}</select></td>
       <td><select class="cpd-motivo-inp nota-select" style="display:${isDescarte?'block':'none'};font-size:12px;padding:4px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)"><option value="">—</option>${DESCARTE_MOTIVOS.map(m=>`<option value="${m}" ${d.motivo===m?'selected':''}>${m}</option>`).join('')}</select></td>
@@ -3111,9 +3211,10 @@ function renderCpdList(entries) {
     </tr>
     <tr class="cpd-edit-row" data-edit-date="${d.date}" data-edit-agent="${d.agent}" data-edit-idx="${d.idx}" style="display:none">
       <td colspan="7" style="padding:8px 4px">
-        <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:end">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:8px;align-items:end">
           <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="cpd-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none"></div>
           <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="cpd-ef-tel" type="text" value="${(d.telefone ? formatPhone(d.telefone) : '').replace(/"/g,'&quot;')}" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none"></div>
+          <div class="form-group" style="margin:0"><label style="font-size:11px">Condomínio</label><input class="cpd-ef-condo" type="text" value="${(d.condominio||'').replace(/"/g,'&quot;')}" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;width:100%;outline:none"></div>
           <button class="cpd-ef-save btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Salvar</button>
           <button class="cpd-ef-cancel" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:8px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;white-space:nowrap">Cancelar</button>
         </div>
@@ -3172,10 +3273,11 @@ function renderCpdList(entries) {
   wrap.querySelectorAll('.cpd-ef-save').forEach(btn => {
     btn.addEventListener('click', async () => {
       const editRow = wrap.querySelector(`.cpd-edit-row[data-edit-date="${btn.dataset.date}"][data-edit-agent="${btn.dataset.agent}"][data-edit-idx="${btn.dataset.idx}"]`);
-      const nome = editRow.querySelector('.cpd-ef-nome').value.trim();
-      const telefone = editRow.querySelector('.cpd-ef-tel').value.trim();
+      const nome       = editRow.querySelector('.cpd-ef-nome').value.trim();
+      const telefone   = editRow.querySelector('.cpd-ef-tel').value.trim();
+      const condominio = editRow.querySelector('.cpd-ef-condo')?.value.trim()||'';
       btn.textContent = 'Salvando...'; btn.disabled = true;
-      await updateCpdDetail(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), { nome, telefone });
+      await updateCpdDetail(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx), { nome, telefone, condominio });
       const freshRef = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
       renderCpdList(filterEntries(activePeriod, freshRef));
     });
