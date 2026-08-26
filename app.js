@@ -484,12 +484,16 @@ function checkPhoneConflicts(telefone, currentUid, currentAgentName) {
   const all = getEntries();
   const conflicts = [];
   all.forEach(e => {
-    const isOwn = currentUid ? (e.uid===currentUid) : normalizeAgentName(e.agent)===currentAgentName;
+    // isOwn: testa uid E nome para pegar entradas legadas sem uid do mesmo agente
+    const isOwn = currentUid
+      ? (e.uid===currentUid || normalizeAgentName(e.agent)===currentAgentName)
+      : normalizeAgentName(e.agent)===currentAgentName;
     const agentDisp = normalizeAgentName(e.agent);
     (e.cpdDetails||[]).forEach(d => {
-      if (!d.nome || d.status==='descarte') return;
+      // ignora descartados e CQs que já viraram DOC (já aparecem em docDetails)
+      if (!d.nome || d.status==='descarte' || d.status==='doc') return;
       if (normalizePhone(d.telefone) !== norm) return;
-      conflicts.push({ type: isOwn ? 'own_cq' : 'other_cq', nome: d.nome, agent: agentDisp, date: e.date, condominio: d.condominio||'', status: d.status, entryDate: e.date, cpdStatus: d.status });
+      conflicts.push({ type: isOwn ? 'own_cq' : 'other_cq', nome: d.nome, agent: agentDisp, date: e.date, condominio: d.condominio||'' });
     });
     (e.docDetails||[]).forEach(d => {
       if (!d.nome) return;
@@ -1960,6 +1964,15 @@ function renderAgentDashboard(session, selectedDate, editing) {
         for (let i=0;i<cpdDetails.length;i++) {
           if (!cpdDetails[i].nome) { alert(`CQ ${i+1}: preencha o nome do proprietário.`); return; }
           if (!cpdDetails[i].telefone) { alert(`CQ ${i+1}: preencha o telefone.`); return; }
+          // Aviso se telefone já existe como DOC na base (qualquer angariador)
+          const cqConflicts = checkPhoneConflicts(cpdDetails[i].telefone, session.uid, session.name);
+          const docHit = cqConflicts.filter(c => c.type==='own_doc' || c.type==='other_doc');
+          if (docHit.length > 0) {
+            const c = docHit[0];
+            const who = c.type==='own_doc' ? 'Você já tem' : `O angariador ${c.agent} tem`;
+            const ok = confirm(`ℹ️ CQ ${i+1}: ${who} um DOC cadastrado com este telefone (${c.nome}${c.condominio?' · '+c.condominio:''}). Deseja criar o CQ mesmo assim?`);
+            if (!ok) return;
+          }
         }
         if (sentToday?.cpdDetails) {
           cpdDetails.forEach((d,i) => { if (sentToday.cpdDetails[i]) { const s=sentToday.cpdDetails[i]; d.status=s.status||''; d.motivo=s.motivo||''; d.lastContact=s.lastContact||''; d.contactDates=s.contactDates||[]; } });
@@ -2332,6 +2345,19 @@ function initGestorLancamento() {
     const submittedDate=existing?.submittedDate||existing?.date||today();
     const lancCpdVal=parseInt(document.getElementById('lanc-cpd').value)||0;
     const lancCpdDetails=collectCpdDetails(lancCpdVal);
+    // Validação de telefone nos CQs do lançamento gestor
+    for (let i=0;i<lancCpdDetails.length;i++) {
+      const tel = lancCpdDetails[i].telefone;
+      if (!tel) continue;
+      const cqC = checkPhoneConflicts(tel, agentUidCheck, agent);
+      const docHit = cqC.filter(c => c.type==='own_doc' || c.type==='other_doc');
+      if (docHit.length > 0) {
+        const c = docHit[0];
+        const who = c.type==='own_doc' ? `${agent} já tem` : `O angariador ${c.agent} tem`;
+        const ok = confirm(`ℹ️ CQ ${i+1}: ${who} um DOC cadastrado com este telefone (${c.nome}${c.condominio?' · '+c.condominio:''}). Deseja criar o CQ mesmo assim?`);
+        if (!ok) return;
+      }
+    }
     const lancVaVal=parseInt(document.getElementById('lanc-va').value)||0;
     const vaDetails=collectVaDetails(lancVaVal);
     const agentUid = (TEAM.find(a=>a.name===agent))?.username || null;
