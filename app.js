@@ -565,7 +565,8 @@ function sumByAgent(entries, period) {
     const name = normalizeAgentName(e.agent);
     if (!team.has(name)) return;
     if(!map[name]) map[name]={agent:name,prosp:0,cpd:0,doc:0,va:0,vr:0,vidSubmitted:0};
-    map[name].prosp+=e.prosp; map[name].cpd+=(e.cpdDetails||[]).filter(d=>d.nome).length; map[name].doc+=e.doc;
+    const docCount = (e.docDetails||[]).filter(d=>d.nome).length || e.doc;
+    map[name].prosp+=e.prosp; map[name].cpd+=(e.cpdDetails||[]).filter(d=>d.nome).length; map[name].doc+=docCount;
     map[name].va += (e.va||0);
     map[name].vr += (e.vaDetails||[]).filter(d=>d.realizada).length;
     map[name].vidSubmitted += (e.video||0);
@@ -661,7 +662,7 @@ function calcDailyScore(entry) {
 
 function calcMonthlyScore(agentName, monthEntries) {
   const mine  = monthEntries.filter(e => normalizeAgentName(e.agent) === agentName || e.agent === agentName);
-  const doc   = mine.reduce((s, e) => s + e.doc,   0);
+  const doc   = mine.reduce((s, e) => s + ((e.docDetails||[]).filter(d=>d.nome).length || e.doc), 0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
   // Escala: 0–12 DOC → 0–8.0 | 12–14 DOC → 8.0–10.0
@@ -1298,7 +1299,7 @@ function renderAgentDailyRanking(currentAgentName) {
     const streak = calcStreak(name, memberUid);
     return {
       agent: name,
-      doc:   agentE.reduce((s,e)=>s+e.doc,0),
+      doc:   agentE.reduce((s,e)=>s+((e.docDetails||[]).filter(d=>d.nome).length||e.doc),0),
       cpd:   agentE.reduce((s,e)=>s+(e.cpdDetails||[]).filter(d=>d.nome).length,0),
       prosp: agentE.reduce((s,e)=>s+(e.prosp||0),0),
       va:    agentE.reduce((s,e)=>s+(e.va||0),0),
