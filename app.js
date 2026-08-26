@@ -126,7 +126,11 @@ function effectiveVideo(e) {
 
 async function updateDocNota(date, agent, docIdx, nota) {
   const entries = getEntries();
-  const entry = entries.find(e => e.date===date && e.agent===agent);
+  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
+  const entry = entries.find(e => e.date===date && (
+    e.agent===agent || normalizeAgentName(e.agent)===agent ||
+    (agentUid && e.uid===agentUid)
+  ));
   if (!entry || !entry.docDetails[docIdx]) return;
   entry.docDetails[docIdx].nota = nota;
   localUpsert(entry);
@@ -248,7 +252,11 @@ async function updateVideoValidated(date, agent, count) {
 
 async function updateVaRealized(date, agent, vaIdx, dataRealizacao, horarioRealizacao='') {
   const entries = getEntries();
-  const entry = entries.find(e => e.date === date && e.agent === agent);
+  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
+  const entry = entries.find(e => e.date === date && (
+    e.agent === agent || normalizeAgentName(e.agent) === agent ||
+    (agentUid && e.uid === agentUid)
+  ));
   if (!entry || !entry.vaDetails?.[vaIdx]) return;
   entry.vaDetails[vaIdx].realizada = dataRealizacao === 'nao' ? false : true;
   entry.vaDetails[vaIdx].dataRealizacao = dataRealizacao;
@@ -269,7 +277,11 @@ async function updateVaRealized(date, agent, vaIdx, dataRealizacao, horarioReali
 
 async function updateVaDetail(date, agent, vaIdx, fields) {
   const entries = getEntries();
-  const entry = entries.find(e => e.date === date && e.agent === agent);
+  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
+  const entry = entries.find(e => e.date === date && (
+    e.agent === agent || normalizeAgentName(e.agent) === agent ||
+    (agentUid && e.uid === agentUid)
+  ));
   if (!entry || !entry.vaDetails?.[vaIdx]) return;
   Object.assign(entry.vaDetails[vaIdx], fields);
   localUpsert(entry);
@@ -278,7 +290,11 @@ async function updateVaDetail(date, agent, vaIdx, fields) {
 
 async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
   const entries = getEntries();
-  const entry = entries.find(e => e.date === date && e.agent === agent);
+  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
+  const entry = entries.find(e => e.date === date && (
+    e.agent === agent || normalizeAgentName(e.agent) === agent ||
+    (agentUid && e.uid === agentUid)
+  ));
   if (!entry) return;
   // Salva estado anterior para reverter se falhar
   const prevStatus = entry.cpdDetails?.[cpdIdx]?.status;
@@ -383,7 +399,11 @@ function showDocFromCpdModal(cpd, onConfirm, onCancel) {
 
 async function deleteDocDetail(date, agent, docIdx) {
   const entries = getEntries();
-  const entry = entries.find(e => e.date === date && e.agent === agent);
+  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
+  const entry = entries.find(e => e.date === date && (
+    e.agent === agent || normalizeAgentName(e.agent) === agent ||
+    (agentUid && e.uid === agentUid)
+  ));
   if (!entry || !entry.docDetails[docIdx]) return;
   const removed = entry.docDetails.splice(docIdx, 1);
   entry.doc = entry.docDetails.length;
@@ -402,7 +422,11 @@ async function deleteDocDetail(date, agent, docIdx) {
 
 async function updateDocDetail(date, agent, docIdx, fields) {
   const entries = getEntries();
-  const entry = entries.find(e => e.date===date && e.agent===agent);
+  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
+  const entry = entries.find(e => e.date===date && (
+    e.agent===agent || normalizeAgentName(e.agent)===agent ||
+    (agentUid && e.uid===agentUid)
+  ));
   if (!entry || !entry.docDetails[docIdx]) return;
   Object.assign(entry.docDetails[docIdx], fields);
   localUpsert(entry);
@@ -866,9 +890,11 @@ function renderAgentContacts(agentName) {
   cpds.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
   descartados.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
 
-  // DOCs: apenas lançamentos reais do docDetails
+  // DOCs: deduplica por data antes de listar (preferir uid-based sobre legacy)
+  const docEntryDedup = {};
+  entries.forEach(e => { const k = e.date; if (!docEntryDedup[k] || (!docEntryDedup[k].uid && e.uid)) docEntryDedup[k] = e; });
   const docs = [];
-  entries.forEach(e => (e.docDetails||[]).forEach((d, i) => {
+  Object.values(docEntryDedup).forEach(e => (e.docDetails||[]).forEach((d, i) => {
     if (d.nome) docs.push({ ...d, entryDate: e.date, idx: i, _type: 'doc' });
   }));
   docs.sort((a, b) => b.entryDate.localeCompare(a.entryDate));
