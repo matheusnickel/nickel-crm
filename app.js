@@ -561,9 +561,18 @@ function filterEntries(period, ref) {
 function sumByAgent(entries, period) {
   const map={};
   const team = new Set(getAgentNames());
-  entries.forEach(e=>{
+  // Deduplica por agente+data: se existir entrada com uid e outra sem, mantém a com uid
+  const dedupMap = {};
+  entries.forEach(e => {
     const name = normalizeAgentName(e.agent);
     if (!team.has(name)) return;
+    const key = name + '|' + e.date;
+    const existing = dedupMap[key];
+    if (!existing || (!existing.uid && e.uid)) dedupMap[key] = e;
+  });
+  const deduped = Object.values(dedupMap);
+  deduped.forEach(e=>{
+    const name = normalizeAgentName(e.agent);
     if(!map[name]) map[name]={agent:name,prosp:0,cpd:0,doc:0,va:0,vr:0,vidSubmitted:0};
     const docCount = (e.docDetails||[]).filter(d=>d.nome).length;
     map[name].prosp+=e.prosp; map[name].cpd+=(e.cpdDetails||[]).filter(d=>d.nome).length; map[name].doc+=docCount;
