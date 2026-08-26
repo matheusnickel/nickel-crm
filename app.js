@@ -1096,6 +1096,18 @@ function renderAgentContacts(agentName) {
       if (sel.value === 'doc') {
         sel.value = cpd.status || '';
         showDocFromCpdModal(cpd, async (docDetail) => {
+          // Valida telefone antes de converter CQ→DOC
+          if (docDetail.telefone) {
+            const agentUidLocal = TEAM.find(a=>a.name===agentName)?.username;
+            const conflicts = checkPhoneConflicts(docDetail.telefone, agentUidLocal, agentName);
+            const blocked = conflicts.filter(c => c.type==='own_doc' || c.type==='other_doc');
+            if (blocked.length > 0) {
+              const c = blocked[0];
+              const who = c.type==='own_doc' ? 'Você já possui' : `O angariador ${c.agent} possui`;
+              alert(`⚠️ ${who} um DOC cadastrado com este telefone — ${c.nome}${c.condominio?' · '+c.condominio:''}. Verifique antes de continuar.`);
+              return;
+            }
+          }
           await convertCpdToDoc(entryDate, agentName, idx, docDetail);
           agentContactTab = 'doc'; agentDescFilter = '';
           renderAgentContacts(agentName);
@@ -2052,7 +2064,9 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
   const historyBody=document.getElementById('history-body');
   const histShowMore=document.getElementById('hist-show-more');
-  const sorted=[...entries].sort((a,b)=>b.date.localeCompare(a.date));
+  // Deduplica por data antes de exibir histórico
+  const histDedup={}; entries.forEach(e=>{ if(!histDedup[e.date]||(!histDedup[e.date].uid&&e.uid)) histDedup[e.date]=e; });
+  const sorted=Object.values(histDedup).sort((a,b)=>b.date.localeCompare(a.date));
   const renderHistRows = (limit) => {
     const visible = limit ? sorted.slice(0, limit) : sorted;
     historyBody.innerHTML=visible.length===0
@@ -2340,7 +2354,6 @@ function initGestorLancamento() {
         if (!ok) return;
       }
     }
-    const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Salvando...';
     const existing=getEntries().find(e=>e.date===date&&e.agent===agent);
     const submittedDate=existing?.submittedDate||existing?.date||today();
     const lancCpdVal=parseInt(document.getElementById('lanc-cpd').value)||0;
@@ -2358,6 +2371,8 @@ function initGestorLancamento() {
         if (!ok) return;
       }
     }
+    // Desabilita botão somente após todas as validações passarem
+    const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Salvando...';
     const lancVaVal=parseInt(document.getElementById('lanc-va').value)||0;
     const vaDetails=collectVaDetails(lancVaVal);
     const agentUid = (TEAM.find(a=>a.name===agent))?.username || null;
@@ -2663,8 +2678,11 @@ function renderAnalyticsChart(allDocs) {
 let activeDocAgent = '', activeCpdAgent = '', activeCpdStatus = '', activeVisitAgent = '', activeVisitStatus = 'todas';
 
 function renderDocList(entries) {
+  // Deduplica por agente+data para não mostrar registros duplicados de entradas legacy
+  const dedupDoc = {}; entries.forEach(e => { const k=normalizeAgentName(e.agent)+'|'+e.date; if(!dedupDoc[k]||(!dedupDoc[k].uid&&e.uid)) dedupDoc[k]=e; });
+  const dedupedEntries = Object.values(dedupDoc);
   const allRows=[];
-  entries.forEach(e=>(e.docDetails||[]).forEach((d,i)=>allRows.push({date:e.date,agent:e.agent,idx:i,...d})));
+  dedupedEntries.forEach(e=>(e.docDetails||[]).forEach((d,i)=>allRows.push({date:e.date,agent:e.agent,idx:i,...d})));
   allRows.sort((a,b)=>b.date.localeCompare(a.date));
 
   const wrap=document.getElementById('doc-list-wrap');
@@ -3184,8 +3202,11 @@ function renderCpdList(entries) {
       ).join('')}
     </div>`;
 
+  // Deduplica por agente+data antes de listar
+  const dedupCpd = {}; entries.forEach(e => { const k=normalizeAgentName(e.agent)+'|'+e.date; if(!dedupCpd[k]||(!dedupCpd[k].uid&&e.uid)) dedupCpd[k]=e; });
+  const dedupedCpdEntries = Object.values(dedupCpd);
   const allRowsRaw = [];
-  entries.forEach(e => (e.cpdDetails||[]).forEach((d,i) => { if (d.nome) allRowsRaw.push({date:e.date, agent:e.agent, uid:e.uid, idx:i, ...d}); }));
+  dedupedCpdEntries.forEach(e => (e.cpdDetails||[]).forEach((d,i) => { if (d.nome) allRowsRaw.push({date:e.date, agent:e.agent, uid:e.uid, idx:i, ...d}); }));
   allRowsRaw.sort((a,b) => b.date.localeCompare(a.date));
   // Nomes que viraram DOC ou foram descartados — excluir de Em Tratativa
   const _docN = new Set(allRowsRaw.filter(r=>r.status==='doc').map(r=>r.nome.trim().toLowerCase()));
