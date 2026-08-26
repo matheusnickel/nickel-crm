@@ -520,7 +520,7 @@ function getTeamRatios(refDate) {
   const teamSet = new Set(getAgentNames());
   const prevE = getEntries().filter(e => inRange(e.date, pStart, pEnd) && teamSet.has(normalizeAgentName(e.agent)));
   const prevDoc   = prevE.reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
-  const prevCpd   = prevE.reduce((s, e) => s + (e.cpd  || 0), 0);
+  const prevCpd   = prevE.reduce((s, e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
   const prevProsp = prevE.reduce((s, e) => s + (e.prosp || 0), 0);
   // Fallback: ratios aproximados caso não haja dados do mês anterior
   const ratioCpd   = prevDoc > 0 ? prevCpd   / prevDoc : 3.5;
@@ -675,7 +675,7 @@ function calcMonthlyScore(agentName, monthEntries) {
   const dedupScore = {}; raw.forEach(e => { if (!dedupScore[e.date] || (!dedupScore[e.date].uid && e.uid)) dedupScore[e.date] = e; });
   const mine = Object.values(dedupScore);
   const doc   = mine.reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
-  const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
+  const cpd   = mine.reduce((s, e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
   // Escala: 0–12 DOC → 0–8.0 | 12–14 DOC → 8.0–10.0
   // CP e PROSP são desempate mínimo apenas.
@@ -1969,7 +1969,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const visible = limit ? sorted.slice(0, limit) : sorted;
     historyBody.innerHTML=visible.length===0
       ?'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">Nenhum registro</td></tr>'
-      :visible.map(e=>`<tr><td>${formatDate(e.date)}</td><td class="num-cell">${e.prosp}</td><td class="num-cell">${e.cpd}</td><td class="num-cell">${(e.docDetails||[]).filter(d=>d.nome).length}</td></tr>`).join('');
+      :visible.map(e=>`<tr><td>${formatDate(e.date)}</td><td class="num-cell">${e.prosp}</td><td class="num-cell">${(e.cpdDetails||[]).filter(d=>d.nome).length}</td><td class="num-cell">${(e.docDetails||[]).filter(d=>d.nome).length}</td></tr>`).join('');
     if (histShowMore) {
       if (sorted.length > 3 && limit) {
         histShowMore.style.display='block';
@@ -2274,7 +2274,7 @@ function renderEvolucaoDiaria(entries) {
   const colors = ['#a8e63d','#6495ed','#2ecc71','#e67e22','#e74c3c','#9b59b6','#1abc9c','#f1c40f'];
   const datasets = agentNames.map((name,i) => ({
     label: name,
-    data: dates.map(d => { const uid=TEAM.find(a=>a.name===name)?.username; const e=entries.find(x=>x.date===d&&(uid?(x.uid===uid||normalizeAgentName(x.agent)===name):(normalizeAgentName(x.agent)===name||x.agent===name))); return e?(e.docDetails||[]).filter(d=>d.nome).length:0; }),
+    data: dates.map(d => { const uid=TEAM.find(a=>a.name===name)?.username; const ms=entries.filter(x=>x.date===d&&(uid?(x.uid===uid||normalizeAgentName(x.agent)===name):(normalizeAgentName(x.agent)===name||x.agent===name))); const e=ms.find(x=>x.uid)||ms[0]; return e?(e.docDetails||[]).filter(d=>d.nome).length:0; }),
     borderColor: colors[i%colors.length],
     backgroundColor: colors[i%colors.length]+'33',
     borderWidth: 2, pointRadius: 4, tension: .3, fill: false,
@@ -2811,14 +2811,14 @@ function exportTimeline(sorted, days, t) {
 
   const entries = getEntries();
   const eMap = {};
-  entries.forEach(e => { eMap[e.agent+'|'+e.date] = e; });
+  entries.forEach(e => { const k=normalizeAgentName(e.agent)+'|'+e.date; if(!eMap[k]||(!eMap[k].uid&&e.uid)) eMap[k]=e; });
 
   const WDAYS = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
 
   function buildAgentPage(name, streak) {
     const agentPeriodEntries = days.map(d=>eMap[name+'|'+d]).filter(Boolean);
     const totDoc   = agentPeriodEntries.reduce((s,e)=>s+(e.docDetails||[]).filter(d=>d.nome).length,0);
-    const totCpd   = agentPeriodEntries.reduce((s,e)=>s+e.cpd,0);
+    const totCpd   = agentPeriodEntries.reduce((s,e)=>s+(e.cpdDetails||[]).filter(d=>d.nome).length,0);
     const totProsp = agentPeriodEntries.reduce((s,e)=>s+e.prosp,0);
     const missedDays = days.filter(d=>d<=t && !eMap[name+'|'+d]);
 
@@ -2979,12 +2979,13 @@ function renderDayView(dateStr) {
 
   const rows = agentNames.map(name => {
     const memberUid = TEAM.find(a=>a.name===name)?.username;
-    const e=entries.find(x=>x.date===dateStr&&(x.agent===name || normalizeAgentName(x.agent)===name || (memberUid && x.uid===memberUid))), has=!!e;
+    const matches=entries.filter(x=>x.date===dateStr&&(x.agent===name||normalizeAgentName(x.agent)===name||(memberUid&&x.uid===memberUid)));
+    const e=matches.find(x=>x.uid)||matches[0], has=!!e;
     const dash='<span class="day-empty">—</span>';
     return `<tr>
       <td class="day-agent-name">${name}</td>
       <td class="num-cell day-num">${has ? e.prosp : dash}</td>
-      <td class="num-cell day-num">${has ? e.cpd   : dash}</td>
+      <td class="num-cell day-num">${has ? (e.cpdDetails||[]).filter(d=>d.nome).length : dash}</td>
       <td class="num-cell day-num doc-cell">${has ? (e.docDetails||[]).filter(d=>d.nome).length : dash}</td>
       <td class="num-cell day-num" style="color:#ef4444">${has ? (e.va||0) : dash}</td>
       <td class="num-cell day-num" style="color:#f97316">${has ? (e.vaDetails||[]).filter(d=>d.realizada).length : dash}</td>
