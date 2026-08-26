@@ -1126,12 +1126,16 @@ function renderAgentContacts(agentName) {
           if (docDetail.telefone) {
             const agentUidLocal = TEAM.find(a=>a.name===agentName)?.username;
             const conflicts = checkPhoneConflicts(docDetail.telefone, agentUidLocal, agentName);
-            const blocked = conflicts.filter(c => c.type==='own_doc' || c.type==='other_doc');
-            if (blocked.length > 0) {
-              const c = blocked[0];
-              const who = c.type==='own_doc' ? 'Você já possui' : `O angariador ${c.agent} possui`;
-              alert(`⚠️ ${who} um DOC cadastrado com este telefone — ${c.nome}${c.condominio?' · '+c.condominio:''}. Verifique antes de continuar.`);
-              return;
+            const ownDoc   = conflicts.filter(c => c.type==='own_doc');
+            const otherDoc = conflicts.filter(c => c.type==='other_doc');
+            if (ownDoc.length > 0) {
+              const c = ownDoc[0];
+              const ok = confirm(`Este telefone já está cadastrado como DOC seu:\n"${c.nome}"${c.condominio?' — '+c.condominio:''}.\n\nÉ um novo imóvel do mesmo proprietário?\n• OK = sim, cadastrar novo imóvel\n• Cancelar = não, é duplicata`);
+              if (!ok) return;
+            } else if (otherDoc.length > 0) {
+              const c = otherDoc[0];
+              const ok = confirm(`⚠️ O angariador ${c.agent} já tem um DOC com este telefone (${c.nome}${c.condominio?' · '+c.condominio:''}). Deseja continuar mesmo assim?`);
+              if (!ok) return;
             }
           }
           await convertCpdToDoc(entryDate, agentName, idx, docDetail);
@@ -2024,11 +2028,16 @@ function renderAgentDashboard(session, selectedDate, editing) {
           const conflicts = checkPhoneConflicts(tel, session.uid, session.name);
           const blocked = conflicts.filter(c => c.type==='own_doc' || c.type==='other_doc');
           const warn    = conflicts.filter(c => c.type==='own_cq');
-          if (blocked.length > 0) {
-            const c = blocked[0];
-            const who = c.type==='own_doc' ? 'Você já possui' : `O angariador ${c.agent} possui`;
-            alert(`⚠️ DOC ${i+1} (${docDetails[i].nome}): ${who} um DOC cadastrado com este telefone — ${c.nome}${c.condominio?' · '+c.condominio:''}. Verifique antes de continuar.`);
-            return;
+          const ownDocW   = blocked.filter(c => c.type==='own_doc');
+          const otherDocW = blocked.filter(c => c.type==='other_doc');
+          if (ownDocW.length > 0) {
+            const c = ownDocW[0];
+            const ok = confirm(`DOC ${i+1}: Este telefone já está cadastrado como DOC seu:\n"${c.nome}"${c.condominio?' — '+c.condominio:''}.\n\nÉ um novo imóvel do mesmo proprietário?\n• OK = sim, cadastrar novo imóvel\n• Cancelar = não, é duplicata`);
+            if (!ok) return;
+          } else if (otherDocW.length > 0) {
+            const c = otherDocW[0];
+            const ok = confirm(`⚠️ DOC ${i+1} (${docDetails[i].nome}): O angariador ${c.agent} já tem um DOC com este telefone (${c.nome}${c.condominio?' · '+c.condominio:''}). Deseja continuar mesmo assim?`);
+            if (!ok) return;
           }
           if (warn.length > 0) {
             const c = warn[0];
@@ -2368,11 +2377,16 @@ function initGestorLancamento() {
       const conflicts = checkPhoneConflicts(tel, agentUidCheck, agent);
       const blocked = conflicts.filter(c => c.type==='own_doc' || c.type==='other_doc');
       const warn    = conflicts.filter(c => c.type==='own_cq');
-      if (blocked.length > 0) {
-        const c = blocked[0];
-        const who = c.type==='own_doc' ? `${agent} já possui` : `O angariador ${c.agent} possui`;
-        alert(`⚠️ DOC ${i+1} (${docDetails[i].nome}): ${who} um DOC cadastrado com este telefone — ${c.nome}${c.condominio?' · '+c.condominio:''}. Verifique antes de continuar.`);
-        return;
+      const ownDocG   = blocked.filter(c => c.type==='own_doc');
+      const otherDocG = blocked.filter(c => c.type==='other_doc');
+      if (ownDocG.length > 0) {
+        const c = ownDocG[0];
+        const ok = confirm(`DOC ${i+1}: Este telefone já está cadastrado como DOC de ${agent}:\n"${c.nome}"${c.condominio?' — '+c.condominio:''}.\n\nÉ um novo imóvel do mesmo proprietário?\n• OK = sim, cadastrar novo imóvel\n• Cancelar = não, é duplicata`);
+        if (!ok) return;
+      } else if (otherDocG.length > 0) {
+        const c = otherDocG[0];
+        const ok = confirm(`⚠️ DOC ${i+1} (${docDetails[i].nome}): O angariador ${c.agent} já tem um DOC com este telefone (${c.nome}${c.condominio?' · '+c.condominio:''}). Deseja continuar mesmo assim?`);
+        if (!ok) return;
       }
       if (warn.length > 0) {
         const c = warn[0];
