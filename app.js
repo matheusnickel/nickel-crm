@@ -670,7 +670,10 @@ function calcDailyScore(entry) {
 
 
 function calcMonthlyScore(agentName, monthEntries) {
-  const mine  = monthEntries.filter(e => normalizeAgentName(e.agent) === agentName || e.agent === agentName);
+  const uid = TEAM.find(a=>a.name===agentName)?.username;
+  const raw  = monthEntries.filter(e => uid ? (e.uid===uid || normalizeAgentName(e.agent)===agentName) : normalizeAgentName(e.agent)===agentName || e.agent===agentName);
+  const dedupScore = {}; raw.forEach(e => { if (!dedupScore[e.date] || (!dedupScore[e.date].uid && e.uid)) dedupScore[e.date] = e; });
+  const mine = Object.values(dedupScore);
   const doc   = mine.reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
   const cpd   = mine.reduce((s, e) => s + e.cpd,   0);
   const prosp = mine.reduce((s, e) => s + e.prosp, 0);
@@ -726,7 +729,9 @@ function renderNotasRanking() {
   } else {
     rows = names.map(name => {
       const uid = TEAM.find(a=>a.name===name)?.username;
-      const doc = monthE.filter(x => uid ? (x.uid===uid || normalizeAgentName(x.agent)===name) : normalizeAgentName(x.agent)===name || x.agent===name).reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
+      const rawM = monthE.filter(x => uid ? (x.uid===uid || normalizeAgentName(x.agent)===name) : normalizeAgentName(x.agent)===name || x.agent===name);
+      const dedupM = {}; rawM.forEach(e => { if (!dedupM[e.date] || (!dedupM[e.date].uid && e.uid)) dedupM[e.date] = e; });
+      const doc = Object.values(dedupM).reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
       return { name, score: calcMonthlyScore(name, monthE), doc, sent: true };
     });
   }
@@ -1304,7 +1309,9 @@ function renderAgentDailyRanking(currentAgentName) {
 
   const byAgent = names.map(name => {
     const memberUid = TEAM.find(a=>a.name===name)?.username;
-    const agentE = periodEntries.filter(e => memberUid ? (e.uid===memberUid || normalizeAgentName(e.agent)===name) : e.agent===name);
+    const raw = periodEntries.filter(e => memberUid ? (e.uid===memberUid || normalizeAgentName(e.agent)===name) : e.agent===name);
+    const dedupE = {}; raw.forEach(e => { if (!dedupE[e.date] || (!dedupE[e.date].uid && e.uid)) dedupE[e.date] = e; });
+    const agentE = Object.values(dedupE);
     const streak = calcStreak(name, memberUid);
     return {
       agent: name,
