@@ -3922,7 +3922,7 @@ function generateReport(period) {
     const aUid = TEAM.find(t=>t.name===a.agent)?.username;
     const agentEntries = allEntries.filter(e => aUid ? (e.uid===aUid || normalizeAgentName(e.agent)===a.agent) : normalizeAgentName(e.agent)===a.agent || e.agent===a.agent);
     const entryMap = {};
-    agentEntries.forEach(e => { entryMap[e.date] = e; });
+    agentEntries.forEach(e => { if (!entryMap[e.date] || (!entryMap[e.date].uid && e.uid)) entryMap[e.date] = e; });
 
     // Daily score timeline squares
     const squares = days.map(d => {
@@ -3937,9 +3937,10 @@ function generateReport(period) {
       </div>`;
     }).join('');
 
-    // DOCs do período
-    const docs = periodEntries
-      .filter(e => aUid ? (e.uid===aUid || normalizeAgentName(e.agent)===a.agent) : normalizeAgentName(e.agent)===a.agent || e.agent===a.agent)
+    // DOCs do período (deduplica por data antes de listar)
+    const agentPeriod = periodEntries.filter(e => aUid ? (e.uid===aUid || normalizeAgentName(e.agent)===a.agent) : normalizeAgentName(e.agent)===a.agent || e.agent===a.agent);
+    const apDedup = {}; agentPeriod.forEach(e => { if (!apDedup[e.date] || (!apDedup[e.date].uid && e.uid)) apDedup[e.date] = e; });
+    const docs = Object.values(apDedup)
       .flatMap(e => (e.docDetails||[]).map(d => ({...d, date: e.date})))
       .filter(d => d.nome);
 
