@@ -2738,7 +2738,7 @@ function renderDocList(entries) {
     </select>
   </div>`;
 
-  const rows = activeDocAgent ? allRows.filter(r=>r.agent===activeDocAgent) : allRows;
+  const rows = activeDocAgent ? allRows.filter(r=>normalizeAgentName(r.agent)===activeDocAgent) : allRows;
 
   if (allRows.length===0) { wrap.innerHTML=filterHTML+'<div class="empty-state">Nenhum DOC registrado no período</div>';
     wrap.querySelector('#doc-agent-filter').addEventListener('change',function(){ activeDocAgent=this.value; renderDocList(entries); });
@@ -3565,7 +3565,7 @@ function renderVisitList(entries) {
   });
   allRows.sort((a,b) => b.date.localeCompare(a.date));
 
-  const byAgent = activeVisitAgent ? allRows.filter(r => r.agent === activeVisitAgent) : allRows;
+  const byAgent = activeVisitAgent ? allRows.filter(r => normalizeAgentName(r.agent) === activeVisitAgent) : allRows;
   const rows = byAgent.filter(d => {
     if (activeVisitStatus === 'agendadas')  return d.realizada !== true && !(d.realizada === false && d.dataRealizacao === 'nao');
     if (activeVisitStatus === 'realizadas') return d.realizada === true;
