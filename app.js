@@ -245,7 +245,7 @@ async function updateCpdDetail(date, agent, cpdIdx, fields) {
 
 async function updateVideoValidated(date, agent, count) {
   const entries = getEntries();
-  const entry = entries.find(e => e.date===date && e.agent===agent);
+  const entry = findEntry(entries, date, agent);
   if (!entry) return;
   entry.videoValidated = count;
   localUpsert(entry);
@@ -393,6 +393,12 @@ async function deleteDocDetail(date, agent, docIdx) {
   if (!entry || !entry.docDetails[docIdx]) return;
   const removed = entry.docDetails.splice(docIdx, 1);
   entry.doc = entry.docDetails.length;
+  // Se o DOC deletado veio de um CQ convertido, restaura o status do CQ
+  const removedNome = (removed[0]?.nome||'').trim().toLowerCase();
+  if (removedNome) {
+    const matchCpd = (entry.cpdDetails||[]).find(c => c.status==='doc' && (c.nome||'').trim().toLowerCase()===removedNome);
+    if (matchCpd) matchCpd.status = '';
+  }
   localUpsert(entry);
   try {
     await fbUpsertEntry(entry);
@@ -400,6 +406,7 @@ async function deleteDocDetail(date, agent, docIdx) {
     // Reverte deleção local
     entry.docDetails.splice(docIdx, 0, removed[0]);
     entry.doc = entry.docDetails.length;
+    if (removedNome) { const m=(entry.cpdDetails||[]).find(c=>c.status===''&&(c.nome||'').trim().toLowerCase()===removedNome); if(m) m.status='doc'; }
     localUpsert(entry);
     alert('❌ Erro ao excluir DOC. Verifique sua conexão.');
     throw e;
@@ -699,18 +706,19 @@ function calcDailyScore(entry) {
   // Sem DOC: teto 7.9 (azul é exclusivo de quem captou DOC)
   // Com DOC: base 8.0 + bônus de esforço até 10.0
   const vid = effectiveVideo(entry);
-  const effort = entry.cpd * 1.0 + vid * 0.5 + entry.prosp * 0.025;
+  const cpdCount = (entry.cpdDetails||[]).filter(d=>d.nome).length;
+  const docCount = (entry.docDetails||[]).filter(d=>d.nome).length;
+  const effort = cpdCount * 1.0 + vid * 0.5 + entry.prosp * 0.025;
 
-  if (entry.doc > 0) {
-    const base  = Math.min(entry.doc * 8.0, 10);
+  if (docCount > 0) {
+    const base  = Math.min(docCount * 8.0, 10);
     const bonus = Math.min(effort * 0.15, 2.0);
     return parseFloat(Math.min(base + bonus, 10).toFixed(1));
   }
 
   // Sem DOC: verifica se atinge o piso amarelo
-  const meetsFloor = entry.cpd > 0 || vid > 0 || entry.prosp > 30; // vid já usa effectiveVideo
+  const meetsFloor = cpdCount > 0 || vid > 0 || entry.prosp > 30;
   if (!meetsFloor) {
-    // Vermelho: só prosp baixo ou nada — mostra valor pequeno mas fica vermelho
     return parseFloat(Math.min(entry.prosp * 0.025, 2.9).toFixed(1));
   }
   return parseFloat(Math.min(3.0 + effort, 7.9).toFixed(1));
@@ -917,7 +925,7 @@ function renderAgentContacts(agentName) {
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
          </select>`;
       return `<tr data-entry-date="${d.entryDate}" data-idx="${d.idx}">
-        <td style="font-weight:500">${d.nome}<br><span style="font-size:11px;color:var(--text-muted)">${d.condominio||''}</span></td>
+        <td style="font-weight:500">${d.nome}<br><span style="font-size:11px;color:var(--text-muted)">${d.condominio||''}</span>${d.indicacao==='sim'?`<br><span style="font-size:10px;color:#a8e63d">Indicação: ${d.indicador||'—'}</span>`:''}</td>
         <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}<br>${d.tipo||'—'} · ${d.bairro||'—'}</td>
         <td>${statusCell}</td>
         <td></td>
@@ -1243,7 +1251,7 @@ function renderAgentVisits(agentName) {
     btn.addEventListener('click', async () => {
       btn.disabled = true; btn.textContent = '...';
       const entries = getEntries();
-      const entry = entries.find(e => e.date === btn.dataset.entryDate && e.agent === agentName);
+      const entry = findEntry(entries, btn.dataset.entryDate, agentName);
       const v = entry?.vaDetails?.[parseInt(btn.dataset.idx)];
       const dataRealizacao = v?.dataAgend || today();
       const horarioRealizacao = v?.horario || '';
@@ -1262,7 +1270,7 @@ function renderAgentVisits(agentName) {
     btn.addEventListener('click', async () => {
       btn.disabled = true; btn.textContent = '...';
       const entries = getEntries();
-      const entry = entries.find(e => e.date===btn.dataset.entryDate && e.agent===agentName);
+      const entry = findEntry(entries, btn.dataset.entryDate, agentName);
       if (entry?.vaDetails?.[parseInt(btn.dataset.idx)]) {
         const idx = parseInt(btn.dataset.idx);
         const prev = { ...entry.vaDetails[idx] };
@@ -2356,7 +2364,7 @@ function initGestorLancamento() {
         if (!ok) return;
       }
     }
-    const existing=getEntries().find(e=>e.date===date&&e.agent===agent);
+    const existing=findEntry(getEntries(),date,agent);
     const submittedDate=existing?.submittedDate||existing?.date||today();
     const lancCpdVal=parseInt(document.getElementById('lanc-cpd').value)||0;
     const lancCpdDetails=collectCpdDetails(lancCpdVal);
@@ -3730,7 +3738,7 @@ function renderVisitList(entries) {
     btn.addEventListener('click', async () => {
       btn.disabled = true; btn.textContent = '...';
       const entries = getEntries();
-      const entry = entries.find(e => e.date === btn.dataset.date && e.agent === btn.dataset.agent);
+      const entry = findEntry(entries, btn.dataset.date, btn.dataset.agent);
       if (entry?.vaDetails?.[parseInt(btn.dataset.idx)]) {
         const d = entry.vaDetails[parseInt(btn.dataset.idx)];
         d.realizada = null; d.dataRealizacao = ''; d.horarioRealizacao = '';
@@ -3744,7 +3752,7 @@ function renderVisitList(entries) {
   wrap.querySelectorAll('.vi-del-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const entries = getEntries();
-      const entry = entries.find(e => e.date === btn.dataset.date && e.agent === btn.dataset.agent);
+      const entry = findEntry(entries, btn.dataset.date, btn.dataset.agent);
       if (!entry?.vaDetails) return;
       const removed = entry.vaDetails.splice(parseInt(btn.dataset.idx), 1);
       entry.va = entry.vaDetails.length;
