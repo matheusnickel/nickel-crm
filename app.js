@@ -1958,10 +1958,20 @@ function renderAgentDashboard(session, selectedDate, editing) {
         for (let i=0;i<cpdDetails.length;i++) {
           if (!cpdDetails[i].nome) { alert(`CQ ${i+1}: preencha o nome do proprietário.`); return; }
           if (!cpdDetails[i].telefone) { alert(`CQ ${i+1}: preencha o telefone.`); return; }
-          // Aviso se telefone já existe como DOC na base (qualquer angariador)
+          // Aviso se telefone já existe como CQ ou DOC na base
           const cqConflicts = checkPhoneConflicts(cpdDetails[i].telefone, session.uid, session.name);
-          const docHit = cqConflicts.filter(c => c.type==='own_doc' || c.type==='other_doc');
-          if (docHit.length > 0) {
+          const ownCqHit   = cqConflicts.filter(c => c.type==='own_cq');
+          const otherCqHit = cqConflicts.filter(c => c.type==='other_cq');
+          const docHit     = cqConflicts.filter(c => c.type==='own_doc' || c.type==='other_doc');
+          if (ownCqHit.length > 0) {
+            const c = ownCqHit[0];
+            const ok = confirm(`⚠️ CQ ${i+1}: Você já tem um CQ cadastrado com este telefone:\n"${c.nome}"${c.condominio?' · '+c.condominio:''}.\n\nÉ a mesma pessoa? Evite duplicar.\n• OK = continuar mesmo assim\n• Cancelar = não cadastrar`);
+            if (!ok) return;
+          } else if (otherCqHit.length > 0) {
+            const c = otherCqHit[0];
+            const ok = confirm(`⚠️ CQ ${i+1}: O angariador ${c.agent} já tem um CQ com este telefone (${c.nome}${c.condominio?' · '+c.condominio:''}). Deseja criar mesmo assim?`);
+            if (!ok) return;
+          } else if (docHit.length > 0) {
             const c = docHit[0];
             const who = c.type==='own_doc' ? 'Você já tem' : `O angariador ${c.agent} tem`;
             const ok = confirm(`ℹ️ CQ ${i+1}: ${who} um DOC cadastrado com este telefone (${c.nome}${c.condominio?' · '+c.condominio:''}). Deseja criar o CQ mesmo assim?`);
@@ -2355,8 +2365,18 @@ function initGestorLancamento() {
       const tel = lancCpdDetails[i].telefone;
       if (!tel) continue;
       const cqC = checkPhoneConflicts(tel, agentUidCheck, agent);
-      const docHit = cqC.filter(c => c.type==='own_doc' || c.type==='other_doc');
-      if (docHit.length > 0) {
+      const ownCqG   = cqC.filter(c => c.type==='own_cq');
+      const otherCqG = cqC.filter(c => c.type==='other_cq');
+      const docHit   = cqC.filter(c => c.type==='own_doc' || c.type==='other_doc');
+      if (ownCqG.length > 0) {
+        const c = ownCqG[0];
+        const ok = confirm(`⚠️ CQ ${i+1}: ${agent} já tem um CQ cadastrado com este telefone:\n"${c.nome}"${c.condominio?' · '+c.condominio:''}.\n\nÉ a mesma pessoa? Evite duplicar.\n• OK = continuar mesmo assim\n• Cancelar = não cadastrar`);
+        if (!ok) return;
+      } else if (otherCqG.length > 0) {
+        const c = otherCqG[0];
+        const ok = confirm(`⚠️ CQ ${i+1}: O angariador ${c.agent} já tem um CQ com este telefone (${c.nome}${c.condominio?' · '+c.condominio:''}). Deseja criar mesmo assim?`);
+        if (!ok) return;
+      } else if (docHit.length > 0) {
         const c = docHit[0];
         const who = c.type==='own_doc' ? `${agent} já tem` : `O angariador ${c.agent} tem`;
         const ok = confirm(`ℹ️ CQ ${i+1}: ${who} um DOC cadastrado com este telefone (${c.nome}${c.condominio?' · '+c.condominio:''}). Deseja criar o CQ mesmo assim?`);
