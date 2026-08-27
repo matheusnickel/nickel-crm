@@ -1724,19 +1724,21 @@ function renderAgentDashboard(session, selectedDate, editing) {
   const date = selectedDate || t;
   const { start:wStart, end:wEnd }=weekRange(t);
   const entries=getEntries().filter(e=> session.uid ? (e.uid===session.uid || normalizeAgentName(e.agent)===session.name) : normalizeAgentName(e.agent)===session.name || e.agent===session.name);
-  const weekDoc=entries.filter(e=>inRange(e.date,wStart,wEnd)).reduce((s,e)=>s+(e.docDetails||[]).filter(d=>d.nome).length,0);
+  // Deduplica por data (prefere uid-based sobre legacy) antes de calcular contadores
+  const entriesDedup = (() => { const m={}; entries.forEach(e=>{ if(!m[e.date]||(!m[e.date].uid&&e.uid)) m[e.date]=e; }); return Object.values(m); })();
+  const weekDoc=entriesDedup.filter(e=>inRange(e.date,wStart,wEnd)).reduce((s,e)=>s+(e.docDetails||[]).filter(d=>d.nome).length,0);
   const sentToday=entries.find(e=>e.date===date);
   const editCount=getEditCount(session.uid||session.name,date);
   const canEdit=editCount<2;
 
   const { start:mStart, end:mEnd } = monthRange(t);
-  const monthDoc = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s+(e.docDetails||[]).filter(d=>d.nome).length, 0);
+  const monthDoc = entriesDedup.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s+(e.docDetails||[]).filter(d=>d.nome).length, 0);
 
   // Metas card
   const metasWrap = document.getElementById('metas-wrap');
   if (metasWrap) {
-    const monthCpd  = entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
-    const monthProsp= entries.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.prosp||0), 0);
+    const monthCpd  = entriesDedup.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
+    const monthProsp= entriesDedup.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.prosp||0), 0);
 
     const { metaCqMonth: META_CQ, metaProspMonth: META_PROSP } = getTeamRatios(t);
 
