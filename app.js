@@ -308,7 +308,7 @@ async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
   }
 }
 
-const DESCARTE_MOTIVOS = ['Exclusivo', 'Vendeu', 'Não está vendendo'];
+const DESCARTE_MOTIVOS = ['Exclusivo', 'Vendeu', 'Não está vendendo', 'Inválido', 'Duplicou'];
 
 function showDescarteModal(nomeLead, onConfirm, onCancel) {
   document.getElementById('descarte-modal-overlay')?.remove();
@@ -907,20 +907,7 @@ function renderAgentContacts(agentName) {
         <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
         <td><select class="cpd-tracker-status nota-select" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text)">${statusSelOpts}</select></td>
         <td style="font-size:11px;white-space:nowrap">${histLabel}</td>
-        <td style="white-space:nowrap">
-          <button class="ac-edit-btn" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">✏️</button>
-        </td>
-      </tr>
-      <tr class="ac-edit-row" data-edit-type="cpd" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="display:none">
-        <td colspan="5" style="padding:8px 0">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:8px;align-items:end">
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="ac-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="ac-ef-tel" type="text" value="${(d.telefone ? formatPhone(d.telefone) : '').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Condomínio</label><input class="ac-ef-condo" type="text" value="${(d.condominio||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
-            <button class="ac-ef-save btn" data-type="cpd" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Salvar</button>
-            <button class="ac-ef-cancel" data-edit-type="cpd" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="${cancelBtnStyle}">Cancelar</button>
-          </div>
-        </td>
+        <td></td>
       </tr>`;
     } else {
       const bairrosOpts = BAIRROS.map(b=>`<option value="${b}" ${d.bairro===b?'selected':''}>${b}</option>`).join('');
@@ -932,24 +919,7 @@ function renderAgentContacts(agentName) {
         <td style="font-weight:500">${d.nome}<br><span style="font-size:11px;color:var(--text-muted)">${d.condominio||''}</span></td>
         <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}<br>${d.tipo||'—'} · ${d.bairro||'—'}</td>
         <td>${statusCell}</td>
-        <td style="white-space:nowrap">
-          <button class="ac-edit-btn" data-type="doc" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">✏️</button>
-          <button class="del-doc-detail-btn" data-entry-date="${d.entryDate}" data-idx="${d.idx}" title="Excluir DOC" style="background:none;border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px">🗑</button>
-        </td>
-      </tr>
-      <tr class="ac-edit-row" data-edit-type="doc" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="display:none">
-        <td colspan="4" style="padding:8px 0">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto auto;gap:8px;align-items:end">
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Nome</label><input class="ac-ef-nome" type="text" value="${(d.nome||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Telefone</label><input class="ac-ef-tel" type="tel" value="${(d.telefone ? formatPhone(d.telefone) : '').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Condomínio</label><input class="ac-ef-condo" type="text" value="${(d.condominio||'').replace(/"/g,'&quot;')}" style="${inpStyle}"></div>
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Tipo</label><select class="ac-ef-tipo" style="${inpStyle}"><option value="">Selecione</option>${tiposOpts}</select></div>
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Bairro</label><select class="ac-ef-bairro" style="${inpStyle}"><option value="">Selecione</option>${bairrosOpts}${d.bairro&&!BAIRROS.includes(d.bairro)?`<option value="${d.bairro}" selected>${d.bairro}</option>`:''}</select></div>
-            <div class="form-group" style="margin:0"><label style="font-size:11px">Valor</label><input class="ac-ef-valor" type="number" min="0" value="${d.valor||0}" style="${inpStyle}"></div>
-            <button class="ac-ef-save btn" data-type="doc" data-entry-date="${d.entryDate}" data-idx="${d.idx}" style="padding:8px 14px;font-size:13px;white-space:nowrap">Salvar</button>
-            <button class="ac-ef-cancel" data-edit-type="doc" data-edit-date="${d.entryDate}" data-edit-idx="${d.idx}" style="${cancelBtnStyle}">Cancelar</button>
-          </div>
-        </td>
+        <td></td>
       </tr>`;
     }
   };
@@ -1867,9 +1837,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const docSummary=(sentToday.docDetails||[]).map((d,i)=>
       `<div class="doc-summary-item">DOC ${i+1}: <strong>${d.nome||'—'}</strong> · ${d.tipo||'—'} · ${d.bairro||'—'} · ${formatCurrency(d.valor)}${d.indicacao==='sim'?` · Indicação: ${d.indicador||'—'}`:''}</div>`
     ).join('');
-    const editBtn=canEdit
-      ?`<button class="btn btn-outline" id="edit-today-btn" style="margin-top:14px;font-size:13px;padding:9px">Corrigir lançamento de ${formatDate(date)}</button>`
-      :`<div style="margin-top:14px;padding:10px 14px;background:rgba(224,62,62,.08);border:1px solid rgba(224,62,62,.25);border-radius:8px;font-size:12px;color:#ff6b6b;text-align:center">Correções esgotadas. Para nova alteração, fale com o gestor.</div>`;
+    const editBtn=`<div style="margin-top:14px;padding:10px 14px;background:rgba(168,230,61,.06);border:1px solid rgba(168,230,61,.2);border-radius:8px;font-size:12px;color:var(--text-muted);text-align:center">Precisa corrigir? <strong style="color:#a8e63d">Chame o gestor.</strong></div>`;
     const dailyScore = calcDailyScore(sentToday);
     const dsColor = scoreColor(dailyScore);
     const dsLabel = scoreLabel(dailyScore);
@@ -1888,7 +1856,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
         ${docSummary?`<div class="doc-summary-list">${docSummary}</div>`:''}
         ${editBtn}
       </div>`;
-    if (canEdit) document.getElementById('edit-today-btn').addEventListener('click',()=>{ agentEditing=true; renderAgentDashboard(session,date,true); });
   } else {
     const pre=sentToday||{prosp:0,cpd:0,doc:0,video:0,docDetails:[],cpdDetails:[]};
     const isFuture = date > t;
