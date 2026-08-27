@@ -2706,7 +2706,7 @@ function renderDocList(entries) {
     <tr data-row-date="${d.date}" data-row-agent="${d.agent}" data-row-idx="${d.idx}">
       <td>${formatDate(d.date)}</td>
       <td>${normalizeAgentName(d.agent)}</td>
-      <td style="font-weight:500">${d.nome||'—'}</td>
+      <td style="font-weight:500">${d.nome||'—'}${d.indicacao==='sim'?`<br><span style="font-size:10px;color:#a8e63d">Indicação: ${d.indicador||'—'}</span>`:''}</td>
       <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}</td>
       <td style="font-size:12px;color:var(--text-muted)">${d.condominio||'—'}</td>
       <td>${d.tipo?`<span class="tipo-tag tipo-${d.tipo.toLowerCase()}">${d.tipo}</span>`:'—'}</td>
