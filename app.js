@@ -124,13 +124,19 @@ function effectiveVideo(e) {
   return typeof e.videoApproved === 'number' ? e.videoApproved : (e.video || 0);
 }
 
+// Retorna a entrada correta para um agente+data, sempre preferindo uid-based sobre legacy
+function findEntry(entries, date, agent) {
+  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
+  const candidates = entries.filter(e => e.date === date && (
+    e.agent === agent || normalizeAgentName(e.agent) === agent ||
+    (agentUid && e.uid === agentUid)
+  ));
+  return candidates.find(e => e.uid) || candidates[0] || null;
+}
+
 async function updateDocNota(date, agent, docIdx, nota) {
   const entries = getEntries();
-  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
-  const entry = entries.find(e => e.date===date && (
-    e.agent===agent || normalizeAgentName(e.agent)===agent ||
-    (agentUid && e.uid===agentUid)
-  ));
+  const entry = findEntry(entries, date, agent);
   if (!entry || !entry.docDetails[docIdx]) return;
   entry.docDetails[docIdx].nota = nota;
   localUpsert(entry);
@@ -230,11 +236,7 @@ function collectCpdDetails(count) {
 
 async function updateCpdDetail(date, agent, cpdIdx, fields) {
   const entries = getEntries();
-  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
-  const entry = entries.find(e => e.date===date && (
-    e.agent===agent || normalizeAgentName(e.agent)===agent ||
-    (agentUid && e.uid===agentUid)
-  ));
+  const entry = findEntry(entries, date, agent);
   if (!entry || !(entry.cpdDetails||[])[cpdIdx]) return;
   Object.assign(entry.cpdDetails[cpdIdx], fields);
   localUpsert(entry);
@@ -252,11 +254,7 @@ async function updateVideoValidated(date, agent, count) {
 
 async function updateVaRealized(date, agent, vaIdx, dataRealizacao, horarioRealizacao='') {
   const entries = getEntries();
-  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
-  const entry = entries.find(e => e.date === date && (
-    e.agent === agent || normalizeAgentName(e.agent) === agent ||
-    (agentUid && e.uid === agentUid)
-  ));
+  const entry = findEntry(entries, date, agent);
   if (!entry || !entry.vaDetails?.[vaIdx]) return;
   entry.vaDetails[vaIdx].realizada = dataRealizacao === 'nao' ? false : true;
   entry.vaDetails[vaIdx].dataRealizacao = dataRealizacao;
@@ -277,11 +275,7 @@ async function updateVaRealized(date, agent, vaIdx, dataRealizacao, horarioReali
 
 async function updateVaDetail(date, agent, vaIdx, fields) {
   const entries = getEntries();
-  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
-  const entry = entries.find(e => e.date === date && (
-    e.agent === agent || normalizeAgentName(e.agent) === agent ||
-    (agentUid && e.uid === agentUid)
-  ));
+  const entry = findEntry(entries, date, agent);
   if (!entry || !entry.vaDetails?.[vaIdx]) return;
   Object.assign(entry.vaDetails[vaIdx], fields);
   localUpsert(entry);
@@ -290,11 +284,7 @@ async function updateVaDetail(date, agent, vaIdx, fields) {
 
 async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
   const entries = getEntries();
-  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
-  const entry = entries.find(e => e.date === date && (
-    e.agent === agent || normalizeAgentName(e.agent) === agent ||
-    (agentUid && e.uid === agentUid)
-  ));
+  const entry = findEntry(entries, date, agent);
   if (!entry) return;
   // Salva estado anterior para reverter se falhar
   const prevStatus = entry.cpdDetails?.[cpdIdx]?.status;
@@ -399,11 +389,7 @@ function showDocFromCpdModal(cpd, onConfirm, onCancel) {
 
 async function deleteDocDetail(date, agent, docIdx) {
   const entries = getEntries();
-  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
-  const entry = entries.find(e => e.date === date && (
-    e.agent === agent || normalizeAgentName(e.agent) === agent ||
-    (agentUid && e.uid === agentUid)
-  ));
+  const entry = findEntry(entries, date, agent);
   if (!entry || !entry.docDetails[docIdx]) return;
   const removed = entry.docDetails.splice(docIdx, 1);
   entry.doc = entry.docDetails.length;
@@ -422,11 +408,7 @@ async function deleteDocDetail(date, agent, docIdx) {
 
 async function updateDocDetail(date, agent, docIdx, fields) {
   const entries = getEntries();
-  const agentUid = TEAM.find(a => a.name === agent || normalizeAgentName(a.name) === agent)?.username;
-  const entry = entries.find(e => e.date===date && (
-    e.agent===agent || normalizeAgentName(e.agent)===agent ||
-    (agentUid && e.uid===agentUid)
-  ));
+  const entry = findEntry(entries, date, agent);
   if (!entry || !entry.docDetails[docIdx]) return;
   Object.assign(entry.docDetails[docIdx], fields);
   localUpsert(entry);
