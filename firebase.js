@@ -158,6 +158,18 @@ export async function fbRenameAgent(oldName, newName) {
   console.log(`✅ "${oldName}" renomeado para "${newName}" (${toRename.length} entradas)`);
 }
 
+// ── FORCE LOGOUT ────────────────────────────────────────
+export async function fbCheckForceLogout() {
+  try {
+    const snap = await getDoc(doc(db, '_meta', 'forceLogout'));
+    return snap.exists() ? snap.data().active === true : false;
+  } catch { return false; }
+}
+
+export async function fbClearForceLogout() {
+  await setDoc(doc(db, '_meta', 'forceLogout'), { active: false });
+}
+
 // ── VENDAS ──────────────────────────────────────────────
 export async function fbSaveSale(sale) {
   await addDoc(collection(db, 'sales'), sale);

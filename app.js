@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth, fbRenameAgent, fbMigrateToUid, fbUpdateAgentDisplayName } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth, fbRenameAgent, fbMigrateToUid, fbUpdateAgentDisplayName, fbCheckForceLogout } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
@@ -4211,7 +4211,12 @@ window.adminRenameAll = async function() {
 };
 
 // ── PAGE DETECTION ───────────────────────────────────────
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', async ()=>{
+  // Se gestor ativou força-logout, limpa sessão e redireciona para login
+  if (!document.getElementById('login-form')) {
+    const forceOut = await fbCheckForceLogout();
+    if (forceOut) { clearSession(); window.location.href='index.html'; return; }
+  }
   if      (document.getElementById('login-form'))  initLogin();
   else if (document.getElementById('streak-wrap'))  initAgentDashboard();
   else if (document.getElementById('gestor-name')) initGestorDashboard();
