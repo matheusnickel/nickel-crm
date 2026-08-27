@@ -2768,10 +2768,14 @@ function renderDocList(entries) {
           ${STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${d.nota===o.value?'selected':''}>${o.label}</option>`).join('')}
         </select>
       </td>
-      <td><button class="doc-edit-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}"
-        data-nome="${(d.nome||'').replace(/"/g,'&quot;')}" data-valor="${d.valor||0}"
-        data-bairro="${(d.bairro||'').replace(/"/g,'&quot;')}" data-tipo="${d.tipo||''}"
-        data-indicacao="${d.indicacao||'nao'}" data-indicador="${(d.indicador||'').replace(/"/g,'&quot;')}">✏️</button></td>
+      <td style="display:flex;gap:4px;align-items:center">
+        <button class="doc-edit-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}"
+          data-nome="${(d.nome||'').replace(/"/g,'&quot;')}" data-valor="${d.valor||0}"
+          data-bairro="${(d.bairro||'').replace(/"/g,'&quot;')}" data-tipo="${d.tipo||''}"
+          data-indicacao="${d.indicacao||'nao'}" data-indicador="${(d.indicador||'').replace(/"/g,'&quot;')}">✏️</button>
+        <button class="doc-del-btn" data-date="${d.date}" data-agent="${d.agent}" data-idx="${d.idx}"
+          title="Excluir DOC" style="background:none;border:1px solid rgba(231,76,60,.4);color:#e74c3c;border-radius:6px;padding:4px 7px;cursor:pointer;font-size:13px;line-height:1">🗑</button>
+      </td>
     </tr>
     <tr class="doc-edit-row" data-edit-date="${d.date}" data-edit-agent="${d.agent}" data-edit-idx="${d.idx}" style="display:none">
       <td colspan="10">
@@ -2874,6 +2878,18 @@ function renderDocList(entries) {
     sel.addEventListener('change', async () => {
       applyColor(sel);
       await updateDocNota(sel.dataset.date, sel.dataset.agent, parseInt(sel.dataset.idx), sel.value);
+    });
+  });
+
+  // delete DOC (gestor)
+  wrap.querySelectorAll('.doc-del-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const nome = btn.closest('tr')?.querySelector('td:nth-child(3)')?.textContent?.trim() || 'este DOC';
+      if (!confirm(`Excluir o DOC de "${nome}"? Esta ação não pode ser desfeita.`)) return;
+      btn.disabled = true; btn.textContent = '...';
+      await deleteDocDetail(btn.dataset.date, btn.dataset.agent, parseInt(btn.dataset.idx));
+      const freshRef = activePeriod==='month' ? activeMonthRef : activePeriod==='week' ? activeWeekRef : undefined;
+      renderDocList(filterEntries(activePeriod, freshRef));
     });
   });
 }
