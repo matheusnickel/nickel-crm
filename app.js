@@ -308,7 +308,7 @@ async function convertCpdToDoc(date, agent, cpdIdx, docDetail) {
   }
 }
 
-const DESCARTE_MOTIVOS = ['Exclusivo', 'Vendeu', 'Não está vendendo', 'Inválido', 'Duplicou'];
+const DESCARTE_MOTIVOS = ['Exclusivo', 'Vendeu', 'Não está vendendo', 'Inválido', 'Duplicou', '4%'];
 
 function showDescarteModal(nomeLead, onConfirm, onCancel) {
   document.getElementById('descarte-modal-overlay')?.remove();
