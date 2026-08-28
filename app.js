@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth, fbRenameAgent, fbMigrateToUid, fbUpdateAgentDisplayName, fbCheckForceLogout } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth, fbRenameAgent, fbMigrateToUid, fbUpdateAgentDisplayName, fbCheckForceLogout, fbListenLeads, fbSaveLead, fbUpdateLead, fbGetLeadQueue, fbSaveLeadQueue } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
@@ -1647,6 +1647,8 @@ async function initAgentDashboard() {
     renderAgentDashboard(session, dp?.value||today(), agentEditing);
   });
   fbListenSales(sales=>{ SALES=sales; renderVGVRankingAgent(); });
+  const agentUid = session.uid || TEAM.find(a=>a.name===session.name)?.username;
+  initLeads(false, agentUid);
 }
 
 function renderVGVRankingAgent() {
@@ -2193,6 +2195,7 @@ async function initGestorDashboard() {
   initTeamManagement();
   initOfertaAtiva();
   initVendas();
+  initLeads(true, null);
 }
 
 function renderVGVRanking() {
@@ -4217,6 +4220,243 @@ window.adminRenameAll = async function() {
   console.log('✅ TEAM atualizado. Recarregue a página.');
   alert('✅ Todos os nomes foram atualizados. Recarregue a página.');
 };
+
+// ── DISTRIBUIÇÃO DE LEADS ────────────────────────────────
+const LEAD_STATUS_OPTIONS = [
+  { value: 'novo',           label: 'Novo',            color: '#6495ed' },
+  { value: 'contatado',      label: 'Contatado',       color: '#f0c040' },
+  { value: 'em_atendimento', label: 'Em atendimento',  color: '#e879f9' },
+  { value: 'visita_agendada',label: 'Visita agendada', color: '#a8e63d' },
+  { value: 'negociacao',     label: 'Negociação',      color: '#ff9800' },
+  { value: 'convertido',     label: 'Convertido',      color: '#4caf50' },
+  { value: 'perdido',        label: 'Perdido',         color: '#e74c3c' },
+];
+
+let LEADS = [];
+let leadsUnsubscribe = null;
+
+function leadStatusColor(v) { return LEAD_STATUS_OPTIONS.find(o=>o.value===v)?.color||'#888'; }
+function leadStatusLabel(v) { return LEAD_STATUS_OPTIONS.find(o=>o.value===v)?.label||v||'—'; }
+
+// Calcula fila: ordena agentes por (total de leads asc, último recebimento asc)
+function calcLeadQueue(leads) {
+  const agents = TEAM.map(a => a.username);
+  const counts = {}, lastAt = {};
+  agents.forEach(uid => { counts[uid] = 0; lastAt[uid] = ''; });
+  leads.forEach(l => {
+    if (l.assignedTo && counts[l.assignedTo] !== undefined) {
+      counts[l.assignedTo]++;
+      if (!lastAt[l.assignedTo] || l.assignedAt > lastAt[l.assignedTo]) lastAt[l.assignedTo] = l.assignedAt;
+    }
+  });
+  return agents
+    .map(uid => ({ uid, name: TEAM.find(a=>a.username===uid)?.name||uid, count: counts[uid], lastAt: lastAt[uid]||'' }))
+    .sort((a, b) => a.count !== b.count ? a.count - b.count : a.lastAt.localeCompare(b.lastAt));
+}
+
+function renderLeadsPanel() {
+  const wrap = document.getElementById('leads-wrap');
+  if (!wrap) return;
+
+  const queue = calcLeadQueue(LEADS);
+  const next = queue[0];
+
+  // Badge no título
+  const badge = document.getElementById('leads-badge');
+  if (badge) { badge.textContent = LEADS.length; badge.style.display = ''; }
+
+  // Verifica duplicatas de telefone nos leads existentes
+  const checkLeadPhone = tel => {
+    const norm = normalizePhone(tel);
+    if (!norm || norm.length < 10) return null;
+    return LEADS.find(l => normalizePhone(l.telefone) === norm) || null;
+  };
+
+  // Fila visual
+  const queueHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Fila de distribuição</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${queue.map((a, i) => {
+          const isNext = i === 0;
+          const borderColor = isNext ? '#a8e63d' : 'var(--border)';
+          const bg = isNext ? 'rgba(168,230,61,.08)' : 'var(--bg3)';
+          const badge2 = isNext ? `<span style="background:#a8e63d;color:#111;border-radius:8px;font-size:9px;font-weight:800;padding:1px 6px;margin-left:4px">PRÓXIMO</span>` : '';
+          return `<div style="border:1px solid ${borderColor};background:${bg};border-radius:10px;padding:10px 14px;min-width:130px;flex:1">
+            <div style="font-weight:600;font-size:13px">${a.name}${badge2}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:3px">${a.count} lead${a.count!==1?'s':''} recebido${a.count!==1?'s':''}</div>
+            ${a.lastAt?`<div style="font-size:10px;color:var(--text-muted);margin-top:2px">Último: ${a.lastAt.slice(0,16).replace('T',' ')}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // Formulário de novo lead
+  const agentOpts = TEAM.map(a => `<option value="${a.username}" ${next&&a.username===next.uid?'selected':''}>${a.name}${next&&a.username===next.uid?' ← sugerido':''}</option>`).join('');
+  const formHTML = `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">Cadastrar novo lead</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="form-group" style="margin:0"><label>Nome *</label><input type="text" id="lead-nome" placeholder="Nome do cliente"></div>
+        <div class="form-group" style="margin:0"><label>Telefone *</label><input type="tel" id="lead-tel" placeholder="(41) 99999-9999"></div>
+        <div class="form-group" style="margin:0"><label>E-mail</label><input type="email" id="lead-email" placeholder="email@exemplo.com"></div>
+        <div class="form-group" style="margin:0"><label>Imóvel de interesse</label><input type="text" id="lead-imovel" placeholder="Ex: Apto Batel 2 quartos"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:10px"><label>Observações</label><textarea id="lead-obs" rows="2" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 10px;resize:vertical;outline:none" placeholder="Informações adicionais..."></textarea></div>
+      <div class="form-group" style="margin-bottom:14px"><label>Atribuir para</label>
+        <select id="lead-agent" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;width:100%;outline:none">
+          ${agentOpts}
+        </select>
+      </div>
+      <div id="lead-phone-warn" style="display:none;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.4);border-radius:8px;padding:8px 12px;font-size:12px;color:#e74c3c;margin-bottom:10px"></div>
+      <button id="lead-save-btn" class="btn" style="width:100%;padding:12px">Distribuir lead →</button>
+    </div>`;
+
+  // Tabela de leads distribuídos
+  const tableRows = [...LEADS].sort((a,b)=>b.assignedAt.localeCompare(a.assignedAt)).map(l => {
+    const statusOpts = LEAD_STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${l.status===o.value?'selected':''}>${o.label}</option>`).join('');
+    return `<tr>
+      <td>${TEAM.find(a=>a.username===l.assignedTo)?.name||l.assignedTo||'—'}</td>
+      <td style="font-weight:500">${l.nome||'—'}</td>
+      <td style="color:var(--text-muted);font-size:12px">${l.telefone?formatPhone(l.telefone):'—'}</td>
+      <td style="font-size:11px;color:var(--text-muted)">${l.assignedAt?l.assignedAt.slice(0,16).replace('T',' '):'—'}</td>
+      <td><select class="lead-status-sel nota-select" data-id="${l.id}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:${leadStatusColor(l.status)}">${statusOpts}</select></td>
+      <td style="font-size:11px;color:var(--text-muted)">${l.imovelInteresse||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = queueHTML + formHTML + `
+    <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Histórico de distribuições (${LEADS.length})</div>
+    <div class="doc-table-wrap"><table class="data-table" style="font-size:12px">
+      <thead><tr><th>Corretor</th><th>Cliente</th><th>Telefone</th><th>Distribuído em</th><th>Status</th><th>Imóvel</th></tr></thead>
+      <tbody>${tableRows||'<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum lead distribuído ainda</td></tr>'}</tbody>
+    </table></div>`;
+
+  // Phone check ao digitar
+  document.getElementById('lead-tel')?.addEventListener('input', function() {
+    applyPhoneMask(this); // aplica máscara
+    const warn = document.getElementById('lead-phone-warn');
+    const dup = checkLeadPhone(this.value);
+    if (dup) {
+      const assignedName = TEAM.find(a=>a.username===dup.assignedTo)?.name||dup.assignedTo;
+      warn.textContent = `⚠️ Este telefone já está cadastrado como lead de ${assignedName} (${dup.nome}, ${dup.assignedAt?.slice(0,10)||''}).`;
+      warn.style.display = 'block';
+    } else { warn.style.display = 'none'; }
+  });
+
+  // Salvar lead
+  document.getElementById('lead-save-btn')?.addEventListener('click', async () => {
+    const nome = document.getElementById('lead-nome').value.trim();
+    const tel = document.getElementById('lead-tel').value.trim();
+    const email = document.getElementById('lead-email').value.trim();
+    const imovel = document.getElementById('lead-imovel').value.trim();
+    const obs = document.getElementById('lead-obs').value.trim();
+    const agentUid = document.getElementById('lead-agent').value;
+    if (!nome) { alert('Preencha o nome do cliente.'); return; }
+    if (!agentUid) { alert('Selecione um corretor.'); return; }
+
+    // Verifica duplicata de telefone
+    if (tel) {
+      const dup = checkLeadPhone(tel);
+      if (dup) {
+        const assignedName = TEAM.find(a=>a.username===dup.assignedTo)?.name||dup.assignedTo;
+        const ok = confirm(`⚠️ Este telefone já existe como lead de ${assignedName} (${dup.nome}).\n\nDeseja cadastrar mesmo assim?`);
+        if (!ok) return;
+      }
+    }
+
+    const btn = document.getElementById('lead-save-btn');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    const agentName = TEAM.find(a=>a.username===agentUid)?.name||agentUid;
+    const now = new Date().toISOString();
+    const lead = {
+      nome, telefone: tel, email, imovelInteresse: imovel, observacoes: obs,
+      assignedTo: agentUid, assignedToName: agentName,
+      assignedAt: now, assignedBy: getSession()?.name||'gestor',
+      status: 'novo',
+      statusHistory: [{ status: 'novo', at: now, by: getSession()?.name||'gestor' }],
+      createdAt: now,
+    };
+    try {
+      await fbSaveLead(lead);
+      // Limpa form
+      ['lead-nome','lead-tel','lead-email','lead-imovel','lead-obs'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+      document.getElementById('lead-phone-warn').style.display='none';
+    } catch(e) { alert('❌ Erro ao salvar lead. Verifique sua conexão.'); }
+    btn.disabled = false; btn.textContent = 'Distribuir lead →';
+  });
+
+  // Atualizar status pelo gestor
+  wrap.querySelectorAll('.lead-status-sel').forEach(sel => {
+    sel.addEventListener('change', async function() {
+      const id = this.dataset.id;
+      const newStatus = this.value;
+      const now = new Date().toISOString();
+      const lead = LEADS.find(l=>l.id===id);
+      if (!lead) return;
+      const history = [...(lead.statusHistory||[]), { status: newStatus, at: now, by: getSession()?.name||'gestor' }];
+      try { await fbUpdateLead(id, { status: newStatus, statusHistory: history }); } catch(e) { alert('❌ Erro ao atualizar status.'); }
+    });
+  });
+}
+
+function renderAgentLeads(agentUid) {
+  const card = document.getElementById('agent-leads-card');
+  const wrap = document.getElementById('agent-leads-wrap');
+  if (!card || !wrap) return;
+
+  const myLeads = LEADS.filter(l => l.assignedTo === agentUid).sort((a,b)=>b.assignedAt.localeCompare(a.assignedAt));
+
+  // Notifica leads novos (status 'novo')
+  const newCount = myLeads.filter(l=>l.status==='novo').length;
+  card.style.display = myLeads.length ? '' : 'none';
+  const title = card.querySelector('.card-title');
+  if (title) title.innerHTML = `🎯 Leads Recebidos${newCount?` <span style="background:#e74c3c;color:#fff;border-radius:10px;font-size:11px;padding:1px 8px;font-weight:700">${newCount} novo${newCount>1?'s':''}</span>`:''}`;
+
+  if (!myLeads.length) { wrap.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhum lead recebido ainda.</div>'; return; }
+
+  wrap.innerHTML = myLeads.map(l => {
+    const statusOpts = LEAD_STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${l.status===o.value?'selected':''}>${o.label}</option>`).join('');
+    const isNew = l.status === 'novo';
+    return `<div style="border:1px solid ${isNew?'rgba(231,76,60,.5)':'var(--border)'};background:${isNew?'rgba(231,76,60,.05)':'var(--bg3)'};border-radius:10px;padding:14px;margin-bottom:10px">
+      ${isNew?'<div style="font-size:10px;font-weight:700;color:#e74c3c;letter-spacing:.05em;margin-bottom:6px">🔔 NOVO LEAD</div>':''}
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:700;font-size:14px">${l.nome||'—'}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${l.telefone?formatPhone(l.telefone):'—'}${l.email?' · '+l.email:''}</div>
+          ${l.imovelInteresse?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">🏠 ${l.imovelInteresse}</div>`:''}
+          ${l.observacoes?`<div style="font-size:12px;color:var(--text-muted);margin-top:4px;font-style:italic">${l.observacoes}</div>`:''}
+          <div style="font-size:10px;color:var(--text-muted);margin-top:6px">Recebido em ${l.assignedAt?l.assignedAt.slice(0,16).replace('T',' '):'—'} · por ${l.assignedBy||'gestor'}</div>
+        </div>
+        <div style="min-width:140px">
+          <label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px">Status</label>
+          <select class="agent-lead-status nota-select" data-id="${l.id}" style="font-size:12px;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:${leadStatusColor(l.status)};width:100%">${statusOpts}</select>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('.agent-lead-status').forEach(sel => {
+    sel.addEventListener('change', async function() {
+      const id = this.dataset.id;
+      const newStatus = this.value;
+      const now = new Date().toISOString();
+      const lead = LEADS.find(l=>l.id===id);
+      if (!lead) return;
+      const history = [...(lead.statusHistory||[]), { status: newStatus, at: now, by: agentUid }];
+      try { await fbUpdateLead(id, { status: newStatus, statusHistory: history }); } catch(e) { alert('❌ Erro ao atualizar status.'); }
+    });
+  });
+}
+
+function initLeads(isGestor, uid) {
+  if (leadsUnsubscribe) leadsUnsubscribe();
+  leadsUnsubscribe = fbListenLeads(leads => {
+    LEADS = leads;
+    if (isGestor) renderLeadsPanel();
+    else renderAgentLeads(uid);
+  });
+}
 
 // ── PAGE DETECTION ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async ()=>{

@@ -158,6 +158,29 @@ export async function fbRenameAgent(oldName, newName) {
   console.log(`✅ "${oldName}" renomeado para "${newName}" (${toRename.length} entradas)`);
 }
 
+// ── LEADS / DISTRIBUIÇÃO ────────────────────────────────
+export function fbListenLeads(callback) {
+  return onSnapshot(collection(db, 'leads'), snap => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  });
+}
+export async function fbSaveLead(lead) {
+  const ref = doc(collection(db, 'leads'));
+  await setDoc(ref, { ...lead, id: ref.id });
+  return ref.id;
+}
+export async function fbUpdateLead(id, fields) {
+  const { updateDoc: upd } = await import('https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js');
+  await upd(doc(db, 'leads', id), fields);
+}
+export async function fbGetLeadQueue() {
+  const snap = await getDoc(doc(db, '_meta', 'leadQueue'));
+  return snap.exists() ? snap.data() : { counts: {}, lastAssignedAt: {} };
+}
+export async function fbSaveLeadQueue(data) {
+  await setDoc(doc(db, '_meta', 'leadQueue'), data, { merge: true });
+}
+
 // ── FORCE LOGOUT ────────────────────────────────────────
 export async function fbCheckForceLogout() {
   try {
