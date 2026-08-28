@@ -4313,23 +4313,40 @@ function renderLeadsPanel() {
     </div>`;
 
   // Tabela de leads distribuídos
+  const agentOptsFor = (selUid) => TEAM.map(a=>`<option value="${a.username}" ${a.username===selUid?'selected':''}>${a.name}</option>`).join('');
   const tableRows = [...LEADS].sort((a,b)=>b.assignedAt.localeCompare(a.assignedAt)).map(l => {
     const statusOpts = LEAD_STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${l.status===o.value?'selected':''}>${o.label}</option>`).join('');
-    return `<tr>
+    return `<tr data-lead-id="${l.id}">
       <td>${TEAM.find(a=>a.username===l.assignedTo)?.name||l.assignedTo||'—'}</td>
       <td style="font-weight:500">${l.nome||'—'}</td>
       <td style="color:var(--text-muted);font-size:12px">${l.telefone?formatPhone(l.telefone):'—'}</td>
       <td style="font-size:11px;color:var(--text-muted)">${l.assignedAt?l.assignedAt.slice(0,16).replace('T',' '):'—'}</td>
       <td><select class="lead-status-sel nota-select" data-id="${l.id}" style="font-size:11px;padding:3px 6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:${leadStatusColor(l.status)}">${statusOpts}</select></td>
       <td style="font-size:11px;color:var(--text-muted)">${l.imovelInteresse||'—'}</td>
+      <td><button class="lead-edit-btn" data-id="${l.id}" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-size:11px;padding:3px 8px;cursor:pointer">✏️</button></td>
+    </tr>
+    <tr class="lead-edit-row" data-for="${l.id}" style="display:none">
+      <td colspan="7" style="padding:12px;background:var(--bg3)">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;flex-wrap:wrap">
+          <div class="form-group" style="margin:0"><label style="font-size:10px">Nome</label><input class="led-nome" type="text" value="${(l.nome||'').replace(/"/g,'&quot;')}" style="font-size:12px;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%;outline:none"></div>
+          <div class="form-group" style="margin:0"><label style="font-size:10px">Telefone</label><input class="led-tel" type="tel" value="${l.telefone||''}" style="font-size:12px;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%;outline:none"></div>
+          <div class="form-group" style="margin:0"><label style="font-size:10px">Imóvel</label><input class="led-imovel" type="text" value="${(l.imovelInteresse||'').replace(/"/g,'&quot;')}" style="font-size:12px;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%;outline:none"></div>
+          <div class="form-group" style="margin:0"><label style="font-size:10px">Corretor</label><select class="led-agent nota-select" style="font-size:12px;padding:6px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);width:100%;outline:none">${agentOptsFor(l.assignedTo)}</select></div>
+          <div style="display:flex;gap:6px">
+            <button class="lead-edit-save btn" data-id="${l.id}" style="font-size:11px;padding:6px 12px;white-space:nowrap">Salvar</button>
+            <button class="lead-edit-cancel" data-id="${l.id}" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);font-size:11px;padding:6px 10px;cursor:pointer">✕</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin:8px 0 0"><label style="font-size:10px">Observações</label><textarea class="led-obs" rows="2" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 8px;resize:vertical;outline:none">${l.observacoes||''}</textarea></div>
+      </td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML = queueHTML + formHTML + `
     <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Histórico de distribuições (${LEADS.length})</div>
     <div class="doc-table-wrap"><table class="data-table" style="font-size:12px">
-      <thead><tr><th>Corretor</th><th>Cliente</th><th>Telefone</th><th>Distribuído em</th><th>Status</th><th>Imóvel</th></tr></thead>
-      <tbody>${tableRows||'<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum lead distribuído ainda</td></tr>'}</tbody>
+      <thead><tr><th>Corretor</th><th>Cliente</th><th>Telefone</th><th>Distribuído em</th><th>Status</th><th>Imóvel</th><th></th></tr></thead>
+      <tbody>${tableRows||'<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum lead distribuído ainda</td></tr>'}</tbody>
     </table></div>`;
 
   // Phone check ao digitar
@@ -4396,6 +4413,50 @@ function renderLeadsPanel() {
       if (!lead) return;
       const history = [...(lead.statusHistory||[]), { status: newStatus, at: now, by: getSession()?.name||'gestor' }];
       try { await fbUpdateLead(id, { status: newStatus, statusHistory: history }); } catch(e) { alert('❌ Erro ao atualizar status.'); }
+    });
+  });
+
+  // Toggle form de edição inline
+  wrap.querySelectorAll('.lead-edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.id;
+      const row = wrap.querySelector(`.lead-edit-row[data-for="${id}"]`);
+      if (!row) return;
+      const isOpen = row.style.display !== 'none';
+      // Fecha todos
+      wrap.querySelectorAll('.lead-edit-row').forEach(r => r.style.display='none');
+      wrap.querySelectorAll('.lead-edit-btn').forEach(b => b.textContent='✏️');
+      if (!isOpen) { row.style.display=''; this.textContent='✕'; }
+    });
+  });
+
+  wrap.querySelectorAll('.lead-edit-cancel').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.id;
+      const row = wrap.querySelector(`.lead-edit-row[data-for="${id}"]`);
+      if (row) row.style.display='none';
+      const editBtn = wrap.querySelector(`.lead-edit-btn[data-id="${id}"]`);
+      if (editBtn) editBtn.textContent='✏️';
+    });
+  });
+
+  wrap.querySelectorAll('.lead-edit-save').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      const id = this.dataset.id;
+      const row = wrap.querySelector(`.lead-edit-row[data-for="${id}"]`);
+      if (!row) return;
+      const nome = row.querySelector('.led-nome').value.trim();
+      const tel = row.querySelector('.led-tel').value.trim();
+      const imovel = row.querySelector('.led-imovel').value.trim();
+      const agentUid = row.querySelector('.led-agent').value;
+      const obs = row.querySelector('.led-obs').value.trim();
+      if (!nome) { alert('Nome é obrigatório.'); return; }
+      this.disabled=true; this.textContent='Salvando...';
+      const agentName = TEAM.find(a=>a.username===agentUid)?.name||agentUid;
+      try {
+        await fbUpdateLead(id, { nome, telefone: tel, imovelInteresse: imovel, observacoes: obs, assignedTo: agentUid, assignedToName: agentName });
+      } catch(e) { alert('❌ Erro ao salvar.'); }
+      this.disabled=false; this.textContent='Salvar';
     });
   });
 }
