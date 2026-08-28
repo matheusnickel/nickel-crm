@@ -926,7 +926,7 @@ function renderAgentContacts(agentName) {
          </select>`;
       return `<tr data-entry-date="${d.entryDate}" data-idx="${d.idx}">
         <td style="font-weight:500">${d.nome}<br><span style="font-size:11px;color:var(--text-muted)">${d.condominio||''}</span>${d.indicacao==='sim'?`<br><span style="font-size:10px;color:#a8e63d">Indicação: ${d.indicador||'—'}</span>`:''}</td>
-        <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}<br>${d.tipo||'—'} · ${d.bairro||'—'}</td>
+        <td style="color:var(--text-muted);font-size:12px">${d.telefone ? formatPhone(d.telefone) : '—'}<br>${d.tipo||'—'} · ${d.bairro||'—'}${d.condominio?`<br><span style="font-size:10px">${d.condominio}</span>`:''}</td>
         <td>${statusCell}</td>
         <td></td>
       </tr>`;
