@@ -1,4 +1,4 @@
-const CACHE = 'nickel-crm-v169';
+const CACHE = 'nickel-crm-v170';
 const ASSETS = [
   '/nickel-crm/',
   '/nickel-crm/index.html',
@@ -28,11 +28,22 @@ self.addEventListener('fetch', e => {
   if (e.request.url.includes('firebase') || e.request.url.includes('googleapis') || e.request.url.includes('gstatic') || e.request.url.includes('jsdelivr')) {
     return;
   }
-  // Rede com timeout de 4s; cai no cache se lenta ou offline
+  // JS e HTML: sempre rede primeiro (garante código atualizado); cai no cache só offline
+  const url = e.request.url;
+  if (url.endsWith('.js') || url.endsWith('.html') || url.endsWith('/nickel-crm/') || url.endsWith('/nickel-crm')) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+  // Demais assets (css, imagens): cache-first com fallback rede
   e.respondWith(
-    Promise.race([
-      fetch(e.request),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
-    ]).catch(() => caches.match(e.request))
+    caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });
