@@ -4486,69 +4486,170 @@ function renderLeadsPanel() {
   });
 }
 
+const LEAD_ARCHIVED = ['convertido', 'perdido'];
+let agentLeadFilter = 'ativos'; // 'ativos' | 'arquivados'
+let agentLeadExpanded = new Set(); // ids expandidos
+
 function renderAgentLeads(agentUid) {
   const card = document.getElementById('agent-leads-card');
   const wrap = document.getElementById('agent-leads-wrap');
   if (!card || !wrap) return;
 
-  const myLeads = LEADS.filter(l => l.assignedTo === agentUid).sort((a,b)=>b.assignedAt.localeCompare(a.assignedAt));
+  const allMyLeads = LEADS.filter(l => l.assignedTo === agentUid).sort((a,b)=>b.assignedAt.localeCompare(a.assignedAt));
+  const ativos     = allMyLeads.filter(l => !LEAD_ARCHIVED.includes(l.status));
+  const arquivados = allMyLeads.filter(l =>  LEAD_ARCHIVED.includes(l.status));
+  const myLeads    = agentLeadFilter === 'ativos' ? ativos : arquivados;
 
-  // Notifica leads novos (status 'novo')
-  const newCount = myLeads.filter(l=>l.status==='novo').length;
-  card.style.display = myLeads.length ? '' : 'none';
+  // Badge de novos
+  const newCount = ativos.filter(l=>l.status==='novo').length;
+  card.style.display = '';
   const title = card.querySelector('.card-title');
   if (title) title.innerHTML = `🎯 Leads Recebidos${newCount?` <span style="background:#e74c3c;color:#fff;border-radius:10px;font-size:11px;padding:1px 8px;font-weight:700">${newCount} novo${newCount>1?'s':''}</span>`:''}`;
 
-  if (!myLeads.length) { wrap.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhum lead recebido ainda.</div>'; return; }
-
-  wrap.innerHTML = myLeads.map(l => {
-    const statusOpts = LEAD_STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${l.status===o.value?'selected':''}>${o.label}</option>`).join('');
-    const isNew = l.status === 'novo';
-    const followUps = l.followUps || [];
-    const lastFU = followUps.length ? followUps[followUps.length - 1] : null;
-    const fuHistHTML = followUps.slice().reverse().map(f =>
-      `<div style="border-left:2px solid var(--border);padding:6px 10px;margin-bottom:6px">
-        <div style="font-size:12px;color:var(--text)">${f.text}</div>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${f.at?.slice(0,16).replace('T',' ')||''} · ${f.by||''}</div>
-      </div>`
-    ).join('');
-
-    return `<div data-lead-card="${l.id}" style="border:1px solid ${isNew?'rgba(231,76,60,.5)':'var(--border)'};background:${isNew?'rgba(231,76,60,.05)':'var(--bg3)'};border-radius:10px;padding:14px;margin-bottom:10px">
-      ${isNew?'<div style="font-size:10px;font-weight:700;color:#e74c3c;letter-spacing:.05em;margin-bottom:6px">🔔 NOVO LEAD</div>':''}
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:14px">${l.nome||'—'}</div>
-          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">${l.telefone?formatPhone(l.telefone):'—'}${l.email?' · '+l.email:''}</div>
-          ${l.imovelInteresse?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">🏠 ${l.imovelInteresse}</div>`:''}
-          ${l.observacoes?`<div style="font-size:12px;color:var(--text-muted);margin-top:4px;font-style:italic">${l.observacoes}</div>`:''}
-          <div style="font-size:10px;color:var(--text-muted);margin-top:6px">Recebido em ${l.assignedAt?l.assignedAt.slice(0,16).replace('T',' '):'—'} · por ${l.assignedBy||'gestor'}</div>
-          ${lastFU ? `<div style="margin-top:10px;padding:8px 10px;background:var(--bg2);border-radius:8px;border-left:3px solid #a8e63d">
-            <div style="font-size:10px;font-weight:700;color:#a8e63d;letter-spacing:.04em;margin-bottom:3px">ÚLTIMO FOLLOW-UP · ${lastFU.at?.slice(0,16).replace('T',' ')||''}</div>
-            <div style="font-size:13px;color:var(--text)">${lastFU.text}</div>
-          </div>` : ''}
+  // Form de novo lead pelo próprio angariador
+  const novoLeadForm = `
+    <div style="margin-bottom:14px">
+      <button id="agent-new-lead-btn" class="btn" style="width:100%;padding:10px;background:rgba(168,230,61,.1);border:1px solid #a8e63d;color:#a8e63d;font-size:13px">+ Registrar lead da minha carteira</button>
+      <div id="agent-new-lead-form" style="display:none;margin-top:10px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Novo lead — sua carteira</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="form-group" style="margin:0"><label style="font-size:10px">Nome *</label><input type="text" id="anl-nome" placeholder="Nome do cliente"></div>
+          <div class="form-group" style="margin:0"><label style="font-size:10px">Telefone</label><input type="tel" id="anl-tel" placeholder="(41) 99999-9999"></div>
+          <div class="form-group" style="margin:0"><label style="font-size:10px">Imóvel</label><input type="text" id="anl-imovel" placeholder="Ex: Apto Batel 2q"></div>
+          <div class="form-group" style="margin:0"><label style="font-size:10px">E-mail</label><input type="email" id="anl-email" placeholder="email@..."></div>
         </div>
-        <div style="min-width:140px">
-          <label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px">Status</label>
-          <select class="agent-lead-status nota-select" data-id="${l.id}" style="font-size:12px;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:${leadStatusColor(l.status)};width:100%">${statusOpts}</select>
+        <div class="form-group" style="margin-bottom:10px"><label style="font-size:10px">Observações</label><textarea id="anl-obs" rows="2" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 10px;resize:none;outline:none;overflow:hidden" placeholder="Detalhes do cliente..."></textarea></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="anl-cancel" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 14px;cursor:pointer">Cancelar</button>
+          <button id="anl-save" class="btn" style="padding:8px 20px;font-size:13px">Salvar lead</button>
         </div>
-      </div>
-
-      <!-- Follow-up input -->
-      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-        <label style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Registrar follow-up</label>
-        <textarea class="fu-text" data-id="${l.id}" rows="3" placeholder="Como está o cliente? O que combinaram?..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;resize:none;outline:none;overflow:hidden;display:block;margin-bottom:8px"></textarea>
-        <div style="display:flex;justify-content:flex-end">
-          <button class="fu-save-btn btn" data-id="${l.id}" style="padding:8px 20px;font-size:13px">Salvar follow-up</button>
-        </div>
-        ${followUps.length ? `
-        <button class="fu-hist-btn" data-id="${l.id}" style="margin-top:8px;background:none;border:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;padding:0;text-decoration:underline">
-          Ver histórico de follow-up (${followUps.length})
-        </button>
-        <div class="fu-hist-wrap" data-id="${l.id}" style="display:none;margin-top:8px">${fuHistHTML}</div>
-        ` : ''}
       </div>
     </div>`;
-  }).join('');
+
+  // Abas ativos / arquivados
+  const tabsHTML = `
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="agent-lead-tab-btn${agentLeadFilter==='ativos'?' active':''}" data-filter="ativos" style="flex:1;padding:7px;border-radius:8px;border:1px solid ${agentLeadFilter==='ativos'?'var(--gold)':'var(--border)'};background:${agentLeadFilter==='ativos'?'rgba(168,230,61,.1)':'var(--bg3)'};color:${agentLeadFilter==='ativos'?'var(--gold)':'var(--text-muted)'};font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+        Ativos (${ativos.length})
+      </button>
+      <button class="agent-lead-tab-btn${agentLeadFilter==='arquivados'?' active':''}" data-filter="arquivados" style="flex:1;padding:7px;border-radius:8px;border:1px solid ${agentLeadFilter==='arquivados'?'var(--gold)':'var(--border)'};background:${agentLeadFilter==='arquivados'?'rgba(168,230,61,.1)':'var(--bg3)'};color:${agentLeadFilter==='arquivados'?'var(--gold)':'var(--text-muted)'};font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer">
+        Arquivados (${arquivados.length})
+      </button>
+    </div>`;
+
+  if (!allMyLeads.length) {
+    wrap.innerHTML = novoLeadForm + '<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhum lead recebido ainda.</div>';
+  } else {
+
+    const cardsHTML = myLeads.length === 0
+      ? `<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhum lead ${agentLeadFilter === 'ativos' ? 'ativo' : 'arquivado'}.</div>`
+      : myLeads.map(l => {
+        const isExpanded = agentLeadExpanded.has(l.id);
+        const statusOpts = LEAD_STATUS_OPTIONS.map(o=>`<option value="${o.value}" ${l.status===o.value?'selected':''}>${o.label}</option>`).join('');
+        const isNew = l.status === 'novo';
+        const followUps = l.followUps || [];
+        const lastFU = followUps.length ? followUps[followUps.length - 1] : null;
+        const fuHistHTML = followUps.slice().reverse().map(f =>
+          `<div style="border-left:2px solid var(--border);padding:6px 10px;margin-bottom:6px">
+            <div style="font-size:12px;color:var(--text)">${f.text}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${f.at?.slice(0,16).replace('T',' ')||''} · ${f.by||''}</div>
+          </div>`
+        ).join('');
+
+        // Card recolhido: só header
+        const headerHTML = `
+          <button class="lead-card-toggle" data-id="${l.id}" style="width:100%;background:none;border:none;text-align:left;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div style="flex:1;min-width:0">
+              ${isNew?'<span style="font-size:9px;font-weight:800;color:#e74c3c;letter-spacing:.05em;margin-right:6px">🔔 NOVO</span>':''}
+              <span style="font-weight:700;font-size:14px;color:var(--text)">${l.nome||'—'}</span>
+              ${lastFU?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">💬 ${lastFU.text}</div>`:'<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Sem follow-up ainda</div>'}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+              <span style="font-size:11px;font-weight:600;color:${leadStatusColor(l.status)}">${leadStatusLabel(l.status)}</span>
+              <span style="font-size:12px;color:var(--text-muted)">${isExpanded?'▴':'▾'}</span>
+            </div>
+          </button>`;
+
+        // Detalhes expandidos
+        const detailHTML = isExpanded ? `
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+              <div>
+                <div style="font-size:12px;color:var(--text-muted)">${l.telefone?formatPhone(l.telefone):'—'}${l.email?' · '+l.email:''}</div>
+                ${l.imovelInteresse?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px">🏠 ${l.imovelInteresse}</div>`:''}
+                ${l.observacoes?`<div style="font-size:12px;color:var(--text-muted);margin-top:4px;font-style:italic">${l.observacoes}</div>`:''}
+                <div style="font-size:10px;color:var(--text-muted);margin-top:4px">Recebido em ${l.assignedAt?l.assignedAt.slice(0,16).replace('T',' '):'—'} · por ${l.assignedBy||'gestor'}</div>
+              </div>
+              <div style="min-width:140px">
+                <label style="font-size:10px;color:var(--text-muted);display:block;margin-bottom:4px">Status</label>
+                <select class="agent-lead-status nota-select" data-id="${l.id}" style="font-size:12px;padding:5px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:${leadStatusColor(l.status)};width:100%">${statusOpts}</select>
+              </div>
+            </div>
+            ${lastFU?`<div style="padding:8px 10px;background:var(--bg2);border-radius:8px;border-left:3px solid #a8e63d;margin-bottom:10px">
+              <div style="font-size:10px;font-weight:700;color:#a8e63d;margin-bottom:3px">ÚLTIMO FOLLOW-UP · ${lastFU.at?.slice(0,16).replace('T',' ')||''}</div>
+              <div style="font-size:13px">${lastFU.text}</div>
+            </div>`:''}
+            <label style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Registrar follow-up</label>
+            <textarea class="fu-text" data-id="${l.id}" rows="3" placeholder="Como está o cliente? O que combinaram?..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;resize:none;outline:none;overflow:hidden;display:block;margin-bottom:8px"></textarea>
+            <div style="display:flex;justify-content:flex-end;margin-bottom:${followUps.length?'8px':'0'}">
+              <button class="fu-save-btn btn" data-id="${l.id}" style="padding:8px 20px;font-size:13px">Salvar follow-up</button>
+            </div>
+            ${followUps.length?`
+              <button class="fu-hist-btn" data-id="${l.id}" style="background:none;border:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;padding:0;text-decoration:underline">Ver histórico de follow-up (${followUps.length})</button>
+              <div class="fu-hist-wrap" data-id="${l.id}" style="display:none;margin-top:8px">${fuHistHTML}</div>
+            `:''}
+          </div>` : '';
+
+        return `<div data-lead-card="${l.id}" style="border:1px solid ${isNew?'rgba(231,76,60,.5)':'var(--border)'};background:${isNew?'rgba(231,76,60,.05)':'var(--bg3)'};border-radius:10px;padding:12px 14px;margin-bottom:8px">
+          ${headerHTML}${detailHTML}
+        </div>`;
+      }).join('');
+
+    wrap.innerHTML = novoLeadForm + tabsHTML + cardsHTML;
+  }
+
+  // Toggle form novo lead
+  wrap.querySelector('#agent-new-lead-btn')?.addEventListener('click', function() {
+    const f = wrap.querySelector('#agent-new-lead-form');
+    if (f) { f.style.display = f.style.display==='none'?'block':'none'; }
+  });
+  wrap.querySelector('#anl-cancel')?.addEventListener('click', () => {
+    const f = wrap.querySelector('#agent-new-lead-form'); if(f) f.style.display='none';
+  });
+  wrap.querySelector('#anl-save')?.addEventListener('click', async function() {
+    const nome = wrap.querySelector('#anl-nome')?.value.trim();
+    if (!nome) { alert('Preencha o nome.'); return; }
+    const tel   = wrap.querySelector('#anl-tel')?.value.trim();
+    const imovel= wrap.querySelector('#anl-imovel')?.value.trim();
+    const email = wrap.querySelector('#anl-email')?.value.trim();
+    const obs   = wrap.querySelector('#anl-obs')?.value.trim();
+    const agentName = getSession()?.name || agentUid;
+    const now = new Date().toISOString();
+    this.disabled=true; this.textContent='Salvando...';
+    try {
+      await fbSaveLead({ nome, telefone:tel, email, imovelInteresse:imovel, observacoes:obs,
+        assignedTo:agentUid, assignedToName:agentName, assignedAt:now, assignedBy:agentName,
+        status:'novo', statusHistory:[{status:'novo',at:now,by:agentName}], createdAt:now, selfRegistered:true });
+      ['anl-nome','anl-tel','anl-imovel','anl-email','anl-obs'].forEach(id=>{const el=wrap.querySelector('#'+id);if(el)el.value='';});
+      wrap.querySelector('#agent-new-lead-form').style.display='none';
+    } catch(e) { alert('❌ Erro ao salvar.'); }
+    this.disabled=false; this.textContent='Salvar lead';
+  });
+
+  // Filtro ativos/arquivados
+  wrap.querySelectorAll('.agent-lead-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => { agentLeadFilter = btn.dataset.filter; renderAgentLeads(agentUid); });
+  });
+
+  // Expand/collapse card
+  wrap.querySelectorAll('.lead-card-toggle').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.id;
+      if (agentLeadExpanded.has(id)) agentLeadExpanded.delete(id);
+      else agentLeadExpanded.add(id);
+      renderAgentLeads(agentUid);
+    });
+  });
 
   wrap.querySelectorAll('.agent-lead-status').forEach(sel => {
     sel.addEventListener('change', async function() {
@@ -4573,11 +4674,9 @@ function renderAgentLeads(agentUid) {
       if (!lead) return;
       const followUps = [...(lead.followUps||[]), { text, at: now, by: getSession()?.name||agentUid }];
       this.disabled=true; this.textContent='Salvando...';
-      try {
-        await fbUpdateLead(id, { followUps });
-        if (ta) ta.value = '';
-      } catch(e) { alert('❌ Erro ao salvar follow-up.'); }
-      this.disabled=false; this.textContent='Salvar';
+      try { await fbUpdateLead(id, { followUps }); if(ta) ta.value=''; }
+      catch(e) { alert('❌ Erro ao salvar follow-up.'); }
+      this.disabled=false; this.textContent='Salvar follow-up';
     });
   });
 
@@ -4588,9 +4687,7 @@ function renderAgentLeads(agentUid) {
       if (!hist) return;
       const open = hist.style.display !== 'none';
       hist.style.display = open ? 'none' : 'block';
-      this.textContent = open
-        ? `Ver histórico de follow-up (${(LEADS.find(l=>l.id===id)?.followUps||[]).length})`
-        : 'Fechar histórico';
+      this.textContent = open ? `Ver histórico de follow-up (${(LEADS.find(l=>l.id===id)?.followUps||[]).length})` : 'Fechar histórico';
     });
   });
 }
