@@ -180,6 +180,12 @@ a { color: inherit; text-decoration: none; }
   max-width: 1200px;
 }
 
+/* Override: painel do agente usa seu próprio grid responsivo */
+.main-content.agent-layout {
+  max-width: 100%;
+  padding: 10px;
+}
+
 /* ── GESTOR GRID ROWS ── */
 .g-row {
   display: grid;
@@ -1340,49 +1346,37 @@ tr.podium-3 td { background: rgba(180,100,40,.04); }
 .tipo-terreno   { background: rgba(46,204,113,.15);  color: #2ecc71; }
 .tipo-comercial { background: rgba(230,126,34,.15);  color: #e67e22; }
 
-/* ── MOBILE (≤480px) ── */
-@media (max-width: 480px) {
-  .card { padding: 14px 12px; }
+/* ══════════════════════════════════════════════════
+   LAYOUT RESPONSIVO — AGENTE (2 colunas desktop)
+══════════════════════════════════════════════════ */
 
-  .va-detail-item input,
-  .va-detail-item select { font-size: 16px; padding: 12px 14px; }
-
-  .nota-tab-btn { padding: 10px 12px; font-size: 11px; }
-
-  .data-table td, .data-table th { padding: 10px 6px; font-size: 11px; }
-}
-
-/* ── AGENTE LAYOUT RESPONSIVO ── */
-
-/* Mobile-first: tudo empilhado */
+/* Mobile-first: contêineres somem, filhos fluem normalmente */
 .agent-layout {
   max-width: 100%;
-  padding: 12px;
+  padding: 10px;
+  margin: 0 auto;
 }
 
 .agent-full,
 .agent-col-left,
 .agent-col-right {
-  display: contents; /* os filhos aparecem diretamente no flow normal */
+  display: contents;
 }
 
-/* Desktop: duas colunas lado a lado */
+/* Desktop ≥ 900px: grid 2 colunas */
 @media (min-width: 900px) {
   .agent-layout {
-    max-width: 1280px;
-    margin: 0 auto;
+    max-width: 1320px;
     padding: 20px 24px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr;
     gap: 0 20px;
     align-items: start;
   }
 
   .agent-full {
     display: block;
-    grid-column: 1 / -1; /* full width */
-    margin-bottom: 0;
+    grid-column: 1 / -1;
   }
 
   .agent-col-left,
@@ -1391,47 +1385,107 @@ tr.podium-3 td { background: rgba(180,100,40,.04); }
     flex-direction: column;
     gap: 0;
   }
-
-  /* No desktop, inputs do formulário maiores */
-  .agent-col-left .form-group input,
-  .agent-col-left .form-group select {
-    font-size: 14px;
-  }
 }
 
-/* Mobile: touch-friendly */
-@media (max-width: 899px) {
-  .agent-layout {
-    padding: 10px;
-  }
+/* ══════════════════════════════════════════════════
+   MOBILE GERAL (≤ 768px) — ambos os painéis
+══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
 
-  /* Inputs e selects maiores para toque */
-  .form-group input,
-  .form-group select,
-  .form-group textarea {
-    font-size: 16px !important; /* evita zoom automático no iOS */
-    padding: 12px 14px;
-    min-height: 44px;
-  }
+  /* Layout base */
+  .main-content        { padding: 10px; max-width: 100%; }
+  .main-content.wide   { max-width: 100%; padding: 10px; }
+  .card                { padding: 14px 12px; margin-bottom: 12px; }
 
-  /* Botões com área de toque mínima */
-  .btn {
-    min-height: 44px;
-    font-size: 15px;
-  }
+  /* Header */
+  .app-header          { padding: 0 12px; }
+  .app-header .logo    { font-size: 14px; letter-spacing: 1px; }
+  .app-header .user-info { font-size: 12px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .logout-btn          { font-size: 11px; padding: 5px 10px; min-height: 36px; }
 
-  .logout-btn {
-    min-height: 36px;
-    padding: 6px 14px;
-  }
+  /* Inputs/selects: font-size 16px evita zoom automático no iOS */
+  input[type="text"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="date"],
+  input[type="month"],
+  select,
+  textarea             { font-size: 16px !important; padding: 11px 12px !important; min-height: 44px; }
 
-  /* Tabelas: scroll horizontal com fonte menor */
-  .data-table { font-size: 12px; }
-  .data-table td, .data-table th { padding: 8px 6px; }
+  /* Botões primários */
+  .btn                 { min-height: 44px; font-size: 14px; }
 
-  /* Wizard tabs menores */
-  .nota-tab-btn { padding: 10px 10px; font-size: 11px; }
+  /* Filter row do gestor */
+  .filter-row          { flex-wrap: wrap; gap: 6px; }
+  .filter-btn          { flex: 1 1 40%; min-height: 40px; font-size: 12px; }
 
-  /* Cards com menos padding */
-  .card { padding: 14px 12px; margin-bottom: 12px; }
+  /* Totais gestor: 2x2 em vez de 4x1 */
+  .totals-grid         { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .total-box .t-val    { font-size: 22px; }
+
+  /* Ranking period buttons: scroll horizontal */
+  .rank-period-row     { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Rows do gestor: 1 coluna */
+  .g-row-1-1,
+  .g-row-2-1           { grid-template-columns: 1fr !important; }
+
+  /* Formulário de vendas inline → empilhado */
+  #venda-form          { grid-template-columns: 1fr !important; }
+  #venda-form .btn     { margin-top: 4px; }
+
+  /* Formulário adicionar agente → empilhado */
+  #add-agent-form      { grid-template-columns: 1fr !important; }
+
+  /* Tabelas: scroll horizontal, fonte menor */
+  .data-table          { font-size: 11px; min-width: 500px; }
+  .data-table td,
+  .data-table th       { padding: 8px 5px; }
+  .doc-table-wrap,
+  [style*="overflow-x:auto"] { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+
+  /* Collapsible card-toggle: touch target maior */
+  .card-toggle         { min-height: 48px; display: flex; align-items: center; padding: 12px 0; }
+
+  /* Wizard abas */
+  .nota-tab-btn        { padding: 10px 8px; font-size: 10px; }
+
+  /* Análise analytics buttons */
+  .analytics-row       { flex-wrap: wrap; gap: 6px; }
+  .analytics-btn       { flex: 1 1 40%; min-height: 36px; font-size: 11px; }
+
+  /* Conv mode buttons */
+  .conv-mode-row       { flex-wrap: wrap; gap: 6px; }
+  .conv-mode-btn       { flex: 1; min-height: 36px; font-size: 12px; }
+
+  /* Campos detail (CQ/DOC edit) */
+  .doc-edit-fields     { grid-template-columns: 1fr !important; }
+
+  /* Metas grid */
+  .metas-grid          { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Leads: form inline → empilhado */
+  #leads-wrap [style*="grid-template-columns:1fr 1fr"] { display: flex !important; flex-direction: column !important; }
+
+  /* Fila de agentes: scroll se necessário */
+  #leads-wrap [style*="display:flex;flex-wrap:wrap"] { gap: 6px !important; }
+}
+
+/* ══════════════════════════════════════════════════
+   MOBILE PEQUENO (≤ 480px)
+══════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .totals-grid         { grid-template-columns: repeat(2, 1fr); }
+  .total-box           { padding: 10px 8px; }
+  .total-box .t-val    { font-size: 20px; }
+
+  .filter-btn          { font-size: 11px; padding: 8px 4px; }
+
+  /* Nota tabs ainda menores */
+  .nota-tab-btn        { padding: 8px 6px; font-size: 10px; }
+
+  /* Va detail inputs */
+  .va-detail-item input,
+  .va-detail-item select { font-size: 16px !important; padding: 12px 10px !important; }
 }
