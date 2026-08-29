@@ -4514,7 +4514,7 @@ function renderAgentLeads(agentUid) {
       <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
         <label style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Registrar follow-up</label>
         <div style="display:flex;gap:8px;align-items:flex-end">
-          <textarea class="fu-text" data-id="${l.id}" rows="2" placeholder="Como está o cliente? O que combinaram?..." style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 10px;resize:none;outline:none;min-height:44px"></textarea>
+          <textarea class="fu-text" data-id="${l.id}" rows="2" placeholder="Como está o cliente? O que combinaram?..." style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 10px;resize:none;outline:none;min-height:44px;overflow:hidden"></textarea>
           <button class="fu-save-btn btn" data-id="${l.id}" style="padding:8px 14px;white-space:nowrap;font-size:12px;align-self:flex-end">Salvar</button>
         </div>
         ${followUps.length ? `
