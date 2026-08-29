@@ -1438,8 +1438,8 @@ function renderAgentDailyRanking(currentAgentName) {
       <button class="nota-tab-btn${activeAgentRankTab==='semana'?' active':''}" data-tab="semana">Semana</button>
       <button class="nota-tab-btn${activeAgentRankTab==='mes'?' active':''}" data-tab="mes">Mês</button>
     </div>
-    <div style="overflow-x:auto;margin-top:10px">
-      <table class="data-table rank-table" style="min-width:320px">
+    <div class="rank-table-wrap" style="margin-top:10px">
+      <table class="data-table rank-table">
         <thead><tr>
           <th style="width:36px">#</th>
           <th>Angariador</th>
@@ -4381,7 +4381,7 @@ function renderLeadsPanel() {
 
   wrap.innerHTML = queueHTML + formHTML + `
     <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Histórico de distribuições (${LEADS.length})</div>
-    <div class="doc-table-wrap"><table class="data-table" style="font-size:12px">
+    <div class="doc-table-wrap"><table class="data-table" style="font-size:12px;min-width:600px">
       <thead><tr><th>Corretor</th><th>Cliente</th><th>Telefone</th><th>Distribuído em</th><th>Status</th><th>Imóvel</th><th></th></tr></thead>
       <tbody>${tableRows||'<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:16px">Nenhum lead distribuído ainda</td></tr>'}</tbody>
     </table></div>`;

@@ -975,7 +975,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* compact DOC table — fits without horizontal scroll */
-.doc-table-wrap { overflow-x: hidden; }
+.doc-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .doc-table {
   table-layout: fixed;
   font-size: 10px;
@@ -997,14 +997,16 @@ a { color: inherit; text-decoration: none; }
 .doc-edit-actions { display:flex; gap:8px; }
 .doc-edit-actions .btn { font-size:12px; padding:7px 16px; }
 
-/* rank table col widths */
-.rank-table col.col-pos   { width: 44px; }
-.rank-table col.col-name  { width: auto; }
-.rank-table col.col-doc   { width: 60px; }
-.rank-table col.col-cpd   { width: 60px; }
+/* rank table — scroll horizontal no mobile */
+.rank-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.rank-table { min-width: 480px; }
+.rank-table col.col-pos   { width: 36px; }
+.rank-table col.col-name  { width: 120px; }
+.rank-table col.col-doc   { width: 52px; }
+.rank-table col.col-cpd   { width: 52px; }
 .rank-table col.col-prosp { width: 60px; }
-.rank-table col.col-va    { width: 60px; }
-.rank-table col.col-vr    { width: 60px; }
+.rank-table col.col-va    { width: 48px; }
+.rank-table col.col-vr    { width: 48px; }
 
 .day-view-wrap { margin-top: 4px; overflow-x: auto; }
 
