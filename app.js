@@ -4513,9 +4513,9 @@ function renderAgentLeads(agentUid) {
       <!-- Follow-up input -->
       <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
         <label style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px">Registrar follow-up</label>
-        <div style="display:flex;gap:8px;align-items:flex-end">
-          <textarea class="fu-text" data-id="${l.id}" rows="2" placeholder="Como está o cliente? O que combinaram?..." style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 10px;resize:none;outline:none;min-height:44px;overflow:hidden"></textarea>
-          <button class="fu-save-btn btn" data-id="${l.id}" style="padding:8px 14px;white-space:nowrap;font-size:12px;align-self:flex-end">Salvar</button>
+        <textarea class="fu-text" data-id="${l.id}" rows="3" placeholder="Como está o cliente? O que combinaram?..." style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;resize:none;outline:none;overflow:hidden;display:block;margin-bottom:8px"></textarea>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="fu-save-btn btn" data-id="${l.id}" style="padding:8px 20px;font-size:13px">Salvar follow-up</button>
         </div>
         ${followUps.length ? `
         <button class="fu-hist-btn" data-id="${l.id}" style="margin-top:8px;background:none;border:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;padding:0;text-decoration:underline">
