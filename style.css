@@ -1351,3 +1351,87 @@ tr.podium-3 td { background: rgba(180,100,40,.04); }
 
   .data-table td, .data-table th { padding: 10px 6px; font-size: 11px; }
 }
+
+/* ── AGENTE LAYOUT RESPONSIVO ── */
+
+/* Mobile-first: tudo empilhado */
+.agent-layout {
+  max-width: 100%;
+  padding: 12px;
+}
+
+.agent-full,
+.agent-col-left,
+.agent-col-right {
+  display: contents; /* os filhos aparecem diretamente no flow normal */
+}
+
+/* Desktop: duas colunas lado a lado */
+@media (min-width: 900px) {
+  .agent-layout {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 0 20px;
+    align-items: start;
+  }
+
+  .agent-full {
+    display: block;
+    grid-column: 1 / -1; /* full width */
+    margin-bottom: 0;
+  }
+
+  .agent-col-left,
+  .agent-col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* No desktop, inputs do formulário maiores */
+  .agent-col-left .form-group input,
+  .agent-col-left .form-group select {
+    font-size: 14px;
+  }
+}
+
+/* Mobile: touch-friendly */
+@media (max-width: 899px) {
+  .agent-layout {
+    padding: 10px;
+  }
+
+  /* Inputs e selects maiores para toque */
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px !important; /* evita zoom automático no iOS */
+    padding: 12px 14px;
+    min-height: 44px;
+  }
+
+  /* Botões com área de toque mínima */
+  .btn {
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  .logout-btn {
+    min-height: 36px;
+    padding: 6px 14px;
+  }
+
+  /* Tabelas: scroll horizontal com fonte menor */
+  .data-table { font-size: 12px; }
+  .data-table td, .data-table th { padding: 8px 6px; }
+
+  /* Wizard tabs menores */
+  .nota-tab-btn { padding: 10px 10px; font-size: 11px; }
+
+  /* Cards com menos padding */
+  .card { padding: 14px 12px; margin-bottom: 12px; }
+}
