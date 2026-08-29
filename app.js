@@ -320,16 +320,39 @@ function showDescarteModal(nomeLead, onConfirm, onCancel) {
       <div style="font-size:15px;font-weight:700;margin-bottom:4px;color:#ef4444">🗑 Descartar CQ</div>
       <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px">${nomeLead ? `<strong style="color:var(--text)">${nomeLead}</strong> será movido para descartados.` : 'O lead será movido para descartados.'}</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600;letter-spacing:.5px">MOTIVO</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
         ${DESCARTE_MOTIVOS.map(m => `<button class="desc-motivo-btn" data-motivo="${m}" style="text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:12px 16px;cursor:pointer;transition:all .15s">${m}</button>`).join('')}
+        <button class="desc-motivo-btn" data-motivo="__outro__" style="text-align:left;background:var(--bg3);border:1px dashed var(--border);border-radius:10px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:12px 16px;cursor:pointer;transition:all .15s">✏️ Outro motivo...</button>
+      </div>
+      <div id="outro-motivo-wrap" style="display:none;margin-bottom:12px">
+        <input id="outro-motivo-input" type="text" placeholder="Descreva o motivo..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:11px 14px;outline:none;margin-bottom:8px">
+        <button id="outro-motivo-confirm" class="btn" style="width:100%;padding:11px">Confirmar descarte</button>
       </div>
       <button id="descarte-cancel" style="background:none;border:1px solid var(--border);color:var(--text-muted);border-radius:8px;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;width:100%">Cancelar</button>
     </div>`;
   document.body.appendChild(overlay);
   overlay.querySelectorAll('.desc-motivo-btn').forEach(btn => {
     btn.addEventListener('mouseenter', () => { btn.style.background='var(--accent)'; btn.style.color='#000'; btn.style.borderColor='var(--accent)'; });
-    btn.addEventListener('mouseleave', () => { btn.style.background='var(--bg3)'; btn.style.color='var(--text)'; btn.style.borderColor='var(--border)'; });
-    btn.addEventListener('click', () => { overlay.remove(); onConfirm(btn.dataset.motivo); });
+    btn.addEventListener('mouseleave', () => {
+      if (btn.dataset.motivo === '__outro__') { btn.style.background='var(--bg3)'; btn.style.color='var(--text-muted)'; btn.style.borderColor='var(--border)'; }
+      else { btn.style.background='var(--bg3)'; btn.style.color='var(--text)'; btn.style.borderColor='var(--border)'; }
+    });
+    btn.addEventListener('click', () => {
+      if (btn.dataset.motivo === '__outro__') {
+        overlay.querySelector('#outro-motivo-wrap').style.display = 'block';
+        overlay.querySelector('#outro-motivo-input').focus();
+        return;
+      }
+      overlay.remove(); onConfirm(btn.dataset.motivo);
+    });
+  });
+  overlay.querySelector('#outro-motivo-confirm').addEventListener('click', () => {
+    const val = overlay.querySelector('#outro-motivo-input').value.trim();
+    if (!val) { overlay.querySelector('#outro-motivo-input').focus(); return; }
+    overlay.remove(); onConfirm(val);
+  });
+  overlay.querySelector('#outro-motivo-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') overlay.querySelector('#outro-motivo-confirm').click();
   });
   overlay.querySelector('#descarte-cancel').addEventListener('click', () => { overlay.remove(); onCancel(); });
 }
