@@ -2064,7 +2064,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     }
   }
 
-  if (!agentContactTab) { agentContactTab = 'cpd'; agentDescFilter = 'tratativa'; }
+  if (!agentContactTab) { agentContactTab = ''; agentDescFilter = ''; }
   renderAgentContacts(session.name);
   renderAgentVisits(session.name);
   renderAgentDailyRanking(session.name);
@@ -4279,12 +4279,14 @@ function renderLeadsPanel() {
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         ${queue.map((a, i) => {
           const isNext = i === 0;
-          const borderColor = isNext ? '#a8e63d' : 'var(--border)';
-          const bg = isNext ? 'rgba(168,230,61,.08)' : 'var(--bg3)';
+          const hasLeads = a.count > 0;
+          const borderColor = isNext ? '#a8e63d' : hasLeads ? 'rgba(255,152,0,.45)' : 'var(--border)';
+          const bg = isNext ? 'rgba(168,230,61,.08)' : hasLeads ? 'rgba(255,152,0,.06)' : 'var(--bg3)';
+          const countColor = hasLeads ? '#ff9800' : 'var(--text-muted)';
           const badge2 = isNext ? `<span style="background:#a8e63d;color:#111;border-radius:8px;font-size:9px;font-weight:800;padding:1px 6px;margin-left:4px">PRÓXIMO</span>` : '';
           return `<div style="border:1px solid ${borderColor};background:${bg};border-radius:10px;padding:10px 14px;min-width:130px;flex:1">
             <div style="font-weight:600;font-size:13px">${a.name}${badge2}</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:3px">${a.count} lead${a.count!==1?'s':''} recebido${a.count!==1?'s':''}</div>
+            <div style="font-size:11px;color:${countColor};margin-top:3px;font-weight:${hasLeads?'600':'400'}">${a.count} lead${a.count!==1?'s':''} recebido${a.count!==1?'s':''}</div>
             ${a.lastAt?`<div style="font-size:10px;color:var(--text-muted);margin-top:2px">Último: ${a.lastAt.slice(0,16).replace('T',' ')}</div>`:''}
           </div>`;
         }).join('')}
