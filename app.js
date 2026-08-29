@@ -501,14 +501,26 @@ function isoWeekToDateStr(weekStr) {
 function inRange(s,a,b)   { return s>=a && s<=b; }
 function formatDate(s)    { const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
 function formatPhone(v) {
-  const d = v.replace(/\D/g,'');
-  if (d.length <= 10) return d.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
-  return d.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
+  if (!v) return '';
+  const raw = v.trim();
+  // Se começa com + ou tem código de país diferente de 55 → exibe como digitado
+  if (raw.startsWith('+')) return raw;
+  const d = raw.replace(/\D/g,'');
+  // Internacional: >12 dígitos ou não começa com 55 e tem >11 dígitos
+  if (d.length > 12) return '+' + d;
+  if (d.length > 11 && !d.startsWith('55')) return '+' + d;
+  // Brasileiro com código de país 55
+  const local = (d.length > 11 && d.startsWith('55')) ? d.slice(2) : d;
+  if (local.length <= 10) return local.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
+  return local.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3').replace(/-$/,'');
 }
 // Normaliza telefone para comparação: remove formatação, descarta prefixo 55 se número >11 dígitos
 function normalizePhone(v) {
   if (!v) return '';
-  let d = v.replace(/\D/g,'');
+  const raw = v.trim();
+  // Número com + preserva o código de país para comparação exata
+  if (raw.startsWith('+')) return raw.replace(/\D/g,'');
+  let d = raw.replace(/\D/g,'');
   if (d.length > 11 && d.startsWith('55')) d = d.slice(2);
   return d;
 }
