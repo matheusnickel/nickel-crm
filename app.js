@@ -3924,7 +3924,6 @@ function generateReport(period) {
   const periodEntries = filterEntries(period, ref).filter(e => new Set(team).has(normalizeAgentName(e.agent)));
   const periodLabel = getPeriodLabel(period, ref);
 
-  // Build date range for daily timeline
   let rangeStart, rangeEnd;
   if (period === 'today') {
     rangeStart = rangeEnd = t;
@@ -3938,178 +3937,214 @@ function generateReport(period) {
   const endD = new Date(rangeEnd+'T12:00:00');
   while (cur <= endD) { days.push(toDateStr(cur)); cur.setDate(cur.getDate()+1); }
 
-  // Ranking geral
-  const byAgent = sumByAgent(periodEntries);
+  const byAgent = sumByAgent(periodEntries, ref.slice(0,7));
   const ranked = [...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
 
-  function scoreHex(score) {
-    if (score >= 8) return '#6495ed';
-    if (score >= 6) return '#a8e63d';
-    if (score >= 3) return '#f0c040';
-    return '#e74c3c';
-  }
-  function textOnScore(score) {
-    return score >= 3 && score < 8 ? '#111' : '#fff';
-  }
+  // ── cores idênticas ao painel ───────────────────────────
+  const C = { bg:'#07090f', card:'#0e1117', border:'rgba(255,255,255,0.08)', text:'#e8eaf0', muted:'#6b7280',
+    green:'#a8e63d', blue:'#6495ed', yellow:'#f0c040', red:'#ef4444', orange:'#f97316',
+    gold:'#ffd700', silver:'#c0c0c0', bronze:'#cd7f32' };
 
-  // Per-agent cards
+  function scoreHex(score) {
+    if (score >= 8) return C.blue;
+    if (score >= 6) return C.green;
+    if (score >= 3) return C.yellow;
+    return C.red;
+  }
+  function scoreTextColor(score) { return (score >= 3 && score < 6) ? '#111' : '#fff'; }
+  function podiumColor(i) { return i===0?C.gold:i===1?C.silver:i===2?C.bronze:'rgba(255,255,255,0.12)'; }
+  function podiumLabel(i) { return i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`; }
+
+  // ── tabela de ranking ───────────────────────────────────
+  const rankRows = ranked.map((a,i) => {
+    const pc = podiumColor(i);
+    const medal = podiumLabel(i);
+    const isTop = i < 3;
+    return `<tr style="background:${isTop?'rgba(255,255,255,0.04)':'transparent'}">
+      <td style="padding:10px 12px;text-align:center;width:42px">
+        <span style="display:inline-block;min-width:28px;height:28px;border-radius:50%;background:${pc};color:${i<3?'#111':'#ccc'};font-size:${i<3?'16px':'12px'};font-weight:800;line-height:28px;text-align:center">${medal}</span>
+      </td>
+      <td style="padding:10px 12px;font-weight:700;font-size:14px;color:${C.text}">${a.agent}</td>
+      <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:${C.green}">${a.doc}</td>
+      <td style="padding:10px 12px;text-align:center;font-size:16px;font-weight:700;color:${C.blue}">${a.cpd}</td>
+      <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:600;color:${C.yellow}">${a.prosp}</td>
+      <td style="padding:10px 12px;text-align:center;font-size:13px;color:${C.red}">${a.va||0}</td>
+      <td style="padding:10px 12px;text-align:center;font-size:13px;color:${C.orange}">${a.vr||0}</td>
+    </tr>`;
+  }).join('');
+
+  // ── cards individuais ───────────────────────────────────
   const agentCards = ranked.map((a, i) => {
-    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}º`;
-    const aUid = TEAM.find(t=>t.name===a.agent)?.username;
+    const aUid = TEAM.find(tm=>tm.name===a.agent)?.username;
     const agentEntries = allEntries.filter(e => aUid ? (e.uid===aUid || normalizeAgentName(e.agent)===a.agent) : normalizeAgentName(e.agent)===a.agent || e.agent===a.agent);
     const entryMap = {};
     agentEntries.forEach(e => { if (!entryMap[e.date] || (!entryMap[e.date].uid && e.uid)) entryMap[e.date] = e; });
 
-    // Daily score timeline squares
     const squares = days.map(d => {
       const e = entryMap[d];
-      if (!e) return `<div style="display:inline-block;width:26px;height:26px;border-radius:4px;background:#e8e8e8;margin:2px;vertical-align:middle;font-size:8px;line-height:26px;text-align:center;color:#aaa">${d.slice(8)}</div>`;
+      if (!e) return `<div style="display:inline-block;width:28px;height:28px;border-radius:5px;background:rgba(255,255,255,0.06);margin:2px;vertical-align:middle;font-size:8px;line-height:28px;text-align:center;color:${C.muted}">${d.slice(8)}</div>`;
       const score = calcDailyScore(e);
       const bg = scoreHex(score);
-      const tc = textOnScore(score);
+      const tc = scoreTextColor(score);
       const label = score % 1 === 0 ? score.toFixed(0) : score.toFixed(1);
-      return `<div style="display:inline-block;width:26px;height:26px;border-radius:4px;background:${bg};margin:2px;vertical-align:middle;font-size:7px;line-height:13px;text-align:center;color:${tc};font-weight:700">
-        <div>${d.slice(8)}</div><div>${label}</div>
-      </div>`;
+      return `<div style="display:inline-block;width:28px;height:28px;border-radius:5px;background:${bg};margin:2px;vertical-align:middle;font-size:7px;line-height:14px;text-align:center;color:${tc};font-weight:800">
+        <div>${d.slice(8)}</div><div>${label}</div></div>`;
     }).join('');
 
-    // DOCs do período (deduplica por data antes de listar)
     const agentPeriod = periodEntries.filter(e => aUid ? (e.uid===aUid || normalizeAgentName(e.agent)===a.agent) : normalizeAgentName(e.agent)===a.agent || e.agent===a.agent);
     const apDedup = {}; agentPeriod.forEach(e => { if (!apDedup[e.date] || (!apDedup[e.date].uid && e.uid)) apDedup[e.date] = e; });
-    const docs = Object.values(apDedup)
-      .flatMap(e => (e.docDetails||[]).map(d => ({...d, date: e.date})))
-      .filter(d => d.nome);
+    const docs = Object.values(apDedup).flatMap(e => (e.docDetails||[]).map(d => ({...d, date: e.date}))).filter(d => d.nome);
+
+    const STATUS_COLOR = {'FOTOS':'#e67e22','AVI':'#3498db','AV':'#9b59b6','SITE':C.green};
+    const STATUS_LABEL = {'FOTOS':'FOTOS','AVI':'AV ASSINADA','AV':'FALTA ASSINAR','SITE':'SITE'};
 
     const docRows = docs.length === 0
-      ? '<tr><td colspan="5" style="color:#999;font-style:italic">Nenhum DOC no período</td></tr>'
+      ? `<tr><td colspan="5" style="padding:12px;color:${C.muted};font-style:italic;font-size:12px">Nenhum DOC no período</td></tr>`
       : docs.map(d => {
-          const statusColors = {'FOTOS':'#e67e22','AVI':'#3498db','AV':'#9b59b6','SITE':'#a8e63d'};
-          const statusLabels = {'FOTOS':'FOTOS','AVI':'AV ASSINADA','AV':'FALTA ASSINAR','SITE':'SITE'};
-          const sColor = statusColors[d.nota] || '#999';
-          const sLabel = statusLabels[d.nota] || '—';
-          return `<tr>
-            <td style="color:#555;font-size:11px">${formatDate(d.date)}</td>
-            <td style="font-weight:600">${d.nome||'—'}</td>
-            <td>${d.tipo||'—'} · ${d.bairro||'—'}</td>
-            <td style="text-align:right;font-weight:600">${formatCurrency(d.valor)}</td>
-            <td><span style="background:${sColor};color:#fff;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700">${sLabel}</span></td>
+          const sc = STATUS_COLOR[d.nota] || C.muted;
+          const sl = STATUS_LABEL[d.nota] || d.nota || '—';
+          const indicador = d.indicacao ? `<span style="background:rgba(168,230,61,.18);color:${C.green};border:1px solid rgba(168,230,61,.35);padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-left:4px">IND</span>` : '';
+          return `<tr style="border-bottom:1px solid rgba(255,255,255,0.06)">
+            <td style="padding:8px 10px;color:${C.muted};font-size:11px;white-space:nowrap">${formatDate(d.date)}</td>
+            <td style="padding:8px 10px;font-weight:700;color:${C.text};font-size:12px">${d.nome||'—'}${indicador}</td>
+            <td style="padding:8px 10px;color:${C.muted};font-size:11px">${d.tipo||'—'} · ${d.bairro||'—'}</td>
+            <td style="padding:8px 10px;text-align:right;font-weight:700;color:${C.green};font-size:12px">${formatCurrency(d.valor)}</td>
+            <td style="padding:8px 10px"><span style="background:${sc};color:#fff;padding:3px 8px;border-radius:4px;font-size:9px;font-weight:800;letter-spacing:.4px">${sl}</span></td>
           </tr>`;
         }).join('');
 
     const monthEntries = filterEntries('month', ref);
     const notaMes = calcMonthlyScore(a.agent, monthEntries);
-    const notaMesBg = scoreHex(notaMes);
+    const notaBg = scoreHex(notaMes);
+    const notaTc = scoreTextColor(notaMes);
+    const pc = podiumColor(i);
+    const isTop3 = i < 3;
 
     return `
-    <div style="border:1px solid #e0e0e0;border-radius:12px;padding:20px 24px;margin-bottom:24px;page-break-inside:avoid">
-
-      <!-- Cabeçalho do corretor -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;border-bottom:2px solid #f0f0f0;padding-bottom:12px">
-        <div style="display:flex;align-items:center;gap:12px">
-          <span style="font-size:22px">${medal}</span>
-          <span style="font-size:20px;font-weight:800;color:#111">${a.agent}</span>
+    <div style="border:1px solid ${isTop3?pc:C.border};border-radius:14px;padding:0;margin-bottom:20px;page-break-inside:avoid;overflow:hidden">
+      <!-- header do corretor -->
+      <div style="background:${isTop3?`linear-gradient(135deg,rgba(255,255,255,0.07),rgba(255,255,255,0.03))`:'rgba(255,255,255,0.03)'};padding:18px 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid ${C.border}">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="display:inline-block;width:36px;height:36px;border-radius:50%;background:${pc};color:${isTop3?'#111':'#ccc'};font-size:${isTop3?'20px':'14px'};font-weight:800;line-height:36px;text-align:center">${podiumLabel(i)}</span>
+          <span style="font-size:18px;font-weight:800;color:${C.text}">${a.agent}</span>
         </div>
-        <div style="display:flex;gap:20px;align-items:center">
+        <div style="display:flex;gap:18px;align-items:center">
           <div style="text-align:center">
-            <div style="font-size:24px;font-weight:800;color:#a8e63d">${a.doc}</div>
-            <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase">DOC</div>
+            <div style="font-size:26px;font-weight:800;color:${C.green}">${a.doc}</div>
+            <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase">DOC</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:24px;font-weight:800;color:#6495ed">${a.cpd}</div>
-            <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase">CQ</div>
+            <div style="font-size:22px;font-weight:800;color:${C.blue}">${a.cpd}</div>
+            <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase">CQ</div>
           </div>
           <div style="text-align:center">
-            <div style="font-size:24px;font-weight:800;color:#f0c040">${a.prosp}</div>
-            <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase">PROSP</div>
+            <div style="font-size:20px;font-weight:700;color:${C.yellow}">${a.prosp}</div>
+            <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase">PROSP</div>
           </div>
-          ${period !== 'today' ? `<div style="text-align:center;background:${notaMesBg};border-radius:10px;padding:8px 14px">
-            <div style="font-size:22px;font-weight:800;color:${textOnScore(notaMes)}">${notaMes.toFixed(1)}</div>
-            <div style="font-size:9px;color:${textOnScore(notaMes)};opacity:.85;letter-spacing:.5px">NOTA MÊS</div>
+          <div style="text-align:center">
+            <div style="font-size:18px;font-weight:700;color:${C.red}">${a.va||0}</div>
+            <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase">VA</div>
+          </div>
+          ${period !== 'today' ? `<div style="text-align:center;background:${notaBg};border-radius:10px;padding:8px 14px">
+            <div style="font-size:22px;font-weight:800;color:${notaTc}">${notaMes.toFixed(1)}</div>
+            <div style="font-size:8px;color:${notaTc};opacity:.8;letter-spacing:.5px;text-transform:uppercase">Nota mês</div>
           </div>` : ''}
         </div>
       </div>
-
-      <!-- Timeline de notas -->
-      <div style="margin-bottom:14px">
-        <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Notas diárias — ${periodLabel}</div>
-        <div style="line-height:1">${squares}</div>
-        <div style="display:flex;gap:12px;margin-top:8px;font-size:10px;color:#555">
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#6495ed;margin-right:3px"></span>Azul 8–10 (DOC)</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#a8e63d;margin-right:3px"></span>Verde 6–7.9</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f0c040;margin-right:3px"></span>Amarelo 3–5.9</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e74c3c;margin-right:3px"></span>Vermelho 0–2.9</span>
+      <!-- body do card -->
+      <div style="padding:18px 22px;background:${C.card}">
+        <!-- timeline -->
+        <div style="font-size:9px;color:${C.muted};text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px">Performance diária — ${periodLabel}</div>
+        <div style="line-height:1;margin-bottom:10px">${squares}</div>
+        <div style="display:flex;gap:14px;margin-bottom:18px;font-size:10px;color:${C.muted}">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${C.blue};margin-right:4px;vertical-align:middle"></span>≥8 — Com DOC</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${C.green};margin-right:4px;vertical-align:middle"></span>6–7.9 — Bom</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${C.yellow};margin-right:4px;vertical-align:middle"></span>3–5.9 — Regular</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${C.red};margin-right:4px;vertical-align:middle"></span>0–2.9 — Baixo</span>
         </div>
+        <!-- docs -->
+        <div style="font-size:9px;color:${C.muted};text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px">DOCs captados · ${docs.length}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:rgba(255,255,255,0.05)">
+            <th style="text-align:left;padding:7px 10px;font-size:9px;color:${C.muted};font-weight:600;letter-spacing:.8px;text-transform:uppercase">Data</th>
+            <th style="text-align:left;padding:7px 10px;font-size:9px;color:${C.muted};font-weight:600;letter-spacing:.8px;text-transform:uppercase">Proprietário</th>
+            <th style="text-align:left;padding:7px 10px;font-size:9px;color:${C.muted};font-weight:600;letter-spacing:.8px;text-transform:uppercase">Imóvel</th>
+            <th style="text-align:right;padding:7px 10px;font-size:9px;color:${C.muted};font-weight:600;letter-spacing:.8px;text-transform:uppercase">Valor</th>
+            <th style="text-align:left;padding:7px 10px;font-size:9px;color:${C.muted};font-weight:600;letter-spacing:.8px;text-transform:uppercase">Status</th>
+          </tr></thead>
+          <tbody>${docRows}</tbody>
+        </table>
       </div>
-
-      <!-- DOCs captados -->
-      <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">DOCs captados</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead><tr style="background:#f8f8f8">
-          <th style="text-align:left;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">DATA</th>
-          <th style="text-align:left;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">PROPRIETÁRIO</th>
-          <th style="text-align:left;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">IMÓVEL</th>
-          <th style="text-align:right;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">VALOR</th>
-          <th style="text-align:left;padding:6px 8px;font-size:10px;color:#888;font-weight:600;letter-spacing:.5px">STATUS</th>
-        </tr></thead>
-        <tbody>${docRows}</tbody>
-      </table>
     </div>`;
   }).join('');
 
-  // Totais gerais
-  const totDoc = byAgent.reduce((s,a)=>s+a.doc,0);
-  const totCpd = byAgent.reduce((s,a)=>s+a.cpd,0);
-  const totProsp = byAgent.reduce((s,a)=>s+a.prosp,0);
+  // ── totais gerais ───────────────────────────────────────
+  const totDoc  = byAgent.reduce((s,a)=>s+a.doc,0);
+  const totCpd  = byAgent.reduce((s,a)=>s+a.cpd,0);
+  const totProsp= byAgent.reduce((s,a)=>s+a.prosp,0);
+  const totVa   = byAgent.reduce((s,a)=>s+(a.va||0),0);
+  const totVr   = byAgent.reduce((s,a)=>s+(a.vr||0),0);
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-  <title>Nickel CRM — Relatório por Angariador</title>
+  <title>Nickel CRM — Relatório de Desempenho</title>
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#111;background:#fff;padding:32px;max-width:960px;margin:0 auto}
-    table td{padding:7px 8px;border-bottom:1px solid #f0f0f0}
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:${C.text};background:${C.bg};padding:32px;max-width:1000px;margin:0 auto}
     @media print{
-      body{padding:16px}
-      button{display:none!important}
+      body{padding:12px}
+      .no-print{display:none!important}
       .page-break{page-break-before:always}
     }
+    @page{margin:14mm 12mm;size:A4}
   </style>
   </head><body>
 
-  <button onclick="window.print()" style="background:#111;color:#fff;border:none;padding:11px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;margin-bottom:28px;display:block">🖨 Imprimir / Salvar PDF</button>
+  <!-- Botão de impressão -->
+  <div class="no-print" style="margin-bottom:24px;text-align:right">
+    <button onclick="window.print()" style="background:${C.green};color:#07090f;border:none;padding:12px 28px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:800;letter-spacing:.3px">🖨&nbsp; Imprimir / Salvar PDF</button>
+  </div>
 
   <!-- Cabeçalho -->
-  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;padding-bottom:16px;border-bottom:1px solid ${C.border}">
     <div>
-      <div style="font-size:11px;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Nickel CRM</div>
-      <div style="font-size:26px;font-weight:800;color:#111">Relatório de Desempenho</div>
+      <div style="font-size:10px;color:${C.green};letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:4px">NICKEL CRM</div>
+      <div style="font-size:28px;font-weight:800;color:${C.text}">Relatório de Desempenho</div>
     </div>
     <div style="text-align:right">
-      <div style="font-size:13px;color:#555">${periodLabel}</div>
-      <div style="font-size:11px;color:#aaa;margin-top:2px">Gerado em ${formatDate(t)}</div>
+      <div style="font-size:14px;color:${C.text};font-weight:600">${periodLabel}</div>
+      <div style="font-size:11px;color:${C.muted};margin-top:4px">Gerado em ${formatDate(t)}</div>
     </div>
   </div>
 
   <!-- Totais gerais -->
-  <div style="display:flex;gap:16px;margin:20px 0 32px;padding:20px 24px;background:#f8f8f8;border-radius:12px">
-    <div style="flex:1;text-align:center">
-      <div style="font-size:32px;font-weight:800;color:#a8e63d">${totDoc}</div>
-      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">DOC total</div>
-    </div>
-    <div style="flex:1;text-align:center;border-left:1px solid #e0e0e0">
-      <div style="font-size:32px;font-weight:800;color:#6495ed">${totCpd}</div>
-      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">CQ total</div>
-    </div>
-    <div style="flex:1;text-align:center;border-left:1px solid #e0e0e0">
-      <div style="font-size:32px;font-weight:800;color:#f0c040">${totProsp}</div>
-      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">PROSP total</div>
-    </div>
-    <div style="flex:1;text-align:center;border-left:1px solid #e0e0e0">
-      <div style="font-size:32px;font-weight:800;color:#111">${ranked.length}</div>
-      <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Angariadores</div>
-    </div>
+  <div style="display:flex;gap:0;margin:20px 0 28px;background:${C.card};border:1px solid ${C.border};border-radius:14px;overflow:hidden">
+    ${[['DOC',totDoc,C.green],['CQ',totCpd,C.blue],['PROSP',totProsp,C.yellow],['VA',totVa,C.red],['VR',totVr,C.orange],['Angariadores',ranked.length,C.text]].map(([label,val,color],idx)=>`
+    <div style="flex:1;text-align:center;padding:18px 10px;${idx>0?`border-left:1px solid ${C.border}`:''}">
+      <div style="font-size:28px;font-weight:800;color:${color}">${val}</div>
+      <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-top:3px">${label}</div>
+    </div>`).join('')}
   </div>
 
-  <!-- Cards por angariador -->
+  <!-- Ranking geral -->
+  <div style="background:${C.card};border:1px solid ${C.border};border-radius:14px;margin-bottom:28px;overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid ${C.border}">
+      <span style="font-size:11px;color:${C.green};text-transform:uppercase;letter-spacing:1.5px;font-weight:700">🏆 Ranking — DOC · CQ · PROSP</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="background:rgba(255,255,255,0.04)">
+        <th style="padding:10px 12px;width:42px"></th>
+        <th style="padding:10px 12px;text-align:left;font-size:10px;color:${C.muted};letter-spacing:.8px;text-transform:uppercase;font-weight:600">Angariador</th>
+        <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.green};letter-spacing:.8px;text-transform:uppercase;font-weight:700">DOC</th>
+        <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.blue};letter-spacing:.8px;text-transform:uppercase;font-weight:700">CQ</th>
+        <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.yellow};letter-spacing:.8px;text-transform:uppercase;font-weight:700">PROSP</th>
+        <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.red};letter-spacing:.8px;text-transform:uppercase;font-weight:700">VA</th>
+        <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.orange};letter-spacing:.8px;text-transform:uppercase;font-weight:700">VR</th>
+      </tr></thead>
+      <tbody>${rankRows}</tbody>
+    </table>
+  </div>
+
+  <!-- Cards individuais -->
   ${agentCards}
 
   </body></html>`;
