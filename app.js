@@ -2623,8 +2623,9 @@ function renderStreakRanking() { renderTimeline(); }
 
 function renderGestorRanking() {
   const t = today();
-  const rankEntries = filterEntries(activeRankingPeriod, t).filter(e => new Set(getAgentNames()).has(normalizeAgentName(e.agent)));
-  const periodKey = activeRankingPeriod === 'month' ? t.slice(0,7) : t.slice(0,7);
+  const rankRef = activeRankingPeriod === 'month' ? (activeMonthRef || t) : activeRankingPeriod === 'week' ? (activeWeekRef || t) : t;
+  const rankEntries = filterEntries(activeRankingPeriod, rankRef).filter(e => new Set(getAgentNames()).has(normalizeAgentName(e.agent)));
+  const periodKey = rankRef.slice(0,7);
   const rankByAgent = sumByAgent(rankEntries, periodKey);
   const ranked = [...rankByAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
   const body = document.getElementById('rank-body');

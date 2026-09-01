@@ -1,4 +1,4 @@
-const CACHE = 'nickel-crm-v181';
+const CACHE = 'nickel-crm-v182';
 const ASSETS = [
   '/nickel-crm/',
   '/nickel-crm/index.html',
