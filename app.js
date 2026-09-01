@@ -2534,6 +2534,9 @@ function initTeamManagement() {
   const exportBtn = document.getElementById('export-backup-btn');
   if (exportBtn) exportBtn.addEventListener('click', exportBackup);
 
+  const exportDocsDayBtn = document.getElementById('export-docs-day-btn');
+  if (exportDocsDayBtn) exportDocsDayBtn.addEventListener('click', () => generateDocsByDayReport());
+
   const migrateBtn = document.getElementById('migrate-uid-btn');
   if (migrateBtn) {
     migrateBtn.addEventListener('click', async () => {
@@ -3907,6 +3910,191 @@ function renderOfertaAtiva() {
       renderOfertaAtiva();
     });
   });
+}
+
+// ── RELATÓRIO: EVOLUÇÃO DE DOCs POR DIA ──────────────────
+function generateDocsByDayReport() {
+  const t = today();
+  const ref = activeMonthRef || t;
+  const team = new Set(getAgentNames());
+  const allEntries = getEntries();
+  const { start, end } = monthRange(ref);
+  const periodLabel = getPeriodLabel('month', ref);
+
+  // Constrói lista de dias do mês
+  const days = [];
+  let cur = new Date(start + 'T12:00:00');
+  while (toDateStr(cur) <= end) { days.push(toDateStr(cur)); cur.setDate(cur.getDate() + 1); }
+
+  // Filtra e deduplicação por agente+data
+  const periodEntries = filterEntries('month', ref).filter(e => team.has(normalizeAgentName(e.agent)));
+  const dedupMap = {};
+  periodEntries.forEach(e => {
+    const name = normalizeAgentName(e.agent);
+    const key = name + '|' + e.date;
+    if (!dedupMap[key] || (!dedupMap[key].uid && e.uid)) dedupMap[key] = e;
+  });
+  const deduped = Object.values(dedupMap);
+
+  // Agrupa DOCs por dia
+  const docsByDay = {};
+  days.forEach(d => docsByDay[d] = []);
+  deduped.forEach(e => {
+    (e.docDetails || []).filter(d => d.nome).forEach(d => {
+      if (docsByDay[e.date]) docsByDay[e.date].push({ ...d, agent: normalizeAgentName(e.agent) });
+    });
+  });
+
+  const C = {
+    bg: '#07090f', card: '#0e1117', border: 'rgba(255,255,255,0.08)',
+    text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed',
+    yellow: '#f0c040', red: '#ef4444', orange: '#f97316',
+    gold: '#ffd700', silver: '#c0c0c0', bronze: '#cd7f32',
+  };
+
+  const STATUS_COLOR = { FOTOS: '#e67e22', AVI: '#3498db', AV: '#9b59b6', SITE: C.green };
+  const STATUS_LABEL = { FOTOS: 'FOTOS', AVI: 'AV ASSINADA', AV: 'FALTA ASSINAR', SITE: 'SITE' };
+
+  const TIPO_COLOR = {
+    'Casa': '#6495ed', 'Apartamento': '#a8e63d', 'Terreno': '#f0c040',
+    'Comercial': '#e879f9', 'Chácara': '#ff9800', 'Rural': '#4caf50',
+  };
+
+  // Totais acumulados por dia para o gráfico de barras
+  const totalDocs = days.reduce((s, d) => s + docsByDay[d].length, 0);
+  const maxPerDay = Math.max(...days.map(d => docsByDay[d].length), 1);
+
+  const daySections = days.map(d => {
+    const docs = docsByDay[d];
+    const count = docs.length;
+    const weekday = new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short' });
+    const dateLabel = new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    const barPct = Math.round((count / maxPerDay) * 100);
+    const barColor = count === 0 ? 'rgba(255,255,255,0.06)' : count >= 5 ? C.green : count >= 3 ? C.blue : C.yellow;
+
+    const docRows = count === 0
+      ? `<div style="padding:10px 0;color:${C.muted};font-size:12px;font-style:italic">Nenhum DOC captado</div>`
+      : docs.map(d => {
+          const sc = STATUS_COLOR[d.nota] || C.muted;
+          const sl = STATUS_LABEL[d.nota] || d.nota || '—';
+          const tc = TIPO_COLOR[d.tipo] || C.muted;
+          const ind = d.indicacao ? `<span style="background:rgba(168,230,61,.18);color:${C.green};border:1px solid rgba(168,230,61,.35);padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;margin-left:4px">IND</span>` : '';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:4px;border:1px solid ${C.border}">
+            <div style="flex:0 0 120px;font-weight:700;font-size:12px;color:${C.text}">${d.nome || '—'}${ind}</div>
+            <div style="flex:0 0 90px"><span style="background:${tc};color:#fff;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700">${d.tipo || '—'}</span></div>
+            <div style="flex:0 0 80px;font-size:11px;color:${C.muted}">${d.bairro || '—'}</div>
+            <div style="flex:1;font-size:11px;color:${C.muted}">${d.agent}</div>
+            <div style="flex:0 0 90px;text-align:right;font-weight:700;font-size:12px;color:${C.green}">${formatCurrency(d.valor)}</div>
+            <div style="flex:0 0 90px;text-align:right"><span style="background:${sc};color:#fff;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700">${sl}</span></div>
+          </div>`;
+        }).join('');
+
+    return `
+    <div style="margin-bottom:${count > 0 ? '18px' : '6px'};page-break-inside:avoid">
+      <!-- cabeçalho do dia -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:${count > 0 ? '8px' : '0'}">
+        <div style="flex:0 0 56px;text-align:center;background:${count > 0 ? C.card : 'rgba(255,255,255,0.02)'};border:1px solid ${count > 0 ? C.border : 'rgba(255,255,255,0.04)'};border-radius:8px;padding:6px 4px">
+          <div style="font-size:16px;font-weight:800;color:${count > 0 ? C.text : C.muted}">${dateLabel}</div>
+          <div style="font-size:9px;color:${C.muted};text-transform:uppercase;letter-spacing:.5px">${weekday}</div>
+        </div>
+        <!-- barra de quantidade -->
+        <div style="flex:1;height:20px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;position:relative">
+          <div style="height:100%;width:${barPct}%;background:${barColor};border-radius:6px;transition:width .3s"></div>
+        </div>
+        <div style="flex:0 0 32px;text-align:right;font-size:${count > 0 ? '18px' : '13px'};font-weight:800;color:${count > 0 ? C.green : C.muted}">${count}</div>
+      </div>
+      ${count > 0 ? docRows : ''}
+    </div>`;
+  }).join('');
+
+  // Ranking do mês por número de DOCs por agente
+  const agentTotals = {};
+  deduped.forEach(e => {
+    const name = normalizeAgentName(e.agent);
+    if (!agentTotals[name]) agentTotals[name] = 0;
+    agentTotals[name] += (e.docDetails || []).filter(d => d.nome).length;
+  });
+  const agentRanked = Object.entries(agentTotals).sort((a, b) => b[1] - a[1]);
+  const podiumColors = [C.gold, C.silver, C.bronze];
+
+  const agentRankHtml = agentRanked.map(([name, count], i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid ${C.border}">
+      <span style="flex:0 0 28px;height:28px;background:${i < 3 ? podiumColors[i] : 'rgba(255,255,255,0.1)'};border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:${i < 3 ? '14px' : '11px'};font-weight:800;color:${i < 3 ? '#111' : C.muted}">${i < 3 ? ['🥇','🥈','🥉'][i] : i+1}</span>
+      <span style="flex:1;font-size:13px;font-weight:600;color:${C.text}">${name}</span>
+      <span style="font-size:20px;font-weight:800;color:${C.green}">${count}</span>
+      <span style="font-size:10px;color:${C.muted};text-transform:uppercase;letter-spacing:.5px">DOC</span>
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>Nickel CRM — DOCs por Dia</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+    body{font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:${C.text};background:${C.bg};padding:32px;max-width:960px;margin:0 auto}
+    @media print{
+      body{padding:12px}
+      .no-print{display:none!important}
+      .page-break{page-break-before:always}
+    }
+    @page{margin:14mm 12mm;size:A4}
+  </style>
+  </head><body>
+
+  <div class="no-print" style="margin-bottom:24px;text-align:right">
+    <button onclick="window.print()" style="background:${C.green};color:#07090f;border:none;padding:12px 28px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:800">🖨&nbsp; Imprimir / Salvar PDF</button>
+  </div>
+
+  <!-- Cabeçalho -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:16px;border-bottom:1px solid ${C.border};margin-bottom:20px">
+    <div>
+      <div style="font-size:10px;color:${C.green};letter-spacing:3px;text-transform:uppercase;font-weight:700;margin-bottom:4px">NICKEL CRM</div>
+      <div style="font-size:26px;font-weight:800;color:${C.text}">Evolução de DOCs por Dia</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:14px;font-weight:600;color:${C.text}">${periodLabel}</div>
+      <div style="font-size:11px;color:${C.muted};margin-top:4px">Gerado em ${formatDate(t)}</div>
+    </div>
+  </div>
+
+  <!-- Resumo -->
+  <div style="display:flex;gap:0;margin-bottom:28px;background:${C.card};border:1px solid ${C.border};border-radius:14px;overflow:hidden">
+    <div style="flex:1;text-align:center;padding:18px 10px">
+      <div style="font-size:32px;font-weight:800;color:${C.green}">${totalDocs}</div>
+      <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-top:3px">DOC total</div>
+    </div>
+    <div style="flex:1;text-align:center;padding:18px 10px;border-left:1px solid ${C.border}">
+      <div style="font-size:32px;font-weight:800;color:${C.blue}">${days.filter(d=>docsByDay[d].length>0).length}</div>
+      <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-top:3px">Dias com DOC</div>
+    </div>
+    <div style="flex:1;text-align:center;padding:18px 10px;border-left:1px solid ${C.border}">
+      <div style="font-size:32px;font-weight:800;color:${C.yellow}">${(totalDocs / Math.max(days.filter(d=>docsByDay[d].length>0).length,1)).toFixed(1)}</div>
+      <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-top:3px">Média por dia ativo</div>
+    </div>
+    <div style="flex:1;text-align:center;padding:18px 10px;border-left:1px solid ${C.border}">
+      <div style="font-size:32px;font-weight:800;color:${C.orange}">${maxPerDay}</div>
+      <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-top:3px">Máximo em um dia</div>
+    </div>
+  </div>
+
+  <!-- Ranking por angariador -->
+  <div style="background:${C.card};border:1px solid ${C.border};border-radius:14px;margin-bottom:28px;overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid ${C.border}">
+      <span style="font-size:11px;color:${C.green};text-transform:uppercase;letter-spacing:1.5px;font-weight:700">🏆 DOCs por Angariador — ${periodLabel}</span>
+    </div>
+    ${agentRankHtml}
+  </div>
+
+  <!-- DOCs por dia -->
+  <div style="background:${C.card};border:1px solid ${C.border};border-radius:14px;padding:20px 22px">
+    <div style="font-size:11px;color:${C.green};text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:18px">📅 Cronologia — DOC por Dia</div>
+    ${daySections}
+  </div>
+
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { alert('Ative os pop-ups no navegador para exportar o relatório.'); return; }
+  w.document.write(html);
+  w.document.close();
 }
 
 // ── PDF EXPORT ───────────────────────────────────────────
