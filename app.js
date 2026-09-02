@@ -154,7 +154,7 @@ async function updateDocNota(date, agent, docIdx, nota) {
   try { await fbUpsertEntry(entry); } catch(e) { alert('❌ Erro ao salvar nota. Verifique sua conexão.'); }
 }
 
-// ── VA DETAILS (Visita Agendada — Treino Livre) ──────────
+// ── VA DETAILS (Visita Agendada de Cliente Comprador) ────
 function buildVaDetailsHTML(count, prefill=[]) {
   if (count === 0) return '';
   const selSt = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:\'DM Sans\',sans-serif;font-size:13px;padding:8px 6px;outline:none;flex:1';
@@ -194,7 +194,7 @@ function collectVaDetails(count) {
   return d;
 }
 
-// ── VR DETAILS (Visita Realizada — Pit Stop) ─────────────
+// ── VR DETAILS (Visita Realizada) ────────────────────────
 function buildVrDetailsHTML(count, prefill=[]) {
   if (count === 0) return '';
   let html = '<div class="cpd-details-wrap">';
