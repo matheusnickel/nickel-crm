@@ -171,10 +171,10 @@ function buildVaDetailsHTML(count, prefill=[]) {
       <div class="va-label">VISITA AGENDADA ${i+1}</div>
       <span style="${lbSt}">CLIENTE OU NOME DO CORRETOR</span>
       <input class="va-nome" data-idx="${i}" type="text" placeholder="" value="${(p.nome||'').replace(/"/g,'&quot;')}" style="${inpSt}">
-      <span style="${lbSt}">CONDOMÍNIO</span>
+      <span style="${lbSt}">NOME DO CONDOMÍNIO</span>
       <input class="va-imovel" data-idx="${i}" type="text" placeholder="" value="${(p.imovel||'').replace(/"/g,'&quot;')}" style="${inpSt}">
       <span style="${lbSt}">DATA DA VISITA</span>
-      <input class="va-dataagend" data-idx="${i}" type="date" value="${p.dataAgend||''}" style="${inpSt}">
+      <input class="va-dataagend" data-idx="${i}" type="date" value="${p.dataAgend||''}" style="${inpSt};box-sizing:border-box;width:100%">
       <span style="${lbSt}">HORÁRIO</span>
       <div class="va-row">
         <select class="va-hour" data-idx="${i}" style="${selSt}"><option value="">Hora</option>${hours.replace(`value="${pH}"`,`value="${pH}" selected`)}</select>
@@ -1692,11 +1692,16 @@ function renderFotosForm(session) {
     listHTML += `</div>`;
   }
 
+  const lb = 'display:block;font-size:10px;font-weight:700;letter-spacing:.6px;color:var(--text-muted);margin-bottom:3px;margin-top:8px';
+  const fi = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;width:100%;box-sizing:border-box';
   wrap.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <input id="foto-condominio" type="text" placeholder="Condomínio / Imóvel" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;width:100%;box-sizing:border-box">
-      <input id="foto-valor" type="text" placeholder="Valor (R$)" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;width:100%;box-sizing:border-box">
-      <input id="foto-data" type="datetime-local" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;width:100%;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column">
+      <span style="${lb}">NOME DO CONDOMÍNIO</span>
+      <input id="foto-condominio" type="text" style="${fi};margin-bottom:2px">
+      <span style="${lb}">VALOR (R$)</span>
+      <input id="foto-valor" type="text" style="${fi};margin-bottom:2px">
+      <span style="${lb}">DATA DAS FOTOS</span>
+      <input id="foto-data" type="datetime-local" style="${fi};margin-bottom:12px">
       <button id="foto-salvar-btn" style="background:#6495ed;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">Agendar Fotos</button>
     </div>
     ${listHTML}
