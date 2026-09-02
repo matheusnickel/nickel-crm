@@ -1,4 +1,4 @@
-import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth, fbRenameAgent, fbMigrateToUid, fbUpdateAgentDisplayName, fbCheckForceLogout, fbListenLeads, fbSaveLead, fbUpdateLead, fbGetLeadQueue, fbSaveLeadQueue } from './firebase.js';
+import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, fbSaveTeam, fbGetOfertas, fbSaveOferta, fbDeleteOferta, fbSaveSale, fbDeleteSale, fbListenSales, fbGetVideoAuth, fbSaveVideoAuth, fbRenameAgent, fbMigrateToUid, fbUpdateAgentDisplayName, fbCheckForceLogout, fbListenLeads, fbSaveLead, fbUpdateLead, fbGetLeadQueue, fbSaveLeadQueue, fbListenFotos, fbSaveFoto, fbUpdateFoto, fbDeleteFoto } from './firebase.js';
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
@@ -82,6 +82,17 @@ const SEED = [];
 function getEntries()         { return JSON.parse(localStorage.getItem('nickel_entries')||'[]'); }
 function saveEntries(entries) { localStorage.setItem('nickel_entries', JSON.stringify(entries)); }
 
+// ── FOTOS LOCAL CACHE ─────────────────────────────────────
+function getFotos()         { return JSON.parse(localStorage.getItem('nickel_fotos')||'[]'); }
+function saveFotos(fotos)   { localStorage.setItem('nickel_fotos', JSON.stringify(fotos)); }
+function localUpsertFoto(foto) {
+  const fotos = getFotos();
+  const idx = fotos.findIndex(f => f.id === foto.id);
+  if (idx >= 0) fotos[idx] = foto; else fotos.push(foto);
+  saveFotos(fotos);
+}
+function localDeleteFoto(id) { saveFotos(getFotos().filter(f => f.id !== id)); }
+
 function localUpsert(entry) {
   const entries = getEntries();
   const idx = entries.findIndex(e => e.date===entry.date && e.agent===entry.agent);
@@ -156,7 +167,7 @@ function buildVaDetailsHTML(count, prefill=[]) {
     const p = prefill[i] || {};
     const [pH='', pMin=''] = (p.horario||'').split(':');
     html += `<div class="va-detail-item">
-      <div class="va-label">🏎️ VA ${i+1}</div>
+      <div class="va-label">VISITA AGENDADA ${i+1}</div>
       <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}">
       <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}">
       <input class="va-dataagend" data-idx="${i}" type="date" value="${p.dataAgend||''}">
@@ -1653,6 +1664,58 @@ async function initLogin() {
   });
 }
 
+// ── AGENDAMENTO DE FOTOS (agente) ────────────────────────
+function renderFotosForm(session) {
+  const wrap = document.getElementById('fotos-form-wrap');
+  if (!wrap) return;
+  const myFotos = getFotos().filter(f => f.agentUid===session.uid || f.agent===session.name).sort((a,b)=>a.data.localeCompare(b.data));
+
+  let listHTML = '';
+  if (myFotos.length) {
+    listHTML = `<div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">`;
+    myFotos.forEach(f => {
+      const d = f.data ? f.data.slice(0,10).split('-').reverse().join('/') : '—';
+      const h = f.data && f.data.length>10 ? f.data.slice(11,16) : '';
+      listHTML += `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(100,149,237,0.10);border-left:3px solid #6495ed">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">📸 ${f.condominio||'—'}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${d}${h?' às '+h:''} ${f.valor?'• R$ '+f.valor:''}</div>
+        </div>
+        <button onclick="window._deleteFoto('${f.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;padding:2px 6px">🗑</button>
+      </div>`;
+    });
+    listHTML += `</div>`;
+  }
+
+  wrap.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input id="foto-condominio" type="text" placeholder="Condomínio / Imóvel" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;width:100%;box-sizing:border-box">
+      <input id="foto-valor" type="text" placeholder="Valor (R$)" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;width:100%;box-sizing:border-box">
+      <input id="foto-data" type="datetime-local" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;width:100%;box-sizing:border-box">
+      <button id="foto-salvar-btn" style="background:#6495ed;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">Agendar Fotos</button>
+    </div>
+    ${listHTML}
+  `;
+
+  document.getElementById('foto-salvar-btn')?.addEventListener('click', async () => {
+    const cond  = document.getElementById('foto-condominio')?.value.trim();
+    const valor = document.getElementById('foto-valor')?.value.trim();
+    const data  = document.getElementById('foto-data')?.value;
+    if (!cond || !data) { alert('Preencha condomínio e data/horário.'); return; }
+    const btn = document.getElementById('foto-salvar-btn');
+    btn.disabled=true; btn.textContent='Salvando...';
+    try {
+      await fbSaveFoto({ condominio:cond, valor, data, agent:session.name, agentUid:session.uid||session.username||'' });
+    } catch(e) { alert('Erro ao salvar. Verifique conexão.'); }
+    btn.disabled=false; btn.textContent='Agendar Fotos';
+  });
+
+  window._deleteFoto = async id => {
+    if (!confirm('Excluir este agendamento de fotos?')) return;
+    try { await fbDeleteFoto(id); } catch(e) { alert('Erro ao excluir.'); }
+  };
+}
+
 // ── AGENT DASHBOARD ──────────────────────────────────────
 let agentUnsubscribe=null;
 let histExpanded=false;
@@ -1682,6 +1745,8 @@ async function initAgentDashboard() {
     renderAgentDashboard(session, dp?.value||today(), agentEditing);
   });
   fbListenSales(sales=>{ SALES=sales; renderVGVRankingAgent(); });
+  if (fotosUnsubscribeAgent) fotosUnsubscribeAgent();
+  fotosUnsubscribeAgent=fbListenFotos(fotos=>{ saveFotos(fotos); renderFotosForm(session); });
   const agentUid = session.uid || TEAM.find(a=>a.name===session.name)?.username;
   initLeads(false, agentUid);
 }
@@ -1914,7 +1979,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         { key:'cp',    label:'CQ',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
         { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',                                     color:'#a8e63d', pts:'6 pontos por DOC' },
         { key:'vid',   label:'VÍDEO',  hint:'Quantos vídeos publicou hoje? (Instagram | TikTok)',                      color:'#e879f9', pts:'+0.9 pts/unidade' },
-        { key:'va',    label:'🏎️ TREINO LIVRE — VISITA AGENDADA', hint:'Quantas visitas agendou hoje? (informe nome, telefone, imóvel e horário)', color:'#ef4444', pts:'controle interno' },
+        { key:'va',    label:'VISITA AGENDADA DE CLIENTE COMPRADOR NA MINHA CAPTAÇÃO', hint:'Quantas visitas agendou hoje? (informe nome, telefone, imóvel e horário)', color:'#ef4444', pts:'controle interno' },
       ];
       const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0 };
       let wStep = 0;
@@ -2140,6 +2205,193 @@ let SALES=[];
 let vgvPeriod='month';
 let vgvMonth=today().slice(0,7);
 
+let agendaView='week';
+let agendaNavDate=today();
+let agendaFilterAgent='';
+let agendaFilterType='';
+let fotosUnsubscribeGestor=null;
+let fotosUnsubscribeAgent=null;
+
+function getAgendaEvents() {
+  const entries = getEntries();
+  const fotos = getFotos();
+  const events = [];
+  entries.forEach(entry => {
+    if (!entry.vaDetails) return;
+    entry.vaDetails.forEach(va => {
+      if (!va.dataAgend) return;
+      events.push({
+        type: 'VISITA',
+        date: va.dataAgend,
+        horario: va.horario || '',
+        agent: entry.agent,
+        agentUid: entry.uid || '',
+        label: va.nome ? `${va.nome} — ${va.imovel||''}` : (va.imovel || ''),
+        imovel: va.imovel || '',
+        nome: va.nome || '',
+        realizada: va.realizada || false,
+        entryDate: entry.date,
+      });
+    });
+  });
+  fotos.forEach(f => {
+    if (!f.data) return;
+    events.push({
+      type: 'FOTOS',
+      date: f.data.slice(0,10),
+      horario: f.data.length > 10 ? f.data.slice(11,16) : '',
+      agent: f.agent || '',
+      agentUid: f.agentUid || '',
+      label: f.condominio || '',
+      condominio: f.condominio || '',
+      valor: f.valor || '',
+      id: f.id,
+    });
+  });
+  return events;
+}
+
+function renderAgenda() {
+  const wrap = document.getElementById('agenda-wrap');
+  if (!wrap) return;
+
+  const events = getAgendaEvents();
+  const allAgents = [...new Set(events.map(e => e.agent).filter(Boolean))].sort();
+
+  const filtered = events.filter(e => {
+    if (agendaFilterAgent && e.agent !== agendaFilterAgent) return false;
+    if (agendaFilterType && e.type !== agendaFilterType) return false;
+    return true;
+  });
+
+  function getWeekDates(ref) {
+    const d = new Date(ref + 'T12:00:00');
+    const day = d.getDay();
+    const mon = new Date(d); mon.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+    return Array.from({length:7}, (_,i) => { const x=new Date(mon); x.setDate(mon.getDate()+i); return x.toISOString().slice(0,10); });
+  }
+  function getMonthDates(ref) {
+    const [y,m] = ref.slice(0,7).split('-').map(Number);
+    const first = new Date(y,m-1,1);
+    const last  = new Date(y,m,0);
+    const dates = [];
+    for (let d=1; d<=last.getDate(); d++) dates.push(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+    return dates;
+  }
+  function fmtDate(d) {
+    const [y,m,day] = d.split('-');
+    return `${day}/${m}`;
+  }
+  function fmtMonth(d) {
+    const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const [y,m] = d.split('-');
+    return `${months[+m-1]} ${y}`;
+  }
+
+  const typeColor = { VISITA:'#ef4444', FOTOS:'#6495ed' };
+  const typeBg    = { VISITA:'rgba(239,68,68,0.12)', FOTOS:'rgba(100,149,237,0.12)' };
+
+  let calHTML = '';
+  if (agendaView === 'day') {
+    const dayEvents = filtered.filter(e => e.date === agendaNavDate).sort((a,b)=>(a.horario||'').localeCompare(b.horario||''));
+    calHTML = `<div style="padding:8px 0">`;
+    if (!dayEvents.length) calHTML += `<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px">Nenhum evento neste dia.</div>`;
+    dayEvents.forEach(ev => {
+      calHTML += `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-radius:8px;margin-bottom:6px;background:${typeBg[ev.type]};border-left:3px solid ${typeColor[ev.type]}">
+        <div style="min-width:42px;font-size:12px;font-weight:700;color:${typeColor[ev.type]}">${ev.horario||'--:--'}</div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:${typeColor[ev.type]}">${ev.type}</div>
+          <div style="font-size:13px;color:var(--text)">${ev.label}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${ev.agent}</div>
+        </div>
+      </div>`;
+    });
+    calHTML += `</div>`;
+  } else if (agendaView === 'week') {
+    const weekDates = getWeekDates(agendaNavDate);
+    const dayNames = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+    calHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">`;
+    weekDates.forEach((date, idx) => {
+      const dayEvs = filtered.filter(e => e.date === date).sort((a,b)=>(a.horario||'').localeCompare(b.horario||''));
+      const isToday = date === today();
+      calHTML += `<div style="min-height:80px;border-radius:8px;background:var(--bg3);padding:4px">
+        <div style="font-size:11px;font-weight:700;color:${isToday?'#6495ed':'var(--text-muted)'};text-align:center;margin-bottom:4px">${dayNames[idx]}<br>${fmtDate(date)}</div>`;
+      dayEvs.forEach(ev => {
+        calHTML += `<div style="font-size:10px;border-radius:4px;padding:2px 4px;margin-bottom:2px;background:${typeBg[ev.type]};border-left:2px solid ${typeColor[ev.type]};overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${ev.agent}: ${ev.label}">
+          <span style="color:${typeColor[ev.type]};font-weight:700">${ev.type.slice(0,1)}</span> ${ev.horario||''} ${ev.label||ev.agent}
+        </div>`;
+      });
+      calHTML += `</div>`;
+    });
+    calHTML += `</div>`;
+  } else {
+    const monthDates = getMonthDates(agendaNavDate);
+    const firstDay = new Date(agendaNavDate.slice(0,7)+'-01T12:00:00').getDay();
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+    calHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">`;
+    ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].forEach(d => {
+      calHTML += `<div style="font-size:11px;font-weight:700;color:var(--text-muted);text-align:center;padding:2px">${d}</div>`;
+    });
+    for (let i=0;i<offset;i++) calHTML += `<div></div>`;
+    monthDates.forEach(date => {
+      const dayEvs = filtered.filter(e => e.date === date);
+      const isToday = date === today();
+      calHTML += `<div style="min-height:40px;border-radius:6px;background:var(--bg3);padding:2px;cursor:pointer" onclick="window._agendaClickDay('${date}')">
+        <div style="font-size:11px;font-weight:700;color:${isToday?'#6495ed':'var(--text)'};text-align:center">${date.slice(8)}</div>
+        ${dayEvs.slice(0,2).map(ev=>`<div style="font-size:9px;border-radius:3px;padding:1px 3px;margin:1px 0;background:${typeBg[ev.type]};color:${typeColor[ev.type]};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ev.type.slice(0,1)} ${ev.label||ev.agent}</div>`).join('')}
+        ${dayEvs.length>2?`<div style="font-size:9px;color:var(--text-muted)">+${dayEvs.length-2}</div>`:''}
+      </div>`;
+    });
+    calHTML += `</div>`;
+  }
+
+  function navLabel() {
+    if (agendaView==='day') return agendaNavDate.split('-').reverse().join('/');
+    if (agendaView==='week') { const w=getWeekDates(agendaNavDate); return `${fmtDate(w[0])} – ${fmtDate(w[6])}`; }
+    return fmtMonth(agendaNavDate);
+  }
+
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div style="font-size:15px;font-weight:700;color:var(--text)">📅 Agenda da Equipe</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <select id="agenda-filter-agent" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:4px 8px">
+          <option value="">Todos</option>
+          ${allAgents.map(a=>`<option value="${a}" ${agendaFilterAgent===a?'selected':''}>${a}</option>`).join('')}
+        </select>
+        <select id="agenda-filter-type" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:4px 8px">
+          <option value="">Todos tipos</option>
+          <option value="VISITA" ${agendaFilterType==='VISITA'?'selected':''}>VISITA</option>
+          <option value="FOTOS"  ${agendaFilterType==='FOTOS'?'selected':''}>FOTOS</option>
+        </select>
+        <div style="display:flex;gap:4px">
+          ${['day','week','month'].map(v=>`<button onclick="window._agendaSetView('${v}')" style="padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;background:${agendaView===v?'#6495ed':'var(--bg3)'};color:${agendaView===v?'#fff':'var(--text)'}">${v==='day'?'Dia':v==='week'?'Semana':'Mês'}</button>`).join('')}
+        </div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <button onclick="window._agendaNav(-1)" style="padding:4px 10px;border-radius:6px;border:none;background:var(--bg3);color:var(--text);cursor:pointer;font-size:14px">‹</button>
+          <span style="font-size:12px;color:var(--text);min-width:90px;text-align:center">${navLabel()}</span>
+          <button onclick="window._agendaNav(1)" style="padding:4px 10px;border-radius:6px;border:none;background:var(--bg3);color:var(--text);cursor:pointer;font-size:14px">›</button>
+        </div>
+      </div>
+    </div>
+    ${calHTML}
+  `;
+
+  document.getElementById('agenda-filter-agent')?.addEventListener('change', e => { agendaFilterAgent=e.target.value; renderAgenda(); });
+  document.getElementById('agenda-filter-type')?.addEventListener('change', e => { agendaFilterType=e.target.value; renderAgenda(); });
+
+  window._agendaSetView = v => { agendaView=v; renderAgenda(); };
+  window._agendaNav = dir => {
+    const d = new Date(agendaNavDate+'T12:00:00');
+    if (agendaView==='day')   d.setDate(d.getDate()+dir);
+    else if (agendaView==='week') d.setDate(d.getDate()+dir*7);
+    else { d.setMonth(d.getMonth()+dir); }
+    agendaNavDate=d.toISOString().slice(0,10);
+    renderAgenda();
+  };
+  window._agendaClickDay = date => { agendaNavDate=date; agendaView='day'; renderAgenda(); };
+}
+
 async function initGestorDashboard() {
   const session=getSession();
   if (!session||session.role!=='gestor') { window.location.href='index.html'; return; }
@@ -2217,7 +2469,10 @@ async function initGestorDashboard() {
     renderTimeline();
     renderNotasRanking();
     renderVGVRanking();
+    renderAgenda();
   });
+  if (fotosUnsubscribeGestor) fotosUnsubscribeGestor();
+  fotosUnsubscribeGestor=fbListenFotos(fotos=>{ saveFotos(fotos); renderAgenda(); });
   salesUnsubscribe=fbListenSales(sales=>{
     SALES=sales;
     renderGestorDashboard();

@@ -63,6 +63,16 @@
         <div id="form-wrap"></div>
       </div>
 
+      <!-- Agendamento de Fotos -->
+      <div class="card collapsible-card" id="fotos-card">
+        <button class="card-title card-toggle" data-target="fotos-body">
+          📸 Agendar Fotos <span class="toggle-arrow">▸</span>
+        </button>
+        <div class="card-body" id="fotos-body" style="display:none">
+          <div id="fotos-form-wrap"></div>
+        </div>
+      </div>
+
       <!-- Histórico de lançamentos -->
       <div class="card">
         <div class="card-title">📅 Últimos lançamentos</div>
@@ -125,5 +135,17 @@
   </main>
 
   <script type="module" src="app.js"></script>
+  <script>
+    document.addEventListener('click', e => {
+      const btn = e.target.closest('.card-toggle');
+      if (!btn) return;
+      const body = document.getElementById(btn.dataset.target);
+      if (!body) return;
+      const card = btn.closest('.collapsible-card');
+      const open = body.style.display === 'none';
+      body.style.display = open ? 'block' : 'none';
+      if (card) card.classList.toggle('open', open);
+    });
+  </script>
 </body>
 </html>

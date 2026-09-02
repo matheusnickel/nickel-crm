@@ -193,6 +193,25 @@ export async function fbClearForceLogout() {
   await setDoc(doc(db, '_meta', 'forceLogout'), { active: false });
 }
 
+// ── FOTOS (agendamentos de fotos) ───────────────────────
+export async function fbSaveFoto(foto) {
+  const ref = doc(collection(db, 'fotos'));
+  await setDoc(ref, { ...foto, id: ref.id });
+  return ref.id;
+}
+export async function fbUpdateFoto(id, fields) {
+  const { updateDoc: upd } = await import('https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js');
+  await upd(doc(db, 'fotos', id), fields);
+}
+export async function fbDeleteFoto(id) {
+  await deleteDoc(doc(db, 'fotos', id));
+}
+export function fbListenFotos(callback) {
+  return onSnapshot(collection(db, 'fotos'), snap => {
+    callback(snap.docs.map(d => d.data()));
+  });
+}
+
 // ── VENDAS ──────────────────────────────────────────────
 export async function fbSaveSale(sale) {
   await addDoc(collection(db, 'sales'), sale);
