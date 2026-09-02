@@ -166,14 +166,19 @@ function buildVaDetailsHTML(count, prefill=[]) {
   for (let i = 0; i < count; i++) {
     const p = prefill[i] || {};
     const [pH='', pMin=''] = (p.horario||'').split(':');
+    const lbSt = 'font-size:10px;font-weight:700;letter-spacing:.6px;color:var(--text-muted);margin-bottom:3px;margin-top:8px;display:block';
     html += `<div class="va-detail-item">
       <div class="va-label">VISITA AGENDADA ${i+1}</div>
-      <input class="va-nome" data-idx="${i}" type="text" placeholder="Nome do cliente" value="${(p.nome||'').replace(/"/g,'&quot;')}">
-      <input class="va-imovel" data-idx="${i}" type="text" placeholder="Imóvel (endereço/ref)" value="${(p.imovel||'').replace(/"/g,'&quot;')}">
-      <input class="va-dataagend" data-idx="${i}" type="date" value="${p.dataAgend||''}">
+      <span style="${lbSt}">CLIENTE OU NOME DO CORRETOR</span>
+      <input class="va-nome" data-idx="${i}" type="text" placeholder="" value="${(p.nome||'').replace(/"/g,'&quot;')}" style="${inpSt}">
+      <span style="${lbSt}">CONDOMÍNIO</span>
+      <input class="va-imovel" data-idx="${i}" type="text" placeholder="" value="${(p.imovel||'').replace(/"/g,'&quot;')}" style="${inpSt}">
+      <span style="${lbSt}">DATA DA VISITA</span>
+      <input class="va-dataagend" data-idx="${i}" type="date" value="${p.dataAgend||''}" style="${inpSt}">
+      <span style="${lbSt}">HORÁRIO</span>
       <div class="va-row">
-        <select class="va-hour" data-idx="${i}"><option value="">Hora</option>${hours.replace(`value="${pH}"`,`value="${pH}" selected`)}</select>
-        <select class="va-min" data-idx="${i}"><option value="">Min</option>${mins.replace(`value="${pMin}"`,`value="${pMin}" selected`)}</select>
+        <select class="va-hour" data-idx="${i}" style="${selSt}"><option value="">Hora</option>${hours.replace(`value="${pH}"`,`value="${pH}" selected`)}</select>
+        <select class="va-min" data-idx="${i}" style="${selSt}"><option value="">Min</option>${mins.replace(`value="${pMin}"`,`value="${pMin}" selected`)}</select>
       </div>
     </div>`;
   }
@@ -2266,14 +2271,14 @@ window.openAgendaEditModal = function openAgendaEditModal(ev) {
   let fields = '';
   if (isVisita) {
     fields = `
-      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">NOME DO CLIENTE</label>
-      <input id="aedit-nome"     type="text"  value="${(ev.nome||'').replace(/"/g,'&quot;')}" style="${inp('margin-bottom:10px')}">
-      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">IMÓVEL</label>
-      <input id="aedit-imovel"   type="text"  value="${(ev.imovel||'').replace(/"/g,'&quot;')}" style="${inp('margin-bottom:10px')}">
-      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">DATA DA VISITA</label>
-      <input id="aedit-data"     type="date"  value="${ev.date||''}" style="${inp('margin-bottom:10px')}">
-      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">HORÁRIO</label>
-      <input id="aedit-horario"  type="time"  value="${ev.horario||''}" style="${inp('margin-bottom:16px')}">
+      <label style="font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:.5px">CLIENTE OU NOME DO CORRETOR</label>
+      <input id="aedit-nome"     type="text"  value="${(ev.nome||'').replace(/"/g,'&quot;')}" style="${inp('margin-bottom:12px')}">
+      <label style="font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:.5px">CONDOMÍNIO</label>
+      <input id="aedit-imovel"   type="text"  value="${(ev.imovel||'').replace(/"/g,'&quot;')}" style="${inp('margin-bottom:12px')}">
+      <label style="font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:.5px">DATA DA VISITA</label>
+      <input id="aedit-data"     type="date"  value="${ev.date||''}" style="${inp('margin-bottom:12px')}">
+      <label style="font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:.5px">HORÁRIO</label>
+      <input id="aedit-horario"  type="time"  value="${ev.horario||''}" style="${inp('margin-bottom:18px')}">
     `;
   } else {
     fields = `
