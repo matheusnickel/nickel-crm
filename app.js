@@ -2250,6 +2250,114 @@ function getAgendaEvents() {
   return events;
 }
 
+window.openAgendaEditModal = function openAgendaEditModal(ev) {
+  const existing = document.getElementById('agenda-edit-modal');
+  if (existing) existing.remove();
+
+  const isVisita = ev.type === 'VISITA';
+  const isFoto   = ev.type === 'FOTOS';
+
+  const modal = document.createElement('div');
+  modal.id = 'agenda-edit-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);padding:16px';
+
+  const inp = s => `background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;width:100%;box-sizing:border-box;${s||''}`;
+
+  let fields = '';
+  if (isVisita) {
+    fields = `
+      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">NOME DO CLIENTE</label>
+      <input id="aedit-nome"     type="text"  value="${(ev.nome||'').replace(/"/g,'&quot;')}" style="${inp('margin-bottom:10px')}">
+      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">IMÓVEL</label>
+      <input id="aedit-imovel"   type="text"  value="${(ev.imovel||'').replace(/"/g,'&quot;')}" style="${inp('margin-bottom:10px')}">
+      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">DATA DA VISITA</label>
+      <input id="aedit-data"     type="date"  value="${ev.date||''}" style="${inp('margin-bottom:10px')}">
+      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">HORÁRIO</label>
+      <input id="aedit-horario"  type="time"  value="${ev.horario||''}" style="${inp('margin-bottom:16px')}">
+    `;
+  } else {
+    fields = `
+      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">CONDOMÍNIO / IMÓVEL</label>
+      <input id="aedit-cond"   type="text"          value="${(ev.condominio||'').replace(/"/g,'&quot;')}" style="${inp('margin-bottom:10px')}">
+      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">VALOR (R$)</label>
+      <input id="aedit-valor"  type="text"          value="${(ev.valor||'').replace(/"/g,'&quot;')}" style="${inp('margin-bottom:10px')}">
+      <label style="font-size:11px;color:var(--text-muted);font-weight:600;letter-spacing:.4px">DATA E HORÁRIO</label>
+      <input id="aedit-dt"     type="datetime-local" value="${ev.date&&ev.horario?ev.date+'T'+ev.horario:(ev.date||'')+'T00:00'}" style="${inp('margin-bottom:16px')}">
+    `;
+  }
+
+  modal.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:800;color:${isVisita?'#ef4444':'#6495ed'};letter-spacing:.5px">${ev.type} — ${ev.agent}</div>
+        <button id="aedit-close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;line-height:1;padding:0">×</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">${fields}</div>
+      <div style="display:flex;gap:8px">
+        <button id="aedit-save" style="flex:1;background:#22c55e;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">Salvar</button>
+        <button id="aedit-del"  style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer">Excluir</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.getElementById('aedit-close').addEventListener('click', () => modal.remove());
+
+  document.getElementById('aedit-save').addEventListener('click', async () => {
+    const btn = document.getElementById('aedit-save');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    try {
+      if (isVisita) {
+        const entries = getEntries();
+        const entry = entries.find(e => e.date === ev.entryDate && (e.agent === ev.agent || e.uid === ev.agentUid));
+        if (!entry) { alert('Entrada não encontrada.'); btn.disabled=false; btn.textContent='Salvar'; return; }
+        const vaIdx = entry.vaDetails.findIndex(v =>
+          v.dataAgend === ev.date && v.nome === ev.nome && v.imovel === ev.imovel
+        );
+        if (vaIdx < 0) { alert('Visita não encontrada.'); btn.disabled=false; btn.textContent='Salvar'; return; }
+        entry.vaDetails[vaIdx] = {
+          ...entry.vaDetails[vaIdx],
+          nome:      document.getElementById('aedit-nome').value.trim(),
+          imovel:    document.getElementById('aedit-imovel').value.trim(),
+          dataAgend: document.getElementById('aedit-data').value,
+          horario:   document.getElementById('aedit-horario').value,
+        };
+        localUpsert(entry);
+        await fbUpsertEntry(entry);
+      } else {
+        const dt = document.getElementById('aedit-dt').value;
+        await fbUpdateFoto(ev.id, {
+          condominio: document.getElementById('aedit-cond').value.trim(),
+          valor:      document.getElementById('aedit-valor').value.trim(),
+          data:       dt,
+        });
+      }
+      modal.remove();
+    } catch(e) { alert('Erro ao salvar. Verifique conexão.'); btn.disabled=false; btn.textContent='Salvar'; }
+  });
+
+  document.getElementById('aedit-del').addEventListener('click', async () => {
+    if (!confirm('Excluir este evento?')) return;
+    try {
+      if (isVisita) {
+        const entries = getEntries();
+        const entry = entries.find(e => e.date === ev.entryDate && (e.agent === ev.agent || e.uid === ev.agentUid));
+        if (!entry) { modal.remove(); return; }
+        entry.vaDetails = entry.vaDetails.filter(v =>
+          !(v.dataAgend === ev.date && v.nome === ev.nome && v.imovel === ev.imovel)
+        );
+        entry.va = entry.vaDetails.length;
+        localUpsert(entry);
+        await fbUpsertEntry(entry);
+      } else {
+        await fbDeleteFoto(ev.id);
+      }
+      modal.remove();
+    } catch(e) { alert('Erro ao excluir. Verifique conexão.'); }
+  });
+};
+
 function renderAgenda() {
   const wrap = document.getElementById('agenda-wrap');
   if (!wrap) return;
@@ -2286,12 +2394,18 @@ function renderAgenda() {
   const TB = { VISITA:'rgba(239,68,68,0.13)', FOTOS:'rgba(100,149,237,0.13)' };
   const TL = { VISITA:'V', FOTOS:'F' };
 
+  const evKey = ev => `_aev_${ev.type}_${ev.date}_${ev.agent}_${ev.nome||ev.condominio||''}`.replace(/\W/g,'_');
+  window._agendaEvMap = window._agendaEvMap || {};
+
   function evPill(ev, full=false) {
     const time = ev.horario || '';
     const name = (ev.label || ev.agent || '').split('—')[0].trim();
     const agent = ev.agent ? ev.agent.split(' ')[0] : '';
+    const key = evKey(ev);
+    window._agendaEvMap[key] = ev;
+    const clickAttr = `onclick="openAgendaEditModal(window._agendaEvMap['${key}'])"`;
     if (full) {
-      return `<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-radius:10px;margin-bottom:8px;background:${TB[ev.type]};border-left:3px solid ${TC[ev.type]}">
+      return `<div ${clickAttr} style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-radius:10px;margin-bottom:8px;background:${TB[ev.type]};border-left:3px solid ${TC[ev.type]};cursor:pointer;transition:opacity .15s" onmouseenter="this.style.opacity='.8'" onmouseleave="this.style.opacity='1'">
         <div style="display:flex;flex-direction:column;align-items:center;min-width:36px">
           <span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:${TC[ev.type]}">${ev.type}</span>
           <span style="font-size:15px;font-weight:700;color:var(--text);line-height:1.2">${time||'—'}</span>
@@ -2300,9 +2414,10 @@ function renderAgenda() {
           <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ev.label||'—'}</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${ev.agent}</div>
         </div>
+        <span style="font-size:11px;color:var(--text-muted);flex-shrink:0">✏️</span>
       </div>`;
     }
-    return `<div style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:6px;margin-bottom:3px;background:${TB[ev.type]};border-left:2px solid ${TC[ev.type]};overflow:hidden;cursor:default" title="${ev.agent}: ${ev.label||''} ${time}">
+    return `<div ${clickAttr} style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:6px;margin-bottom:3px;background:${TB[ev.type]};border-left:2px solid ${TC[ev.type]};overflow:hidden;cursor:pointer" title="Clique para editar — ${ev.agent}: ${ev.label||''} ${time}">
       <span style="font-size:9px;font-weight:800;color:${TC[ev.type]};flex-shrink:0">${TL[ev.type]}</span>
       ${time?`<span style="font-size:10px;font-weight:700;color:var(--text);flex-shrink:0">${time}</span>`:''}
       <span style="font-size:10px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">${name||agent}</span>
