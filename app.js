@@ -2271,74 +2271,95 @@ function renderAgenda() {
   }
   function getMonthDates(ref) {
     const [y,m] = ref.slice(0,7).split('-').map(Number);
-    const first = new Date(y,m-1,1);
-    const last  = new Date(y,m,0);
+    const last = new Date(y,m,0);
     const dates = [];
     for (let d=1; d<=last.getDate(); d++) dates.push(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
     return dates;
   }
-  function fmtDate(d) {
-    const [y,m,day] = d.split('-');
-    return `${day}/${m}`;
-  }
+  function fmtDate(d) { const [,m,day]=d.split('-'); return `${day}/${m}`; }
   function fmtMonth(d) {
-    const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    const [y,m] = d.split('-');
-    return `${months[+m-1]} ${y}`;
+    const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const [y,m]=d.split('-'); return `${months[+m-1]} ${y}`;
   }
 
-  const typeColor = { VISITA:'#ef4444', FOTOS:'#6495ed' };
-  const typeBg    = { VISITA:'rgba(239,68,68,0.12)', FOTOS:'rgba(100,149,237,0.12)' };
+  const TC = { VISITA:'#ef4444', FOTOS:'#6495ed' };
+  const TB = { VISITA:'rgba(239,68,68,0.13)', FOTOS:'rgba(100,149,237,0.13)' };
+  const TL = { VISITA:'V', FOTOS:'F' };
 
-  let calHTML = '';
-  if (agendaView === 'day') {
-    const dayEvents = filtered.filter(e => e.date === agendaNavDate).sort((a,b)=>(a.horario||'').localeCompare(b.horario||''));
-    calHTML = `<div style="padding:8px 0">`;
-    if (!dayEvents.length) calHTML += `<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:16px">Nenhum evento neste dia.</div>`;
-    dayEvents.forEach(ev => {
-      calHTML += `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-radius:8px;margin-bottom:6px;background:${typeBg[ev.type]};border-left:3px solid ${typeColor[ev.type]}">
-        <div style="min-width:42px;font-size:12px;font-weight:700;color:${typeColor[ev.type]}">${ev.horario||'--:--'}</div>
-        <div>
-          <div style="font-size:12px;font-weight:700;color:${typeColor[ev.type]}">${ev.type}</div>
-          <div style="font-size:13px;color:var(--text)">${ev.label}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${ev.agent}</div>
+  function evPill(ev, full=false) {
+    const time = ev.horario || '';
+    const name = (ev.label || ev.agent || '').split('—')[0].trim();
+    const agent = ev.agent ? ev.agent.split(' ')[0] : '';
+    if (full) {
+      return `<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-radius:10px;margin-bottom:8px;background:${TB[ev.type]};border-left:3px solid ${TC[ev.type]}">
+        <div style="display:flex;flex-direction:column;align-items:center;min-width:36px">
+          <span style="font-size:10px;font-weight:800;letter-spacing:.5px;color:${TC[ev.type]}">${ev.type}</span>
+          <span style="font-size:15px;font-weight:700;color:var(--text);line-height:1.2">${time||'—'}</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ev.label||'—'}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${ev.agent}</div>
         </div>
       </div>`;
-    });
+    }
+    return `<div style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:6px;margin-bottom:3px;background:${TB[ev.type]};border-left:2px solid ${TC[ev.type]};overflow:hidden;cursor:default" title="${ev.agent}: ${ev.label||''} ${time}">
+      <span style="font-size:9px;font-weight:800;color:${TC[ev.type]};flex-shrink:0">${TL[ev.type]}</span>
+      ${time?`<span style="font-size:10px;font-weight:700;color:var(--text);flex-shrink:0">${time}</span>`:''}
+      <span style="font-size:10px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">${name||agent}</span>
+    </div>`;
+  }
+
+  let calHTML = '';
+
+  if (agendaView === 'day') {
+    const dayEvents = filtered.filter(e => e.date === agendaNavDate).sort((a,b)=>(a.horario||'99').localeCompare(b.horario||'99'));
+    calHTML = `<div style="padding:4px 0">`;
+    if (!dayEvents.length) {
+      calHTML += `<div style="text-align:center;padding:32px 0;color:var(--text-muted);font-size:13px">Nenhum evento neste dia.</div>`;
+    } else {
+      dayEvents.forEach(ev => { calHTML += evPill(ev, true); });
+    }
     calHTML += `</div>`;
+
   } else if (agendaView === 'week') {
     const weekDates = getWeekDates(agendaNavDate);
     const dayNames = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
-    calHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">`;
+    const MAX_VISIBLE = 4;
+    calHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">`;
     weekDates.forEach((date, idx) => {
-      const dayEvs = filtered.filter(e => e.date === date).sort((a,b)=>(a.horario||'').localeCompare(b.horario||''));
+      const dayEvs = filtered.filter(e => e.date === date).sort((a,b)=>(a.horario||'99').localeCompare(b.horario||'99'));
       const isToday = date === today();
-      calHTML += `<div style="min-height:80px;border-radius:8px;background:var(--bg3);padding:4px">
-        <div style="font-size:11px;font-weight:700;color:${isToday?'#6495ed':'var(--text-muted)'};text-align:center;margin-bottom:4px">${dayNames[idx]}<br>${fmtDate(date)}</div>`;
-      dayEvs.forEach(ev => {
-        calHTML += `<div style="font-size:10px;border-radius:4px;padding:2px 4px;margin-bottom:2px;background:${typeBg[ev.type]};border-left:2px solid ${typeColor[ev.type]};overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${ev.agent}: ${ev.label}">
-          <span style="color:${typeColor[ev.type]};font-weight:700">${ev.type.slice(0,1)}</span> ${ev.horario||''} ${ev.label||ev.agent}
+      const isPast  = date < today();
+      calHTML += `<div style="border-radius:10px;background:${isToday?'rgba(100,149,237,0.06)':'var(--bg3)'};border:1px solid ${isToday?'rgba(100,149,237,0.35)':'var(--border)'};padding:8px 6px;min-height:90px">
+        <div style="text-align:center;margin-bottom:6px">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.5px;color:${isToday?'#6495ed':isPast?'var(--text-muted)':'var(--text-muted)'};text-transform:uppercase">${dayNames[idx]}</div>
+          <div style="font-size:${isToday?'18':'15'}px;font-weight:${isToday?'800':'600'};color:${isToday?'#6495ed':isPast?'var(--text-muted)':'var(--text)'};line-height:1.1">${date.slice(8)}</div>
         </div>`;
-      });
+      dayEvs.slice(0, MAX_VISIBLE).forEach(ev => { calHTML += evPill(ev); });
+      if (dayEvs.length > MAX_VISIBLE) {
+        calHTML += `<div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:2px;cursor:pointer" onclick="window._agendaClickDay('${date}')">+${dayEvs.length-MAX_VISIBLE} mais</div>`;
+      }
       calHTML += `</div>`;
     });
     calHTML += `</div>`;
+
   } else {
     const monthDates = getMonthDates(agendaNavDate);
     const firstDay = new Date(agendaNavDate.slice(0,7)+'-01T12:00:00').getDay();
     const offset = firstDay === 0 ? 6 : firstDay - 1;
-    calHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">`;
+    calHTML = `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
     ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].forEach(d => {
-      calHTML += `<div style="font-size:11px;font-weight:700;color:var(--text-muted);text-align:center;padding:2px">${d}</div>`;
+      calHTML += `<div style="font-size:10px;font-weight:700;color:var(--text-muted);text-align:center;padding:4px 0;letter-spacing:.5px;text-transform:uppercase">${d}</div>`;
     });
     for (let i=0;i<offset;i++) calHTML += `<div></div>`;
     monthDates.forEach(date => {
       const dayEvs = filtered.filter(e => e.date === date);
       const isToday = date === today();
-      calHTML += `<div style="min-height:40px;border-radius:6px;background:var(--bg3);padding:2px;cursor:pointer" onclick="window._agendaClickDay('${date}')">
-        <div style="font-size:11px;font-weight:700;color:${isToday?'#6495ed':'var(--text)'};text-align:center">${date.slice(8)}</div>
-        ${dayEvs.slice(0,2).map(ev=>`<div style="font-size:9px;border-radius:3px;padding:1px 3px;margin:1px 0;background:${typeBg[ev.type]};color:${typeColor[ev.type]};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ev.type.slice(0,1)} ${ev.label||ev.agent}</div>`).join('')}
-        ${dayEvs.length>2?`<div style="font-size:9px;color:var(--text-muted)">+${dayEvs.length-2}</div>`:''}
+      const isPast  = date < today();
+      calHTML += `<div style="min-height:52px;border-radius:8px;background:${isToday?'rgba(100,149,237,0.08)':'var(--bg3)'};border:1px solid ${isToday?'rgba(100,149,237,0.35)':'transparent'};padding:4px;cursor:pointer" onclick="window._agendaClickDay('${date}')">
+        <div style="font-size:11px;font-weight:${isToday?'800':'500'};color:${isToday?'#6495ed':isPast?'var(--text-muted)':'var(--text)'};text-align:center;margin-bottom:2px">${date.slice(8)}</div>
+        ${dayEvs.slice(0,2).map(ev=>`<div style="font-size:9px;border-radius:4px;padding:1px 4px;margin-bottom:2px;background:${TB[ev.type]};color:${TC[ev.type]};font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${TL[ev.type]} ${ev.horario||''} ${(ev.label||ev.agent||'').split('—')[0].trim()}</div>`).join('')}
+        ${dayEvs.length>2?`<div style="font-size:9px;color:var(--text-muted);text-align:center">+${dayEvs.length-2}</div>`:''}
       </div>`;
     });
     calHTML += `</div>`;
@@ -2350,26 +2371,31 @@ function renderAgenda() {
     return fmtMonth(agendaNavDate);
   }
 
+  const viewBtn = v => `<button onclick="window._agendaSetView('${v}')" style="padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:background .15s;background:${agendaView===v?'#6495ed':'transparent'};color:${agendaView===v?'#fff':'var(--text-muted)'}">${v==='day'?'Dia':v==='week'?'Semana':'Mês'}</button>`;
+
   wrap.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-      <div style="font-size:15px;font-weight:700;color:var(--text)">📅 Agenda da Equipe</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-        <select id="agenda-filter-agent" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:4px 8px">
-          <option value="">Todos</option>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px">
+        📅 Agenda da Equipe
+        ${filtered.length?`<span style="font-size:11px;font-weight:600;background:rgba(100,149,237,0.15);color:#6495ed;border-radius:20px;padding:2px 8px">${filtered.length} evento${filtered.length!==1?'s':''}</span>`:''}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="agenda-filter-agent" style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;padding:5px 10px;outline:none">
+          <option value="">Todos angariadores</option>
           ${allAgents.map(a=>`<option value="${a}" ${agendaFilterAgent===a?'selected':''}>${a}</option>`).join('')}
         </select>
-        <select id="agenda-filter-type" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:4px 8px">
+        <select id="agenda-filter-type" style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;padding:5px 10px;outline:none">
           <option value="">Todos tipos</option>
-          <option value="VISITA" ${agendaFilterType==='VISITA'?'selected':''}>VISITA</option>
-          <option value="FOTOS"  ${agendaFilterType==='FOTOS'?'selected':''}>FOTOS</option>
+          <option value="VISITA" ${agendaFilterType==='VISITA'?'selected':''}>Visitas</option>
+          <option value="FOTOS"  ${agendaFilterType==='FOTOS'?'selected':''}>Fotos</option>
         </select>
-        <div style="display:flex;gap:4px">
-          ${['day','week','month'].map(v=>`<button onclick="window._agendaSetView('${v}')" style="padding:4px 10px;border-radius:6px;border:none;cursor:pointer;font-size:12px;background:${agendaView===v?'#6495ed':'var(--bg3)'};color:${agendaView===v?'#fff':'var(--text)'}">${v==='day'?'Dia':v==='week'?'Semana':'Mês'}</button>`).join('')}
+        <div style="display:flex;background:var(--bg3);border-radius:7px;padding:3px;gap:2px">
+          ${['day','week','month'].map(viewBtn).join('')}
         </div>
-        <div style="display:flex;gap:4px;align-items:center">
-          <button onclick="window._agendaNav(-1)" style="padding:4px 10px;border-radius:6px;border:none;background:var(--bg3);color:var(--text);cursor:pointer;font-size:14px">‹</button>
-          <span style="font-size:12px;color:var(--text);min-width:90px;text-align:center">${navLabel()}</span>
-          <button onclick="window._agendaNav(1)" style="padding:4px 10px;border-radius:6px;border:none;background:var(--bg3);color:var(--text);cursor:pointer;font-size:14px">›</button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="window._agendaNav(-1)" style="width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;line-height:1">‹</button>
+          <span style="font-size:12px;font-weight:600;color:var(--text);min-width:100px;text-align:center">${navLabel()}</span>
+          <button onclick="window._agendaNav(1)" style="width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:var(--text);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;line-height:1">›</button>
         </div>
       </div>
     </div>
@@ -2382,9 +2408,9 @@ function renderAgenda() {
   window._agendaSetView = v => { agendaView=v; renderAgenda(); };
   window._agendaNav = dir => {
     const d = new Date(agendaNavDate+'T12:00:00');
-    if (agendaView==='day')   d.setDate(d.getDate()+dir);
-    else if (agendaView==='week') d.setDate(d.getDate()+dir*7);
-    else { d.setMonth(d.getMonth()+dir); }
+    if (agendaView==='day')        d.setDate(d.getDate()+dir);
+    else if (agendaView==='week')  d.setDate(d.getDate()+dir*7);
+    else                           d.setMonth(d.getMonth()+dir);
     agendaNavDate=d.toISOString().slice(0,10);
     renderAgenda();
   };
