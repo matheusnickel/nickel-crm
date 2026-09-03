@@ -183,39 +183,20 @@ function openEditModal(ev = null) {
   const existing = document.getElementById('ag-modal');
   if (existing) existing.remove();
 
-  const isNew = !ev;
-  const inpSt = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 11px;outline:none;width:100%;box-sizing:border-box';
-  const lbSt  = 'display:block;font-size:10px;font-weight:700;letter-spacing:.6px;color:var(--text-muted);margin-bottom:3px;margin-top:10px';
-  const selSt = `${inpSt};cursor:pointer`;
+  const isNew   = !ev;
+  const canEdit = session.role === 'gestor' || isNew || ev?.agentUid === session.uid;
+  const INP = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 11px;outline:none;width:100%;box-sizing:border-box;font-family:inherit';
+  const LB  = 'display:block;font-size:10px;font-weight:700;letter-spacing:.6px;color:var(--text-muted);margin-bottom:3px;margin-top:10px';
+  const semCond = ['reuniao','treinamento'];
+  const currentTipo = ev?.tipo || 'angariacao';
+
+  const tipoOptions = Object.entries(TIPOS).map(([k,t])=>
+    `<option value="${k}"${currentTipo===k?' selected':''}>${t.label}</option>`
+  ).join('');
 
   const modal = document.createElement('div');
   modal.id = 'ag-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);padding:16px';
-
-  const tipoOptions = Object.entries(TIPOS).map(([k,t])=>
-    `<option value="${k}"${ev?.tipo===k?' selected':''}>${t.label}</option>`
-  ).join('');
-
-  const canEdit = session.role === 'gestor' || isNew || ev?.agentUid === session.uid;
-  const currentTipo = ev?.tipo || 'angariacao';
-
-  const semCond = ['reuniao','treinamento'];
-  const condFields = (tipo) => semCond.includes(tipo) ? '' : `
-    <span style="${lbSt}">NOME DO CONDOMÍNIO</span>
-    <input id="ag-cond" type="text" value="${(ev?.condominio||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
-    <span style="${lbSt}">VALOR DO IMÓVEL (R$)</span>
-    <input id="ag-valor" type="text" value="${(ev?.valor||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
-  `;
-  const assuntoFields = (tipo) => semCond.includes(tipo) ? `
-    <span style="${lbSt}">ASSUNTO / PAUTA</span>
-    <textarea id="ag-assunto" rows="3" style="${inpSt};resize:vertical;margin-bottom:2px" ${!canEdit?'readonly':''}>${(ev?.assunto||'').replace(/</g,'&lt;')}</textarea>
-  ` : '';
-  const vendaFields = (tipo) => tipo === 'venda' ? `
-    <span id="ag-lb-captacao" style="${lbSt}">CORRETOR DA CAPTAÇÃO</span>
-    <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao || session.name).replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
-    <span id="ag-lb-cliente" style="${lbSt}">CORRETOR DO CLIENTE COMPRADOR</span>
-    <input id="ag-cliente" type="text" value="${(ev?.corretorCliente||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
-  ` : '';
 
   modal.innerHTML = `
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.55);max-height:90vh;overflow-y:auto">
@@ -223,15 +204,32 @@ function openEditModal(ev = null) {
         <div style="font-size:14px;font-weight:800;color:var(--text)">${isNew?'Novo compromisso':'Editar compromisso'}</div>
         <button id="ag-modal-close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:22px;line-height:1;padding:0">×</button>
       </div>
-      <span style="${lbSt}">TIPO DE ATIVIDADE</span>
-      <select id="ag-tipo" style="${selSt};margin-bottom:2px" ${!canEdit?'disabled':''}>
+      <span style="${LB}">TIPO DE ATIVIDADE</span>
+      <select id="ag-tipo" style="${INP};cursor:pointer;margin-bottom:2px" ${!canEdit?'disabled':''}>
         ${tipoOptions}
       </select>
-      <div id="ag-cond-fields">${condFields(currentTipo)}</div>
-      <div id="ag-assunto-fields">${assuntoFields(currentTipo)}</div>
-      <div id="ag-venda-fields">${vendaFields(currentTipo)}</div>
-      <span style="${lbSt}">DATA E HORÁRIO</span>
-      <input id="ag-dt" type="datetime-local" value="${ev?.dataHora||''}" style="${inpSt};margin-bottom:18px" ${!canEdit?'readonly':''}>
+
+      <div id="ag-grp-cond">
+        <span style="${LB}">NOME DO CONDOMÍNIO</span>
+        <input id="ag-cond" type="text" value="${(ev?.condominio||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+        <span style="${LB}">VALOR DO IMÓVEL (R$)</span>
+        <input id="ag-valor" type="text" value="${(ev?.valor||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+      </div>
+
+      <div id="ag-grp-assunto">
+        <span style="${LB}">ASSUNTO / PAUTA</span>
+        <textarea id="ag-assunto" rows="3" style="${INP};resize:vertical;margin-bottom:2px" ${!canEdit?'readonly':''}>${(ev?.assunto||'').replace(/</g,'&lt;')}</textarea>
+      </div>
+
+      <div id="ag-grp-venda">
+        <span style="${LB}">CORRETOR DA CAPTAÇÃO</span>
+        <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao||session.name).replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+        <span style="${LB}">CORRETOR DO CLIENTE COMPRADOR</span>
+        <input id="ag-cliente" type="text" value="${(ev?.corretorCliente||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+      </div>
+
+      <span style="${LB}">DATA E HORÁRIO</span>
+      <input id="ag-dt" type="datetime-local" value="${ev?.dataHora||''}" style="${INP};margin-bottom:18px" ${!canEdit?'readonly':''}>
       ${!isNew?`<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Corretor: <strong style="color:var(--text)">${ev?.agent||'—'}</strong></div>`:''}
       ${canEdit?`<div style="display:flex;gap:8px">
         <button id="ag-save" style="flex:1;background:#22c55e;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">Salvar</button>
@@ -240,20 +238,23 @@ function openEditModal(ev = null) {
     </div>
   `;
 
-  // Show/hide fields on tipo change
-  document.getElementById('ag-tipo')?.addEventListener('change', e => {
-    document.getElementById('ag-cond-fields').innerHTML   = condFields(e.target.value);
-    document.getElementById('ag-assunto-fields').innerHTML = assuntoFields(e.target.value);
-    document.getElementById('ag-venda-fields').innerHTML  = vendaFields(e.target.value);
-  });
-
   document.body.appendChild(modal);
+
+  function applyTipo(tipo) {
+    document.getElementById('ag-grp-cond').style.display    = semCond.includes(tipo) ? 'none' : 'block';
+    document.getElementById('ag-grp-assunto').style.display = semCond.includes(tipo) ? 'block' : 'none';
+    document.getElementById('ag-grp-venda').style.display   = tipo === 'venda' ? 'block' : 'none';
+  }
+
+  applyTipo(currentTipo);
+
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   document.getElementById('ag-modal-close').addEventListener('click', () => modal.remove());
+  document.getElementById('ag-tipo').addEventListener('change', e => applyTipo(e.target.value));
 
   if (!canEdit) return;
 
-  document.getElementById('ag-save')?.addEventListener('click', async () => {
+  document.getElementById('ag-save').addEventListener('click', async () => {
     const btn  = document.getElementById('ag-save');
     const tipo = document.getElementById('ag-tipo').value;
     const dt   = document.getElementById('ag-dt').value;
@@ -279,7 +280,7 @@ function openEditModal(ev = null) {
         await fbUpdateAgendaEvent(ev.id, data);
       }
       modal.remove();
-    } catch(e) {
+    } catch(err) {
       alert('Erro ao salvar. Verifique sua conexão.');
       btn.disabled = false; btn.textContent = 'Salvar';
     }
@@ -288,7 +289,7 @@ function openEditModal(ev = null) {
   document.getElementById('ag-del')?.addEventListener('click', async () => {
     if (!confirm('Excluir este compromisso?')) return;
     try { await fbDeleteAgendaEvent(ev.id); modal.remove(); }
-    catch(e) { alert('Erro ao excluir.'); }
+    catch(err) { alert('Erro ao excluir.'); }
   });
 }
 
