@@ -206,6 +206,10 @@ function openEditModal(ev = null) {
     <span style="${lbSt}">VALOR DO IMÓVEL (R$)</span>
     <input id="ag-valor" type="text" value="${(ev?.valor||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
   `;
+  const assuntoFields = (tipo) => semCond.includes(tipo) ? `
+    <span style="${lbSt}">ASSUNTO / PAUTA</span>
+    <textarea id="ag-assunto" rows="3" style="${inpSt};resize:vertical;margin-bottom:2px" ${!canEdit?'readonly':''}>${(ev?.assunto||'').replace(/</g,'&lt;')}</textarea>
+  ` : '';
   const vendaFields = (tipo) => tipo === 'venda' ? `
     <span id="ag-lb-captacao" style="${lbSt}">CORRETOR DA CAPTAÇÃO</span>
     <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao || session.name).replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
@@ -224,6 +228,7 @@ function openEditModal(ev = null) {
         ${tipoOptions}
       </select>
       <div id="ag-cond-fields">${condFields(currentTipo)}</div>
+      <div id="ag-assunto-fields">${assuntoFields(currentTipo)}</div>
       <div id="ag-venda-fields">${vendaFields(currentTipo)}</div>
       <span style="${lbSt}">DATA E HORÁRIO</span>
       <input id="ag-dt" type="datetime-local" value="${ev?.dataHora||''}" style="${inpSt};margin-bottom:18px" ${!canEdit?'readonly':''}>
@@ -237,8 +242,9 @@ function openEditModal(ev = null) {
 
   // Show/hide fields on tipo change
   document.getElementById('ag-tipo')?.addEventListener('change', e => {
-    document.getElementById('ag-cond-fields').innerHTML = condFields(e.target.value);
-    document.getElementById('ag-venda-fields').innerHTML = vendaFields(e.target.value);
+    document.getElementById('ag-cond-fields').innerHTML   = condFields(e.target.value);
+    document.getElementById('ag-assunto-fields').innerHTML = assuntoFields(e.target.value);
+    document.getElementById('ag-venda-fields').innerHTML  = vendaFields(e.target.value);
   });
 
   document.body.appendChild(modal);
@@ -265,6 +271,7 @@ function openEditModal(ev = null) {
         agentUid:   ev?.agentUid || session.uid || session.username || '',
         corretorCaptacao: tipo === 'venda' ? (document.getElementById('ag-captacao')?.value.trim() || '') : '',
         corretorCliente:  tipo === 'venda' ? (document.getElementById('ag-cliente')?.value.trim()  || '') : '',
+        assunto: semCond.includes(tipo) ? (document.getElementById('ag-assunto')?.value.trim() || '') : '',
       };
       if (isNew) {
         await fbSaveAgendaEvent(data);
