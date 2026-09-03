@@ -21,7 +21,7 @@ const TIPOS = {
   venda:       { label: 'VENDA',       short: 'V', color: '#22c55e', bg: 'rgba(34,197,94,0.13)'   },
   fotos:       { label: 'FOTOS',       short: 'F', color: '#6495ed', bg: 'rgba(100,149,237,0.13)' },
   reuniao:     { label: 'REUNIÃO',     short: 'R', color: '#a855f7', bg: 'rgba(168,85,247,0.13)'  },
-  treinamento: { label: 'TREINAMENTO', short: 'TREIN', color: '#f59e0b', bg: 'rgba(245,158,11,0.13)'  },
+  treinamento: { label: 'TREINAMENTO', short: 'TREINAMENTO', color: '#f59e0b', bg: 'rgba(245,158,11,0.13)'  },
 };
 
 // ── CALENDAR STATE ────────────────────────────────────────
@@ -77,7 +77,7 @@ function filtered() {
 function pill(ev, full=false) {
   const t = TIPOS[ev.tipo] || TIPOS.fotos;
   const time = ev.dataHora ? ev.dataHora.slice(11,16) : '';
-  const name = `${ev.condominio||'—'}`;
+  const name = ev.condominio || '';
   const agentFirst = (ev.agent||'').split(' ')[0];
 
   if (full) {
@@ -87,7 +87,7 @@ function pill(ev, full=false) {
         <span class="ag-day-event-time">${time||'—'}</span>
       </div>
       <div style="flex:1;min-width:0">
-        <div class="ag-day-event-name">${name} — ${agentFirst}</div>
+        <div class="ag-day-event-name">${name ? name + ' — ' : ''}${agentFirst}</div>
         <div class="ag-day-event-agent">${ev.agent}</div>
       </div>
       <span style="font-size:11px;color:var(--text-muted)">✏️</span>
@@ -96,7 +96,7 @@ function pill(ev, full=false) {
   return `<div class="ag-pill" data-id="${ev.id}" style="background:${t.bg};border-color:${t.color}" title="${t.label} — ${name} — ${ev.agent} ${time}">
     <span class="ag-pill-badge" style="color:${t.color}">${t.short}</span>
     ${time ? `<span class="ag-pill-time">${time}</span>` : ''}
-    <span class="ag-pill-name">${name} — ${agentFirst}</span>
+    <span class="ag-pill-name">${name ? name + ' — ' : ''}${agentFirst}</span>
   </div>`;
 }
 
@@ -152,7 +152,8 @@ function renderCalendar() {
           <div class="ag-month-day-num">${d.slice(8)}</div>
           ${dayEvs.slice(0,2).map(e=>{
             const tp = TIPOS[e.tipo]||TIPOS.fotos;
-            return `<div class="ag-month-pill" style="background:${tp.bg};color:${tp.color}">${tp.short} ${e.condominio||''} — ${(e.agent||'').split(' ')[0]}</div>`;
+            const cond = e.condominio ? e.condominio + ' — ' : '';
+            return `<div class="ag-month-pill" style="background:${tp.bg};color:${tp.color}">${tp.short} ${cond}${(e.agent||'').split(' ')[0]}</div>`;
           }).join('')}
           ${dayEvs.length>2?`<div style="font-size:9px;color:var(--text-muted);text-align:center">+${dayEvs.length-2}</div>`:''}
         </div>`;
