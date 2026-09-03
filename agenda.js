@@ -202,7 +202,7 @@ function openEditModal(ev = null) {
   const vendaFields = (tipo) => tipo === 'venda' ? `
     <span id="ag-lb-captacao" style="${lbSt}">CORRETOR DA CAPTAÇÃO</span>
     <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao || session.name).replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
-    <span id="ag-lb-cliente" style="${lbSt}">CORRETOR DO CLIENTE</span>
+    <span id="ag-lb-cliente" style="${lbSt}">CORRETOR DO CLIENTE COMPRADOR</span>
     <input id="ag-cliente" type="text" value="${(ev?.corretorCliente||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
   ` : '';
 
