@@ -271,25 +271,37 @@ async function initLogin() {
 
   TEAM = await fbGetTeam() || [];
 
-  const GESTOR_PASS = 'nickel2025';
+  const grid = document.getElementById('names-grid');
+  if (!grid) return;
 
-  document.getElementById('login-form').addEventListener('submit', e => {
-    e.preventDefault();
-    const username = document.getElementById('username').value.trim().toLowerCase();
-    const password = document.getElementById('password').value;
-    const errEl    = document.getElementById('login-err');
+  function initials(name) {
+    return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  }
 
-    if (username === 'matheus') {
-      if (password !== GESTOR_PASS) { errEl.textContent = 'Senha incorreta.'; return; }
-      setSession({ uid: 'matheus', username: 'matheus', name: 'Matheus', role: 'gestor' });
-      window.location.href = 'agenda.html'; return;
-    }
+  function makeBtn(uid, name, role) {
+    const btn = document.createElement('button');
+    btn.className = 'name-btn';
+    const isGestor = role === 'gestor';
+    btn.innerHTML = `
+      <div class="name-avatar${isGestor?' gestor':''}">${initials(name)}</div>
+      <div class="name-info">
+        <div class="name-full">${name}</div>
+        <div class="name-role">${isGestor?'Gestor':'Corretor'}</div>
+      </div>
+      <div class="name-arrow">›</div>
+    `;
+    btn.addEventListener('click', () => {
+      setSession({ uid, username: uid, name, role });
+      window.location.href = 'agenda.html';
+    });
+    return btn;
+  }
 
-    const agent = TEAM.find(a => (a.username || a.name.toLowerCase().replace(/\s/g,'')) === username);
-    if (!agent || agent.password !== password) { errEl.textContent = 'Usuário ou senha incorretos.'; return; }
-    setSession({ uid: agent.username || username, username, name: agent.name, role: 'agent' });
-    window.location.href = 'agenda.html';
+  grid.innerHTML = '';
+  TEAM.forEach(a => {
+    grid.appendChild(makeBtn(a.username || a.name, a.name, 'agent'));
   });
+  grid.appendChild(makeBtn('matheus', 'Matheus', 'gestor'));
 }
 
 async function initMain() {
