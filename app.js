@@ -614,27 +614,30 @@ function weekDaysBefore(ref) {
   return days;
 }
 
-// ── RATIOS DO TIME (mês anterior) ────────────────────────
+// ── RATIOS DO TIME (média julho + agosto 2026) ────────────
 // Fonte única de verdade para META_CQ e META_PROSP usados em AMBOS os painéis.
-function getTeamRatios(refDate) {
-  const t = refDate || today();
-  const prevMonthD = new Date(t + 'T12:00:00');
-  prevMonthD.setDate(1);
-  prevMonthD.setMonth(prevMonthD.getMonth() - 1);
-  const prevRef = toDateStr(prevMonthD);
-  const { start: pStart, end: pEnd } = monthRange(prevRef);
+function getTeamRatios(_refDate) {
+  const BASE_MONTHS = ['2026-07', '2026-08'];
   const teamSet = new Set(getAgentNames());
-  const prevE = getEntries().filter(e => inRange(e.date, pStart, pEnd) && teamSet.has(normalizeAgentName(e.agent)));
-  const prevDoc   = prevE.reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
-  const prevCpd   = prevE.reduce((s, e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
-  const prevProsp = prevE.reduce((s, e) => s + (e.prosp || 0), 0);
-  // Fallback: ratios aproximados caso não haja dados do mês anterior
-  const ratioCpd   = prevDoc > 0 ? prevCpd   / prevDoc : 3.5;
-  const ratioProsp = prevDoc > 0 ? prevProsp / prevDoc : 32;
+  const entries = getEntries();
+  let totalDoc = 0, totalCpd = 0, totalProsp = 0;
+  BASE_MONTHS.forEach(ym => {
+    const { start, end } = monthRange(ym + '-01');
+    const me = entries.filter(e => inRange(e.date, start, end) && teamSet.has(normalizeAgentName(e.agent)));
+    totalDoc   += me.reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
+    totalCpd   += me.reduce((s, e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
+    totalProsp += me.reduce((s, e) => s + (e.prosp || 0), 0);
+  });
+  const avgDoc   = totalDoc   / BASE_MONTHS.length;
+  const avgCpd   = totalCpd   / BASE_MONTHS.length;
+  const avgProsp = totalProsp / BASE_MONTHS.length;
+  // Fallback: ratios aproximados caso não haja dados base
+  const ratioCpd   = avgDoc > 0 ? avgCpd   / avgDoc : 3.5;
+  const ratioProsp = avgDoc > 0 ? avgProsp / avgDoc : 32;
   // Metas do time para META_DOC_GESTOR DOCs
   const metaCqGestor    = Math.round(ratioCpd   * META_DOC_GESTOR);
   const metaProspGestor = Math.round(ratioProsp * META_DOC_GESTOR);
-  // Metas individuais escalonadas para META_DOC_MONTH DOCs (mesma proporção, mesmo arredondamento)
+  // Metas individuais escalonadas para META_DOC_MONTH DOCs (mesma proporção)
   const metaCqMonth    = Math.round(metaCqGestor    / META_DOC_GESTOR * META_DOC_MONTH);
   const metaProspMonth = Math.round(metaProspGestor / META_DOC_GESTOR * META_DOC_MONTH);
   return { metaCqGestor, metaProspGestor, metaCqMonth, metaProspMonth };
@@ -1874,20 +1877,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const okProsp = onPace(monthProsp, META_PROSP);
     const okCpd   = onPace(monthCpd,   META_CQ);
     const okDoc   = onPace(monthDoc,   META_DOC_MONTH);
-    const key = `${okProsp?1:0}${okCpd?1:0}${okDoc?1:0}`; // 000..111
-    const MSGS = {
-      '000': ['🔥', 'Tudo está abaixo do ritmo. Aumente a prospecção, gere mais CQs e volte a colocar documentação na mesa.'],
-      '100': ['🔥', 'Você está prospectando, mas isso não está virando CQ. Revise sua abordagem e gere mais conversas qualificadas.'],
-      '110': ['💥', 'CQ você tem. Agora faça essas oportunidades avançarem. Conduza as conversas e transforme CQ em DOC.'],
-      '010': ['💥', 'Você está qualificando bem, mas precisa avançar esses CQs. Trabalhe as oportunidades abertas e puxe documentação.'],
-      '001': ['🚨', 'Os DOCs estão saindo, mas a entrada está enfraquecendo. Volte a prospectar e gere novos CQs para manter o ritmo.'],
-      '101': ['🚨', 'Os DOCs estão vindo, mas seus CQs estão baixos. Melhore a qualidade das conversas para sustentar esse resultado.'],
-      '011': ['🔥', 'Você está convertendo bem, mas prospectando pouco. Aumente a entrada para não deixar o ritmo cair.'],
-      '111': ['🏆', 'É isso. Não inventa moda. Mantém esse ritmo e vai ser difícil alguém te alcançar.'],
-    };
-    const [icon, msg] = MSGS[key];
-    const isOk = key === '111';
-    const bottleneckHTML = `<div class="agent-gargalo ${isOk ? 'ok' : 'warn'}"><div class="agent-gargalo-msg">${icon} ${isOk ? `<strong>${msg}</strong>` : msg}</div></div>`;
 
     const mkMetaRow = (label, val, meta, unit, b, isBottleneck) => {
       const chip = paceChip(val, meta, unit);
@@ -1914,7 +1903,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
     metasWrap.innerHTML = `
       <div class="agent-meta-card">
         <div class="agent-meta-period">${mesLabel} · dia ${dayOfMonth} de ${daysInMonth} · ${daysRemaining} dias restantes</div>
-        ${bottleneckHTML}
         ${mkMetaRow('Angariações (DOC)',     monthDoc,   META_DOC_MONTH, 'DOC',   doc,   !okDoc)}
         ${mkMetaRow('Conversas Qualif. (CQ)',monthCpd,   META_CQ,        'CQ',    cq,    !okCpd)}
         ${mkMetaRow('Prospecções',           monthProsp, META_PROSP,     'PROSP', prosp, !okProsp)}
