@@ -2758,9 +2758,6 @@ function initGestorLancamento() {
     document.querySelectorAll('.doc-tel').forEach(applyPhoneMask);
     bindBairroSelects();
   });
-  document.getElementById('lanc-va').addEventListener('input',function(){
-    document.getElementById('lanc-va-details').innerHTML=buildVaDetailsHTML(Math.max(0,parseInt(this.value)||0),[]);
-  });
 
   document.getElementById('gestor-lanc-form').addEventListener('submit',async ev=>{
     ev.preventDefault();
@@ -2823,11 +2820,9 @@ function initGestorLancamento() {
     }
     // Desabilita botão somente após todas as validações passarem
     const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Salvando...';
-    const lancVaVal=parseInt(document.getElementById('lanc-va').value)||0;
-    const vaDetails=collectVaDetails(lancVaVal);
     const agentUid = (TEAM.find(a=>a.name===agent))?.username || null;
     try {
-      await upsertEntry({date,uid:agentUid,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:parseInt(document.getElementById('lanc-video').value)||0,va:lancVaVal,vr:0,cpdDetails:lancCpdDetails,docDetails,vaDetails,vrDetails:[],submittedDate});
+      await upsertEntry({date,uid:agentUid,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:0,va:0,vr:0,cpdDetails:lancCpdDetails,docDetails,vaDetails:[],vrDetails:[],submittedDate});
       resetEditCount(agentUid||agent,date);
       btn.textContent='✅ Salvo!';
       setTimeout(() => { btn.disabled=false; btn.textContent='Salvar lançamento'; }, 2000);
@@ -2840,7 +2835,6 @@ function initGestorLancamento() {
     document.getElementById('lanc-prosp').value=0;
     document.getElementById('lanc-cpd').value=0;
     document.getElementById('lanc-doc').value=0;
-    document.getElementById('lanc-video').value=0;
     document.getElementById('lanc-cpd-details').innerHTML='';
     document.getElementById('lanc-doc-details').innerHTML='';
     const newToday=today(); dateInput.value=newToday; dateInput.max=newToday;
