@@ -1988,7 +1988,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
         { key:'prosp', label:'PROSP',  hint:'Quantos imóveis você prospectou?',                                        color:'#f0c040', pts:'+0.11 pts/unidade' },
         { key:'cp',    label:'CQ',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
         { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',                                     color:'#a8e63d', pts:'6 pontos por DOC' },
-        { key:'va',    label:'VISITA AGENDADA DE CLIENTE COMPRADOR NA MINHA CAPTAÇÃO', hint:'Quantas visitas agendou hoje? (informe nome, telefone, imóvel e horário)', color:'#ef4444', pts:'controle interno' },
       ];
       const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0 };
       let wStep = 0;
