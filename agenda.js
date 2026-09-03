@@ -199,6 +199,13 @@ function openEditModal(ev = null) {
   const canEdit = session.role === 'gestor' || isNew || ev?.agentUid === session.uid;
   const currentTipo = ev?.tipo || 'angariacao';
 
+  const semCond = ['reuniao','treinamento'];
+  const condFields = (tipo) => semCond.includes(tipo) ? '' : `
+    <span style="${lbSt}">NOME DO CONDOMÍNIO</span>
+    <input id="ag-cond" type="text" value="${(ev?.condominio||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
+    <span style="${lbSt}">VALOR DO IMÓVEL (R$)</span>
+    <input id="ag-valor" type="text" value="${(ev?.valor||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
+  `;
   const vendaFields = (tipo) => tipo === 'venda' ? `
     <span id="ag-lb-captacao" style="${lbSt}">CORRETOR DA CAPTAÇÃO</span>
     <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao || session.name).replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
@@ -216,10 +223,7 @@ function openEditModal(ev = null) {
       <select id="ag-tipo" style="${selSt};margin-bottom:2px" ${!canEdit?'disabled':''}>
         ${tipoOptions}
       </select>
-      <span style="${lbSt}">NOME DO CONDOMÍNIO</span>
-      <input id="ag-cond" type="text" value="${(ev?.condominio||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
-      <span style="${lbSt}">VALOR DO IMÓVEL (R$)</span>
-      <input id="ag-valor" type="text" value="${(ev?.valor||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
+      <div id="ag-cond-fields">${condFields(currentTipo)}</div>
       <div id="ag-venda-fields">${vendaFields(currentTipo)}</div>
       <span style="${lbSt}">DATA E HORÁRIO</span>
       <input id="ag-dt" type="datetime-local" value="${ev?.dataHora||''}" style="${inpSt};margin-bottom:18px" ${!canEdit?'readonly':''}>
@@ -231,8 +235,9 @@ function openEditModal(ev = null) {
     </div>
   `;
 
-  // Show/hide venda fields on tipo change
+  // Show/hide fields on tipo change
   document.getElementById('ag-tipo')?.addEventListener('change', e => {
+    document.getElementById('ag-cond-fields').innerHTML = condFields(e.target.value);
     document.getElementById('ag-venda-fields').innerHTML = vendaFields(e.target.value);
   });
 
@@ -243,17 +248,18 @@ function openEditModal(ev = null) {
   if (!canEdit) return;
 
   document.getElementById('ag-save')?.addEventListener('click', async () => {
-    const btn = document.getElementById('ag-save');
-    const cond = document.getElementById('ag-cond').value.trim();
+    const btn  = document.getElementById('ag-save');
+    const tipo = document.getElementById('ag-tipo').value;
     const dt   = document.getElementById('ag-dt').value;
-    if (!cond || !dt) { alert('Preencha condomínio e data/horário.'); return; }
+    const cond = document.getElementById('ag-cond')?.value.trim() || '';
+    if (!dt) { alert('Preencha a data/horário.'); return; }
+    if (!semCond.includes(tipo) && !cond) { alert('Preencha o nome do condomínio.'); return; }
     btn.disabled = true; btn.textContent = 'Salvando...';
     try {
-      const tipo = document.getElementById('ag-tipo').value;
       const data = {
         tipo,
         condominio: cond,
-        valor:      document.getElementById('ag-valor').value.trim(),
+        valor:      document.getElementById('ag-valor')?.value.trim() || '',
         dataHora:   dt,
         agent:      ev?.agent || session.name,
         agentUid:   ev?.agentUid || session.uid || session.username || '',
