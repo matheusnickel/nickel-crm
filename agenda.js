@@ -197,9 +197,17 @@ function openEditModal(ev = null) {
   ).join('');
 
   const canEdit = session.role === 'gestor' || isNew || ev?.agentUid === session.uid;
+  const currentTipo = ev?.tipo || 'angariacao';
+
+  const vendaFields = (tipo) => tipo === 'venda' ? `
+    <span id="ag-lb-captacao" style="${lbSt}">CORRETOR DA CAPTAÇÃO</span>
+    <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao || session.name).replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
+    <span id="ag-lb-cliente" style="${lbSt}">CORRETOR DO CLIENTE</span>
+    <input id="ag-cliente" type="text" value="${(ev?.corretorCliente||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
+  ` : '';
 
   modal.innerHTML = `
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.55)">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.55);max-height:90vh;overflow-y:auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <div style="font-size:14px;font-weight:800;color:var(--text)">${isNew?'Novo compromisso':'Editar compromisso'}</div>
         <button id="ag-modal-close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:22px;line-height:1;padding:0">×</button>
@@ -212,6 +220,7 @@ function openEditModal(ev = null) {
       <input id="ag-cond" type="text" value="${(ev?.condominio||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
       <span style="${lbSt}">VALOR DO IMÓVEL (R$)</span>
       <input id="ag-valor" type="text" value="${(ev?.valor||'').replace(/"/g,'&quot;')}" style="${inpSt};margin-bottom:2px" ${!canEdit?'readonly':''}>
+      <div id="ag-venda-fields">${vendaFields(currentTipo)}</div>
       <span style="${lbSt}">DATA E HORÁRIO</span>
       <input id="ag-dt" type="datetime-local" value="${ev?.dataHora||''}" style="${inpSt};margin-bottom:18px" ${!canEdit?'readonly':''}>
       ${!isNew?`<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Corretor: <strong style="color:var(--text)">${ev?.agent||'—'}</strong></div>`:''}
@@ -221,6 +230,11 @@ function openEditModal(ev = null) {
       </div>`:''}
     </div>
   `;
+
+  // Show/hide venda fields on tipo change
+  document.getElementById('ag-tipo')?.addEventListener('change', e => {
+    document.getElementById('ag-venda-fields').innerHTML = vendaFields(e.target.value);
+  });
 
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
@@ -235,13 +249,16 @@ function openEditModal(ev = null) {
     if (!cond || !dt) { alert('Preencha condomínio e data/horário.'); return; }
     btn.disabled = true; btn.textContent = 'Salvando...';
     try {
+      const tipo = document.getElementById('ag-tipo').value;
       const data = {
-        tipo:       document.getElementById('ag-tipo').value,
+        tipo,
         condominio: cond,
         valor:      document.getElementById('ag-valor').value.trim(),
         dataHora:   dt,
         agent:      ev?.agent || session.name,
         agentUid:   ev?.agentUid || session.uid || session.username || '',
+        corretorCaptacao: tipo === 'venda' ? (document.getElementById('ag-captacao')?.value.trim() || '') : '',
+        corretorCliente:  tipo === 'venda' ? (document.getElementById('ag-cliente')?.value.trim()  || '') : '',
       };
       if (isNew) {
         await fbSaveAgendaEvent(data);
