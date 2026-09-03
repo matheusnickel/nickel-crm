@@ -77,8 +77,11 @@ function filtered() {
 function pill(ev, full=false) {
   const t = TIPOS[ev.tipo] || TIPOS.fotos;
   const time = ev.dataHora ? ev.dataHora.slice(11,16) : '';
-  const name = ev.condominio || '';
-  const agentFirst = (ev.agent||'').split(' ')[0];
+  const semCond = ['reuniao','treinamento'];
+  // Para reunião/treinamento: mostra o assunto; para os demais: mostra condomínio + corretor
+  const displayName = semCond.includes(ev.tipo)
+    ? (ev.assunto || ev.agent || '')
+    : (ev.condominio ? ev.condominio + ' — ' + (ev.agent||'').split(' ')[0] : (ev.agent||'').split(' ')[0]);
 
   if (full) {
     return `<div class="ag-day-event" data-id="${ev.id}" style="background:${t.bg};border-color:${t.color}">
@@ -87,16 +90,16 @@ function pill(ev, full=false) {
         <span class="ag-day-event-time">${time||'—'}</span>
       </div>
       <div style="flex:1;min-width:0">
-        <div class="ag-day-event-name">${name ? name + ' — ' : ''}${agentFirst}</div>
+        <div class="ag-day-event-name">${displayName}</div>
         <div class="ag-day-event-agent">${ev.agent}</div>
       </div>
       <span style="font-size:11px;color:var(--text-muted)">✏️</span>
     </div>`;
   }
-  return `<div class="ag-pill" data-id="${ev.id}" style="background:${t.bg};border-color:${t.color}" title="${t.label} — ${name} — ${ev.agent} ${time}">
+  return `<div class="ag-pill" data-id="${ev.id}" style="background:${t.bg};border-color:${t.color}" title="${t.label} — ${displayName} ${time}">
     <span class="ag-pill-badge" style="color:${t.color}">${t.short}</span>
     ${time ? `<span class="ag-pill-time">${time}</span>` : ''}
-    <span class="ag-pill-name">${name ? name + ' — ' : ''}${agentFirst}</span>
+    <span class="ag-pill-name">${displayName}</span>
   </div>`;
 }
 
@@ -152,8 +155,11 @@ function renderCalendar() {
           <div class="ag-month-day-num">${d.slice(8)}</div>
           ${dayEvs.slice(0,2).map(e=>{
             const tp = TIPOS[e.tipo]||TIPOS.fotos;
-            const cond = e.condominio ? e.condominio + ' — ' : '';
-            return `<div class="ag-month-pill" style="background:${tp.bg};color:${tp.color}">${tp.short} ${cond}${(e.agent||'').split(' ')[0]}</div>`;
+            const semCondM = ['reuniao','treinamento'];
+            const mLabel = semCondM.includes(e.tipo)
+              ? (e.assunto || e.agent || '')
+              : (e.condominio ? e.condominio + ' — ' + (e.agent||'').split(' ')[0] : (e.agent||'').split(' ')[0]);
+            return `<div class="ag-month-pill" style="background:${tp.bg};color:${tp.color}">${tp.short} ${mLabel}</div>`;
           }).join('')}
           ${dayEvs.length>2?`<div style="font-size:9px;color:var(--text-muted);text-align:center">+${dayEvs.length-2}</div>`:''}
         </div>`;
