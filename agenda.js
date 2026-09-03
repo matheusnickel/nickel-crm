@@ -21,7 +21,7 @@ const TIPOS = {
   venda:       { label: 'VENDA',       short: 'V', color: '#22c55e', bg: 'rgba(34,197,94,0.13)'   },
   fotos:       { label: 'FOTOS',       short: 'F', color: '#6495ed', bg: 'rgba(100,149,237,0.13)' },
   reuniao:     { label: 'REUNIÃO',     short: 'R', color: '#a855f7', bg: 'rgba(168,85,247,0.13)'  },
-  treinamento: { label: 'TREINAMENTO', short: 'T', color: '#f59e0b', bg: 'rgba(245,158,11,0.13)'  },
+  treinamento: { label: 'TREINAMENTO', short: 'TREIN', color: '#f59e0b', bg: 'rgba(245,158,11,0.13)'  },
 };
 
 // ── CALENDAR STATE ────────────────────────────────────────
