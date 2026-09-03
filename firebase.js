@@ -212,6 +212,25 @@ export function fbListenFotos(callback) {
   });
 }
 
+// ── AGENDA EVENTS ────────────────────────────────────────
+export async function fbSaveAgendaEvent(ev) {
+  const ref = doc(collection(db, 'agenda_events'));
+  await setDoc(ref, { ...ev, id: ref.id });
+  return ref.id;
+}
+export async function fbUpdateAgendaEvent(id, fields) {
+  const { updateDoc: upd } = await import('https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js');
+  await upd(doc(db, 'agenda_events', id), fields);
+}
+export async function fbDeleteAgendaEvent(id) {
+  await deleteDoc(doc(db, 'agenda_events', id));
+}
+export function fbListenAgendaEvents(callback) {
+  return onSnapshot(collection(db, 'agenda_events'), snap => {
+    callback(snap.docs.map(d => d.data()));
+  });
+}
+
 // ── VENDAS ──────────────────────────────────────────────
 export async function fbSaveSale(sale) {
   await addDoc(collection(db, 'sales'), sale);

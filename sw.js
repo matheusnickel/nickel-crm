@@ -1,4 +1,4 @@
-const CACHE = 'nickel-crm-v185';
+const CACHE = 'nickel-crm-v186';
 const ASSETS = [
   '/nickel-crm/',
   '/nickel-crm/index.html',
@@ -9,6 +9,9 @@ const ASSETS = [
   '/nickel-crm/style.css',
   '/nickel-crm/manifest.json',
   '/nickel-crm/icon.svg',
+  '/nickel-crm/agenda-login.html',
+  '/nickel-crm/agenda.html',
+  '/nickel-crm/agenda.js',
 ];
 
 self.addEventListener('install', e => {
