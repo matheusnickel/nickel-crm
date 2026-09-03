@@ -224,7 +224,7 @@ function openEditModal(ev = null) {
 
       <div id="ag-grp-venda">
         <span style="${LB}">CORRETOR DA CAPTAÇÃO</span>
-        <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao||session.name).replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+        <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
         <span style="${LB}">CORRETOR DO CLIENTE COMPRADOR</span>
         <input id="ag-cliente" type="text" value="${(ev?.corretorCliente||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
       </div>
