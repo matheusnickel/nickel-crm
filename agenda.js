@@ -207,41 +207,46 @@ function openEditModal(ev = null) {
   modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);padding:16px';
 
   modal.innerHTML = `
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.55);max-height:90vh;overflow-y:auto">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.55);max-height:92vh;display:flex;flex-direction:column">
+      <!-- cabeçalho fixo -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 10px;flex-shrink:0">
         <div style="font-size:14px;font-weight:800;color:var(--text)">${isNew?'Novo compromisso':'Editar compromisso'}</div>
         <button id="ag-modal-close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:22px;line-height:1;padding:0">×</button>
       </div>
-      <span style="${LB}">TIPO DE ATIVIDADE</span>
-      <select id="ag-tipo" style="${INP};cursor:pointer;margin-bottom:2px" ${!canEdit?'disabled':''}>
-        ${tipoOptions}
-      </select>
+      <!-- campos roláveis -->
+      <div style="overflow-y:auto;padding:0 20px;flex:1">
+        <span style="${LB}">TIPO DE ATIVIDADE</span>
+        <select id="ag-tipo" style="${INP};cursor:pointer;margin-bottom:2px" ${!canEdit?'disabled':''}>
+          ${tipoOptions}
+        </select>
 
-      <div id="ag-grp-cond">
-        <span style="${LB}">NOME DO CONDOMÍNIO</span>
-        <input id="ag-cond" type="text" value="${(ev?.condominio||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
-        <span style="${LB}">VALOR DO IMÓVEL (R$)</span>
-        <input id="ag-valor" type="text" value="${(ev?.valor||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+        <div id="ag-grp-cond">
+          <span style="${LB}">NOME DO CONDOMÍNIO</span>
+          <input id="ag-cond" type="text" value="${(ev?.condominio||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+          <span style="${LB}">VALOR DO IMÓVEL (R$)</span>
+          <input id="ag-valor" type="text" value="${(ev?.valor||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+        </div>
+
+        <div id="ag-grp-assunto">
+          <span style="${LB}">ASSUNTO / PAUTA</span>
+          <textarea id="ag-assunto" rows="3" style="${INP};resize:vertical;margin-bottom:2px" ${!canEdit?'readonly':''}>${(ev?.assunto||'').replace(/</g,'&lt;')}</textarea>
+        </div>
+
+        <div id="ag-grp-venda">
+          <span style="${LB}">CORRETOR DA CAPTAÇÃO</span>
+          <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+          <span style="${LB}">CORRETOR DO CLIENTE COMPRADOR</span>
+          <input id="ag-cliente" type="text" value="${(ev?.corretorCliente||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
+        </div>
+
+        <span style="${LB}">DATA E HORÁRIO</span>
+        <input id="ag-dt" type="datetime-local" value="${ev?.dataHora||''}" style="${INP};margin-bottom:10px" ${!canEdit?'readonly':''}>
+        ${!isNew?`<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Corretor: <strong style="color:var(--text)">${ev?.agent||'—'}</strong></div>`:''}
       </div>
-
-      <div id="ag-grp-assunto">
-        <span style="${LB}">ASSUNTO / PAUTA</span>
-        <textarea id="ag-assunto" rows="3" style="${INP};resize:vertical;margin-bottom:2px" ${!canEdit?'readonly':''}>${(ev?.assunto||'').replace(/</g,'&lt;')}</textarea>
-      </div>
-
-      <div id="ag-grp-venda">
-        <span style="${LB}">CORRETOR DA CAPTAÇÃO</span>
-        <input id="ag-captacao" type="text" value="${(ev?.corretorCaptacao||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
-        <span style="${LB}">CORRETOR DO CLIENTE COMPRADOR</span>
-        <input id="ag-cliente" type="text" value="${(ev?.corretorCliente||'').replace(/"/g,'&quot;')}" style="${INP};margin-bottom:2px" ${!canEdit?'readonly':''}>
-      </div>
-
-      <span style="${LB}">DATA E HORÁRIO</span>
-      <input id="ag-dt" type="datetime-local" value="${ev?.dataHora||''}" style="${INP};margin-bottom:18px" ${!canEdit?'readonly':''}>
-      ${!isNew?`<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Corretor: <strong style="color:var(--text)">${ev?.agent||'—'}</strong></div>`:''}
-      ${canEdit?`<div style="display:flex;gap:8px">
-        <button id="ag-save" style="flex:1;background:#22c55e;color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">Salvar</button>
-        ${!isNew?`<button id="ag-del" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer">Excluir</button>`:''}
+      <!-- botões fixos no rodapé -->
+      ${canEdit?`<div style="display:flex;gap:8px;padding:14px 20px;flex-shrink:0;border-top:1px solid var(--border)">
+        <button id="ag-save" style="flex:1;background:#22c55e;color:#fff;border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">Salvar</button>
+        ${!isNew?`<button id="ag-del" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px 16px;font-size:14px;font-weight:700;cursor:pointer">Excluir</button>`:''}
       </div>`:''}
     </div>
   `;
