@@ -191,7 +191,8 @@ function openEditModal(ev = null) {
   if (existing) existing.remove();
 
   const isNew   = !ev;
-  const canEdit = session.role === 'gestor';
+  // Gestor edita tudo; agentes só criam novos ou editam os próprios
+  const canEdit = session.role === 'gestor' || isNew || ev?.agentUid === (session.uid || session.username);
   const INP = 'background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;padding:9px 11px;outline:none;width:100%;box-sizing:border-box;font-family:inherit';
   const LB  = 'display:block;font-size:10px;font-weight:700;letter-spacing:.6px;color:var(--text-muted);margin-bottom:3px;margin-top:10px';
   const semCond = ['reuniao','treinamento'];
