@@ -1,4 +1,4 @@
-const CACHE = 'nickel-crm-v190';
+const CACHE = 'nickel-crm-v191';
 const ASSETS = [
   '/nickel-crm/',
   '/nickel-crm/index.html',
@@ -33,7 +33,7 @@ self.addEventListener('fetch', e => {
   }
   // JS e HTML: sempre rede primeiro (garante código atualizado); cai no cache só offline
   const url = e.request.url;
-  if (url.endsWith('.js') || url.endsWith('.html') || url.endsWith('/nickel-crm/') || url.endsWith('/nickel-crm')) {
+  if (url.endsWith('.js') || url.endsWith('.html') || url.endsWith('.css') || url.endsWith('/nickel-crm/') || url.endsWith('/nickel-crm')) {
     e.respondWith(
       fetch(e.request)
         .then(res => {

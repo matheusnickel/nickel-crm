@@ -1834,10 +1834,8 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
     const doc   = mkBar(monthDoc,   META_DOC_MONTH, '#e74c3c');
     const cq    = mkBar(monthCpd,   META_CQ,        '#6495ed');
-    const prosp = mkBar(monthProsp, META_PROSP,     '#f0c040');
 
     // ── Ritmo esperado até hoje (meta proporcional ao dia) ──
-    // Ex: meta 128 PROSP, dia 15 de 31 → esperado = round(128 * 15/31) = 62
     const expectedToday = (meta) => Math.round(meta * dayOfMonth / daysInMonth);
     const onPace        = (val, meta) => val >= expectedToday(meta);
     const paceChip      = (val, meta, unit) => {
@@ -1861,18 +1859,13 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
     const gapDoc   = gap(monthDoc,   META_DOC_MONTH);
     const gapCpd   = gap(monthCpd,   META_CQ);
-    const gapProsp = gap(monthProsp, META_PROSP);
 
-    const bottleneck = (gapProsp === 0 && gapCpd === 0 && gapDoc === 0) ? null
-                     : gapProsp >= gapCpd && gapProsp >= gapDoc          ? 'prosp'
-                     : gapCpd  >= gapDoc                                  ? 'cq'
+    const bottleneck = (gapCpd === 0 && gapDoc === 0) ? null
+                     : gapCpd  >= gapDoc               ? 'cq'
                      : 'doc';
 
-    const ndProsp = Math.ceil(Math.max(META_PROSP - monthProsp, 0) / Math.max(daysRemaining, 1));
     const ndCpd   = Math.ceil(Math.max(META_CQ    - monthCpd,   0) / Math.max(daysRemaining, 1));
-
-    const ndDoc = Math.ceil(Math.max(META_DOC_MONTH - monthDoc, 0) / Math.max(daysRemaining, 1));
-    const okProsp = onPace(monthProsp, META_PROSP);
+    const ndDoc   = Math.ceil(Math.max(META_DOC_MONTH - monthDoc, 0) / Math.max(daysRemaining, 1));
     const okCpd   = onPace(monthCpd,   META_CQ);
     const okDoc   = onPace(monthDoc,   META_DOC_MONTH);
 
