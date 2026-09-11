@@ -813,7 +813,7 @@ function scoreLabel(score) {
 }
 
 // ── NOTAS RANKING ─────────────────────────────────────────
-let activeNotaTab = 'dia';
+let activeNotaTab = 'mes';
 
 function renderNotasRanking() {
   const wrap = document.getElementById('notas-ranking-wrap');
