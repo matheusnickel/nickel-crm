@@ -2168,7 +2168,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
 // ── GESTOR DASHBOARD ─────────────────────────────────────
 let evolucaoChart=null, analyticsChart=null;
 let activePeriod='today', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
-let activeRankingPeriod='week';
+let activeRankingPeriod='month';
 let activeMonthRef=today(); // 'YYYY-MM-DD' — referência do mês selecionado no filtro "Mês"
 let activeWeekRef=today();  // 'YYYY-MM-DD' — referência da semana selecionada no filtro "Semana"
 let activeCustomStart='', activeCustomEnd=''; // período personalizado

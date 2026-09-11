@@ -53,7 +53,7 @@
     </div>
 
     <!-- Totais (full width) -->
-    <div class="totals-grid">
+    <div class="totals-grid" style="grid-template-columns:repeat(2,1fr);max-width:600px;margin:0 auto">
       <div class="total-box">
         <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
           <div class="t-val" id="tot-cpd">0</div>
@@ -74,17 +74,9 @@
           <div id="meta-doc-bar" style="height:100%;border-radius:3px;background:#a8e63d;transition:width .4s ease"></div>
         </div>
       </div>
-      <div class="total-box">
-        <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
-          <div class="t-val" id="tot-vid">0</div>
-          <div id="meta-vid-lbl" style="font-size:13px;color:var(--text-muted);font-weight:400"></div>
-        </div>
-        <div class="t-lbl" style="color:#e879f9">VÍDEO</div>
-        <div id="meta-vid-bar-wrap" style="display:none;margin-top:8px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
-          <div id="meta-vid-bar" style="height:100%;border-radius:3px;background:#e879f9;transition:width .4s ease"></div>
-        </div>
-      </div>
     </div>
+    <!-- tot-vid mantido oculto para não quebrar JS -->
+    <div style="display:none"><div id="tot-vid"></div><div id="meta-vid-lbl"></div><div id="meta-vid-bar-wrap"><div id="meta-vid-bar"></div></div></div>
 
     <!-- Linha 1: Ranking (2/3) + Ranking de Notas (1/3) -->
     <div class="g-row g-row-2-1">
