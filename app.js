@@ -3013,23 +3013,20 @@ function renderGestorDashboard() {
     : activePeriod === 'week' ? activeWeekRef || today().slice(0, 7) : today().slice(0, 7);
   const byAgent=sumByAgent(entries, periodKey);
 
-  const totProsp=byAgent.reduce((s,a)=>s+a.prosp,0), totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
+  const totCpd=byAgent.reduce((s,a)=>s+a.cpd,0), totDoc=byAgent.reduce((s,a)=>s+a.doc,0);
   const totVid=byAgent.reduce((s,a)=>s+(a.vid||0),0);
-  document.getElementById('tot-prosp').textContent=totProsp;
   document.getElementById('tot-cpd').textContent=totCpd;
   document.getElementById('tot-doc').textContent=totDoc;
   document.getElementById('tot-vid').textContent=totVid;
 
   // ── METAS com barras de progresso ────────────────────────
-  // Só exibe no filtro "mês"
   const showMeta = activePeriod === 'month';
-  // META_DOC_GESTOR is a global constant (defined at top of file)
-  ['prosp','cpd','doc','vid'].forEach(k => {
+  ['cpd','doc','vid'].forEach(k => {
     document.getElementById(`meta-${k}-bar-wrap`).style.display = showMeta ? '' : 'none';
     document.getElementById(`meta-${k}-lbl`).textContent = '';
   });
   if (showMeta) {
-    const { metaCqGestor: metaCpd, metaProspGestor: metaProsp } = getTeamRatios(activeMonthRef || today());
+    const { metaCqGestor: metaCpd } = getTeamRatios(activeMonthRef || today());
 
     const setBar = (key, atual, meta, color) => {
       const pct = Math.min(Math.round((atual / meta) * 100), 100);
@@ -3038,10 +3035,9 @@ function renderGestorDashboard() {
       document.getElementById(`meta-${key}-bar`).style.background = pct >= 100 ? '#a8e63d' : color;
     };
     const META_VID_GESTOR = Math.round(getAgentNames().length * 15);
-    setBar('doc',   totDoc,   META_DOC_GESTOR,  '#a8e63d');
-    setBar('cpd',   totCpd,   metaCpd,          '#6495ed');
-    setBar('prosp', totProsp, metaProsp,         '#f0c040');
-    setBar('vid',   totVid,   META_VID_GESTOR,   '#e879f9');
+    setBar('doc', totDoc, META_DOC_GESTOR, '#a8e63d');
+    setBar('cpd', totCpd, metaCpd,         '#6495ed');
+    setBar('vid', totVid, META_VID_GESTOR,  '#e879f9');
   }
 
   renderGestorRanking();
