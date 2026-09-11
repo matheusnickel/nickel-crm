@@ -1913,23 +1913,11 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
   renderStreak(session.name, session.uid);
 
-  // Banner agressivo — não enviou hoje
   const noSendBanner = document.getElementById('no-send-banner');
-  if (noSendBanner) {
-    const notSentToday = !entries.find(e => e.date === t);
-    noSendBanner.style.display = notSentToday ? 'flex' : 'none';
-  }
+  if (noSendBanner) noSendBanner.style.display = 'none';
 
-  // Alerta de dias não enviados na semana
-  const missedEl=document.getElementById('missed-days-alert');
-  const pastDays=weekDaysBefore(t);
-  const missed=pastDays.filter(d=>!entries.find(e=>e.date===d));
-  if (missed.length>0) {
-    missedEl.style.display='flex';
-    missedEl.innerHTML=`<span class="status-icon">⚠</span><span>Relatório não enviado em: <strong>${missed.map(formatDate).join(', ')}</strong>. Fale com o gestor para registrar.</span>`;
-  } else {
-    missedEl.style.display='none';
-  }
+  const missedEl = document.getElementById('missed-days-alert');
+  if (missedEl) missedEl.style.display = 'none';
 
   const formWrap=document.getElementById('form-wrap');
   if (sentToday&&!editing) {
