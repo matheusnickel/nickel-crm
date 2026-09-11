@@ -56,16 +56,6 @@
     <div class="totals-grid">
       <div class="total-box">
         <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
-          <div class="t-val" id="tot-prosp">0</div>
-          <div id="meta-prosp-lbl" style="font-size:13px;color:var(--text-muted);font-weight:400"></div>
-        </div>
-        <div class="t-lbl">PROSP</div>
-        <div id="meta-prosp-bar-wrap" style="display:none;margin-top:8px;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
-          <div id="meta-prosp-bar" style="height:100%;border-radius:3px;background:#6495ed;transition:width .4s ease"></div>
-        </div>
-      </div>
-      <div class="total-box">
-        <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
           <div class="t-val" id="tot-cpd">0</div>
           <div id="meta-cpd-lbl" style="font-size:13px;color:var(--text-muted);font-weight:400"></div>
         </div>
@@ -101,7 +91,7 @@
 
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-          <div class="card-title" style="margin-bottom:0">Ranking — DOC · CQ · PROSP</div>
+          <div class="card-title" style="margin-bottom:0">Ranking — DOC · CQ</div>
           <div style="display:flex;gap:4px">
             <button class="rank-period-btn active" data-rp="week"     style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text-muted);cursor:pointer">Semana</button>
             <button class="rank-period-btn"        data-rp="month"    style="font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg3);color:var(--text-muted);cursor:pointer">Mês</button>
@@ -116,7 +106,6 @@
               <col class="col-name">
               <col class="col-doc">
               <col class="col-cpd">
-              <col class="col-prosp">
               <col class="col-va">
               <col class="col-vr">
             </colgroup>
@@ -126,7 +115,6 @@
                 <th>Angariador</th>
                 <th class="num-cell doc-th">DOC</th>
                 <th class="num-cell">CQ</th>
-                <th class="num-cell">PROSP</th>
                 <th class="num-cell" style="color:#ef4444">VA</th>
                 <th class="num-cell" style="color:#f97316">VR</th>
               </tr>
@@ -238,7 +226,6 @@
             </div>
           </div>
           <div class="fields-row" style="margin-bottom:10px">
-            <div class="field-box"><label>PROSP<span class="field-hint">(Prospecção)</span></label><input type="number" id="lanc-prosp" min="0" value="0"></div>
             <div class="field-box"><label>CQ<span class="field-hint">(Nova conversa com o proprietário)</span></label><input type="number" id="lanc-cpd" min="0" value="0"></div>
             <div class="field-box"><label>DOC<span class="field-hint">(Pegou Documentação)</span></label><input type="number" id="lanc-doc" min="0" value="0"></div>
           </div>

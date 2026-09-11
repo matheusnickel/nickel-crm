@@ -1445,7 +1445,6 @@ function renderAgentDailyRanking(currentAgentName) {
       <td style="${isMe?'font-weight:700;color:#f0f0f0':''}">${nameTxt}</td>
       <td class="num-cell doc-cell">${a.doc}</td>
       <td class="num-cell">${a.cpd}</td>
-      <td class="num-cell dim-cell">${a.prosp}</td>
       <td class="num-cell dim-cell" style="color:#ef4444">${a.va}</td>
       <td class="num-cell dim-cell" style="color:#f97316">${a.vr}</td>
     </tr>`;
@@ -1464,7 +1463,6 @@ function renderAgentDailyRanking(currentAgentName) {
           <th>Angariador</th>
           <th class="num-cell" style="color:#a8e63d">DOC</th>
           <th class="num-cell">CQ</th>
-          <th class="num-cell dim-cell">PROSP</th>
           <th class="num-cell dim-cell" style="color:#ef4444">VA</th>
           <th class="num-cell dim-cell" style="color:#f97316">VR</th>
         </tr></thead>
@@ -1905,7 +1903,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
         <div class="agent-meta-period">${mesLabel} · dia ${dayOfMonth} de ${daysInMonth} · ${daysRemaining} dias restantes</div>
         ${mkMetaRow('Angariações (DOC)',     monthDoc,   META_DOC_MONTH, 'DOC',   doc,   !okDoc)}
         ${mkMetaRow('Conversas Qualif. (CQ)',monthCpd,   META_CQ,        'CQ',    cq,    !okCpd)}
-        ${mkMetaRow('Prospecções',           monthProsp, META_PROSP,     'PROSP', prosp, !okProsp)}
       </div>`;
   }
 
@@ -1955,7 +1952,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
         <div style="font-weight:600;color:#f0f0f0">Relatório de ${formatDate(date)} enviado</div>
-        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">PROSP <strong style="color:#f0f0f0">${sentToday.prosp}</strong> &nbsp;·&nbsp; CQ <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong>${sentToday.video ? ` &nbsp;·&nbsp; VÍDEO <strong style="color:#e879f9">${sentToday.video}</strong>` : ''}</div>
+        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">CQ <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong>${sentToday.video ? ` &nbsp;·&nbsp; VÍDEO <strong style="color:#e879f9">${sentToday.video}</strong>` : ''}</div>
         <div class="agent-daily-score" style="--nota-color:${dsColor}">
           <span class="agent-nota-val" style="color:${dsColor}">${dailyScore.toFixed(1)}</span>
           <span class="agent-nota-label">${dsLabel}</span>
@@ -1973,11 +1970,10 @@ function renderAgentDashboard(session, selectedDate, editing) {
     } else {
       // ── STEP-BY-STEP WIZARD ──────────────────────────────
       const WSTEPS = [
-        { key:'prosp', label:'PROSP',  hint:'Quantos imóveis você prospectou?',                                        color:'#f0c040', pts:'+0.11 pts/unidade' },
         { key:'cp',    label:'CQ',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
         { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',                                     color:'#a8e63d', pts:'6 pontos por DOC' },
       ];
-      const wVals = { prosp: pre.prosp||0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0 };
+      const wVals = { prosp: 0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0 };
       let wStep = 0;
 
       const wizStepsHTML = WSTEPS.map((s, i) => `
@@ -2174,7 +2170,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const visible = limit ? sorted.slice(0, limit) : sorted;
     historyBody.innerHTML=visible.length===0
       ?'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">Nenhum registro</td></tr>'
-      :visible.map(e=>`<tr><td>${formatDate(e.date)}</td><td class="num-cell">${e.prosp}</td><td class="num-cell">${(e.cpdDetails||[]).filter(d=>d.nome).length}</td><td class="num-cell">${(e.docDetails||[]).filter(d=>d.nome).length}</td></tr>`).join('');
+      :visible.map(e=>`<tr><td>${formatDate(e.date)}</td><td class="num-cell">${(e.cpdDetails||[]).filter(d=>d.nome).length}</td><td class="num-cell">${(e.docDetails||[]).filter(d=>d.nome).length}</td></tr>`).join('');
     if (histShowMore) {
       if (sorted.length > 3 && limit) {
         histShowMore.style.display='block';
@@ -2822,7 +2818,7 @@ function initGestorLancamento() {
     const btn=ev.target.querySelector('[type="submit"]'); btn.disabled=true; btn.textContent='Salvando...';
     const agentUid = (TEAM.find(a=>a.name===agent))?.username || null;
     try {
-      await upsertEntry({date,uid:agentUid,agent,prosp:parseInt(document.getElementById('lanc-prosp').value)||0,cpd:lancCpdVal,doc:docVal,video:0,va:0,vr:0,cpdDetails:lancCpdDetails,docDetails,vaDetails:[],vrDetails:[],submittedDate});
+      await upsertEntry({date,uid:agentUid,agent,prosp:0,cpd:lancCpdVal,doc:docVal,video:0,va:0,vr:0,cpdDetails:lancCpdDetails,docDetails,vaDetails:[],vrDetails:[],submittedDate});
       resetEditCount(agentUid||agent,date);
       btn.textContent='✅ Salvo!';
       setTimeout(() => { btn.disabled=false; btn.textContent='Salvar lançamento'; }, 2000);
@@ -2832,7 +2828,6 @@ function initGestorLancamento() {
       return;
     }
     // reset form
-    document.getElementById('lanc-prosp').value=0;
     document.getElementById('lanc-cpd').value=0;
     document.getElementById('lanc-doc').value=0;
     document.getElementById('lanc-cpd-details').innerHTML='';
@@ -3021,7 +3016,7 @@ function renderGestorRanking() {
   if (body) {
     body.innerHTML = ranked.map((a,i) => {
       const pos = i+1;
-      return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell">${a.prosp}</td><td class="num-cell dim-cell" style="color:#ef4444">${a.va||0}</td><td class="num-cell dim-cell" style="color:#f97316">${a.vr||0}</td></tr>`;
+      return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell" style="color:#ef4444">${a.va||0}</td><td class="num-cell dim-cell" style="color:#f97316">${a.vr||0}</td></tr>`;
     }).join('');
   }
   // Highlight active ranking filter btn
