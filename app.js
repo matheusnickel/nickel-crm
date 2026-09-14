@@ -1922,7 +1922,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         {
           key:   'cp',
           label: 'CONVERSA QUALIFICADA (CQ)',
-          hint:  'Proprietário que está vendendo? Sim.\nEstá sem exclusividade? Sim.\n→ Isso é uma Conversa Qualificada (CQ).',
+          hint:  'Quantas conversas qualificadas com proprietário?',
           color: '#6495ed',
           pts:   '2 pontos por CQ',
         },
