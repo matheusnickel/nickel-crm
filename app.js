@@ -1921,14 +1921,14 @@ function renderAgentDashboard(session, selectedDate, editing) {
       const WSTEPS = [
         {
           key:   'cp',
-          label: 'Conversa Qualificada (CQ)',
+          label: 'CONVERSA QUALIFICADA (CQ)',
           hint:  'Proprietário que está vendendo? Sim.\nEstá sem exclusividade? Sim.\n→ Isso é uma Conversa Qualificada (CQ).',
           color: '#6495ed',
           pts:   '2 pontos por CQ',
         },
         {
           key:   'doc',
-          label: 'Documentação (DOC)',
+          label: 'DOCUMENTAÇÃO (DOC)',
           hint:  'Documentações recebidas HOJE de um proprietário que está vendendo.\n→ Próximo passo: enviar toda a documentação ao Leo por e-mail e formalizar a angariação.',
           color: '#a8e63d',
           pts:   '6 pontos por DOC',
