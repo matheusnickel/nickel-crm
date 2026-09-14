@@ -770,19 +770,19 @@ function calcMonthlyScore(agentName, monthEntries) {
 }
 
 function scoreColor(score) {
-  if (score >= 10) return '#ffffff'; // branco — pontuação perfeita
-  if (score >= 8)  return '#6495ed'; // azul   — 1 DOC + 1 CQ ou ≥4 CQ
-  if (score >= 6)  return '#a8e63d'; // verde  — 1 DOC ou 3 CQ
-  if (score >= 4)  return '#f0c040'; // amarelo — 2 CQ
-  return '#e74c3c';                  // vermelho — 0–3 pts
+  if (score >= 8)  return '#6495ed'; // azul   — ≥8
+  if (score >= 6)  return '#a8e63d'; // verde  — 6–7
+  if (score >= 4)  return '#f97316'; // laranja — 4–5
+  if (score >= 2)  return '#f0c040'; // amarelo — 2–3
+  return '#e74c3c';                  // vermelho — 0–1
 }
 
 function scoreLabel(score) {
-  if (score >= 10) return 'Perfeito!';
   if (score >= 8)  return 'Excelente';
   if (score >= 6)  return 'Bom';
   if (score >= 4)  return 'Regular';
-  return 'Fraco';
+  if (score >= 2)  return 'Fraco';
+  return 'Muito fraco';
 }
 
 // ── NOTAS RANKING ─────────────────────────────────────────
@@ -1889,7 +1889,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const dailyScore = calcDailyScore(sentToday);
     const dsColor = scoreColor(dailyScore);
     const dsLabel = scoreLabel(dailyScore);
-    const dsMsg = dailyScore >= 10 ? 'Perfeito! Dia completo!' : dailyScore >= 8 ? 'Você foi bem, continue!' : dailyScore >= 6 ? 'Bom, mas pode melhorar.' : dailyScore >= 4 ? 'Melhore!' : 'Fraco demais!';
+    const dsMsg = dailyScore >= 8 ? 'Você foi bem, continue!' : dailyScore >= 6 ? 'Bom, mas pode melhorar.' : dailyScore >= 4 ? 'Melhore!' : dailyScore >= 2 ? 'Fraco demais!' : 'Nada lançado!';
     formWrap.innerHTML=`
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
@@ -4257,7 +4257,7 @@ function generateDocsByDayReport() {
 
   const C = {
     bg: '#07090f', card: '#0e1117', border: 'rgba(255,255,255,0.08)',
-    text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed',
+    text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed', orange: '#f97316',
     yellow: '#f0c040', red: '#ef4444', orange: '#f97316',
     gold: '#ffd700', silver: '#c0c0c0', bronze: '#cd7f32',
   };
@@ -4444,13 +4444,13 @@ function generateReport(period) {
     gold:'#ffd700', silver:'#c0c0c0', bronze:'#cd7f32' };
 
   function scoreHex(score) {
-    if (score >= 10) return '#ffffff';
     if (score >= 8)  return C.blue;
     if (score >= 6)  return C.green;
-    if (score >= 4)  return C.yellow;
+    if (score >= 4)  return C.orange;
+    if (score >= 2)  return C.yellow;
     return C.red;
   }
-  function scoreTextColor(score) { return score >= 10 ? '#07090f' : (score >= 4 && score < 6) ? '#111' : '#fff'; }
+  function scoreTextColor(score) { return (score >= 2 && score < 6) ? '#111' : '#fff'; }
   function podiumColor(i) { return i===0?C.gold:i===1?C.silver:i===2?C.bronze:'rgba(255,255,255,0.12)'; }
   function podiumLabel(i) { return i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`; }
 
