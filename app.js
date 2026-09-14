@@ -1017,7 +1017,9 @@ function renderAgentContacts(agentName) {
     </tr>`;
   };
 
-  const visitList = tab==='agendadas' ? visAgendadas : tab==='realizadas' ? visRealizadas : tab==='nao' ? visNao : [];
+  // Redireciona tabs de visita obsoletas para CQs
+  if (['agendadas','realizadas','nao'].includes(tab)) { agentContactTab = 'cpd'; tab = 'cpd'; }
+  const visitList = [];
 
   const monthLabel = m => { const [y,mo]=m.split('-'); return `${['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+mo-1]}/${y.slice(2)}`; };
 
@@ -1032,9 +1034,6 @@ function renderAgentContacts(agentName) {
     <div class="nota-tabs" style="position:relative;flex-wrap:wrap;gap:4px">
       <button class="nota-tab-btn${isCpd?' active':''}" data-ctab="cpd">CQs (${totalCqs})</button>
       <button class="nota-tab-btn${tab==='doc'?' active':''}" data-ctab="doc">DOCs (${docs.length})</button>
-      <button class="nota-tab-btn${tab==='agendadas'?' active':''}" data-ctab="agendadas" style="color:${tab==='agendadas'?'inherit':'#ef4444aa'}">⏳ Agendadas (${visAgendadas.length})</button>
-      <button class="nota-tab-btn${tab==='realizadas'?' active':''}" data-ctab="realizadas" style="color:${tab==='realizadas'?'inherit':'#a8e63daa'}">✅ Realizadas (${visRealizadas.length})</button>
-      <button class="nota-tab-btn${tab==='nao'?' active':''}" data-ctab="nao" style="color:${tab==='nao'?'inherit':'#888'}">❌ Não realizadas (${visNao.length})</button>
     </div>
     ${isCpd ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
       ${CQ_SUB_FILTERS.map(({f,label,cnt}) =>
