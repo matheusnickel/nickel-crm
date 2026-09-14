@@ -106,10 +106,13 @@
         <div id="agent-leads-wrap"></div>
       </div>
 
-      <!-- Meus CQs, DOCs e Visitas -->
+      <!-- Meus CQs, DOCs (colapsável) -->
       <div class="card">
-        <div class="card-title">📋 Meus CQs e DOCs</div>
-        <div id="agent-contacts-wrap"></div>
+        <div class="card-title" id="contacts-toggle" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between">
+          <span>📋 Meus CQs e DOCs</span>
+          <span id="contacts-chevron" style="font-size:12px;color:var(--text-muted);transition:transform .2s">▼</span>
+        </div>
+        <div id="agent-contacts-wrap" style="display:none"></div>
       </div>
 
       <!-- Minhas Visitas (oculto — integrado acima) -->
@@ -149,6 +152,16 @@
       const open = body.style.display === 'none';
       body.style.display = open ? 'block' : 'none';
       if (card) card.classList.toggle('open', open);
+    });
+
+    // Toggle CQs e DOCs
+    document.getElementById('contacts-toggle')?.addEventListener('click', function() {
+      const wrap = document.getElementById('agent-contacts-wrap');
+      const chevron = document.getElementById('contacts-chevron');
+      if (!wrap) return;
+      const open = wrap.style.display === 'none';
+      wrap.style.display = open ? '' : 'none';
+      if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
     });
 
     // Toggle de leads
