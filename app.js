@@ -1929,7 +1929,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
         {
           key:   'doc',
           label: 'DOCUMENTAÇÃO (DOC)',
-          hint:  'Documentações recebidas HOJE de um proprietário que está vendendo.\n→ Próximo passo: enviar toda a documentação ao Leo por e-mail e formalizar a angariação.',
+          hint:  'Quantidade de documentações captadas hoje.',
           color: '#a8e63d',
           pts:   '6 pontos por DOC',
         },
