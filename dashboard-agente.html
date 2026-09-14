@@ -73,26 +73,34 @@
 
 <!-- Histórico de lançamentos -->
       <div class="card">
-        <div class="card-title">📅 Últimos lançamentos</div>
-        <div id="streak-wrap"></div>
+        <div class="card-title" id="streak-toggle" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between">
+          <span>📅 Últimos lançamentos</span>
+          <span id="streak-chevron" style="font-size:12px;color:var(--text-muted);transition:transform .2s">▼</span>
+        </div>
+        <div id="streak-wrap" style="display:none"></div>
       </div>
 
       <!-- Histórico tabela -->
       <div class="card">
-        <div class="card-title">Histórico</div>
-        <div style="overflow-x:auto">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th class="num-cell">CQ</th>
-                <th class="num-cell">DOC</th>
-              </tr>
-            </thead>
-            <tbody id="history-body"></tbody>
-          </table>
+        <div class="card-title" id="hist-toggle" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between">
+          <span>📋 Histórico</span>
+          <span id="hist-chevron" style="font-size:12px;color:var(--text-muted);transition:transform .2s">▼</span>
         </div>
-        <button id="hist-show-more" style="display:none;margin-top:12px;width:100%;background:none;border:1px solid var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px;border-radius:8px;cursor:pointer;">Ver todos</button>
+        <div id="hist-body-wrap" style="display:none">
+          <div style="overflow-x:auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th class="num-cell">CQ</th>
+                  <th class="num-cell">DOC</th>
+                </tr>
+              </thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+          <button id="hist-show-more" style="display:none;margin-top:12px;width:100%;background:none;border:1px solid var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px;border-radius:8px;cursor:pointer;">Ver todos</button>
+        </div>
       </div>
 
     </div>
@@ -152,6 +160,26 @@
       const open = body.style.display === 'none';
       body.style.display = open ? 'block' : 'none';
       if (card) card.classList.toggle('open', open);
+    });
+
+    // Toggle Últimos lançamentos
+    document.getElementById('streak-toggle')?.addEventListener('click', function() {
+      const wrap = document.getElementById('streak-wrap');
+      const chevron = document.getElementById('streak-chevron');
+      if (!wrap) return;
+      const open = wrap.style.display === 'none';
+      wrap.style.display = open ? '' : 'none';
+      if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+    });
+
+    // Toggle Histórico tabela
+    document.getElementById('hist-toggle')?.addEventListener('click', function() {
+      const wrap = document.getElementById('hist-body-wrap');
+      const chevron = document.getElementById('hist-chevron');
+      if (!wrap) return;
+      const open = wrap.style.display === 'none';
+      wrap.style.display = open ? '' : 'none';
+      if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
     });
 
     // Toggle CQs e DOCs
