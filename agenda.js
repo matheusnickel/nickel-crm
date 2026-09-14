@@ -33,6 +33,7 @@ let allEvents   = [];
 let TEAM        = [];
 let session     = null;
 let unsubscribe = null;
+let mobileStripDate = today(); // selected day in mobile week-strip
 
 // ── DATE HELPERS ──────────────────────────────────────────
 function getWeekDates(ref) {
@@ -103,6 +104,38 @@ function pill(ev, full=false) {
   </div>`;
 }
 
+const isMobile = () => window.innerWidth < 640;
+
+function renderWeekStrip(days, evsByDate, cal) {
+  const NAMES = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  const strip = `<div class="ag-week-strip">${days.map((d,i)=>{
+    const isToday    = d === today();
+    const isSelected = d === mobileStripDate;
+    const hasEvs     = (evsByDate[d]||[]).length > 0;
+    return `<div class="ag-strip-day${isToday?' today':''}${isSelected?' selected':''}" data-strip="${d}">
+      <span class="ag-strip-name">${NAMES[i]}</span>
+      <span class="ag-strip-num">${d.slice(8)}</span>
+      <span class="${hasEvs?'ag-strip-dot':'ag-strip-dot-empty'}"></span>
+    </div>`;
+  }).join('')}</div>`;
+
+  const dayEvs = evsByDate[mobileStripDate] || [];
+  const td = mobileStripDate.split('-');
+  const dayLabel = `<div class="ag-day-label">${td[2]}/${td[1]}/${td[0]}</div>`;
+  const events   = dayEvs.length
+    ? `<div class="ag-day-view">${dayEvs.map(e=>pill(e,true)).join('')}</div>`
+    : `<div class="ag-empty">Nenhum compromisso neste dia.</div>`;
+
+  cal.innerHTML = strip + dayLabel + events;
+
+  cal.querySelectorAll('[data-strip]').forEach(el => {
+    el.addEventListener('click', () => {
+      mobileStripDate = el.dataset.strip;
+      renderCalendar();
+    });
+  });
+}
+
 function renderCalendar() {
   const cal = document.getElementById('ag-calendar');
   if (!cal) return;
@@ -121,21 +154,28 @@ function renderCalendar() {
 
   if (view === 'week') {
     const days = getWeekDates(navDate);
-    const NAMES = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
-    cal.innerHTML = `<div class="ag-cal-week">${days.map((d,i)=>{
-      const isToday = d === today();
-      const isPast  = d < today();
-      const dayEvs  = evsByDate[d] || [];
-      const MAX = 4;
-      return `<div class="ag-day-col${isToday?' today':''}${isPast?' past':''}">
-        <div class="ag-day-head">
-          <div class="ag-day-name">${NAMES[i]}</div>
-          <div class="ag-day-num">${d.slice(8)}</div>
-        </div>
-        ${dayEvs.slice(0,MAX).map(e=>pill(e)).join('')}
-        ${dayEvs.length>MAX?`<div class="ag-more" data-goto="${d}">+${dayEvs.length-MAX} mais</div>`:''}
-      </div>`;
-    }).join('')}</div>`;
+    // keep strip date in sync with the current week
+    if (!days.includes(mobileStripDate)) mobileStripDate = days.find(d=>d===today()) || days[0];
+
+    if (isMobile()) {
+      renderWeekStrip(days, evsByDate, cal);
+    } else {
+      const NAMES = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+      cal.innerHTML = `<div class="ag-cal-week">${days.map((d,i)=>{
+        const isToday = d === today();
+        const isPast  = d < today();
+        const dayEvs  = evsByDate[d] || [];
+        const MAX = 4;
+        return `<div class="ag-day-col${isToday?' today':''}${isPast?' past':''}">
+          <div class="ag-day-head">
+            <div class="ag-day-name">${NAMES[i]}</div>
+            <div class="ag-day-num">${d.slice(8)}</div>
+          </div>
+          ${dayEvs.slice(0,MAX).map(e=>pill(e)).join('')}
+          ${dayEvs.length>MAX?`<div class="ag-more" data-goto="${d}">+${dayEvs.length-MAX} mais</div>`:''}
+        </div>`;
+      }).join('')}</div>`;
+    }
 
   } else if (view === 'month') {
     const dates = getMonthDates(navDate);
@@ -183,6 +223,15 @@ function renderCalendar() {
   cal.querySelectorAll('[data-goto]').forEach(el => {
     el.addEventListener('click', () => { navDate = el.dataset.goto; view = 'day'; renderCalendar(); });
   });
+}
+
+// keep mobileStripDate in sync when navigating weeks
+function advanceMobileStrip(dir) {
+  if (view === 'week') {
+    const d = new Date(mobileStripDate + 'T12:00:00');
+    d.setDate(d.getDate() + dir * 7);
+    mobileStripDate = d.toISOString().slice(0,10);
+  }
 }
 
 // ── NEW / EDIT MODAL ──────────────────────────────────────
@@ -370,24 +419,29 @@ async function initMain() {
     agentSel.style.display = '';
   }
 
+  // Mobile default: start on day view
+  if (isMobile()) view = 'day';
+
   // Nav controls
   document.querySelectorAll('.ag-view-btn').forEach(btn => {
     btn.addEventListener('click', () => { view = btn.dataset.v; renderCalendar(); });
   });
   document.getElementById('ag-prev').addEventListener('click', () => {
     const d = new Date(navDate + 'T12:00:00');
-    if (view === 'day')   d.setDate(d.getDate() - 1);
+    if (view === 'day')        d.setDate(d.getDate() - 1);
     else if (view === 'week')  d.setDate(d.getDate() - 7);
     else                       d.setMonth(d.getMonth() - 1);
     navDate = d.toISOString().slice(0,10);
+    if (view === 'week') advanceMobileStrip(-1);
     renderCalendar();
   });
   document.getElementById('ag-next').addEventListener('click', () => {
     const d = new Date(navDate + 'T12:00:00');
-    if (view === 'day')   d.setDate(d.getDate() + 1);
+    if (view === 'day')        d.setDate(d.getDate() + 1);
     else if (view === 'week')  d.setDate(d.getDate() + 7);
     else                       d.setMonth(d.getMonth() + 1);
     navDate = d.toISOString().slice(0,10);
+    if (view === 'week') advanceMobileStrip(1);
     renderCalendar();
   });
 

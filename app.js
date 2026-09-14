@@ -615,32 +615,27 @@ function weekDaysBefore(ref) {
 }
 
 // ── RATIOS DO TIME (média julho + agosto 2026) ────────────
-// Fonte única de verdade para META_CQ e META_PROSP usados em AMBOS os painéis.
+// Fonte única de verdade para META_CQ usado em AMBOS os painéis.
 function getTeamRatios(_refDate) {
   const BASE_MONTHS = ['2026-07', '2026-08'];
   const teamSet = new Set(getAgentNames());
   const entries = getEntries();
-  let totalDoc = 0, totalCpd = 0, totalProsp = 0;
+  let totalDoc = 0, totalCpd = 0;
   BASE_MONTHS.forEach(ym => {
     const { start, end } = monthRange(ym + '-01');
     const me = entries.filter(e => inRange(e.date, start, end) && teamSet.has(normalizeAgentName(e.agent)));
-    totalDoc   += me.reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
-    totalCpd   += me.reduce((s, e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
-    totalProsp += me.reduce((s, e) => s + (e.prosp || 0), 0);
+    totalDoc += me.reduce((s, e) => s + ((e.docDetails||[]).filter(d=>d.nome).length || (e.doc||0)), 0);
+    totalCpd += me.reduce((s, e) => s + ((e.cpdDetails||[]).filter(d=>d.nome).length || (e.cpd||0)), 0);
   });
-  const avgDoc   = totalDoc   / BASE_MONTHS.length;
-  const avgCpd   = totalCpd   / BASE_MONTHS.length;
-  const avgProsp = totalProsp / BASE_MONTHS.length;
-  // Fallback: ratios aproximados caso não haja dados base
-  const ratioCpd   = avgDoc > 0 ? avgCpd   / avgDoc : 3.5;
-  const ratioProsp = avgDoc > 0 ? avgProsp / avgDoc : 32;
+  const avgDoc = totalDoc / BASE_MONTHS.length;
+  const avgCpd = totalCpd / BASE_MONTHS.length;
+  // Fallback: ratio aproximado caso não haja dados base
+  const ratioCpd = avgDoc > 0 ? avgCpd / avgDoc : 3.5;
   // Metas do time para META_DOC_GESTOR DOCs
-  const metaCqGestor    = Math.round(ratioCpd   * META_DOC_GESTOR);
-  const metaProspGestor = Math.round(ratioProsp * META_DOC_GESTOR);
+  const metaCqGestor = Math.round(ratioCpd * META_DOC_GESTOR);
   // Metas individuais escalonadas para META_DOC_MONTH DOCs (mesma proporção)
-  const metaCqMonth    = Math.round(metaCqGestor    / META_DOC_GESTOR * META_DOC_MONTH);
-  const metaProspMonth = Math.round(metaProspGestor / META_DOC_GESTOR * META_DOC_MONTH);
-  return { metaCqGestor, metaProspGestor, metaCqMonth, metaProspMonth };
+  const metaCqMonth = Math.round(metaCqGestor / META_DOC_GESTOR * META_DOC_MONTH);
+  return { metaCqGestor, metaCqMonth };
 }
 
 // ── FILTER / AGGREGATE ───────────────────────────────────
@@ -683,8 +678,9 @@ function sumByAgent(entries, period) {
   deduped.forEach(e=>{
     const name = normalizeAgentName(e.agent);
     if(!map[name]) map[name]={agent:name,prosp:0,cpd:0,doc:0,va:0,vr:0,vidSubmitted:0};
-    const docCount = (e.docDetails||[]).filter(d=>d.nome).length;
-    map[name].prosp+=e.prosp; map[name].cpd+=(e.cpdDetails||[]).filter(d=>d.nome).length; map[name].doc+=docCount;
+    const docCount = (e.docDetails||[]).filter(d=>d.nome).length || (e.doc||0);
+    const cpdCount = (e.cpdDetails||[]).filter(d=>d.nome).length || (e.cpd||0);
+    map[name].prosp+=e.prosp; map[name].cpd+=cpdCount; map[name].doc+=docCount;
     map[name].va += (e.va||0);
     map[name].vr += (e.vaDetails||[]).filter(d=>d.realizada).length;
     map[name].vidSubmitted += (e.video||0);
@@ -749,33 +745,11 @@ function calcStreak(agentName, uid) {
 
 function calcDailyScore(entry) {
   if (!entry) return 0;
-  // Faixas: vermelho 0–2.9 · amarelo 3–5.9 · verde 6–7.9 · azul 8–10
-  //
-  // VERMELHO: sem CP, sem DOC, sem vídeo E prosp ≤ 30
-  // AMARELO mínimo (3.0) quando:
-  //   - pelo menos 1 CP, ou
-  //   - pelo menos 1 vídeo, ou
-  //   - prosp > 30 (esforço alto de prospecção)
-  // A partir do mínimo 3.0, cada atividade extra sobe a nota
-  // Sem DOC: teto 7.9 (azul é exclusivo de quem captou DOC)
-  // Com DOC: base 8.0 + bônus de esforço até 10.0
-  const vid = effectiveVideo(entry);
-  const cpdCount = (entry.cpdDetails||[]).filter(d=>d.nome).length;
-  const docCount = (entry.docDetails||[]).filter(d=>d.nome).length;
-  const effort = cpdCount * 1.0 + vid * 0.5 + entry.prosp * 0.025;
-
-  if (docCount > 0) {
-    const base  = Math.min(docCount * 8.0, 10);
-    const bonus = Math.min(effort * 0.15, 2.0);
-    return parseFloat(Math.min(base + bonus, 10).toFixed(1));
-  }
-
-  // Sem DOC: verifica se atinge o piso amarelo
-  const meetsFloor = cpdCount > 0 || vid > 0 || entry.prosp > 30;
-  if (!meetsFloor) {
-    return parseFloat(Math.min(entry.prosp * 0.025, 2.9).toFixed(1));
-  }
-  return parseFloat(Math.min(3.0 + effort, 7.9).toFixed(1));
+  // CQ = 2 pts · DOC = 6 pts · teto 10
+  // Usa arrays de detalhes quando disponíveis; fallback para campos numéricos (entradas antigas)
+  const cpdCount = (entry.cpdDetails||[]).filter(d=>d.nome).length || (entry.cpd || 0);
+  const docCount = (entry.docDetails||[]).filter(d=>d.nome).length || (entry.doc || 0);
+  return parseFloat(Math.min(docCount * 6 + cpdCount * 2, 10).toFixed(1));
 }
 
 
@@ -784,31 +758,30 @@ function calcMonthlyScore(agentName, monthEntries) {
   const raw  = monthEntries.filter(e => uid ? (e.uid===uid || normalizeAgentName(e.agent)===agentName) : normalizeAgentName(e.agent)===agentName || e.agent===agentName);
   const dedupScore = {}; raw.forEach(e => { if (!dedupScore[e.date] || (!dedupScore[e.date].uid && e.uid)) dedupScore[e.date] = e; });
   const mine = Object.values(dedupScore);
-  const doc   = mine.reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
-  const cpd   = mine.reduce((s, e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
-  const prosp = mine.reduce((s, e) => s + e.prosp, 0);
-  // Escala: 0–12 DOC → 0–8.0 | 12–14 DOC → 8.0–10.0
-  // CP e PROSP são desempate mínimo apenas.
+  const doc = mine.reduce((s, e) => s + ((e.docDetails||[]).filter(d=>d.nome).length || (e.doc||0)), 0);
+  const cpd = mine.reduce((s, e) => s + ((e.cpdDetails||[]).filter(d=>d.nome).length || (e.cpd||0)), 0);
+  // Escala base: 0–12 DOC → 0–8.0 | 12–14 DOC → 8.0–10.0
   let base;
   if (doc >= 14)      base = 10.0;
   else if (doc >= 12) base = 8.0 + ((doc - 12) / 2) * 2.0;
   else                base = (doc / 12) * 8.0;
   const bonusCp = Math.min(cpd * 0.004, 0.2);
-  const bonusPr = Math.min(prosp * 0.0001, 0.05);
-  return parseFloat(Math.min(base + bonusCp + bonusPr, 10).toFixed(1));
+  return parseFloat(Math.min(base + bonusCp, 10).toFixed(1));
 }
 
 function scoreColor(score) {
-  if (score >= 8)  return '#6495ed'; // azul   — DOC garantido
-  if (score >= 6)  return '#a8e63d'; // verde  — esforço forte (3+ CP/VID)
-  if (score >= 3)  return '#f0c040'; // amarelo — esforço moderado
-  return '#e74c3c';                  // vermelho — pouco ou nada feito
+  if (score >= 10) return '#ffffff'; // branco — pontuação perfeita
+  if (score >= 8)  return '#6495ed'; // azul   — 1 DOC + 1 CQ ou ≥4 CQ
+  if (score >= 6)  return '#a8e63d'; // verde  — 1 DOC ou 3 CQ
+  if (score >= 4)  return '#f0c040'; // amarelo — 2 CQ
+  return '#e74c3c';                  // vermelho — 0–3 pts
 }
 
 function scoreLabel(score) {
+  if (score >= 10) return 'Perfeito!';
   if (score >= 8)  return 'Excelente';
   if (score >= 6)  return 'Bom';
-  if (score >= 3)  return 'Regular';
+  if (score >= 4)  return 'Regular';
   return 'Fraco';
 }
 
@@ -834,14 +807,14 @@ function renderNotasRanking() {
     rows = names.map(name => {
       const uid = TEAM.find(a=>a.name===name)?.username;
       const e = dayE.find(x => uid ? (x.uid===uid || normalizeAgentName(x.agent)===name) : normalizeAgentName(x.agent)===name || x.agent===name);
-      return { name, score: calcDailyScore(e || null), doc: e ? (e.docDetails||[]).filter(d=>d.nome).length : 0, sent: !!e };
+      return { name, score: calcDailyScore(e || null), doc: e ? ((e.docDetails||[]).filter(d=>d.nome).length || (e.doc||0)) : 0, sent: !!e };
     });
   } else {
     rows = names.map(name => {
       const uid = TEAM.find(a=>a.name===name)?.username;
       const rawM = monthE.filter(x => uid ? (x.uid===uid || normalizeAgentName(x.agent)===name) : normalizeAgentName(x.agent)===name || x.agent===name);
       const dedupM = {}; rawM.forEach(e => { if (!dedupM[e.date] || (!dedupM[e.date].uid && e.uid)) dedupM[e.date] = e; });
-      const doc = Object.values(dedupM).reduce((s, e) => s + (e.docDetails||[]).filter(d=>d.nome).length, 0);
+      const doc = Object.values(dedupM).reduce((s, e) => s + ((e.docDetails||[]).filter(d=>d.nome).length || (e.doc||0)), 0);
       return { name, score: calcMonthlyScore(name, monthE), doc, sent: true };
     });
   }
@@ -1392,7 +1365,7 @@ function showVaRealizedModal(onConfirm) {
   });
 }
 
-// ── AGENT RANKING (mesmo ranking do gestor: DOC·CQ·PROSP·VA·VR) ──
+// ── AGENT RANKING ──────────────────────────────────────────
 let activeAgentRankTab = 'mes';
 
 function renderAgentDailyRanking(currentAgentName) {
@@ -1420,8 +1393,8 @@ function renderAgentDailyRanking(currentAgentName) {
     const streak = calcStreak(name, memberUid);
     return {
       agent: name,
-      doc:   agentE.reduce((s,e)=>s+(e.docDetails||[]).filter(d=>d.nome).length,0),
-      cpd:   agentE.reduce((s,e)=>s+(e.cpdDetails||[]).filter(d=>d.nome).length,0),
+      doc:   agentE.reduce((s,e)=>s+((e.docDetails||[]).filter(d=>d.nome).length||(e.doc||0)),0),
+      cpd:   agentE.reduce((s,e)=>s+((e.cpdDetails||[]).filter(d=>d.nome).length||(e.cpd||0)),0),
       prosp: agentE.reduce((s,e)=>s+(e.prosp||0),0),
       va:    agentE.reduce((s,e)=>s+(e.va||0),0),
       vr:    agentE.reduce((s,e)=>s+(e.vaDetails||[]).filter(d=>d.realizada).length,0),
@@ -1429,7 +1402,7 @@ function renderAgentDailyRanking(currentAgentName) {
     };
   });
 
-  byAgent.sort((a,b) => b.doc!==a.doc ? b.doc-a.doc : b.cpd!==a.cpd ? b.cpd-a.cpd : b.prosp-a.prosp);
+  byAgent.sort((a,b) => b.doc!==a.doc ? b.doc-a.doc : b.cpd-a.cpd);
 
   const rowsHTML = byAgent.map((a, i) => {
     const pos = i + 1;
@@ -1445,8 +1418,6 @@ function renderAgentDailyRanking(currentAgentName) {
       <td style="${isMe?'font-weight:700;color:#f0f0f0':''}">${nameTxt}</td>
       <td class="num-cell doc-cell">${a.doc}</td>
       <td class="num-cell">${a.cpd}</td>
-      <td class="num-cell dim-cell" style="color:#ef4444">${a.va}</td>
-      <td class="num-cell dim-cell" style="color:#f97316">${a.vr}</td>
     </tr>`;
   }).join('');
 
@@ -1463,8 +1434,6 @@ function renderAgentDailyRanking(currentAgentName) {
           <th>Angariador</th>
           <th class="num-cell" style="color:#a8e63d">DOC</th>
           <th class="num-cell">CQ</th>
-          <th class="num-cell dim-cell" style="color:#ef4444">VA</th>
-          <th class="num-cell dim-cell" style="color:#f97316">VR</th>
         </tr></thead>
         <tbody>${rowsHTML}</tbody>
       </table>
@@ -1800,21 +1769,20 @@ function renderAgentDashboard(session, selectedDate, editing) {
   const entries=getEntries().filter(e=> session.uid ? (e.uid===session.uid || normalizeAgentName(e.agent)===session.name) : normalizeAgentName(e.agent)===session.name || e.agent===session.name);
   // Deduplica por data (prefere uid-based sobre legacy) antes de calcular contadores
   const entriesDedup = (() => { const m={}; entries.forEach(e=>{ if(!m[e.date]||(!m[e.date].uid&&e.uid)) m[e.date]=e; }); return Object.values(m); })();
-  const weekDoc=entriesDedup.filter(e=>inRange(e.date,wStart,wEnd)).reduce((s,e)=>s+(e.docDetails||[]).filter(d=>d.nome).length,0);
+  const weekDoc=entriesDedup.filter(e=>inRange(e.date,wStart,wEnd)).reduce((s,e)=>s+((e.docDetails||[]).filter(d=>d.nome).length||(e.doc||0)),0);
   const sentToday=entries.find(e=>e.date===date);
   const editCount=getEditCount(session.uid||session.name,date);
   const canEdit=editCount<2;
 
   const { start:mStart, end:mEnd } = monthRange(t);
-  const monthDoc = entriesDedup.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s+(e.docDetails||[]).filter(d=>d.nome).length, 0);
+  const monthDoc = entriesDedup.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s+((e.docDetails||[]).filter(d=>d.nome).length||(e.doc||0)), 0);
 
   // Metas card
   const metasWrap = document.getElementById('metas-wrap');
   if (metasWrap) {
-    const monthCpd  = entriesDedup.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.cpdDetails||[]).filter(d=>d.nome).length, 0);
-    const monthProsp= entriesDedup.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + (e.prosp||0), 0);
+    const monthCpd = entriesDedup.filter(e => inRange(e.date, mStart, mEnd)).reduce((s,e) => s + ((e.cpdDetails||[]).filter(d=>d.nome).length||(e.cpd||0)), 0);
 
-    const { metaCqMonth: META_CQ, metaProspMonth: META_PROSP } = getTeamRatios(t);
+    const { metaCqMonth: META_CQ } = getTeamRatios(t);
 
     const mesLabel = new Date(t+'T12:00:00').toLocaleString('pt-BR',{month:'long',year:'numeric'});
 
@@ -1849,7 +1817,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
       }
     };
 
-    // ── Identifica gargalo no funil PROSP → CQ → DOC ────
+    // ── Identifica gargalo no funil CQ → DOC ───────────
     const gap = (val, meta) => {
       const exp = expectedToday(meta);
       if (val >= meta) return 0;
@@ -1928,12 +1896,12 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const dailyScore = calcDailyScore(sentToday);
     const dsColor = scoreColor(dailyScore);
     const dsLabel = scoreLabel(dailyScore);
-    const dsMsg = dailyScore >= 8 ? 'Você foi bem, continue!' : dailyScore >= 6 ? 'Bom, mas pode melhorar.' : dailyScore > 3 ? 'Melhore!' : 'Fraco demais!';
+    const dsMsg = dailyScore >= 10 ? 'Perfeito! Dia completo!' : dailyScore >= 8 ? 'Você foi bem, continue!' : dailyScore >= 6 ? 'Bom, mas pode melhorar.' : dailyScore >= 4 ? 'Melhore!' : 'Fraco demais!';
     formWrap.innerHTML=`
       <div class="sent-today">
         <div style="font-size:24px;margin-bottom:6px">✓</div>
         <div style="font-weight:600;color:#f0f0f0">Relatório de ${formatDate(date)} enviado</div>
-        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">CQ <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong>${sentToday.video ? ` &nbsp;·&nbsp; VÍDEO <strong style="color:#e879f9">${sentToday.video}</strong>` : ''}</div>
+        <div style="font-size:13px;margin-top:6px;color:var(--text-muted)">CQ <strong style="color:#f0f0f0">${sentToday.cpd}</strong> &nbsp;·&nbsp; DOC <strong style="color:#f0f0f0">${sentToday.doc}</strong></div>
         <div class="agent-daily-score" style="--nota-color:${dsColor}">
           <span class="agent-nota-val" style="color:${dsColor}">${dailyScore.toFixed(1)}</span>
           <span class="agent-nota-label">${dsLabel}</span>
@@ -1951,15 +1919,27 @@ function renderAgentDashboard(session, selectedDate, editing) {
     } else {
       // ── STEP-BY-STEP WIZARD ──────────────────────────────
       const WSTEPS = [
-        { key:'cp',    label:'CQ',     hint:'Quantas conversas com proprietário?',                                      color:'#6495ed', pts:'+0.9 pts/unidade' },
-        { key:'doc',   label:'DOC',    hint:'Quantidade de documentações captadas',                                     color:'#a8e63d', pts:'6 pontos por DOC' },
+        {
+          key:   'cp',
+          label: 'Conversa Qualificada (CQ)',
+          hint:  'Proprietário que está vendendo? Sim.\nEstá sem exclusividade? Sim.\n→ Isso é uma Conversa Qualificada (CQ).',
+          color: '#6495ed',
+          pts:   '2 pontos por CQ',
+        },
+        {
+          key:   'doc',
+          label: 'Documentação (DOC)',
+          hint:  'Documentações recebidas HOJE de um proprietário que está vendendo.\n→ Próximo passo: enviar toda a documentação ao Leo por e-mail e formalizar a angariação.',
+          color: '#a8e63d',
+          pts:   '6 pontos por DOC',
+        },
       ];
-      const wVals = { prosp: 0, cp: pre.cpd||0, doc: pre.doc||0, vid: pre.video||0, va: pre.va||0 };
+      const wVals = { prosp: 0, cp: pre.cpd||0, doc: pre.doc||0 };
       let wStep = 0;
 
       const wizStepsHTML = WSTEPS.map((s, i) => `
         <div class="wiz-step" id="wiz-step-${i}" style="${i>0?'display:none':''}">
-          <div style="font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:4px">${s.hint}</div>
+          <div style="font-size:13px;color:var(--text-muted);text-align:center;margin-bottom:6px;white-space:pre-line;line-height:1.5">${s.hint}</div>
           <div style="font-size:15px;font-weight:700;text-align:center;color:${s.color};margin-bottom:2px">${s.label}</div>
           <div style="font-size:11px;background:var(--bg3);border-radius:8px;padding:5px 12px;text-align:center;color:var(--text-muted);margin-bottom:18px;display:inline-block;width:100%;box-sizing:border-box"><strong style="color:${s.color}">${s.pts}</strong></div>
           <div style="display:flex;align-items:center;justify-content:center;gap:24px;margin-bottom:24px">
@@ -1983,7 +1963,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
           <div id="wiz-details" style="display:none">
             <div id="wiz-cpd-area"></div>
             <div id="wiz-doc-area"></div>
-            <div id="wiz-va-area"></div>
             <button id="wiz-submit" class="btn" style="margin-top:14px;width:100%">${sentToday ? 'Salvar correção' : 'Enviar relatório'}</button>
             ${sentToday ? '<button type="button" class="btn btn-outline" id="wiz-cancel" style="margin-top:8px;width:100%">Cancelar</button>' : ''}
           </div>
@@ -2017,7 +1996,6 @@ function renderAgentDashboard(session, selectedDate, editing) {
         document.getElementById('wiz-details').style.display = '';
         document.getElementById('wiz-cpd-area').innerHTML = buildCpdDetailsHTML(wVals.cp, pre.cpdDetails||[]);
         document.getElementById('wiz-doc-area').innerHTML = buildDocDetailsHTML(wVals.doc, pre.docDetails||[]);
-        document.getElementById('wiz-va-area').innerHTML = buildVaDetailsHTML(wVals.va, pre.vaDetails||[]);
         document.querySelectorAll('.cpd-tel,.vr-tel,.doc-tel').forEach(applyPhoneMask);
         bindBairroSelects();
         wStep = WSTEPS.length; updateDots();
@@ -2109,19 +2087,10 @@ function renderAgentDashboard(session, selectedDate, editing) {
         const submitBtn = document.getElementById('wiz-submit');
         submitBtn.disabled = true; submitBtn.textContent = 'Enviando...';
         const submittedDate = sentToday?.submittedDate||sentToday?.date||today();
-        const vaDetails = collectVaDetails(wVals.va);
-        for (let i=0;i<vaDetails.length;i++) {
-          if (!vaDetails[i].nome)      { alert(`VA ${i+1}: preencha o nome do cliente.`); return; }
-          if (!vaDetails[i].imovel)    { alert(`VA ${i+1}: preencha o imóvel.`); return; }
-          if (!vaDetails[i].dataAgend) { alert(`VA ${i+1}: preencha a data da visita.`); return; }
-          if (!vaDetails[i].horario)   { alert(`VA ${i+1}: preencha o horário.`); return; }
-        }
-        if (sentToday?.vaDetails) {
-          vaDetails.forEach((d,i) => { if (sentToday.vaDetails[i]) { const s=sentToday.vaDetails[i]; d.realizada = s.realizada!=null ? s.realizada : false; d.dataRealizacao = s.dataRealizacao||''; d.horarioRealizacao = s.horarioRealizacao||''; } });
-        }
+        const vaDetails = sentToday?.vaDetails || [];
         try {
           wizardInProgress = false; // libera re-render após submit
-          await upsertEntry({date, uid:session.uid, agent:session.name, prosp:wVals.prosp, cpd:wVals.cp, doc:wVals.doc, video:wVals.vid, va:wVals.va, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
+          await upsertEntry({date, uid:session.uid, agent:session.name, prosp:0, cpd:wVals.cp, doc:wVals.doc, video:0, va:0, vr:0, cpdDetails, docDetails, vaDetails, vrDetails:[], submittedDate});
           if (isEdit) incrementEditCount(session.uid||session.name, date);
           submitBtn.textContent = '✅ Enviado!';
           setTimeout(() => { submitBtn.textContent = isEdit ? 'Salvar edição' : 'Enviar lançamento'; submitBtn.disabled = false; }, 2500);
@@ -2151,7 +2120,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
     const visible = limit ? sorted.slice(0, limit) : sorted;
     historyBody.innerHTML=visible.length===0
       ?'<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px">Nenhum registro</td></tr>'
-      :visible.map(e=>`<tr><td>${formatDate(e.date)}</td><td class="num-cell">${(e.cpdDetails||[]).filter(d=>d.nome).length}</td><td class="num-cell">${(e.docDetails||[]).filter(d=>d.nome).length}</td></tr>`).join('');
+      :visible.map(e=>`<tr><td>${formatDate(e.date)}</td><td class="num-cell">${(e.cpdDetails||[]).filter(d=>d.nome).length||(e.cpd||0)}</td><td class="num-cell">${(e.docDetails||[]).filter(d=>d.nome).length||(e.doc||0)}</td></tr>`).join('');
     if (histShowMore) {
       if (sorted.length > 3 && limit) {
         histShowMore.style.display='block';
@@ -2167,7 +2136,7 @@ function renderAgentDashboard(session, selectedDate, editing) {
 
 // ── GESTOR DASHBOARD ─────────────────────────────────────
 let evolucaoChart=null, analyticsChart=null;
-let activePeriod='month', activeConvMode='prosp-cpd', activeAnalyticsMode='tipo';
+let activePeriod='month', activeAnalyticsMode='tipo';
 let activeRankingPeriod='month';
 let activeMonthRef=today(); // 'YYYY-MM-DD' — referência do mês selecionado no filtro "Mês"
 let activeWeekRef=today();  // 'YYYY-MM-DD' — referência da semana selecionada no filtro "Semana"
@@ -2831,7 +2800,7 @@ function renderEvolucaoDiaria(entries) {
   const colors = ['#a8e63d','#6495ed','#2ecc71','#e67e22','#e74c3c','#9b59b6','#1abc9c','#f1c40f'];
   const datasets = agentNames.map((name,i) => ({
     label: name,
-    data: dates.map(d => { const uid=TEAM.find(a=>a.name===name)?.username; const ms=entries.filter(x=>x.date===d&&(uid?(x.uid===uid||normalizeAgentName(x.agent)===name):(normalizeAgentName(x.agent)===name||x.agent===name))); const e=ms.find(x=>x.uid)||ms[0]; return e?(e.docDetails||[]).filter(d=>d.nome).length:0; }),
+    data: dates.map(d => { const uid=TEAM.find(a=>a.name===name)?.username; const ms=entries.filter(x=>x.date===d&&(uid?(x.uid===uid||normalizeAgentName(x.agent)===name):(normalizeAgentName(x.agent)===name||x.agent===name))); const e=ms.find(x=>x.uid)||ms[0]; return e?((e.docDetails||[]).filter(d=>d.nome).length||(e.doc||0)):0; }),
     borderColor: colors[i%colors.length],
     backgroundColor: colors[i%colors.length]+'33',
     borderWidth: 2, pointRadius: 4, tension: .3, fill: false,
@@ -2992,12 +2961,12 @@ function renderGestorRanking() {
   const rankEntries = filterEntries(activeRankingPeriod, rankRef).filter(e => new Set(getAgentNames()).has(normalizeAgentName(e.agent)));
   const periodKey = rankRef.slice(0,7);
   const rankByAgent = sumByAgent(rankEntries, periodKey);
-  const ranked = [...rankByAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
+  const ranked = [...rankByAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd-a.cpd);
   const body = document.getElementById('rank-body');
   if (body) {
     body.innerHTML = ranked.map((a,i) => {
       const pos = i+1;
-      return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td><td class="num-cell dim-cell" style="color:#ef4444">${a.va||0}</td><td class="num-cell dim-cell" style="color:#f97316">${a.vr||0}</td></tr>`;
+      return `<tr class="${pos<=3?'podium-row podium-'+pos:''}"><td><span class="rank-badge ${pos<=3?PODIUM[pos]:''}">${pos<=3?PODIUM_LABEL[pos]:pos}</span></td><td>${a.agent}</td><td class="num-cell doc-cell">${a.doc}</td><td class="num-cell">${a.cpd}</td></tr>`;
     }).join('');
   }
   // Highlight active ranking filter btn
@@ -3057,12 +3026,8 @@ function renderGestorDashboard() {
     b.onclick=()=>{ activeAnalyticsMode=b.dataset.mode; document.querySelectorAll('.analytics-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderAnalyticsChart(allDocs); };
     b.classList.toggle('active',b.dataset.mode===activeAnalyticsMode);
   });
-  const convRanked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
+  const convRanked=[...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd-a.cpd);
   renderConversion(convRanked);
-  document.querySelectorAll('.conv-mode-btn').forEach(b=>{
-    b.onclick=()=>{ activeConvMode=b.dataset.mode; document.querySelectorAll('.conv-mode-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderConversion(convRanked); };
-    b.classList.toggle('active',b.dataset.mode===activeConvMode);
-  });
   renderNotasRanking();
 }
 
@@ -3333,7 +3298,7 @@ function renderTimeline() {
       const score = sent ? calcDailyScore(e) : null;
       const nota = score !== null ? (score % 1 === 0 ? score.toFixed(0) : score.toFixed(1)) : '';
       const cellBg = sent ? scoreColor(score) : '';
-      const notaColor = sent && score <= 3 ? '#fff' : '#07090f';
+      const notaColor = sent ? (score >= 10 ? '#07090f' : score < 4 ? '#fff' : '#07090f') : '#07090f';
       return `<div class="tl-cell tl-day${sent?' tl-sent':''}${isToday?' tl-today':''}" title="${formatDate(d)}${sent?' — Nota '+score.toFixed(1):''}" ${sent?`style="background:${cellBg};border-color:${cellBg}"`:''}>
         <span class="tl-nota" style="color:${notaColor}">${nota}</span>
       </div>`;
@@ -3397,8 +3362,8 @@ function exportTimeline(sorted, days, t) {
 
   function buildAgentPage(name, streak) {
     const agentPeriodEntries = days.map(d=>eMap[name+'|'+d]).filter(Boolean);
-    const totDoc   = agentPeriodEntries.reduce((s,e)=>s+(e.docDetails||[]).filter(d=>d.nome).length,0);
-    const totCpd   = agentPeriodEntries.reduce((s,e)=>s+(e.cpdDetails||[]).filter(d=>d.nome).length,0);
+    const totDoc   = agentPeriodEntries.reduce((s,e)=>s+((e.docDetails||[]).filter(d=>d.nome).length||(e.doc||0)),0);
+    const totCpd   = agentPeriodEntries.reduce((s,e)=>s+((e.cpdDetails||[]).filter(d=>d.nome).length||(e.cpd||0)),0);
     const totProsp = agentPeriodEntries.reduce((s,e)=>s+e.prosp,0);
     const missedDays = days.filter(d=>d<=t && !eMap[name+'|'+d]);
 
@@ -3564,11 +3529,8 @@ function renderDayView(dateStr) {
     const dash='<span class="day-empty">—</span>';
     return `<tr>
       <td class="day-agent-name">${name}</td>
-      <td class="num-cell day-num">${has ? e.prosp : dash}</td>
-      <td class="num-cell day-num">${has ? (e.cpdDetails||[]).filter(d=>d.nome).length : dash}</td>
-      <td class="num-cell day-num doc-cell">${has ? (e.docDetails||[]).filter(d=>d.nome).length : dash}</td>
-      <td class="num-cell day-num" style="color:#ef4444">${has ? (e.va||0) : dash}</td>
-      <td class="num-cell day-num" style="color:#f97316">${has ? (e.vaDetails||[]).filter(d=>d.realizada).length : dash}</td>
+      <td class="num-cell day-num">${has ? ((e.cpdDetails||[]).filter(d=>d.nome).length||(e.cpd||0)) : dash}</td>
+      <td class="num-cell day-num doc-cell">${has ? ((e.docDetails||[]).filter(d=>d.nome).length||(e.doc||0)) : dash}</td>
       <td>${has ? `<button class="del-day-btn" data-date="${dateStr}" data-agent="${name}" data-uid="${e.uid||''}">Remover</button>` : ''}</td>
     </tr>`;
   }).join('');
@@ -3577,11 +3539,8 @@ function renderDayView(dateStr) {
     <table class="data-table rank-table" style="table-layout:auto">
       <thead><tr>
         <th>Angariador</th>
-        <th class="num-cell">PROSP</th>
         <th class="num-cell">CQ</th>
         <th class="num-cell doc-th">DOC</th>
-        <th class="num-cell" style="color:#ef4444">VA</th>
-        <th class="num-cell" style="color:#f97316">VR</th>
         <th></th>
       </tr></thead>
       <tbody>${rows}</tbody>
@@ -4484,7 +4443,7 @@ function generateReport(period) {
   while (cur <= endD) { days.push(toDateStr(cur)); cur.setDate(cur.getDate()+1); }
 
   const byAgent = sumByAgent(periodEntries, ref.slice(0,7));
-  const ranked = [...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd!==a.cpd?b.cpd-a.cpd:b.prosp-a.prosp);
+  const ranked = [...byAgent].sort((a,b)=>b.doc!==a.doc?b.doc-a.doc:b.cpd-a.cpd);
 
   // ── cores idênticas ao painel ───────────────────────────
   const C = { bg:'#07090f', card:'#0e1117', border:'rgba(255,255,255,0.08)', text:'#e8eaf0', muted:'#6b7280',
@@ -4492,12 +4451,13 @@ function generateReport(period) {
     gold:'#ffd700', silver:'#c0c0c0', bronze:'#cd7f32' };
 
   function scoreHex(score) {
-    if (score >= 8) return C.blue;
-    if (score >= 6) return C.green;
-    if (score >= 3) return C.yellow;
+    if (score >= 10) return '#ffffff';
+    if (score >= 8)  return C.blue;
+    if (score >= 6)  return C.green;
+    if (score >= 4)  return C.yellow;
     return C.red;
   }
-  function scoreTextColor(score) { return (score >= 3 && score < 6) ? '#111' : '#fff'; }
+  function scoreTextColor(score) { return score >= 10 ? '#07090f' : (score >= 4 && score < 6) ? '#111' : '#fff'; }
   function podiumColor(i) { return i===0?C.gold:i===1?C.silver:i===2?C.bronze:'rgba(255,255,255,0.12)'; }
   function podiumLabel(i) { return i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`; }
 
@@ -4513,9 +4473,6 @@ function generateReport(period) {
       <td style="padding:10px 12px;font-weight:700;font-size:14px;color:${C.text}">${a.agent}</td>
       <td style="padding:10px 12px;text-align:center;font-size:18px;font-weight:800;color:${C.green}">${a.doc}</td>
       <td style="padding:10px 12px;text-align:center;font-size:16px;font-weight:700;color:${C.blue}">${a.cpd}</td>
-      <td style="padding:10px 12px;text-align:center;font-size:15px;font-weight:600;color:${C.yellow}">${a.prosp}</td>
-      <td style="padding:10px 12px;text-align:center;font-size:13px;color:${C.red}">${a.va||0}</td>
-      <td style="padding:10px 12px;text-align:center;font-size:13px;color:${C.orange}">${a.vr||0}</td>
     </tr>`;
   }).join('');
 
@@ -4583,14 +4540,6 @@ function generateReport(period) {
             <div style="font-size:22px;font-weight:800;color:${C.blue}">${a.cpd}</div>
             <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase">CQ</div>
           </div>
-          <div style="text-align:center">
-            <div style="font-size:20px;font-weight:700;color:${C.yellow}">${a.prosp}</div>
-            <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase">PROSP</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:18px;font-weight:700;color:${C.red}">${a.va||0}</div>
-            <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase">VA</div>
-          </div>
           ${period !== 'today' ? `<div style="text-align:center;background:${notaBg};border-radius:10px;padding:8px 14px">
             <div style="font-size:22px;font-weight:800;color:${notaTc}">${notaMes.toFixed(1)}</div>
             <div style="font-size:8px;color:${notaTc};opacity:.8;letter-spacing:.5px;text-transform:uppercase">Nota mês</div>
@@ -4625,11 +4574,8 @@ function generateReport(period) {
   }).join('');
 
   // ── totais gerais ───────────────────────────────────────
-  const totDoc  = byAgent.reduce((s,a)=>s+a.doc,0);
-  const totCpd  = byAgent.reduce((s,a)=>s+a.cpd,0);
-  const totProsp= byAgent.reduce((s,a)=>s+a.prosp,0);
-  const totVa   = byAgent.reduce((s,a)=>s+(a.va||0),0);
-  const totVr   = byAgent.reduce((s,a)=>s+(a.vr||0),0);
+  const totDoc = byAgent.reduce((s,a)=>s+a.doc,0);
+  const totCpd = byAgent.reduce((s,a)=>s+a.cpd,0);
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
   <title>Nickel CRM — Relatório de Desempenho</title>
@@ -4664,7 +4610,7 @@ function generateReport(period) {
 
   <!-- Totais gerais -->
   <div style="display:flex;gap:0;margin:20px 0 28px;background:${C.card};border:1px solid ${C.border};border-radius:14px;overflow:hidden">
-    ${[['DOC',totDoc,C.green],['CQ',totCpd,C.blue],['PROSP',totProsp,C.yellow],['VA',totVa,C.red],['VR',totVr,C.orange],['Angariadores',ranked.length,C.text]].map(([label,val,color],idx)=>`
+    ${[['DOC',totDoc,C.green],['CQ',totCpd,C.blue],['Angariadores',ranked.length,C.text]].map(([label,val,color],idx)=>`
     <div style="flex:1;text-align:center;padding:18px 10px;${idx>0?`border-left:1px solid ${C.border}`:''}">
       <div style="font-size:28px;font-weight:800;color:${color}">${val}</div>
       <div style="font-size:9px;color:${C.muted};letter-spacing:1px;text-transform:uppercase;margin-top:3px">${label}</div>
@@ -4674,7 +4620,7 @@ function generateReport(period) {
   <!-- Ranking geral -->
   <div style="background:${C.card};border:1px solid ${C.border};border-radius:14px;margin-bottom:28px;overflow:hidden">
     <div style="padding:14px 18px;border-bottom:1px solid ${C.border}">
-      <span style="font-size:11px;color:${C.green};text-transform:uppercase;letter-spacing:1.5px;font-weight:700">🏆 Ranking — DOC · CQ · PROSP</span>
+      <span style="font-size:11px;color:${C.green};text-transform:uppercase;letter-spacing:1.5px;font-weight:700">🏆 Ranking — DOC · CQ</span>
     </div>
     <table style="width:100%;border-collapse:collapse">
       <thead><tr style="background:rgba(255,255,255,0.04)">
@@ -4682,9 +4628,6 @@ function generateReport(period) {
         <th style="padding:10px 12px;text-align:left;font-size:10px;color:${C.muted};letter-spacing:.8px;text-transform:uppercase;font-weight:600">Angariador</th>
         <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.green};letter-spacing:.8px;text-transform:uppercase;font-weight:700">DOC</th>
         <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.blue};letter-spacing:.8px;text-transform:uppercase;font-weight:700">CQ</th>
-        <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.yellow};letter-spacing:.8px;text-transform:uppercase;font-weight:700">PROSP</th>
-        <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.red};letter-spacing:.8px;text-transform:uppercase;font-weight:700">VA</th>
-        <th style="padding:10px 12px;text-align:center;font-size:10px;color:${C.orange};letter-spacing:.8px;text-transform:uppercase;font-weight:700">VR</th>
       </tr></thead>
       <tbody>${rankRows}</tbody>
     </table>
@@ -4705,15 +4648,14 @@ function generateReport(period) {
 function renderConversion(ranked) {
   const convList=document.getElementById('conv-list');
   if (!ranked.length) { convList.innerHTML='<div class="empty-state">Sem dados</div>'; return; }
-  const isProspCpd=activeConvMode==='prosp-cpd';
   convList.innerHTML=ranked.map((a,i)=>{
-    const num=isProspCpd?a.cpd:a.doc,den=isProspCpd?a.prosp:a.cpd;
+    const num=a.doc, den=a.cpd;
     const pct=den>0?((num/den)*100).toFixed(1)+'%':'—';
     const pos=i+1;
     return `<div class="conv-card">
       <div class="conv-card-header"><span class="conv-agent">${pos<=3?PODIUM_LABEL[pos]:''} ${a.agent}</span><span class="conv-pct ${pct==='—'?'muted':''}">${pct}</span></div>
       <div class="conv-bar-wrap"><div class="conv-bar" style="width:${den>0?Math.min((num/den)*100,100):0}%"></div></div>
-      <div class="conv-detail">${isProspCpd?'CQ / PROSP':'DOC / CQ'}: ${den>0?`${num} de ${den}`:'—'}</div>
+      <div class="conv-detail">DOC / CQ: ${den>0?`${num} de ${den}`:'—'}</div>
     </div>`;
   }).join('');
 }
@@ -5088,6 +5030,8 @@ function renderAgentLeads(agentUid) {
   const card = document.getElementById('agent-leads-card');
   const wrap = document.getElementById('agent-leads-wrap');
   if (!card || !wrap) return;
+  // Card começa sempre oculto; só abre se o usuário clicar no botão toggle
+  if (card.dataset.userOpened !== 'true') { card.style.display = 'none'; }
 
   const allMyLeads = LEADS.filter(l => l.assignedTo === agentUid).sort((a,b)=>b.assignedAt.localeCompare(a.assignedAt));
   const ativos     = allMyLeads.filter(l => !LEAD_ARCHIVED.includes(l.status));
@@ -5096,7 +5040,7 @@ function renderAgentLeads(agentUid) {
 
   // Badge de novos
   const newCount = ativos.filter(l=>l.status==='novo').length;
-  card.style.display = '';
+  if (card.dataset.userOpened !== 'true') card.style.display = 'none';
   const title = card.querySelector('.card-title');
   if (title) title.innerHTML = `🎯 Leads Recebidos${newCount?` <span style="background:#e74c3c;color:#fff;border-radius:10px;font-size:11px;padding:1px 8px;font-weight:700">${newCount} novo${newCount>1?'s':''}</span>`:''}`;
 

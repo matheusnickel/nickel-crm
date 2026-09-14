@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Agenda Nickel</title>
   <link rel="stylesheet" href="style.css">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/nickel-crm/sw.js').then(reg => {
+        reg.update();
+        reg.addEventListener('updatefound', () => {
+          reg.installing.addEventListener('statechange', function() {
+            if (this.state === 'installed' && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+            }
+          });
+        });
+      });
+    }
+  </script>
   <style>
     body {
       min-height: 100vh;
