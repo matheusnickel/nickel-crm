@@ -989,8 +989,8 @@ function renderAgentContacts(agentName) {
     </tr>`;
   };
 
-  const isVisit = ['agendadas','realizadas','nao'].includes(tab);
-  const list = isCpd ? cqListFiltered : isVisit ? [] : docs;
+  const isVisit = false;
+  const list = isCpd ? cqListFiltered : docs;
 
   const makeVisitRow = (v) => {
     const isAgendada = v.realizada !== true && !(v.realizada === false && v.dataRealizacao === 'nao');
@@ -1040,13 +1040,7 @@ function renderAgentContacts(agentName) {
         `<button class="cq-sub-filter-btn" data-filter="${f}" style="font-size:11px;padding:4px 12px;border-radius:6px;border:2px solid ${agentDescFilter===f?'var(--accent)':'var(--border)'};background:${agentDescFilter===f?'var(--accent)':'var(--bg3)'};color:${agentDescFilter===f?'#111':'var(--text)'};cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:${agentDescFilter===f?'700':'400'}">${label} (${cnt})</button>`
       ).join('')}
     </div>` : ''}
-    ${isNone
-      ? `<div class="empty-state" style="margin-top:14px;color:var(--text-muted);font-size:13px">Selecione uma aba para visualizar</div>`
-      : isVisit
-        ? visitList.length === 0
-          ? `<div class="empty-state" style="margin-top:12px">Nenhuma visita neste filtro</div>`
-          : `<div style="margin-top:10px"><table class="data-table" style="table-layout:fixed;width:100%"><tbody>${visitList.map(makeVisitRow).join('')}</tbody></table></div>`
-        : list.length === 0
+    ${list.length === 0
           ? `<div class="empty-state" style="margin-top:12px">Nenhum CQ neste filtro</div>`
           : `<div style="overflow-x:auto;margin-top:10px">
               <table class="data-table">
