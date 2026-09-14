@@ -3291,7 +3291,7 @@ function renderTimeline() {
       const score = sent ? calcDailyScore(e) : null;
       const nota = score !== null ? (score % 1 === 0 ? score.toFixed(0) : score.toFixed(1)) : '';
       const cellBg = sent ? scoreColor(score) : '';
-      const notaColor = sent ? (score >= 10 ? '#07090f' : score < 4 ? '#fff' : '#07090f') : '#07090f';
+      const notaColor = sent ? ((score >= 2 && score < 6) ? '#111' : '#fff') : 'var(--text-muted)';
       return `<div class="tl-cell tl-day${sent?' tl-sent':''}${isToday?' tl-today':''}" title="${formatDate(d)}${sent?' — Nota '+score.toFixed(1):''}" ${sent?`style="background:${cellBg};border-color:${cellBg}"`:''}>
         <span class="tl-nota" style="color:${notaColor}">${nota}</span>
       </div>`;
@@ -4258,7 +4258,7 @@ function generateDocsByDayReport() {
   const C = {
     bg: '#07090f', card: '#0e1117', border: 'rgba(255,255,255,0.08)',
     text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed', orange: '#f97316',
-    yellow: '#f0c040', red: '#ef4444', orange: '#f97316',
+    yellow: '#f0c040', red: '#ef4444',
     gold: '#ffd700', silver: '#c0c0c0', bronze: '#cd7f32',
   };
 
