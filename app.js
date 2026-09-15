@@ -772,9 +772,9 @@ function calcMonthlyScore(agentName, monthEntries) {
 function scoreColor(score) {
   if (score >= 8)  return '#6495ed'; // azul    — 8–10
   if (score >= 6)  return '#a8e63d'; // verde   — 6–7
-  if (score >= 4)  return '#ffe600'; // amarelo — 4–5  (bem claro, alta luminância)
-  if (score >= 2)  return '#ff7a00'; // laranja — 2–3  (laranja puro, médio)
-  return '#cc1a1a';                  // vermelho — 0–1  (escuro, claramente vermelho)
+  if (score >= 4)  return '#ffee00'; // amarelo — 4–5
+  if (score >= 2)  return '#ff9900'; // laranja — 2–3
+  return '#ff2222';                  // vermelho — 0–1
 }
 
 function scoreLabel(score) {
@@ -4257,8 +4257,8 @@ function generateDocsByDayReport() {
 
   const C = {
     bg: '#07090f', card: '#0e1117', border: 'rgba(255,255,255,0.08)',
-    text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed', orange: '#ff7a00',
-    yellow: '#ffe600', red: '#cc1a1a',
+    text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed', orange: '#ff9900',
+    yellow: '#ffee00', red: '#ff2222',
     gold: '#ffd700', silver: '#c0c0c0', bronze: '#cd7f32',
   };
 
@@ -4440,7 +4440,7 @@ function generateReport(period) {
 
   // ── cores idênticas ao painel ───────────────────────────
   const C = { bg:'#07090f', card:'#0e1117', border:'rgba(255,255,255,0.08)', text:'#e8eaf0', muted:'#6b7280',
-    green:'#a8e63d', blue:'#6495ed', yellow:'#ffe600', red:'#cc1a1a', orange:'#ff7a00',
+    green:'#a8e63d', blue:'#6495ed', yellow:'#ffee00', red:'#ff2222', orange:'#ff9900',
     gold:'#ffd700', silver:'#c0c0c0', bronze:'#cd7f32' };
 
   function scoreHex(score) {
