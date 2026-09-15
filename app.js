@@ -770,11 +770,11 @@ function calcMonthlyScore(agentName, monthEntries) {
 }
 
 function scoreColor(score) {
-  if (score >= 8)  return '#6495ed'; // azul    — 8–10
-  if (score >= 6)  return '#a8e63d'; // verde   — 6–7
-  if (score >= 4)  return '#f0c040'; // amarelo — 4–5
-  if (score >= 2)  return '#f97316'; // laranja — 2–3
-  return '#e74c3c';                  // vermelho — 0–1
+  if (score >= 8)  return '#6495ed'; // azul    — 8–10  (hue 225)
+  if (score >= 6)  return '#a8e63d'; // verde   — 6–7  (hue 84)
+  if (score >= 4)  return '#f5d000'; // amarelo — 4–5  (hue 50)
+  if (score >= 2)  return '#ff8c00'; // laranja — 2–3  (hue 33)
+  return '#e52222';                  // vermelho — 0–1  (hue 0)
 }
 
 function scoreLabel(score) {
@@ -3291,7 +3291,7 @@ function renderTimeline() {
       const score = sent ? calcDailyScore(e) : null;
       const nota = score !== null ? (score % 1 === 0 ? score.toFixed(0) : score.toFixed(1)) : '';
       const cellBg = sent ? scoreColor(score) : '';
-      const notaColor = sent ? ((score >= 4 && score < 6) ? '#111' : '#fff') : 'var(--text-muted)';
+      const notaColor = sent ? ((score >= 4 && score < 8) ? '#111' : '#fff') : 'var(--text-muted)';
       return `<div class="tl-cell tl-day${sent?' tl-sent':''}${isToday?' tl-today':''}" title="${formatDate(d)}${sent?' — Nota '+score.toFixed(1):''}" ${sent?`style="background:${cellBg};border-color:${cellBg}"`:''}>
         <span class="tl-nota" style="color:${notaColor}">${nota}</span>
       </div>`;
@@ -4257,8 +4257,8 @@ function generateDocsByDayReport() {
 
   const C = {
     bg: '#07090f', card: '#0e1117', border: 'rgba(255,255,255,0.08)',
-    text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed', orange: '#f97316',
-    yellow: '#f0c040', red: '#ef4444',
+    text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed', orange: '#ff8c00',
+    yellow: '#f5d000', red: '#e52222',
     gold: '#ffd700', silver: '#c0c0c0', bronze: '#cd7f32',
   };
 
@@ -4440,7 +4440,7 @@ function generateReport(period) {
 
   // ── cores idênticas ao painel ───────────────────────────
   const C = { bg:'#07090f', card:'#0e1117', border:'rgba(255,255,255,0.08)', text:'#e8eaf0', muted:'#6b7280',
-    green:'#a8e63d', blue:'#6495ed', yellow:'#f0c040', red:'#ef4444', orange:'#f97316',
+    green:'#a8e63d', blue:'#6495ed', yellow:'#f5d000', red:'#e52222', orange:'#ff8c00',
     gold:'#ffd700', silver:'#c0c0c0', bronze:'#cd7f32' };
 
   function scoreHex(score) {
@@ -4450,7 +4450,7 @@ function generateReport(period) {
     if (score >= 2)  return C.orange;
     return C.red;
   }
-  function scoreTextColor(score) { return (score >= 4 && score < 6) ? '#111' : '#fff'; }
+  function scoreTextColor(score) { return (score >= 4 && score < 8) ? '#111' : '#fff'; }
   function podiumColor(i) { return i===0?C.gold:i===1?C.silver:i===2?C.bronze:'rgba(255,255,255,0.12)'; }
   function podiumLabel(i) { return i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`; }
 
