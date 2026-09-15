@@ -770,10 +770,10 @@ function calcMonthlyScore(agentName, monthEntries) {
 }
 
 function scoreColor(score) {
-  if (score >= 8)  return '#6495ed'; // azul   — ≥8
-  if (score >= 6)  return '#a8e63d'; // verde  — 6–7
-  if (score >= 4)  return '#f97316'; // laranja — 4–5
-  if (score >= 2)  return '#f0c040'; // amarelo — 2–3
+  if (score >= 8)  return '#6495ed'; // azul    — 8–10
+  if (score >= 6)  return '#a8e63d'; // verde   — 6–7
+  if (score >= 4)  return '#f0c040'; // amarelo — 4–5
+  if (score >= 2)  return '#f97316'; // laranja — 2–3
   return '#e74c3c';                  // vermelho — 0–1
 }
 
@@ -3291,7 +3291,7 @@ function renderTimeline() {
       const score = sent ? calcDailyScore(e) : null;
       const nota = score !== null ? (score % 1 === 0 ? score.toFixed(0) : score.toFixed(1)) : '';
       const cellBg = sent ? scoreColor(score) : '';
-      const notaColor = sent ? ((score >= 2 && score < 6) ? '#111' : '#fff') : 'var(--text-muted)';
+      const notaColor = sent ? ((score >= 4 && score < 6) ? '#111' : '#fff') : 'var(--text-muted)';
       return `<div class="tl-cell tl-day${sent?' tl-sent':''}${isToday?' tl-today':''}" title="${formatDate(d)}${sent?' — Nota '+score.toFixed(1):''}" ${sent?`style="background:${cellBg};border-color:${cellBg}"`:''}>
         <span class="tl-nota" style="color:${notaColor}">${nota}</span>
       </div>`;
@@ -4446,11 +4446,11 @@ function generateReport(period) {
   function scoreHex(score) {
     if (score >= 8)  return C.blue;
     if (score >= 6)  return C.green;
-    if (score >= 4)  return C.orange;
-    if (score >= 2)  return C.yellow;
+    if (score >= 4)  return C.yellow;
+    if (score >= 2)  return C.orange;
     return C.red;
   }
-  function scoreTextColor(score) { return (score >= 2 && score < 6) ? '#111' : '#fff'; }
+  function scoreTextColor(score) { return (score >= 4 && score < 6) ? '#111' : '#fff'; }
   function podiumColor(i) { return i===0?C.gold:i===1?C.silver:i===2?C.bronze:'rgba(255,255,255,0.12)'; }
   function podiumLabel(i) { return i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`; }
 
