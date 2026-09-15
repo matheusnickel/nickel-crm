@@ -770,11 +770,11 @@ function calcMonthlyScore(agentName, monthEntries) {
 }
 
 function scoreColor(score) {
-  if (score >= 8)  return '#6495ed'; // azul    — 8–10  (hue 225)
-  if (score >= 6)  return '#a8e63d'; // verde   — 6–7  (hue 84)
-  if (score >= 4)  return '#f5d000'; // amarelo — 4–5  (hue 50)
-  if (score >= 2)  return '#ff8c00'; // laranja — 2–3  (hue 33)
-  return '#e52222';                  // vermelho — 0–1  (hue 0)
+  if (score >= 8)  return '#6495ed'; // azul    — 8–10
+  if (score >= 6)  return '#a8e63d'; // verde   — 6–7
+  if (score >= 4)  return '#ffe600'; // amarelo — 4–5  (bem claro, alta luminância)
+  if (score >= 2)  return '#ff7a00'; // laranja — 2–3  (laranja puro, médio)
+  return '#cc1a1a';                  // vermelho — 0–1  (escuro, claramente vermelho)
 }
 
 function scoreLabel(score) {
@@ -4257,8 +4257,8 @@ function generateDocsByDayReport() {
 
   const C = {
     bg: '#07090f', card: '#0e1117', border: 'rgba(255,255,255,0.08)',
-    text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed', orange: '#ff8c00',
-    yellow: '#f5d000', red: '#e52222',
+    text: '#e8eaf0', muted: '#6b7280', green: '#a8e63d', blue: '#6495ed', orange: '#ff7a00',
+    yellow: '#ffe600', red: '#cc1a1a',
     gold: '#ffd700', silver: '#c0c0c0', bronze: '#cd7f32',
   };
 
@@ -4440,7 +4440,7 @@ function generateReport(period) {
 
   // ── cores idênticas ao painel ───────────────────────────
   const C = { bg:'#07090f', card:'#0e1117', border:'rgba(255,255,255,0.08)', text:'#e8eaf0', muted:'#6b7280',
-    green:'#a8e63d', blue:'#6495ed', yellow:'#f5d000', red:'#e52222', orange:'#ff8c00',
+    green:'#a8e63d', blue:'#6495ed', yellow:'#ffe600', red:'#cc1a1a', orange:'#ff7a00',
     gold:'#ffd700', silver:'#c0c0c0', bronze:'#cd7f32' };
 
   function scoreHex(score) {
