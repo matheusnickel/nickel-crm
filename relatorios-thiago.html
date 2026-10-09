@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Relatórios · Equipe Thiago</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+.rt-main{max-width:1140px;margin:0 auto;padding:28px 28px 60px}
+.rt-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.rt-title{font-size:22px;font-weight:700}
+.rt-subtitle{font-size:13px;color:var(--text-muted);margin-top:2px}
+.rt-sync{font-size:11px;color:var(--text-muted)}
+
+/* FILTRO */
+.rt-filter{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:24px;flex-wrap:wrap}
+.rt-filter-lbl{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.period-tabs{display:flex;gap:1px;background:var(--border);border-radius:7px;overflow:hidden;border:1px solid var(--border)}
+.period-tab{background:var(--bg2);border:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;padding:6px 14px;cursor:pointer;transition:background .15s,color .15s}
+.period-tab.active{background:var(--bg3);color:var(--text)}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.range-sep{font-size:12px;color:var(--text-muted)}
+.range-inp{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 9px;outline:none;transition:border-color .2s;cursor:pointer}
+.range-inp:focus,.range-inp.on{border-color:var(--gold)}
+.btn-clr{background:none;border:1px solid var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;padding:6px 10px;border-radius:6px;cursor:pointer;transition:all .15s}
+.btn-clr:hover{border-color:var(--red);color:var(--red)}
+.range-hint{font-size:11px;color:var(--gold);font-weight:600}
+.btn-reload{background:var(--bg3);border:1px solid var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;padding:6px 12px;border-radius:6px;cursor:pointer;margin-left:auto;transition:all .15s}
+.btn-reload:hover{border-color:#6495ed;color:#6495ed}
+
+/* TILES */
+.rt-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.rt-tile{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 20px}
+.rt-tile-num{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;margin-bottom:4px}
+.rt-tile-num.blue{color:#6495ed}
+.rt-tile-num.gold{color:var(--gold)}
+.rt-tile-num.orange{color:#f97316}
+.rt-tile-lbl{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+
+/* RANKING AGENTES */
+.rt-section{margin-bottom:28px}
+.rt-section-title{font-size:13px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.rt-rank{display:flex;flex-direction:column;gap:6px}
+.rt-rank-row{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
+.rt-rank-pos{width:24px;height:24px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-muted);flex-shrink:0}
+.rt-rank-pos.gold{background:rgba(168,230,61,.1);border-color:rgba(168,230,61,.3);color:var(--gold)}
+.rt-rank-pos.silver{background:rgba(100,149,237,.1);border-color:rgba(100,149,237,.3);color:#6495ed}
+.rt-rank-av{width:32px;height:32px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0}
+.rt-rank-name{font-size:14px;font-weight:600;flex:1}
+.rt-rank-bar-wrap{flex:2;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.rt-rank-bar{height:100%;background:#6495ed;border-radius:3px;transition:width .4s}
+.rt-rank-val{font-size:13px;font-weight:700;color:#6495ed;min-width:50px;text-align:right}
+
+/* CHARTS */
+.rt-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.rt-chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
+.rt-chart-title{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+.rt-empty{font-size:13px;color:var(--text-muted);text-align:center;padding:24px 0}
+
+/* LISTA DETALHADA */
+.rt-agent-block{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.rt-agent-hdr{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;user-select:none;transition:background .15s}
+.rt-agent-hdr:hover{background:var(--bg3)}
+.rt-agent-av{width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0}
+.rt-agent-name{font-size:14px;font-weight:600;flex:1}
+.rt-agent-count{font-size:12px;font-weight:700;color:#6495ed;background:rgba(100,149,237,.1);padding:2px 10px;border-radius:20px}
+.rt-agent-chev{font-size:10px;color:var(--text-muted);transition:transform .2s}
+.rt-agent-block.open .rt-agent-chev{transform:rotate(180deg)}
+.rt-agent-body{display:none;border-top:1px solid var(--border)}
+.rt-agent-block.open .rt-agent-body{display:block}
+.rt-cq-row{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.rt-cq-row:last-child{border-bottom:none}
+.rt-cq-row:hover{background:var(--bg3)}
+.rt-cq-idx{width:22px;height:22px;border-radius:50%;background:rgba(100,149,237,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#6495ed;flex-shrink:0}
+.rt-cq-info{flex:1;min-width:0}
+.rt-cq-nome{font-size:13px;font-weight:600;color:var(--text)}
+.rt-cq-tel{font-size:11px;color:var(--text-muted)}
+.rt-cq-badges{display:flex;gap:6px;flex-shrink:0}
+.rt-cq-badge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text-muted);white-space:nowrap}
+.rt-cq-badge.tipo{border-color:rgba(168,230,61,.2);color:var(--gold)}
+.rt-cq-badge.val{border-color:rgba(249,115,22,.2);color:#f97316;font-weight:700}
+
+/* LOADING */
+#rt-loading{position:fixed;inset:0;background:rgba(7,9,15,.85);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(4px)}
+.rt-loading-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px 40px;text-align:center}
+.rt-spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:#6495ed;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.rt-loading-txt{font-size:13px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <span class="logo">NICKEL CRM</span>
+  <span class="user-info">Relatórios · Equipe Thiago</span>
+</header>
+
+<div class="rt-main">
+
+  <div class="rt-header">
+    <div>
+      <div class="rt-title">Relatórios — Equipe Thiago</div>
+      <div class="rt-subtitle">Dados em tempo real do painel de angariação</div>
+    </div>
+    <div class="rt-sync" id="rt-sync">—</div>
+  </div>
+
+  <!-- FILTRO -->
+  <div class="rt-filter">
+    <span class="rt-filter-lbl">Período</span>
+    <div class="period-tabs">
+      <button class="period-tab active" data-p="week">Esta semana</button>
+      <button class="period-tab" data-p="month">Este mês</button>
+      <button class="period-tab" data-p="all">Tudo</button>
+    </div>
+    <div class="filter-sep"></div>
+    <span class="range-sep">De</span>
+    <input type="date" class="range-inp" id="rf-from">
+    <span class="range-sep">até</span>
+    <input type="date" class="range-inp" id="rf-to">
+    <button class="btn-clr" id="rf-clear" style="display:none">✕ Limpar</button>
+    <span class="range-hint" id="rf-hint" style="display:none"></span>
+    <button class="btn-reload" id="btn-reload">⟳ Atualizar dados</button>
+  </div>
+
+  <!-- TILES -->
+  <div class="rt-tiles">
+    <div class="rt-tile"><div class="rt-tile-num blue" id="t-cq">0</div><div class="rt-tile-lbl">CQs no período</div></div>
+    <div class="rt-tile"><div class="rt-tile-num gold" id="t-val">—</div><div class="rt-tile-lbl">Valor médio</div></div>
+    <div class="rt-tile"><div class="rt-tile-num blue" id="t-week">0</div><div class="rt-tile-lbl">CQs esta semana</div></div>
+    <div class="rt-tile"><div class="rt-tile-num orange" id="t-agents">0</div><div class="rt-tile-lbl">Agentes ativos</div></div>
+  </div>
+
+  <!-- RANKING -->
+  <div class="rt-section">
+    <div class="rt-section-title">Ranking de angariadores</div>
+    <div class="rt-rank" id="rt-rank"></div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="rt-charts">
+    <div class="rt-chart-card">
+      <div class="rt-chart-title">Tipologias</div>
+      <canvas id="c-tipo" style="max-height:200px"></canvas>
+      <div class="rt-empty" id="e-tipo" style="display:none">Nenhum dado</div>
+    </div>
+    <div class="rt-chart-card">
+      <div class="rt-chart-title">Bairros mais frequentes</div>
+      <canvas id="c-bairro" style="max-height:200px"></canvas>
+      <div class="rt-empty" id="e-bairro" style="display:none">Nenhum dado</div>
+    </div>
+  </div>
+  <div style="margin-bottom:24px">
+    <div class="rt-chart-card">
+      <div class="rt-chart-title">Faixa de valores</div>
+      <canvas id="c-valor" style="max-height:170px"></canvas>
+      <div class="rt-empty" id="e-valor" style="display:none">Nenhum dado</div>
+    </div>
+  </div>
+
+  <!-- LISTA DETALHADA -->
+  <div class="rt-section">
+    <div class="rt-section-title">CQs detalhados por agente</div>
+    <div id="rt-detail"></div>
+  </div>
+
+</div>
+
+<div id="rt-loading"><div class="rt-loading-box"><div class="rt-spin"></div><div class="rt-loading-txt">Carregando relatórios...</div></div></div>
+
+<script>
+var AGENTS=[
+  {id:'anne',    name:'Anne Ludwig'},
+  {id:'jo',      name:'Jo Casas'},
+  {id:'flora',   name:'Flora Carvalho'},
+  {id:'sanny',   name:'Sanny Martins'},
+  {id:'karoline',name:'Karoline Tyszka'},
+  {id:'thiago',  name:'Thiago Araújo'},
+  {id:'laura',   name:'Laura Bonkoski'},
+];
+var TIPOLOGIAS=['Casa de rua','Casa em condomínio','Apartamento','Cobertura'];
+var MONTHS=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var CHART_COLORS=['#6495ed','#a8e63d','#f97316','#e879f9','#22d3ee','#f87171','#facc15'];
+var FB_KEY='AIzaSyAV1IBBj0usYroywP0i-SLFSHVJh8_S2-g';
+var FB_BASE='https://firestore.googleapis.com/v1/projects/nickel-crm/databases/(default)/documents/painel_thiago';
+
+var curPeriod='week';var rangeFrom='',rangeTo='';
+var allData={};  // {agentId: [{date, cqs:[...]}]}
+var charts={tipo:null,bairro:null,valor:null};
+
+function ini(n){return n.split(' ').slice(0,2).map(function(w){return w[0]||''}).join('').toUpperCase()}
+function fmtValor(v){if(!v)return'';return v.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')}
+function parseValor(s){return parseInt((s||'').replace(/\D/g,''),10)||0}
+function fmtDateShort(d){var p=d.split('-');return(+p[2])+'/'+MONTHS[+p[1]-1]+'/'+p[0]}
+function daysAgo(n){var d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)}
+
+function fbToCq(f){var m=f.mapValue.fields;return{nome:m.nome.stringValue,tel:m.tel.stringValue,bairro:m.bairro.stringValue,tipologia:m.tipologia.stringValue,valor:m.valor.stringValue}}
+
+function loadFromFirebase(cb){
+  document.getElementById('rt-loading').style.display='flex';
+  var results={};var pending=AGENTS.length;
+  if(!pending){cb(results);return}
+  AGENTS.forEach(function(a){
+    fetch(FB_BASE+'/'+a.id+'/entries?key='+FB_KEY)
+      .then(function(r){return r.json()})
+      .then(function(j){
+        if(j.documents&&j.documents.length){
+          results[a.id]=j.documents.map(function(d){
+            var date=d.name.split('/').pop();
+            var cqs=((d.fields.cqs&&d.fields.cqs.arrayValue&&d.fields.cqs.arrayValue.values)||[]).map(fbToCq);
+            return{date:date,cqs:cqs};
+          }).sort(function(a,b){return b.date.localeCompare(a.date)});
+        }else{results[a.id]=[]}
+        if(--pending===0)cb(results);
+      }).catch(function(){results[a.id]=[];if(--pending===0)cb(results)});
+  });
+}
+
+function getPeriodDates(){
+  if(rangeFrom&&rangeTo&&rangeFrom<=rangeTo){
+    var dates=[],d=new Date(rangeFrom),end=new Date(rangeTo);
+    while(d<=end){dates.push(d.toISOString().slice(0,10));d.setDate(d.getDate()+1)}
+    return dates;
+  }
+  var n=curPeriod==='week'?6:curPeriod==='month'?29:3650;
+  var dates=[];for(var i=n;i>=0;i--)dates.push(daysAgo(i));
+  return dates;
+}
+
+function getPeriodCqs(){
+  var dates=getPeriodDates();var dset={};dates.forEach(function(d){dset[d]=true});
+  var result={};
+  AGENTS.forEach(function(a){
+    var cqs=[];
+    (allData[a.id]||[]).forEach(function(e){if(dset[e.date])(e.cqs||[]).forEach(function(c){cqs.push(c)})});
+    result[a.id]=cqs;
+  });
+  return result;
+}
+
+function getWeekCqs(){
+  var n=6;var dates={};for(var i=n;i>=0;i--)dates[daysAgo(i)]=true;
+  var total=0;
+  AGENTS.forEach(function(a){(allData[a.id]||[]).forEach(function(e){if(dates[e.date])total+=(e.cqs||[]).length})});
+  return total;
+}
+
+function refresh(){
+  var byCqs=getPeriodCqs();
+  var allCqs=[],activeAgents=0;
+  AGENTS.forEach(function(a){allCqs=allCqs.concat(byCqs[a.id]||[]);if((byCqs[a.id]||[]).length)activeAgents++});
+
+  // tiles
+  document.getElementById('t-cq').textContent=allCqs.length;
+  var vals=allCqs.map(function(c){return parseValor(c.valor)}).filter(function(v){return v>0});
+  document.getElementById('t-val').textContent=vals.length?'R$'+fmtValor(Math.round(vals.reduce(function(a,b){return a+b},0)/vals.length)):'—';
+  document.getElementById('t-week').textContent=getWeekCqs();
+  document.getElementById('t-agents').textContent=activeAgents;
+
+  // ranking
+  var ranked=AGENTS.map(function(a){return{a:a,n:(byCqs[a.id]||[]).length}}).sort(function(a,b){return b.n-a.n});
+  var max=ranked[0]&&ranked[0].n||1;
+  document.getElementById('rt-rank').innerHTML=ranked.filter(function(r){return r.n>0}).map(function(r,i){
+    var pos=i===0?'gold':i===1?'silver':'';
+    return'<div class="rt-rank-row"><div class="rt-rank-pos '+pos+'">'+(i+1)+'</div>'
+      +'<div class="rt-rank-av">'+ini(r.a.name)+'</div>'
+      +'<div class="rt-rank-name">'+r.a.name+'</div>'
+      +'<div class="rt-rank-bar-wrap"><div class="rt-rank-bar" style="width:'+(r.n/max*100).toFixed(0)+'%"></div></div>'
+      +'<div class="rt-rank-val">'+r.n+' CQ</div></div>';
+  }).join('')||'<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhum dado no período selecionado.</div>';
+
+  buildCharts(allCqs);
+  buildDetail(byCqs);
+}
+
+function buildCharts(cqs){
+  // tipologia
+  var tc={};TIPOLOGIAS.forEach(function(t){tc[t]=0});
+  cqs.forEach(function(c){if(c.tipologia)tc[c.tipologia]=(tc[c.tipologia]||0)+1});
+  var tl=TIPOLOGIAS.filter(function(k){return tc[k]>0});
+  var cc=document.getElementById('c-tipo'),ce=document.getElementById('e-tipo');
+  if(!tl.length){cc.style.display='none';ce.style.display='block'}
+  else{cc.style.display='';ce.style.display='none';if(charts.tipo)charts.tipo.destroy();
+    charts.tipo=new Chart(cc.getContext('2d'),{type:'doughnut',data:{labels:tl,datasets:[{data:tl.map(function(k){return tc[k]}),backgroundColor:CHART_COLORS,borderWidth:0,hoverOffset:4}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#6b8299',font:{size:11},padding:12}},tooltip:{backgroundColor:'#0e1218',titleColor:'#f0f4f8',bodyColor:'#6b8299',borderColor:'#1e2a38',borderWidth:1}}}}})}
+
+  // bairros
+  var bc={};cqs.forEach(function(c){if(c.bairro)bc[c.bairro]=(bc[c.bairro]||0)+1});
+  var bs=Object.keys(bc).sort(function(a,b){return bc[b]-bc[a]}).slice(0,8);
+  var bc2=document.getElementById('c-bairro'),be=document.getElementById('e-bairro');
+  if(!bs.length){bc2.style.display='none';be.style.display='block'}
+  else{bc2.style.display='';be.style.display='none';if(charts.bairro)charts.bairro.destroy();
+    charts.bairro=new Chart(bc2.getContext('2d'),{type:'bar',data:{labels:bs,datasets:[{data:bs.map(function(k){return bc[k]}),backgroundColor:'rgba(100,149,237,.5)',borderColor:'rgba(100,149,237,.9)',borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0e1218',titleColor:'#f0f4f8',bodyColor:'#6b8299',borderColor:'#1e2a38',borderWidth:1}},scales:{x:{grid:{color:'rgba(30,42,56,.8)'},ticks:{color:'#6b8299',font:{size:10},stepSize:1},beginAtZero:true},y:{grid:{display:false},ticks:{color:'#6b8299',font:{size:11}}}}}})}
+
+  // valores
+  var fx=['Até 500k','500k–1M','1M–2M','2M–3M','3M–5M','Acima 5M'],fc=[0,0,0,0,0,0];
+  cqs.forEach(function(c){var v=parseValor(c.valor);if(!v)return;if(v<=500000)fc[0]++;else if(v<=1000000)fc[1]++;else if(v<=2000000)fc[2]++;else if(v<=3000000)fc[3]++;else if(v<=5000000)fc[4]++;else fc[5]++});
+  var vc=document.getElementById('c-valor'),ve=document.getElementById('e-valor');
+  if(fc.every(function(v){return v===0})){vc.style.display='none';ve.style.display='block'}
+  else{vc.style.display='';ve.style.display='none';if(charts.valor)charts.valor.destroy();
+    charts.valor=new Chart(vc.getContext('2d'),{type:'bar',data:{labels:fx,datasets:[{data:fc,backgroundColor:'rgba(168,230,61,.5)',borderColor:'rgba(168,230,61,.9)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#0e1218',titleColor:'#f0f4f8',bodyColor:'#6b8299',borderColor:'#1e2a38',borderWidth:1}},scales:{x:{grid:{color:'rgba(30,42,56,.8)'},ticks:{color:'#6b8299',font:{size:11}}},y:{grid:{color:'rgba(30,42,56,.8)'},ticks:{color:'#6b8299',font:{size:10},stepSize:1},beginAtZero:true}}}})}
+}
+
+function buildDetail(byCqs){
+  var det=document.getElementById('rt-detail');
+  var sorted=AGENTS.filter(function(a){return(byCqs[a.id]||[]).length>0}).sort(function(a,b){return(byCqs[b.id]||[]).length-(byCqs[a.id]||[]).length});
+  if(!sorted.length){det.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:8px 0">Nenhum CQ no período.</div>';return}
+  det.innerHTML=sorted.map(function(a){
+    var cqs=byCqs[a.id]||[];
+    var rows=cqs.map(function(c,i){
+      return'<div class="rt-cq-row">'
+        +'<div class="rt-cq-idx">'+(i+1)+'</div>'
+        +'<div class="rt-cq-info"><div class="rt-cq-nome">'+(c.nome||'(sem nome)')+'</div><div class="rt-cq-tel">'+(c.tel||'—')+'</div></div>'
+        +'<div class="rt-cq-badges">'
+        +(c.bairro?'<span class="rt-cq-badge">'+c.bairro+'</span>':'')
+        +(c.tipologia?'<span class="rt-cq-badge tipo">'+c.tipologia+'</span>':'')
+        +(c.valor?'<span class="rt-cq-badge val">R$ '+fmtValor(parseValor(c.valor))+'</span>':'')
+        +'</div></div>';
+    }).join('');
+    return'<div class="rt-agent-block" data-aid="'+a.id+'">'
+      +'<div class="rt-agent-hdr">'
+      +'<div class="rt-agent-av">'+ini(a.name)+'</div>'
+      +'<div class="rt-agent-name">'+a.name+'</div>'
+      +'<div class="rt-agent-count">'+cqs.length+' CQ</div>'
+      +'<span class="rt-agent-chev">▼</span></div>'
+      +'<div class="rt-agent-body">'+rows+'</div>'
+      +'</div>';
+  }).join('');
+
+  // toggle
+  det.querySelectorAll('.rt-agent-hdr').forEach(function(h){
+    h.addEventListener('click',function(){h.closest('.rt-agent-block').classList.toggle('open')});
+  });
+}
+
+// filtro
+document.querySelectorAll('.period-tab').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.period-tab').forEach(function(t){t.classList.remove('active')});
+    tab.classList.add('active');curPeriod=tab.dataset.p;
+    rangeFrom='';rangeTo='';
+    document.getElementById('rf-from').value='';document.getElementById('rf-to').value='';
+    document.getElementById('rf-clear').style.display='none';document.getElementById('rf-hint').style.display='none';
+    refresh();
+  });
+});
+function applyRange(){
+  var f=document.getElementById('rf-from').value,t=document.getElementById('rf-to').value;
+  if(!f||!t||f>t)return;
+  rangeFrom=f;rangeTo=t;
+  document.getElementById('rf-clear').style.display='';
+  document.getElementById('rf-hint').textContent=fmtDateShort(f)+' → '+fmtDateShort(t);
+  document.getElementById('rf-hint').style.display='';
+  document.querySelectorAll('.period-tab').forEach(function(t){t.classList.remove('active')});
+  refresh();
+}
+document.getElementById('rf-from').addEventListener('change',applyRange);
+document.getElementById('rf-to').addEventListener('change',applyRange);
+document.getElementById('rf-clear').addEventListener('click',function(){
+  rangeFrom='';rangeTo='';
+  document.getElementById('rf-from').value='';document.getElementById('rf-to').value='';
+  document.getElementById('rf-clear').style.display='none';document.getElementById('rf-hint').style.display='none';
+  document.querySelector('.period-tab[data-p="week"]').classList.add('active');
+  curPeriod='week';refresh();
+});
+
+document.getElementById('btn-reload').addEventListener('click',function(){
+  loadFromFirebase(function(data){
+    allData=data;
+    document.getElementById('rt-loading').style.display='none';
+    var now=new Date();document.getElementById('rt-sync').textContent='Atualizado às '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+    refresh();
+  });
+});
+
+// init
+loadFromFirebase(function(data){
+  allData=data;
+  document.getElementById('rt-loading').style.display='none';
+  var now=new Date();document.getElementById('rt-sync').textContent='Atualizado às '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  refresh();
+});
+</script>
+</body>
+</html>
