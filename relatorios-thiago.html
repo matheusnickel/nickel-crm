@@ -195,16 +195,18 @@ function parseValor(s){return parseInt((s||'').replace(/\D/g,''),10)||0}
 function fmtDateShort(d){var p=d.split('-');return(+p[2])+'/'+MONTHS[+p[1]-1]+'/'+p[0]}
 function daysAgo(n){var d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10)}
 
-function fbToCq(f){var m=f.mapValue.fields;return{nome:m.nome.stringValue,tel:m.tel.stringValue,bairro:m.bairro.stringValue,tipologia:m.tipologia.stringValue,valor:m.valor.stringValue}}
+function fbToCq(f){var m=(f&&f.mapValue&&f.mapValue.fields)||{};return{nome:(m.nome&&m.nome.stringValue)||'',tel:(m.tel&&m.tel.stringValue)||'',bairro:(m.bairro&&m.bairro.stringValue)||'',tipologia:(m.tipologia&&m.tipologia.stringValue)||'',valor:(m.valor&&m.valor.stringValue)||''}}
 
 function loadFromFirebase(cb){
   document.getElementById('rt-loading').style.display='flex';
-  var results={};var pending=AGENTS.length;
+  var results={};var pending=AGENTS.length;var done=false;
   if(!pending){cb(results);return}
+  var timeout=setTimeout(function(){if(!done){done=true;cb(results)}},12000);
   AGENTS.forEach(function(a){
     fetch(FB_BASE+'/'+a.id+'/entries?key='+FB_KEY)
       .then(function(r){return r.json()})
       .then(function(j){
+        if(done)return;
         if(j.documents&&j.documents.length){
           results[a.id]=j.documents.map(function(d){
             var date=d.name.split('/').pop();
@@ -212,8 +214,8 @@ function loadFromFirebase(cb){
             return{date:date,cqs:cqs};
           }).sort(function(a,b){return b.date.localeCompare(a.date)});
         }else{results[a.id]=[]}
-        if(--pending===0)cb(results);
-      }).catch(function(){results[a.id]=[];if(--pending===0)cb(results)});
+        if(--pending===0&&!done){done=true;clearTimeout(timeout);cb(results)}
+      }).catch(function(){if(done)return;results[a.id]=[];if(--pending===0&&!done){done=true;clearTimeout(timeout);cb(results)}});
   });
 }
 
@@ -326,12 +328,13 @@ function buildDetail(byCqs){
       +'<div class="rt-agent-body">'+rows+'</div>'
       +'</div>';
   }).join('');
-
-  // toggle
-  det.querySelectorAll('.rt-agent-hdr').forEach(function(h){
-    h.addEventListener('click',function(){h.closest('.rt-agent-block').classList.toggle('open')});
-  });
 }
+
+// delegação única para os blocos de agente no detalhe
+document.getElementById('rt-detail').addEventListener('click',function(e){
+  var hdr=e.target.closest('.rt-agent-hdr');
+  if(hdr)hdr.closest('.rt-agent-block').classList.toggle('open');
+});
 
 // filtro
 document.querySelectorAll('.period-tab').forEach(function(tab){

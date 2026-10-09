@@ -290,7 +290,7 @@ var FB_KEY='AIzaSyAV1IBBj0usYroywP0i-SLFSHVJh8_S2-g';
 var FB_BASE='https://firestore.googleapis.com/v1/projects/nickel-crm/databases/(default)/documents/painel_thiago';
 
 function cqToFb(c){return{mapValue:{fields:{nome:{stringValue:c.nome||''},tel:{stringValue:c.tel||''},bairro:{stringValue:c.bairro||''},tipologia:{stringValue:c.tipologia||''},valor:{stringValue:c.valor||''}}}}}
-function fbToCq(f){var m=f.mapValue.fields;return{nome:m.nome.stringValue,tel:m.tel.stringValue,bairro:m.bairro.stringValue,tipologia:m.tipologia.stringValue,valor:m.valor.stringValue}}
+function fbToCq(f){var m=(f&&f.mapValue&&f.mapValue.fields)||{};return{nome:(m.nome&&m.nome.stringValue)||'',tel:(m.tel&&m.tel.stringValue)||'',bairro:(m.bairro&&m.bairro.stringValue)||'',tipologia:(m.tipologia&&m.tipologia.stringValue)||'',valor:(m.valor&&m.valor.stringValue)||''}}
 
 function fbSaveEntry(agentId,entry){
   var url=FB_BASE+'/'+agentId+'/entries/'+entry.date+'?key='+FB_KEY;
@@ -298,12 +298,15 @@ function fbSaveEntry(agentId,entry){
 }
 
 function fbLoadAll(cb){
-  var results={};var pending=AGENTS.length;
+  var results={};var pending=AGENTS.length;var done=false;
   if(!pending){cb(results);return}
+  // timeout de segurança: se Firebase não responder em 12s, usa localStorage
+  var timeout=setTimeout(function(){if(!done){done=true;cb(results)}},12000);
   AGENTS.forEach(function(a){
     fetch(FB_BASE+'/'+a.id+'/entries?key='+FB_KEY)
       .then(function(r){return r.json()})
       .then(function(j){
+        if(done)return;
         if(j.documents&&j.documents.length){
           results[a.id]=j.documents.map(function(d){
             var date=d.name.split('/').pop();
@@ -311,8 +314,8 @@ function fbLoadAll(cb){
             return{date:date,cqs:cqs};
           }).sort(function(a,b){return b.date.localeCompare(a.date)});
         }
-        if(--pending===0)cb(results);
-      }).catch(function(){if(--pending===0)cb(results)});
+        if(--pending===0&&!done){done=true;clearTimeout(timeout);cb(results)}
+      }).catch(function(){if(done)return;if(--pending===0&&!done){done=true;clearTimeout(timeout);cb(results)}});
   });
 }
 
@@ -474,18 +477,18 @@ function cqItemHTML(id,idx,c,open){
 
 function histHTML(id){
   var entries=loadAgent(id);
-  // achata todos os CQs de todas as entradas em lista plana
   var allCqs=[];
-  entries.forEach(function(e){(e.cqs||[]).forEach(function(c){allCqs.push(c)})});
+  entries.forEach(function(e){(e.cqs||[]).forEach(function(c){allCqs.push({nome:c.nome,tel:c.tel,bairro:c.bairro,tipologia:c.tipologia,valor:c.valor,_date:e.date})})});
   if(!allCqs.length)return'<div class="hcq-empty">Nenhum CQ registrado ainda.</div>';
   return allCqs.map(function(c,i){
     var nome=c.nome||'(sem nome)';var tel=c.tel||'—';
     var bairro=c.bairro||'—';var tipo=c.tipologia||'—';
     var val=c.valor?'R$ '+fmtValor(parseValor(c.valor)):'—';
+    var dateTxt=c._date?fmtDateShort(c._date):'';
     return'<div class="hcq-item">'
       +'<div class="hcq-head" data-hid="'+id+'" data-hi="'+i+'">'
       +'<div class="hcq-idx">'+(i+1)+'</div>'
-      +'<div class="hcq-info"><div class="hcq-nome">'+nome+'</div><div class="hcq-tel">'+tel+'</div></div>'
+      +'<div class="hcq-info"><div class="hcq-nome">'+nome+'</div><div class="hcq-tel">'+tel+(dateTxt?' · <span style="color:var(--gold);font-weight:600">'+dateTxt+'</span>':'')+'</div></div>'
       +'<span class="hcq-chev">▼</span></div>'
       +'<div class="hcq-body">'
       +'<div class="hcq-detail"><span class="hcq-detail-lbl">Bairro</span><span class="hcq-detail-val">'+bairro+'</span></div>'
