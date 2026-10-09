@@ -684,6 +684,99 @@ document.getElementById('btn-range-clear').addEventListener('click',function(){
 // ── TOAST ──
 function toast(msg){var t=document.getElementById('pt-toast');t.textContent=msg;t.style.opacity='1';setTimeout(function(){t.style.opacity='0'},2400)}
 
+// ── SEED DE TESTE (remover depois) ──
+(function seedTest(){
+  var d=function(n){var dt=new Date(today);dt.setDate(dt.getDate()-n);return dt.toISOString().slice(0,10)};
+  var seed={
+    anne:[
+      {date:d(0),cqs:[
+        {nome:'Carlos Menezes',tel:'41 99812-3344',bairro:'Batel',tipologia:'Apartamento',valor:'950000'},
+        {nome:'Fernanda Luz',tel:'41 98723-4455',bairro:'Bigorrilho',tipologia:'Cobertura',valor:'1800000'},
+        {nome:'Ricardo Alves',tel:'41 99001-5566',bairro:'Champagnat',tipologia:'Casa em condomínio',valor:'2300000'},
+      ]},
+      {date:d(2),cqs:[
+        {nome:'Patrícia Sousa',tel:'41 99234-6677',bairro:'Água Verde',tipologia:'Apartamento',valor:'720000'},
+        {nome:'Marcelo Dias',tel:'41 98456-7788',bairro:'Centro',tipologia:'Apartamento',valor:'580000'},
+      ]},
+      {date:d(5),cqs:[
+        {nome:'Juliana Ferreira',tel:'41 99567-8899',bairro:'Juvevê',tipologia:'Casa de rua',valor:'1100000'},
+      ]},
+    ],
+    jo:[
+      {date:d(1),cqs:[
+        {nome:'André Baptista',tel:'41 99678-9900',bairro:'Ahú',tipologia:'Apartamento',valor:'680000'},
+        {nome:'Luciana Pinto',tel:'41 98789-0011',bairro:'Cabral',tipologia:'Cobertura',valor:'2100000'},
+      ]},
+      {date:d(4),cqs:[
+        {nome:'Roberto Campos',tel:'41 99890-1122',bairro:'Bacacheri',tipologia:'Casa de rua',valor:'890000'},
+        {nome:'Simone Torres',tel:'41 98901-2233',bairro:'Alto da XV',tipologia:'Apartamento',valor:'540000'},
+        {nome:'Eduardo Martins',tel:'41 99012-3344',bairro:'Rebouças',tipologia:'Apartamento',valor:'620000'},
+      ]},
+    ],
+    flora:[
+      {date:d(0),cqs:[
+        {nome:'Camila Rocha',tel:'41 99123-4455',bairro:'Portão',tipologia:'Casa de rua',valor:'760000'},
+        {nome:'Felipe Souza',tel:'41 98234-5566',bairro:'Vila Izabel',tipologia:'Apartamento',valor:'490000'},
+      ]},
+      {date:d(3),cqs:[
+        {nome:'Isabela Cunha',tel:'41 99345-6677',bairro:'Mercês',tipologia:'Casa em condomínio',valor:'3200000'},
+        {nome:'Gustavo Lima',tel:'41 98456-7788',bairro:'Seminário',tipologia:'Cobertura',valor:'4500000'},
+        {nome:'Aline Mendes',tel:'41 99567-8899',bairro:'Santo Inácio',tipologia:'Apartamento',valor:'870000'},
+        {nome:'Bruno Carvalho',tel:'41 98678-9900',bairro:'Ecoville',tipologia:'Casa em condomínio',valor:'1950000'},
+      ]},
+      {date:d(6),cqs:[
+        {nome:'Natália Freitas',tel:'41 99789-0011',bairro:'Hugo Lange',tipologia:'Apartamento',valor:'730000'},
+      ]},
+    ],
+    sanny:[
+      {date:d(1),cqs:[
+        {nome:'Diego Ramos',tel:'41 98890-1122',bairro:'Jardim Social',tipologia:'Casa de rua',valor:'1350000'},
+        {nome:'Vanessa Moreira',tel:'41 99901-2233',bairro:'Mossunguê',tipologia:'Apartamento',valor:'810000'},
+      ]},
+      {date:d(5),cqs:[
+        {nome:'Leandro Neves',tel:'41 98012-3344',bairro:'Pilarzinho',tipologia:'Apartamento',valor:'420000'},
+      ]},
+    ],
+    karoline:[
+      {date:d(0),cqs:[
+        {nome:'Priscila Barbosa',tel:'41 99123-5566',bairro:'Batel',tipologia:'Cobertura',valor:'3800000'},
+        {nome:'Renato Figueiredo',tel:'41 98234-6677',bairro:'Bigorrilho',tipologia:'Apartamento',valor:'980000'},
+        {nome:'Tatiane Cruz',tel:'41 99345-7788',bairro:'Champagnat',tipologia:'Apartamento',valor:'1150000'},
+      ]},
+      {date:d(2),cqs:[
+        {nome:'Marcos Vieira',tel:'41 98456-8899',bairro:'Água Verde',tipologia:'Casa em condomínio',valor:'2700000'},
+        {nome:'Cristiane Almeida',tel:'41 99567-9900',bairro:'Centro',tipologia:'Apartamento',valor:'670000'},
+      ]},
+    ],
+    thiago:[
+      {date:d(1),cqs:[
+        {nome:'Alexandre Gomes',tel:'41 98678-0011',bairro:'Juvevê',tipologia:'Apartamento',valor:'590000'},
+        {nome:'Mônica Araújo',tel:'41 99789-1122',bairro:'Ahú',tipologia:'Casa de rua',valor:'1420000'},
+        {nome:'Sérgio Monteiro',tel:'41 98890-2233',bairro:'Cabral',tipologia:'Cobertura',valor:'5200000'},
+      ]},
+      {date:d(4),cqs:[
+        {nome:'Elaine Santos',tel:'41 99901-3344',bairro:'Bacacheri',tipologia:'Apartamento',valor:'660000'},
+      ]},
+    ],
+    laura:[
+      {date:d(0),cqs:[
+        {nome:'Thiago Oliveira',tel:'41 98012-4455',bairro:'Alto da XV',tipologia:'Apartamento',valor:'520000'},
+        {nome:'Marina Costa',tel:'41 99123-5567',bairro:'Rebouças',tipologia:'Casa de rua',valor:'940000'},
+      ]},
+      {date:d(3),cqs:[
+        {nome:'Paulo Henrique',tel:'41 98234-6678',bairro:'Portão',tipologia:'Apartamento',valor:'480000'},
+        {nome:'Bianca Teixeira',tel:'41 99345-7789',bairro:'Vila Izabel',tipologia:'Cobertura',valor:'2900000'},
+        {nome:'Rodrigo Lopes',tel:'41 98456-8890',bairro:'Mercês',tipologia:'Casa em condomínio',valor:'1680000'},
+      ]},
+    ],
+  };
+  Object.keys(seed).forEach(function(id){
+    if(!localStorage.getItem('tgp_a_'+id)){
+      localStorage.setItem('tgp_a_'+id,JSON.stringify(seed[id]));
+    }
+  });
+})();
+
 // ── INIT ──
 renderAgents();
 refreshAnalytics();
