@@ -120,6 +120,17 @@ input[type=date].hid{position:absolute;opacity:0;pointer-events:none;width:0;hei
 .period-tab.active{background:var(--bg3);color:var(--text)}
 .period-tab:hover:not(.active){background:var(--bg3)}
 
+/* RANGE PICKER */
+.range-row{display:flex;align-items:center;gap:8px;margin-top:12px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;flex-wrap:wrap}
+.range-lbl{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.range-sep{font-size:12px;color:var(--text-muted)}
+.range-inp{background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:7px 10px;outline:none;transition:border-color .2s;cursor:pointer}
+.range-inp:focus{border-color:var(--gold)}
+.range-inp.active-range{border-color:var(--gold)}
+.btn-range-clear{background:none;border:1px solid var(--border);color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;padding:7px 12px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-range-clear:hover{border-color:var(--red);color:var(--red)}
+.range-active-lbl{font-size:12px;color:var(--gold);font-weight:600;margin-left:4px}
+
 .analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .analytics-grid.full{grid-template-columns:1fr}
 .a-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
@@ -183,6 +194,15 @@ input[type=date].hid{position:absolute;opacity:0;pointer-events:none;width:0;hei
         <button class="period-tab" data-p="month">Este mês</button>
         <button class="period-tab" data-p="all">Tudo</button>
       </div>
+    </div>
+    <div class="range-row">
+      <span class="range-lbl">Período personalizado</span>
+      <span class="range-sep">De</span>
+      <input type="date" class="range-inp" id="range-from">
+      <span class="range-sep">até</span>
+      <input type="date" class="range-inp" id="range-to">
+      <button class="btn-range-clear" id="btn-range-clear" style="display:none">✕ Limpar</button>
+      <span class="range-active-lbl" id="range-active-lbl" style="display:none"></span>
     </div>
 
     <div class="summary-row">
@@ -256,6 +276,7 @@ var today=new Date().toISOString().slice(0,10);
 var curDate=today;
 var state={};
 var curPeriod='week';
+var rangeFrom='', rangeTo='';
 
 // charts
 var charts={tipo:null,bairro:null,valor:null};
@@ -305,13 +326,23 @@ function refreshTiles(){
 
 /* ── PERIOD DATA ── */
 function getPeriodDates(period){
+  // se range personalizado definido, usa ele
+  if(rangeFrom && rangeTo && rangeFrom<=rangeTo){
+    var dates=[];
+    var d=new Date(rangeFrom);
+    var end=new Date(rangeTo);
+    while(d<=end){
+      dates.push(d.toISOString().slice(0,10));
+      d.setDate(d.getDate()+1);
+    }
+    return dates;
+  }
   var dates=[];
   if(period==='week'){
     for(var i=6;i>=0;i--)dates.push(daysAgo(i));
   } else if(period==='month'){
     for(var i=29;i>=0;i--)dates.push(daysAgo(i));
   } else {
-    // all — scan last 365 days
     for(var i=364;i>=0;i--)dates.push(daysAgo(i));
   }
   return dates;
@@ -673,8 +704,51 @@ document.querySelectorAll('.period-tab').forEach(function(tab){
     document.querySelectorAll('.period-tab').forEach(function(t){t.classList.remove('active')});
     tab.classList.add('active');
     curPeriod=tab.dataset.p;
+    // limpa range ao usar aba
+    rangeFrom=''; rangeTo='';
+    document.getElementById('range-from').value='';
+    document.getElementById('range-to').value='';
+    document.getElementById('range-from').classList.remove('active-range');
+    document.getElementById('range-to').classList.remove('active-range');
+    document.getElementById('btn-range-clear').style.display='none';
+    document.getElementById('range-active-lbl').style.display='none';
     refreshAnalytics();
   });
+});
+
+/* ── RANGE PICKER ── */
+function fmtDateShort(d){var p=d.split('-');return(+p[2])+'/'+p[1]+'/'+p[0]}
+function applyRange(){
+  var f=document.getElementById('range-from').value;
+  var t=document.getElementById('range-to').value;
+  if(!f||!t)return;
+  if(f>t){alert('A data inicial deve ser anterior à data final.');return;}
+  rangeFrom=f; rangeTo=t;
+  document.getElementById('range-from').classList.add('active-range');
+  document.getElementById('range-to').classList.add('active-range');
+  document.getElementById('btn-range-clear').style.display='';
+  var lbl=document.getElementById('range-active-lbl');
+  lbl.textContent='Mostrando: '+fmtDateShort(f)+' → '+fmtDateShort(t);
+  lbl.style.display='';
+  // desativa abas
+  document.querySelectorAll('.period-tab').forEach(function(t){t.classList.remove('active')});
+  refreshAnalytics();
+}
+document.getElementById('range-from').addEventListener('change',applyRange);
+document.getElementById('range-to').addEventListener('change',applyRange);
+document.getElementById('btn-range-clear').addEventListener('click',function(){
+  rangeFrom=''; rangeTo='';
+  document.getElementById('range-from').value='';
+  document.getElementById('range-to').value='';
+  document.getElementById('range-from').classList.remove('active-range');
+  document.getElementById('range-to').classList.remove('active-range');
+  document.getElementById('btn-range-clear').style.display='none';
+  document.getElementById('range-active-lbl').style.display='none';
+  // reativa aba semana
+  document.querySelectorAll('.period-tab').forEach(function(t){t.classList.remove('active')});
+  document.querySelector('.period-tab[data-p="week"]').classList.add('active');
+  curPeriod='week';
+  refreshAnalytics();
 });
 
 /* ── SAVE ── */
