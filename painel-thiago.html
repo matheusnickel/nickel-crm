@@ -549,137 +549,114 @@ function syncDraft(id){
   }
 }
 
-// ── BIND EVENTS ──
-function bindEvents(){
-  // toggle card
-  document.querySelectorAll('.pt-agent-head').forEach(function(h){
-    h.addEventListener('click',function(){h.closest('.pt-agent').classList.toggle('open')});
-  });
+// ── EVENTOS POR DELEGAÇÃO (sem acúmulo de listeners) ──
+function bindEvents(){}  // mantido para compatibilidade, não faz nada
 
-  // data do lançamento
-  document.querySelectorAll('.lancamento-date-inp').forEach(function(inp){
-    inp.addEventListener('change',function(){
-      var id=inp.dataset.id;
-      getDraft(id).date=inp.value;
-      // atualiza botão salvar
-      var btn=document.querySelector('.btn-salvar-lancamento[data-id="'+id+'"]');
-      if(btn)btn.textContent='✓ Salvar lançamento de '+fmtDateShort(inp.value);
-    });
-  });
+function initDelegation(){
+  var wrap=document.getElementById('agents-wrap');
 
-  // cq acordeão toggle
-  document.querySelectorAll('.cq-head').forEach(function(h){
-    h.addEventListener('click',function(e){
-      e.stopPropagation();
-      h.closest('.cq-item').classList.toggle('cq-open');
-    });
-  });
-
-  // stepper +
-  document.querySelectorAll('.sp').forEach(function(b){
-    b.addEventListener('click',function(e){
-      e.stopPropagation();var id=b.dataset.id;syncDraft(id);
-      getDraft(id).cqs.push({nome:'',tel:'',bairro:'',tipologia:'',valor:''});rerenderAgent(id);
-    });
-  });
-  // stepper -
-  document.querySelectorAll('.sm').forEach(function(b){
-    b.addEventListener('click',function(e){
-      e.stopPropagation();var id=b.dataset.id;syncDraft(id);
-      var d=getDraft(id);if(d.cqs.length)d.cqs.pop();rerenderAgent(id);
-    });
-  });
-
-  // inputs texto
-  document.querySelectorAll('.cq-nome,.cq-tel').forEach(function(inp){
-    inp.addEventListener('input',function(){
-      var id=inp.dataset.id,i=+inp.dataset.i,d=getDraft(id);
-      if(!d.cqs[i])d.cqs[i]={nome:'',tel:'',bairro:'',tipologia:'',valor:''};
-      if(inp.classList.contains('cq-nome')){
-        d.cqs[i].nome=inp.value;
-        var sumEl=document.querySelector('.cq-head[data-id="'+id+'"][data-i="'+i+'"] .cq-summary');
-        if(sumEl)sumEl.textContent=cqSummary(d.cqs[i]);
-      } else d.cqs[i].tel=inp.value;
-    });
-  });
-
-  // valor
-  document.querySelectorAll('.cq-valor').forEach(function(inp){
-    inp.addEventListener('input',function(){
-      var id=inp.dataset.id,i=+inp.dataset.i;
-      var raw=inp.value.replace(/\D/g,'');
-      inp.value=raw?fmtValor(parseInt(raw,10)):'';
-      var d=getDraft(id);if(!d.cqs[i])d.cqs[i]={nome:'',tel:'',bairro:'',tipologia:'',valor:''};
-      d.cqs[i].valor=raw;
-    });
-  });
-
-  // bairro chip
-  document.querySelectorAll('.bairro-chip').forEach(function(chip){
-    chip.addEventListener('click',function(e){
-      e.stopPropagation();
-      var id=chip.dataset.id,i=+chip.dataset.i,b=chip.dataset.b;
+  wrap.addEventListener('click',function(e){
+    // toggle card
+    var head=e.target.closest('.pt-agent-head');
+    if(head&&!e.target.closest('.vid-stepper')&&!e.target.closest('.btn-salvar-lancamento')){
+      head.closest('.pt-agent').classList.toggle('open');return;
+    }
+    // stepper +
+    if(e.target.closest('.sp')){
+      var b=e.target.closest('.sp'),id=b.dataset.id;syncDraft(id);
+      getDraft(id).cqs.push({nome:'',tel:'',bairro:'',tipologia:'',valor:''});rerenderAgent(id);return;
+    }
+    // stepper -
+    if(e.target.closest('.sm')){
+      var b=e.target.closest('.sm'),id=b.dataset.id;syncDraft(id);
+      var d=getDraft(id);if(d.cqs.length)d.cqs.pop();rerenderAgent(id);return;
+    }
+    // cq acordeão
+    var cqh=e.target.closest('.cq-head');
+    if(cqh){cqh.closest('.cq-item').classList.toggle('cq-open');return;}
+    // bairro chip
+    var chip=e.target.closest('.bairro-chip');
+    if(chip){
+      var id=chip.dataset.id,i=+chip.dataset.i,bv=chip.dataset.b;
       syncDraft(id);var d=getDraft(id);
       if(!d.cqs[i])d.cqs[i]={nome:'',tel:'',bairro:'',tipologia:'',valor:''};
-      d.cqs[i].bairro=(d.cqs[i].bairro===b?'':b);
+      d.cqs[i].bairro=(d.cqs[i].bairro===bv?'':bv);
       chip.closest('.cq-item').querySelectorAll('.bairro-chip').forEach(function(c){c.classList.toggle('sel',c.dataset.b===d.cqs[i].bairro)});
-    });
-  });
-
-  // bairro add
-  document.querySelectorAll('.btn-bairro-add').forEach(function(btn){
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();var id=btn.dataset.id,i=+btn.dataset.i;
+      return;
+    }
+    // bairro add
+    if(e.target.closest('.btn-bairro-add')){
+      var btn=e.target.closest('.btn-bairro-add'),id=btn.dataset.id,i=+btn.dataset.i;
       var inp=btn.previousElementSibling,v=(inp?inp.value.trim():'');if(!v)return;
       if(allBairros().indexOf(v)<0){extraBairros.push(v);saveExtraBairros()}
       syncDraft(id);var d=getDraft(id);
       if(!d.cqs[i])d.cqs[i]={nome:'',tel:'',bairro:'',tipologia:'',valor:''};
-      d.cqs[i].bairro=v;rerenderAgent(id);
-    });
-  });
-
-  // tipologia
-  document.querySelectorAll('.tipo-btn').forEach(function(btn){
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();var id=btn.dataset.id,i=+btn.dataset.i,t=btn.dataset.t;
+      d.cqs[i].bairro=v;rerenderAgent(id);return;
+    }
+    // tipologia
+    var tbtn=e.target.closest('.tipo-btn');
+    if(tbtn){
+      var id=tbtn.dataset.id,i=+tbtn.dataset.i,t=tbtn.dataset.t;
       syncDraft(id);var d=getDraft(id);
       if(!d.cqs[i])d.cqs[i]={nome:'',tel:'',bairro:'',tipologia:'',valor:''};
       d.cqs[i].tipologia=(d.cqs[i].tipologia===t?'':t);
-      btn.closest('.tipo-group').querySelectorAll('.tipo-btn').forEach(function(b){b.classList.toggle('sel',b.dataset.t===d.cqs[i].tipologia)});
-    });
-  });
-
-
-
-  // salvar lançamento
-  document.querySelectorAll('.btn-salvar-lancamento').forEach(function(btn){
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();var id=btn.dataset.id;syncDraft(id);
+      tbtn.closest('.tipo-group').querySelectorAll('.tipo-btn').forEach(function(b){b.classList.toggle('sel',b.dataset.t===d.cqs[i].tipologia)});
+      return;
+    }
+    // salvar lançamento
+    if(e.target.closest('.btn-salvar-lancamento')){
+      var btn=e.target.closest('.btn-salvar-lancamento'),id=btn.dataset.id;syncDraft(id);
       var d=getDraft(id);
       upsertEntry(id,{date:d.date,cqs:JSON.parse(JSON.stringify(d.cqs))});
       draft[id]={date:today,cqs:[]};
-      rerenderAgent(id);
-      refreshAnalytics();
-      toast('✓ Lançamento salvo — '+fmtDateShort(d.date));
-    });
+      rerenderAgent(id);refreshAnalytics();
+      toast('✓ Lançamento salvo — '+fmtDateShort(d.date));return;
+    }
+    // histórico toggle
+    var ht=e.target.closest('.hist-toggle');
+    if(ht){
+      ht.classList.toggle('hist-open');
+      var list=document.querySelector('.hist-list[data-id="'+ht.dataset.id+'"]');
+      if(list)list.style.display=ht.classList.contains('hist-open')?'block':'none';
+      return;
+    }
+    // CQ no histórico
+    var hh=e.target.closest('.hcq-head');
+    if(hh){hh.closest('.hcq-item').classList.toggle('open');return;}
   });
 
-  // histórico toggle
-  document.querySelectorAll('.hist-toggle').forEach(function(h){
-    h.addEventListener('click',function(e){
-      e.stopPropagation();
-      h.classList.toggle('hist-open');
-      var list=document.querySelector('.hist-list[data-id="'+h.dataset.id+'"]');
-      if(list)list.style.display=h.classList.contains('hist-open')?'block':'none';
-    });
+  wrap.addEventListener('change',function(e){
+    var inp=e.target.closest('.lancamento-date-inp');
+    if(inp){
+      var id=inp.dataset.id;getDraft(id).date=inp.value;
+      var btn=document.querySelector('.btn-salvar-lancamento[data-id="'+id+'"]');
+      if(btn)btn.textContent='✓ Salvar lançamento de '+fmtDateShort(inp.value);
+    }
   });
 
-  // CQ no histórico — expandir
-  document.querySelectorAll('.hcq-head').forEach(function(h){
-    h.addEventListener('click',function(e){
-      e.stopPropagation();
-      h.closest('.hcq-item').classList.toggle('open');
-    });
+  wrap.addEventListener('input',function(e){
+    // nome
+    if(e.target.classList.contains('cq-nome')){
+      var inp=e.target,id=inp.dataset.id,i=+inp.dataset.i,d=getDraft(id);
+      if(!d.cqs[i])d.cqs[i]={nome:'',tel:'',bairro:'',tipologia:'',valor:''};
+      d.cqs[i].nome=inp.value;
+      var sumEl=document.querySelector('.cq-head[data-id="'+id+'"][data-i="'+i+'"] .cq-summary');
+      if(sumEl)sumEl.textContent=cqSummary(d.cqs[i]);return;
+    }
+    // tel
+    if(e.target.classList.contains('cq-tel')){
+      var inp=e.target,id=inp.dataset.id,i=+inp.dataset.i,d=getDraft(id);
+      if(!d.cqs[i])d.cqs[i]={nome:'',tel:'',bairro:'',tipologia:'',valor:''};
+      d.cqs[i].tel=inp.value;return;
+    }
+    // valor
+    if(e.target.classList.contains('cq-valor')){
+      var inp=e.target,id=inp.dataset.id,i=+inp.dataset.i;
+      var raw=inp.value.replace(/\D/g,'');
+      inp.value=raw?fmtValor(parseInt(raw,10)):'';
+      var d=getDraft(id);if(!d.cqs[i])d.cqs[i]={nome:'',tel:'',bairro:'',tipologia:'',valor:''};
+      d.cqs[i].valor=raw;return;
+    }
   });
 }
 
@@ -733,6 +710,7 @@ if(!localStorage.getItem('tgp_cleared_v1')){
 
 // ── INIT ──
 renderAgents();
+initDelegation();
 refreshAnalytics();
 </script>
 </body>
