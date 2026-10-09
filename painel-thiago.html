@@ -142,19 +142,32 @@
 .hist-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;padding:14px 18px;border-top:1px solid var(--border)}
 .hist-toggle:hover{background:var(--bg3)}
 .hist-toggle-lbl{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+.hist-toggle-count{font-size:11px;font-weight:700;color:#6495ed;background:rgba(100,149,237,.1);padding:2px 9px;border-radius:20px}
+.hist-toggle-right{display:flex;align-items:center;gap:8px}
 .hist-toggle-chev{font-size:10px;color:var(--text-muted);transition:transform .2s}
 .hist-open .hist-toggle-chev{transform:rotate(180deg)}
 .hist-list{display:none;border-top:1px solid var(--border)}
 .hist-open .hist-list{display:block}
-.hist-row{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--border)}
-.hist-row:last-child{border-bottom:none}
-.hist-date{font-size:13px;font-weight:600;color:var(--text);min-width:110px}
-.hist-badges{display:flex;gap:6px;flex:1}
-.hist-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px}
-.hist-badge.cq{background:rgba(100,149,237,.12);color:#6495ed}
-.hist-badge.doc{background:rgba(168,230,61,.12);color:var(--gold)}
-.hist-badge.zero{background:rgba(255,255,255,.05);color:var(--text-muted)}
-.hist-empty{padding:14px 18px;font-size:13px;color:var(--text-muted)}
+
+/* CQ no histórico */
+.hcq-item{border-bottom:1px solid var(--border)}
+.hcq-item:last-child{border-bottom:none}
+.hcq-head{display:flex;align-items:center;gap:12px;padding:11px 18px;cursor:pointer;transition:background .15s}
+.hcq-head:hover{background:var(--bg3)}
+.hcq-idx{width:26px;height:26px;border-radius:50%;background:rgba(100,149,237,.12);border:1px solid rgba(100,149,237,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#6495ed;flex-shrink:0}
+.hcq-info{flex:1;min-width:0}
+.hcq-nome{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hcq-tel{font-size:12px;color:var(--text-muted);margin-top:1px}
+.hcq-chev{font-size:10px;color:var(--text-muted);flex-shrink:0;transition:transform .2s}
+.hcq-item.open .hcq-chev{transform:rotate(180deg)}
+.hcq-body{display:none;padding:0 18px 12px 56px;display:flex;flex-direction:column;gap:6px}
+.hcq-item:not(.open) .hcq-body{display:none}
+.hcq-item.open .hcq-body{display:flex}
+.hcq-detail{display:flex;align-items:baseline;gap:6px}
+.hcq-detail-lbl{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;min-width:70px;flex-shrink:0}
+.hcq-detail-val{font-size:13px;color:var(--text);font-weight:500}
+.hcq-detail-val.gold{color:var(--gold);font-weight:700}
+.hcq-empty{padding:14px 18px;font-size:13px;color:var(--text-muted)}
 
 /* ANALYTICS */
 .analytics-section{margin-top:8px}
@@ -444,11 +457,30 @@ function cqItemHTML(id,idx,c,open){
 
 function histHTML(id){
   var entries=loadAgent(id);
-  if(!entries.length)return'<div class="hist-empty">Nenhum lançamento ainda.</div>';
-  return entries.map(function(e){
-    var cq=e.cqs||[];
-    return'<div class="hist-row"><div class="hist-date">'+fmtDateShort(e.date)+'</div><div class="hist-badges"><span class="hist-badge '+(cq.length?'cq':'zero')+'">'+cq.length+' CQ</span></div></div>';
+  // achata todos os CQs de todas as entradas em lista plana
+  var allCqs=[];
+  entries.forEach(function(e){(e.cqs||[]).forEach(function(c){allCqs.push(c)})});
+  if(!allCqs.length)return'<div class="hcq-empty">Nenhum CQ registrado ainda.</div>';
+  return allCqs.map(function(c,i){
+    var nome=c.nome||'(sem nome)';var tel=c.tel||'—';
+    var bairro=c.bairro||'—';var tipo=c.tipologia||'—';
+    var val=c.valor?'R$ '+fmtValor(parseValor(c.valor)):'—';
+    return'<div class="hcq-item">'
+      +'<div class="hcq-head" data-hid="'+id+'" data-hi="'+i+'">'
+      +'<div class="hcq-idx">'+(i+1)+'</div>'
+      +'<div class="hcq-info"><div class="hcq-nome">'+nome+'</div><div class="hcq-tel">'+tel+'</div></div>'
+      +'<span class="hcq-chev">▼</span></div>'
+      +'<div class="hcq-body">'
+      +'<div class="hcq-detail"><span class="hcq-detail-lbl">Bairro</span><span class="hcq-detail-val">'+bairro+'</span></div>'
+      +'<div class="hcq-detail"><span class="hcq-detail-lbl">Tipologia</span><span class="hcq-detail-val">'+tipo+'</span></div>'
+      +'<div class="hcq-detail"><span class="hcq-detail-lbl">Valor</span><span class="hcq-detail-val gold">'+val+'</span></div>'
+      +'</div></div>';
   }).join('');
+}
+
+function histCount(id){
+  var entries=loadAgent(id);
+  var n=0;entries.forEach(function(e){n+=(e.cqs||[]).length});return n;
 }
 
 function agentHTML(a){
@@ -472,7 +504,7 @@ function agentHTML(a){
     +'<button class="btn-salvar-lancamento" data-id="'+a.id+'">✓ Salvar lançamento de '+fmtDateShort(d.date)+'</button>'
     +'</div>'
     // histórico
-    +'<div class="hist-toggle" data-id="'+a.id+'"><span class="hist-toggle-lbl">Histórico</span><span class="hist-toggle-chev">▼</span></div>'
+    +'<div class="hist-toggle" data-id="'+a.id+'"><span class="hist-toggle-lbl">Histórico de CQs</span><div class="hist-toggle-right"><span class="hist-toggle-count">'+histCount(a.id)+'</span><span class="hist-toggle-chev">▼</span></div></div>'
     +'<div class="hist-list" data-id="'+a.id+'">'+histHTML(a.id)+'</div>'
     +'</div></div>';
 }
@@ -639,6 +671,14 @@ function bindEvents(){
       h.classList.toggle('hist-open');
       var list=document.querySelector('.hist-list[data-id="'+h.dataset.id+'"]');
       if(list)list.style.display=h.classList.contains('hist-open')?'block':'none';
+    });
+  });
+
+  // CQ no histórico — expandir
+  document.querySelectorAll('.hcq-head').forEach(function(h){
+    h.addEventListener('click',function(e){
+      e.stopPropagation();
+      h.closest('.hcq-item').classList.toggle('open');
     });
   });
 }
