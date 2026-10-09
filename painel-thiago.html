@@ -771,9 +771,7 @@ function toast(msg){var t=document.getElementById('pt-toast');t.textContent=msg;
     ],
   };
   Object.keys(seed).forEach(function(id){
-    if(!localStorage.getItem('tgp_a_'+id)){
-      localStorage.setItem('tgp_a_'+id,JSON.stringify(seed[id]));
-    }
+    localStorage.setItem('tgp_a_'+id,JSON.stringify(seed[id]));
   });
 })();
 
