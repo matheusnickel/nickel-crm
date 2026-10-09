@@ -80,7 +80,9 @@
 .cq-inp::placeholder{color:var(--text-muted)}
 
 /* BAIRROS */
-.field-lbl{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.field-lbl{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;margin-top:4px}
+.field-lbl::before{content:'';display:inline-block;width:3px;height:13px;border-radius:2px;background:#6495ed;flex-shrink:0}
+.field-lbl.gold::before{background:var(--gold)}
 .bairro-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
 .bairro-chip{font-size:11px;font-weight:500;padding:4px 10px;border-radius:5px;border:1px solid var(--border);background:var(--bg2);color:var(--text-muted);cursor:pointer;transition:all .15s;white-space:nowrap}
 .bairro-chip:hover{border-color:#6495ed;color:var(--text)}
@@ -117,6 +119,19 @@
 .pt-add-doc input::placeholder{color:var(--text-muted)}
 .pt-btn-doc{background:var(--gold);border:none;color:#000;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .2s}
 .pt-btn-doc:hover{background:#96ce35}
+
+/* CQ ACORDEÃO */
+.cq-item{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.cq-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none;transition:background .15s}
+.cq-head:hover{background:rgba(100,149,237,.07)}
+.cq-head-left{display:flex;align-items:center;gap:10px}
+.cq-num{font-size:12px;font-weight:700;color:#6495ed;text-transform:uppercase;letter-spacing:.06em}
+.cq-summary{font-size:12px;color:var(--text-muted);font-style:italic}
+.cq-chev{font-size:10px;color:var(--text-muted);transition:transform .2s}
+.cq-open .cq-chev{transform:rotate(180deg)}
+.cq-body{display:none;padding:0 14px 14px;display:flex;flex-direction:column;gap:9px}
+.cq-item:not(.cq-open) .cq-body{display:none}
+.cq-item.cq-open .cq-body{display:flex}
 
 /* SALVAR LANÇAMENTO */
 .btn-salvar-lancamento{display:block;width:100%;margin-top:16px;padding:11px;background:var(--gold);color:#000;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;border:none;border-radius:8px;cursor:pointer;transition:background .2s,transform .1s;letter-spacing:.3px}
@@ -401,17 +416,29 @@ function buildValorChart(cqs){
 }
 
 // ── CQ FORM HTML ──
-function cqItemHTML(id,idx,c){
+function cqSummary(c){
+  var parts=[];
+  if(c.nome)parts.push(c.nome);
+  if(c.bairro)parts.push(c.bairro);
+  if(c.valor)parts.push('R$ '+fmtValor(parseValor(c.valor)));
+  return parts.length?parts.join(' · '):'Clique para preencher';
+}
+
+function cqItemHTML(id,idx,c,open){
   c=c||{nome:'',tel:'',bairro:'',tipologia:'',valor:''};
   var bairroChips=allBairros().map(function(b){return'<span class="bairro-chip'+(c.bairro===b?' sel':'')+'" data-id="'+id+'" data-i="'+idx+'" data-b="'+b+'">'+b+'</span>'}).join('');
   var tipoButtons=TIPOLOGIAS.map(function(t){return'<button class="tipo-btn'+(c.tipologia===t?' sel':'')+'" data-id="'+id+'" data-i="'+idx+'" data-t="'+t+'">'+t+'</button>'}).join('');
-  return'<div class="cq-item"><div class="cq-num">CQ '+(idx+1)+'</div>'
+  return'<div class="cq-item'+(open?' cq-open':'')+'">'
+    +'<div class="cq-head" data-id="'+id+'" data-i="'+idx+'">'
+    +'<div class="cq-head-left"><span class="cq-num">CQ '+(idx+1)+'</span><span class="cq-summary">'+cqSummary(c)+'</span></div>'
+    +'<span class="cq-chev">▼</span></div>'
+    +'<div class="cq-body">'
     +'<div class="cq-row"><input class="cq-inp cq-nome" data-id="'+id+'" data-i="'+idx+'" type="text" placeholder="Nome do proprietário" value="'+(c.nome||'').replace(/"/g,'&quot;')+'"><input class="cq-inp cq-tel" data-id="'+id+'" data-i="'+idx+'" type="tel" placeholder="Telefone" value="'+(c.tel||'').replace(/"/g,'&quot;')+'"></div>'
     +'<div><div class="field-lbl">Bairro</div><div class="bairro-chips">'+bairroChips+'</div>'
     +'<div class="bairro-add-row"><input class="cq-bairro-new" data-id="'+id+'" data-i="'+idx+'" type="text" placeholder="Adicionar outro bairro..."><button class="btn-bairro-add" data-id="'+id+'" data-i="'+idx+'">+ Adicionar</button></div></div>'
-    +'<div><div class="field-lbl">Tipologia</div><div class="tipo-group">'+tipoButtons+'</div></div>'
-    +'<div class="valor-wrap"><span class="valor-prefix">R$</span><input class="valor-inp cq-valor" data-id="'+id+'" data-i="'+idx+'" type="text" inputmode="numeric" placeholder="Valor do imóvel" value="'+(c.valor?fmtValor(parseValor(c.valor)):'')+'">'+'</div>'
-    +'</div>';
+    +'<div><div class="field-lbl gold">Tipologia</div><div class="tipo-group">'+tipoButtons+'</div></div>'
+    +'<div><div class="field-lbl gold">Valor</div><div class="valor-wrap"><span class="valor-prefix">R$</span><input class="valor-inp cq-valor" data-id="'+id+'" data-i="'+idx+'" type="text" inputmode="numeric" placeholder="Valor do imóvel" value="'+(c.valor?fmtValor(parseValor(c.valor)):'')+'">'+'</div></div>'
+    +'</div></div>';
 }
 
 
@@ -427,7 +454,8 @@ function histHTML(id){
 function agentHTML(a){
   var t=agentPeriodTotals(a.id);
   var d=getDraft(a.id);
-  var cqForms=d.cqs.length?'<div class="cq-list">'+d.cqs.map(function(c,i){return cqItemHTML(a.id,i,c)}).join('')+'</div>':'';
+  var lastIdx=d.cqs.length-1;
+  var cqForms=d.cqs.length?'<div class="cq-list">'+d.cqs.map(function(c,i){return cqItemHTML(a.id,i,c,i===lastIdx)}).join('')+'</div>':'';
   return'<div class="pt-agent" data-agent="'+a.id+'">'
     +'<div class="pt-agent-head"><div class="pt-av">'+ini(a.name)+'</div><div class="pt-agent-name">'+a.name+'</div>'
     +'<div class="pt-badges"><span class="pt-badge '+(t.cq?'cq':'zero')+'">'+t.cq+' CQ</span></div>'
@@ -507,6 +535,14 @@ function bindEvents(){
     });
   });
 
+  // cq acordeão toggle
+  document.querySelectorAll('.cq-head').forEach(function(h){
+    h.addEventListener('click',function(e){
+      e.stopPropagation();
+      h.closest('.cq-item').classList.toggle('cq-open');
+    });
+  });
+
   // stepper +
   document.querySelectorAll('.sp').forEach(function(b){
     b.addEventListener('click',function(e){
@@ -527,8 +563,11 @@ function bindEvents(){
     inp.addEventListener('input',function(){
       var id=inp.dataset.id,i=+inp.dataset.i,d=getDraft(id);
       if(!d.cqs[i])d.cqs[i]={nome:'',tel:'',bairro:'',tipologia:'',valor:''};
-      if(inp.classList.contains('cq-nome'))d.cqs[i].nome=inp.value;
-      else d.cqs[i].tel=inp.value;
+      if(inp.classList.contains('cq-nome')){
+        d.cqs[i].nome=inp.value;
+        var sumEl=document.querySelector('.cq-head[data-id="'+id+'"][data-i="'+i+'"] .cq-summary');
+        if(sumEl)sumEl.textContent=cqSummary(d.cqs[i]);
+      } else d.cqs[i].tel=inp.value;
     });
   });
 
