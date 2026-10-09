@@ -179,9 +179,7 @@
   <div class="pt-topbar">
     <div class="pt-stats">
       <div class="pt-stat"><div class="pt-stat-num blue" id="s-cq-p">0</div><div class="pt-stat-lbl">CQs no período</div></div>
-      <div class="pt-stat"><div class="pt-stat-num green" id="s-doc-p">0</div><div class="pt-stat-lbl">DOCs no período</div></div>
       <div class="pt-stat"><div class="pt-stat-num blue" id="s-cq-w">0</div><div class="pt-stat-lbl">CQs semana</div></div>
-      <div class="pt-stat"><div class="pt-stat-num green" id="s-doc-w">0</div><div class="pt-stat-lbl">DOCs semana</div></div>
     </div>
   </div>
 
@@ -212,7 +210,6 @@
     </div>
     <div class="summary-row">
       <div class="sum-cell"><div class="sum-num blue" id="an-cq">0</div><div class="sum-lbl">CQs no período</div></div>
-      <div class="sum-cell"><div class="sum-num green" id="an-doc">0</div><div class="sum-lbl">DOCs no período</div></div>
       <div class="sum-cell"><div class="sum-num orange" id="an-val">—</div><div class="sum-lbl">Valor médio CQs</div></div>
     </div>
     <div class="analytics-grid">
@@ -270,7 +267,7 @@ function saveExtraBairros(){try{localStorage.setItem('tgp_extra_bairros',JSON.st
 // draft: {agentId: {date, cqs:[{nome,tel,bairro,tipologia,valor}], docs:[{codigo}]}}
 var draft={};
 function getDraft(id){
-  if(!draft[id])draft[id]={date:today,cqs:[],docs:[]};
+  if(!draft[id])draft[id]={date:today,cqs:[]};
   return draft[id];
 }
 
@@ -320,48 +317,44 @@ function aggregatePeriod(){
     loadAgent(a.id).forEach(function(e){
       if(dateSet[e.date]){
         allCqs=allCqs.concat(e.cqs||[]);
-        totalDocs+=(e.docs||[]).length;
-      }
+          }
     });
   });
-  return{cqs:allCqs,totalDocs:totalDocs};
+  return{cqs:allCqs};
 }
 
 function aggregateWeek(){
   var wdates=getWeekDates();var wset={};wdates.forEach(function(d){wset[d]=true});
-  var cq=0,doc=0;
+  var cq=0;
   AGENTS.forEach(function(a){
     loadAgent(a.id).forEach(function(e){
-      if(wset[e.date]){cq+=(e.cqs||[]).length;doc+=(e.docs||[]).length}
+      if(wset[e.date]){cq+=(e.cqs||[]).length}
     });
   });
-  return{c:cq,d:doc};
+  return{c:cq};
 }
 
 // ── TILES ──
 function refreshTiles(){
   var p=aggregatePeriod(),w=aggregateWeek();
   document.getElementById('s-cq-p').textContent=p.cqs.length;
-  document.getElementById('s-doc-p').textContent=p.totalDocs;
   document.getElementById('s-cq-w').textContent=w.c;
-  document.getElementById('s-doc-w').textContent=w.d;
 }
 
 // ── BADGES DO AGENTE (período atual) ──
 function agentPeriodTotals(id){
   var dates=getPeriodDates();var dset={};dates.forEach(function(d){dset[d]=true});
-  var cq=0,doc=0;
+  var cq=0;
   loadAgent(id).forEach(function(e){
-    if(dset[e.date]){cq+=(e.cqs||[]).length;doc+=(e.docs||[]).length}
+    if(dset[e.date]){cq+=(e.cqs||[]).length}
   });
-  return{cq:cq,doc:doc};
+  return{cq:cq};
 }
 
 // ── ANALYTICS ──
 function refreshAnalytics(){
   var agg=aggregatePeriod();
   document.getElementById('an-cq').textContent=agg.cqs.length;
-  document.getElementById('an-doc').textContent=agg.totalDocs;
   var vals=agg.cqs.map(function(c){return parseValor(c.valor||'')}).filter(function(v){return v>0});
   document.getElementById('an-val').textContent=vals.length?'R$ '+fmtValor(Math.round(vals.reduce(function(a,b){return a+b},0)/vals.length)):'—';
   buildTipoChart(agg.cqs);buildBairroChart(agg.cqs);buildValorChart(agg.cqs);
@@ -374,7 +367,7 @@ function refreshAgentBadges(){
     var t=agentPeriodTotals(a.id);
     var el=document.querySelector('[data-agent="'+a.id+'"] .pt-badges');
     if(!el)return;
-    el.innerHTML='<span class="pt-badge '+(t.cq?'cq':'zero')+'">'+t.cq+' CQ</span><span class="pt-badge '+(t.doc?'doc':'zero')+'">'+t.doc+' DOC</span>';
+    el.innerHTML='<span class="pt-badge '+(t.cq?'cq':'zero')+'">'+t.cq+' CQ</span>';
   });
 }
 
@@ -421,18 +414,13 @@ function cqItemHTML(id,idx,c){
     +'</div>';
 }
 
-function docChipsHTML_draft(id){
-  var docs=getDraft(id).docs;
-  if(!docs.length)return'';
-  return'<div class="pt-doc-chips">'+docs.map(function(d,i){return'<div class="pt-doc-chip"><span class="pt-doc-code">'+d.codigo+'</span><button class="pt-doc-rm" data-id="'+id+'" data-i="'+i+'">×</button></div>'}).join('')+'</div>';
-}
 
 function histHTML(id){
   var entries=loadAgent(id);
   if(!entries.length)return'<div class="hist-empty">Nenhum lançamento ainda.</div>';
   return entries.map(function(e){
-    var cq=e.cqs||[],doc=e.docs||[];
-    return'<div class="hist-row"><div class="hist-date">'+fmtDateShort(e.date)+'</div><div class="hist-badges"><span class="hist-badge '+(cq.length?'cq':'zero')+'">'+cq.length+' CQ</span><span class="hist-badge '+(doc.length?'doc':'zero')+'">'+doc.length+' DOC</span></div></div>';
+    var cq=e.cqs||[];
+    return'<div class="hist-row"><div class="hist-date">'+fmtDateShort(e.date)+'</div><div class="hist-badges"><span class="hist-badge '+(cq.length?'cq':'zero')+'">'+cq.length+' CQ</span></div></div>';
   }).join('');
 }
 
@@ -442,7 +430,7 @@ function agentHTML(a){
   var cqForms=d.cqs.length?'<div class="cq-list">'+d.cqs.map(function(c,i){return cqItemHTML(a.id,i,c)}).join('')+'</div>':'';
   return'<div class="pt-agent" data-agent="'+a.id+'">'
     +'<div class="pt-agent-head"><div class="pt-av">'+ini(a.name)+'</div><div class="pt-agent-name">'+a.name+'</div>'
-    +'<div class="pt-badges"><span class="pt-badge '+(t.cq?'cq':'zero')+'">'+t.cq+' CQ</span><span class="pt-badge '+(t.doc?'doc':'zero')+'">'+t.doc+' DOC</span></div>'
+    +'<div class="pt-badges"><span class="pt-badge '+(t.cq?'cq':'zero')+'">'+t.cq+' CQ</span></div>'
     +'<span class="pt-chev">▼</span></div>'
     +'<div class="pt-agent-body">'
     // data do lançamento
@@ -453,11 +441,6 @@ function agentHTML(a){
     +'<div class="pt-stepper-row"><span class="pt-stepper-lbl">CQs</span>'
     +'<div class="vid-stepper"><button class="vid-step-btn sm" data-id="'+a.id+'">−</button><div class="vid-step-val sv" data-id="'+a.id+'">'+d.cqs.length+'</div><button class="vid-step-btn sp" data-id="'+a.id+'">+</button></div></div>'
     +'<div class="cq-forms-wrap" data-id="'+a.id+'">'+cqForms+'</div>'
-    +'</div>'
-    // DOCs
-    +'<div class="pt-sec"><div class="pt-sec-title">DOCs</div>'
-    +'<div class="doc-chips-slot" data-id="'+a.id+'">'+docChipsHTML_draft(a.id)+'</div>'
-    +'<div class="pt-add-doc"><input class="doc-inp" data-id="'+a.id+'" placeholder="Código do DOC" maxlength="30"><button class="pt-btn-doc" data-id="'+a.id+'">+ Adicionar</button></div>'
     +'<button class="btn-salvar-lancamento" data-id="'+a.id+'">✓ Salvar lançamento de '+fmtDateShort(d.date)+'</button>'
     +'</div>'
     // histórico
@@ -595,33 +578,15 @@ function bindEvents(){
     });
   });
 
-  // doc add
-  document.querySelectorAll('.pt-btn-doc').forEach(function(b){
-    b.addEventListener('click',function(e){
-      e.stopPropagation();var id=b.dataset.id;
-      var inp=document.querySelector('.doc-inp[data-id="'+id+'"]');
-      var v=(inp?inp.value:'').trim();if(!v){if(inp)inp.focus();return;}
-      getDraft(id).docs.push({codigo:v});inp.value='';rerenderAgent(id);
-    });
-  });
-  document.querySelectorAll('.doc-inp').forEach(function(inp){
-    inp.addEventListener('keydown',function(e){if(e.key==='Enter'){var b=document.querySelector('.pt-btn-doc[data-id="'+inp.dataset.id+'"]');if(b)b.click()}});
-  });
-  document.querySelectorAll('.pt-doc-rm').forEach(function(b){
-    b.addEventListener('click',function(e){
-      e.stopPropagation();var id=b.dataset.id,i=+b.dataset.i;
-      getDraft(id).docs.splice(i,1);rerenderAgent(id);
-    });
-  });
+
 
   // salvar lançamento
   document.querySelectorAll('.btn-salvar-lancamento').forEach(function(btn){
     btn.addEventListener('click',function(e){
       e.stopPropagation();var id=btn.dataset.id;syncDraft(id);
       var d=getDraft(id);
-      upsertEntry(id,{date:d.date,cqs:JSON.parse(JSON.stringify(d.cqs)),docs:JSON.parse(JSON.stringify(d.docs))});
-      // reset draft para hoje
-      draft[id]={date:today,cqs:[],docs:[]};
+      upsertEntry(id,{date:d.date,cqs:JSON.parse(JSON.stringify(d.cqs))});
+      draft[id]={date:today,cqs:[]};
       rerenderAgent(id);
       refreshAnalytics();
       toast('✓ Lançamento salvo — '+fmtDateShort(d.date));
