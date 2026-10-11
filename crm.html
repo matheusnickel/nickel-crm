@@ -877,6 +877,7 @@ function openDetail(id) {
     ${isGestor ? `<div style="padding:0 20px 8px;display:flex;gap:8px">
       <button class="btn-sm" style="background:var(--blue-light);color:var(--blue);flex:1" data-edit-id="${id}">✏️ Editar</button>
       <button class="btn-sm" style="background:var(--surface2);color:var(--text-3);flex:1" data-archive-id="${id}">${c.archived?'↩ Desarquivar':'📦 Arquivar'}</button>
+      <button class="btn-sm" style="background:var(--red-light);color:var(--red);flex:1" data-delete-id="${id}">🗑️ Excluir</button>
     </div>` : ''}
   `;
 
@@ -889,6 +890,7 @@ function openDetail(id) {
   sheet.querySelectorAll('[data-id].btn-agendar').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openContato(b.dataset.id); }));
   sheet.querySelectorAll('[data-edit-id]').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openEditClient(b.dataset.editId); }));
   sheet.querySelectorAll('[data-archive-id]').forEach(b => b.addEventListener('click', () => toggleArchive(b.dataset.archiveId)));
+  sheet.querySelectorAll('[data-delete-id]').forEach(b => b.addEventListener('click', () => deleteClient(b.dataset.deleteId)));
 
   openModal('modal-detail');
 }
@@ -903,6 +905,19 @@ async function changeStage(id, stage) {
   openDetail(id);
   render();
   showToast(`Movido para ${stage}`);
+}
+
+async function deleteClient(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  if (!confirm(`Excluir "${c.nome}" permanentemente? Esta ação não pode ser desfeita.`)) return;
+  clientes = clientes.filter(x => x.id !== id);
+  contatos = contatos.filter(x => x.clientId !== id);
+  cacheLocal();
+  try { await fbDelete(COL_CLIENTES, id); } catch {}
+  closeModal('modal-detail');
+  render();
+  showToast('Cliente excluído');
 }
 
 async function toggleArchive(id) {
