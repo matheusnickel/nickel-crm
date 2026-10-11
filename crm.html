@@ -283,7 +283,7 @@ a{color:inherit;text-decoration:none}
 
 <div id="loading">
   <div class="spinner"></div>
-  <p>Carregando VIP Imóveis…</p>
+  <p>Carregando Nickel Imóveis…</p>
 </div>
 
 <div id="screen-login" class="hidden">
@@ -489,8 +489,6 @@ window.doLogout = function() {
   session = null;
   clientes = [];
   contatos = [];
-  document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
   showLogin();
 };
 
@@ -770,7 +768,7 @@ function renderClientes() {
   const q = document.getElementById('search-q') ? document.getElementById('search-q').value.toLowerCase() : '';
 
   let filtered = clientes.filter(c => !c.archived);
-  if (q) filtered = filtered.filter(c => c.nome.toLowerCase().includes(q) || (c.tel||'').includes(q) || (c.bairro||'').toLowerCase().includes(q));
+  if (q) filtered = filtered.filter(c => c.nome.toLowerCase().includes(q) || (c.bairro||'').toLowerCase().includes(q) || (c.tipologia||'').toLowerCase().includes(q));
 
   const archivedCount = clientes.filter(c => c.archived).length;
 
@@ -850,7 +848,7 @@ function openDetail(id) {
     <div class="detail-hero">
       <div class="detail-avatar">${avatarInitials(c.nome)}</div>
       <div class="detail-name">${esc(c.nome)}</div>
-      <div class="detail-sub">${esc(c.tel||'')} · Último: ${daysText}</div>
+      <div class="detail-sub">Último contato: ${daysText}</div>
       <div class="detail-stage-select">${stageButtons}</div>
     </div>
     <div class="action-strip">
