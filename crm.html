@@ -292,11 +292,7 @@ a{color:inherit;text-decoration:none}
       <div class="name">Nickel Imóveis</div>
       <div class="sub">CRM</div>
     </div>
-    <div style="text-align:center;margin-bottom:20px;font-size:15px;font-weight:600;color:var(--text)">👤 Matheus</div>
-    <div class="form-group">
-      <label>Senha</label>
-      <input id="login-pass" type="password" placeholder="••••••" autocomplete="current-password">
-    </div>
+    <div style="text-align:center;margin-bottom:28px;font-size:15px;font-weight:600;color:var(--text-2)">Matheus Nickel</div>
     <button class="btn-primary" onclick="doLogin()">Entrar</button>
     <div class="login-err" id="login-err"></div>
   </div>
@@ -482,13 +478,6 @@ function startApp() {
 
 // ── LOGIN ──
 window.doLogin = function() {
-  const pass = document.getElementById('login-pass').value;
-  const err = document.getElementById('login-err');
-  err.textContent = '';
-  if (USERS['matheus'].pass !== pass) {
-    err.textContent = 'Senha incorreta.';
-    return;
-  }
   session = { user: 'matheus', role: 'gestor', name: 'Matheus' };
   sessionStorage.setItem('nickel_session', JSON.stringify(session));
   startApp();
@@ -1204,8 +1193,7 @@ function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Enter key on login
-document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+// sem campo de senha, nada a fazer aqui
 </script>
 </body>
 </html>
