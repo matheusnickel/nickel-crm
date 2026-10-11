@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VIP Imóveis · CRM Compradores</title>
+<meta property="og:title" content="VIP Imóveis · CRM Compradores">
+<meta property="og:description" content="Radar de follow-up de clientes compradores VIP Imóveis.">
+<meta property="og:site_name" content="VIP Imóveis">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg: #F7F8FA;
+  --surface: #FFFFFF;
+  --surface2: #F0F2F5;
+  --border: #E4E7EC;
+  --text: #111827;
+  --text-2: #4B5563;
+  --text-3: #9CA3AF;
+  --blue: #2453C5;
+  --blue-light: #EEF2FF;
+  --blue-mid: #C7D4F8;
+  --green: #16A34A;
+  --green-light: #DCFCE7;
+  --amber: #D97706;
+  --amber-light: #FEF3C7;
+  --red: #DC2626;
+  --red-light: #FEE2E2;
+  --gold: #B45309;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.10), 0 2px 4px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1117;
+    --surface: #1A1D26;
+    --surface2: #22262F;
+    --border: #2D3141;
+    --text: #F9FAFB;
+    --text-2: #D1D5DB;
+    --text-3: #6B7280;
+    --blue: #4F79E8;
+    --blue-light: #1A2340;
+    --blue-mid: #2A3B70;
+    --green-light: #14532D;
+    --amber-light: #451A03;
+    --red-light: #450A0A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1117;
+  --surface: #1A1D26;
+  --surface2: #22262F;
+  --border: #2D3141;
+  --text: #F9FAFB;
+  --text-2: #D1D5DB;
+  --text-3: #6B7280;
+  --blue: #4F79E8;
+  --blue-light: #1A2340;
+  --blue-mid: #2A3B70;
+  --green-light: #14532D;
+  --amber-light: #451A03;
+  --red-light: #450A0A;
+  color-scheme: dark;
+}
+
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;font-size:14px;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:inherit}
+a{color:inherit;text-decoration:none}
+
+/* ── LAYOUT ── */
+#app-shell{height:100%}
+#app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 16px 80px}
+
+/* ── HEADER ── */
+.top-bar{
+  position:sticky;top:env(safe-area-inset-top,0);z-index:100;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top,0));
+  display:flex;align-items:center;gap:12px;
+}
+.top-bar .logo{font-size:16px;font-weight:700;letter-spacing:-.3px;color:var(--blue);flex:1}
+.top-bar .logo span{font-weight:400;color:var(--text-2);font-size:11px;display:block;letter-spacing:.04em;text-transform:uppercase;margin-top:1px}
+.top-bar .avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+
+/* ── BOTTOM NAV ── */
+.nav-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;padding:8px 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0));
+  z-index:100;
+}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;color:var(--text-3);font-size:10px;font-weight:500;cursor:pointer;transition:color .15s}
+.nav-item svg{width:22px;height:22px;stroke-width:1.8}
+.nav-item.active{color:var(--blue)}
+.nav-item.active svg{stroke-width:2.2}
+
+/* ── LOGIN ── */
+#screen-login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:32px 16px}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 24px;width:100%;max-width:360px;box-shadow:var(--shadow-md)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .name{font-size:22px;font-weight:700;color:var(--blue);letter-spacing:-.5px}
+.login-logo .sub{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.1em;margin-top:3px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.form-group input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;background:var(--bg);color:var(--text);transition:border-color .15s;outline:none}
+.form-group input:focus{border-color:var(--blue)}
+.btn-primary{width:100%;background:var(--blue);color:#fff;border-radius:var(--radius-sm);padding:12px;font-weight:600;font-size:15px;margin-top:4px;transition:opacity .15s}
+.btn-primary:hover{opacity:.9}
+.btn-primary:active{opacity:.8}
+.login-err{color:var(--red);font-size:13px;text-align:center;margin-top:10px;min-height:18px}
+
+/* ── SECTION TITLE ── */
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin:20px 0 10px}
+
+/* ── RADAR CARDS ── */
+.radar-header{padding:16px 0 8px;display:flex;align-items:baseline;justify-content:space-between}
+.radar-header h2{font-size:20px;font-weight:700;letter-spacing:-.4px}
+.radar-header .date{font-size:12px;color:var(--text-3)}
+
+.urgency-group{margin-bottom:20px}
+.urgency-label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;padding:6px 10px;border-radius:var(--radius-sm)}
+.urgency-label.red{background:var(--red-light);color:var(--red)}
+.urgency-label.amber{background:var(--amber-light);color:var(--amber)}
+.urgency-label.green{background:var(--green-light);color:var(--green)}
+.urgency-label.new{background:var(--blue-light);color:var(--blue)}
+.urgency-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.urgency-dot.red{background:var(--red)}
+.urgency-dot.amber{background:var(--amber)}
+.urgency-dot.green{background:var(--green)}
+.urgency-dot.new{background:var(--blue)}
+
+.client-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 14px 12px;margin-bottom:8px;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .15s,border-color .15s;position:relative}
+.client-card:hover{box-shadow:var(--shadow-md);border-color:var(--blue-mid)}
+.client-card.urgent-red{border-left:3px solid var(--red)}
+.client-card.urgent-amber{border-left:3px solid var(--amber)}
+.client-card.urgent-green{border-left:3px solid var(--green)}
+.client-card.urgent-new{border-left:3px solid var(--blue)}
+.card-row{display:flex;align-items:flex-start;gap:10px}
+.card-avatar{width:38px;height:38px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.card-main{flex:1;min-width:0}
+.card-name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-detail{font-size:12px;color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;flex-shrink:0}
+.card-badge.red{background:var(--red-light);color:var(--red)}
+.card-badge.amber{background:var(--amber-light);color:var(--amber)}
+.card-badge.green{background:var(--green-light);color:var(--green)}
+.card-badge.new{background:var(--blue-light);color:var(--blue)}
+.card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
+.card-stage{font-size:11px;color:var(--text-3);font-weight:500}
+.card-actions{display:flex;gap:6px}
+.btn-sm{border-radius:var(--radius-sm);padding:5px 10px;font-size:12px;font-weight:600;transition:opacity .15s;display:flex;align-items:center;gap:4px}
+.btn-sm:hover{opacity:.85}
+.btn-contact{background:var(--blue);color:#fff}
+.btn-wpp{background:var(--green-light);color:var(--green)}
+.btn-lembrar{background:var(--amber-light);color:var(--amber)}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:40px 16px;color:var(--text-3)}
+.empty-state svg{width:48px;height:48px;margin:0 auto 12px;display:block;opacity:.4}
+.empty-state p{font-size:14px}
+
+/* ── FAB ── */
+.fab{
+  position:fixed;bottom:calc(68px + env(safe-area-inset-bottom,0));right:calc(50% - 216px);
+  background:var(--blue);color:#fff;width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(36,83,197,.35);cursor:pointer;z-index:99;
+  transition:transform .15s,box-shadow .15s;
+}
+.fab:hover{transform:scale(1.05);box-shadow:0 6px 20px rgba(36,83,197,.45)}
+.fab:active{transform:scale(.97)}
+@media (max-width:480px){.fab{right:20px}}
+
+/* ── KANBAN ── */
+.stage-tabs{display:flex;gap:6px;overflow-x:auto;padding:12px 0;scrollbar-width:none}
+.stage-tabs::-webkit-scrollbar{display:none}
+.stage-tab{flex-shrink:0;padding:6px 14px;border-radius:99px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2)}
+.stage-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.stage-count{display:inline-block;background:rgba(255,255,255,.25);border-radius:99px;padding:0 6px;margin-left:4px;font-size:11px}
+.stage-tab:not(.active) .stage-count{background:var(--surface2);color:var(--text-3)}
+
+/* ── MODAL OVERLAY ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,.72,0,1);padding:0 0 calc(24px + env(safe-area-inset-bottom,0))}
+.modal-overlay.open .modal-sheet{transform:translateY(0)}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto}
+.modal-title{font-size:17px;font-weight:700;padding:4px 20px 16px;border-bottom:1px solid var(--border)}
+.modal-body{padding:16px 20px}
+.modal-body .form-group{margin-bottom:14px}
+.modal-body .form-group input,.modal-body .form-group select,.modal-body .form-group textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;background:var(--bg);color:var(--text);outline:none}
+.modal-body .form-group input:focus,.modal-body .form-group select:focus{border-color:var(--blue)}
+.modal-body textarea{resize:vertical;min-height:72px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-cancel{flex:1;background:var(--surface2);color:var(--text-2);border-radius:var(--radius-sm);padding:12px;font-weight:600;font-size:15px}
+.btn-save{flex:2;background:var(--blue);color:#fff;border-radius:var(--radius-sm);padding:12px;font-weight:600;font-size:15px}
+
+/* ── CLIENT DETAIL ── */
+.detail-hero{padding:20px;text-align:center;border-bottom:1px solid var(--border)}
+.detail-avatar{width:60px;height:60px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.detail-name{font-size:20px;font-weight:700;letter-spacing:-.3px}
+.detail-sub{font-size:13px;color:var(--text-2);margin-top:3px}
+.detail-stage-select{margin:12px auto 0;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.stage-btn{padding:5px 12px;border-radius:99px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);color:var(--text-2);cursor:pointer;transition:all .15s}
+.stage-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.detail-info{padding:16px 20px;border-bottom:1px solid var(--border)}
+.info-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
+.info-row .label{color:var(--text-3);font-weight:500}
+.info-row .val{font-weight:600;text-align:right;max-width:60%}
+.contact-log{padding:16px 20px}
+.log-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.log-item:last-child{border-bottom:none}
+.log-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:5px}
+.log-item .log-content{flex:1;min-width:0}
+.log-date{font-size:11px;color:var(--text-3);font-weight:600}
+.log-text{font-size:13px;color:var(--text-2);margin-top:2px}
+.action-strip{display:flex;gap:8px;padding:0 20px 16px;flex-wrap:wrap}
+.action-strip button{flex:1;min-width:120px;border-radius:var(--radius-sm);padding:10px 14px;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-falei{background:var(--blue);color:#fff}
+.btn-agendar{background:var(--blue-light);color:var(--blue)}
+.btn-wpp-big{background:var(--green-light);color:var(--green)}
+.btn-archive{background:var(--surface2);color:var(--text-2)}
+
+/* ── CLIENTES LIST ── */
+.search-bar{position:relative;margin:12px 0}
+.search-bar input{width:100%;border:1.5px solid var(--border);border-radius:99px;padding:9px 12px 9px 38px;background:var(--surface);color:var(--text);outline:none}
+.search-bar input:focus{border-color:var(--blue)}
+.search-bar svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;stroke:var(--text-3)}
+.client-row{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;transition:box-shadow .15s}
+.client-row:hover{box-shadow:var(--shadow-md)}
+.client-row .cr-avatar{width:40px;height:40px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.client-row .cr-info{flex:1;min-width:0}
+.client-row .cr-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-row .cr-detail{font-size:12px;color:var(--text-2);margin-top:2px}
+.badge-stage{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--surface2);color:var(--text-3);white-space:nowrap}
+.badge-stage.em-atendimento{background:var(--blue-light);color:var(--blue)}
+.badge-stage.visita{background:#FEF9C3;color:#854D0E}
+.badge-stage.proposta{background:#FFEDD5;color:#9A3412}
+.badge-stage.venda{background:var(--green-light);color:var(--green)}
+
+/* ── LOADING ── */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:16px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{color:var(--text-3);font-size:14px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom,0));left:50%;transform:translateX(-50%) translateY(20px);background:#1F2937;color:#fff;border-radius:99px;padding:9px 18px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:all .25s;white-space:nowrap;z-index:300}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── BAIRRO TAGS ── */
+.bairro-tag{display:flex;align-items:center;gap:5px;background:var(--blue);color:#fff;border-radius:99px;padding:4px 10px;font-size:12px;font-weight:600}
+.bairro-tag button{background:none;border:none;color:#fff;cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:.75}
+.bairro-tag button:hover{opacity:1}
+.bairro-opt{padding:10px 14px;font-size:13px;cursor:pointer;transition:background .1s}
+.bairro-opt:hover{background:var(--blue-light);color:var(--blue)}
+
+/* ── PRAZO BTNS ── */
+.prazo-btn{padding:7px 14px;border-radius:99px;font-size:13px;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);color:var(--text-2);cursor:pointer;transition:all .15s}
+.prazo-btn:hover{border-color:var(--blue);color:var(--blue)}
+.prazo-btn.selected{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* ── UTILS ── */
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Carregando VIP Imóveis…</p>
+</div>
+
+<div id="screen-login" class="hidden">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="name">Nickel Imóveis</div>
+      <div class="sub">CRM</div>
+    </div>
+    <div style="text-align:center;margin-bottom:20px;font-size:15px;font-weight:600;color:var(--text)">👤 Matheus</div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input id="login-pass" type="password" placeholder="••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<div id="app-shell" class="hidden">
+  <div id="app">
+    <!-- TOP BAR -->
+    <header class="top-bar">
+      <div class="logo">Nickel Imóveis <span>CRM</span></div>
+      <div class="avatar" id="user-avatar" onclick="doLogout()">M</div>
+    </header>
+
+    <!-- SCREENS -->
+    <div id="screen-radar" class="screen hidden"></div>
+    <div id="screen-kanban" class="screen hidden"></div>
+    <div id="screen-clientes" class="screen hidden"></div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="nav-bar">
+      <div class="nav-item active" data-screen="radar" onclick="navTo('radar')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg>
+        Meu Dia
+      </div>
+      <div class="nav-item" data-screen="kanban" onclick="navTo('kanban')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+        Funil
+      </div>
+      <div class="nav-item" data-screen="clientes" onclick="navTo('clientes')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Clientes
+      </div>
+    </nav>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab hidden" id="fab" onclick="openAddClient()" title="Novo cliente">
+  <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<div class="toast" id="toast"></div>
+
+<!-- ── MODALS ── -->
+
+<!-- Add/Edit Client -->
+<div class="modal-overlay" id="modal-client" onclick="closeModalOnBg(event,'modal-client')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-client-title">Novo Cliente</div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nome *</label><input id="fc-nome" type="text" placeholder="Nome completo"></div>
+      <div class="form-group" style="position:relative">
+        <label>Bairros desejados <span style="font-weight:400;color:var(--text-3)">(até 5)</span></label>
+        <div id="bairro-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
+        <input id="fc-bairro-input" type="text" placeholder="Digite para buscar bairro…" autocomplete="off" oninput="bairroSearch(this.value)" onfocus="bairroSearch(this.value)">
+        <div id="bairro-dropdown" style="display:none;position:absolute;left:0;right:0;background:var(--surface);border:1.5px solid var(--blue);border-radius:var(--radius-sm);max-height:200px;overflow-y:auto;z-index:500;box-shadow:var(--shadow-md);top:calc(100% - 2px)"></div>
+        <input type="hidden" id="fc-bairro">
+      </div>
+      <div class="form-group"><label>O que o cliente busca</label><input id="fc-tipologia" type="text" placeholder="Ex: 3 dorms, 2 vagas, varanda…"></div>
+      <div class="form-group"><label>Budget</label><input id="fc-orcamento" type="text" placeholder="R$ 0" oninput="maskBudget(this)"></div>
+      <div class="form-group"><label>Etapa</label>
+        <select id="fc-etapa">
+          <option value="Em atendimento">Em atendimento</option>
+          <option value="Visita">Visita</option>
+          <option value="Proposta">Proposta</option>
+          <option value="Venda">Venda</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('modal-client')">Cancelar</button>
+        <button class="btn-save" onclick="saveClient()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Client Detail -->
+<div class="modal-overlay" id="modal-detail" onclick="closeModalOnBg(event,'modal-detail')">
+  <div class="modal-sheet" id="detail-sheet"></div>
+</div>
+
+<!-- Falei / Contato -->
+<div class="modal-overlay" id="modal-contato" onclick="closeModalOnBg(event,'modal-contato')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-contato-title">Registrar Contato</div>
+    <div class="modal-body">
+      <div class="form-group"><label>Observação</label><textarea id="ct-obs" placeholder="O que foi discutido…"></textarea></div>
+      <div class="form-group">
+        <label>Próximo contato</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px" id="ct-prazo-btns">
+          <button type="button" class="prazo-btn" data-dias="2">2 dias</button>
+          <button type="button" class="prazo-btn" data-dias="3">3 dias</button>
+          <button type="button" class="prazo-btn" data-dias="5">5 dias</button>
+          <button type="button" class="prazo-btn" data-dias="10">10 dias</button>
+          <button type="button" class="prazo-btn" data-dias="0">Sem prazo</button>
+        </div>
+        <div id="ct-prazo-label" style="font-size:12px;color:var(--blue);margin-top:6px;font-weight:600;min-height:16px"></div>
+        <input type="hidden" id="ct-next">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('modal-contato')">Cancelar</button>
+        <button class="btn-save" onclick="saveContato()">Falei com ele/a</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lembrei (assistente) -->
+<div class="modal-overlay" id="modal-lembrei" onclick="closeModalOnBg(event,'modal-lembrei')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Lembrei o Matheus</div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:14px">Este registro <strong>não</strong> reseta o contador de follow-up. Apenas anota que o Matheus foi lembrado.</p>
+      <div class="form-group"><label>Observação</label><textarea id="lembrei-obs" placeholder="Por que você está lembrando…"></textarea></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal('modal-lembrei')">Cancelar</button>
+        <button class="btn-save" onclick="saveLembrei()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ── CONFIG ──
+const FB_KEY = 'AIzaSyAV1IBBj0usYroywP0i-SLFSHVJh8_S2-g';
+const FB_BASE = 'https://firestore.googleapis.com/v1/projects/nickel-crm/databases/(default)/documents';
+const COL_CLIENTES = 'crm_clientes';
+const COL_CONTATOS = 'crm_contatos';
+
+// ── AUTH ──
+const USERS = {
+  matheus: { pass: 'flor2301', role: 'gestor', name: 'Matheus', initials: 'M' },
+  assistente: { pass: 'flor2301', role: 'assistente', name: 'Assistente', initials: 'A' }
+};
+
+// ── STATE ──
+let session = null;
+let clientes = [];
+let contatos = [];
+let editingClientId = null;
+let contatoTargetId = null;
+let currentScreen = 'radar';
+let currentKanbanStage = 'Em atendimento';
+let unsubListeners = [];
+
+// ── INIT ──
+// Timeout fallback: se algo travar, mostra login após 8s
+const initTimeout = setTimeout(() => showLogin(), 8000);
+
+window.addEventListener('DOMContentLoaded', async () => {
+  clearTimeout(initTimeout);
+  const saved = tryJson(sessionStorage.getItem('nickel_session'));
+  if (saved && USERS[saved.user]) {
+    session = saved;
+    startApp();
+  } else {
+    showLogin();
+  }
+});
+
+function tryJson(s) { try { return JSON.parse(s); } catch { return null; } }
+
+function showLogin() {
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('screen-login').classList.remove('hidden');
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('fab').classList.add('hidden');
+}
+
+function startApp() {
+  document.getElementById('screen-login').classList.add('hidden');
+  const shell = document.getElementById('app-shell');
+  shell.classList.remove('hidden');
+  document.getElementById('fab').classList.remove('hidden');
+  const u = USERS[session.user];
+  document.getElementById('user-avatar').textContent = u.initials;
+  navTo('radar');
+  loadData(); // loading overlay hides after data arrives
+}
+
+// ── LOGIN ──
+window.doLogin = function() {
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  if (USERS['matheus'].pass !== pass) {
+    err.textContent = 'Senha incorreta.';
+    return;
+  }
+  session = { user: 'matheus', role: 'gestor', name: 'Matheus' };
+  sessionStorage.setItem('nickel_session', JSON.stringify(session));
+  startApp();
+};
+
+window.doLogout = function() {
+  if (!confirm('Sair da sessão?')) return;
+  sessionStorage.removeItem('nickel_session');
+  session = null;
+  clientes = [];
+  contatos = [];
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+  showLogin();
+};
+
+// ── NAVIGATION ──
+window.navTo = function(screen) {
+  currentScreen = screen;
+  ['radar','kanban','clientes'].forEach(s => {
+    document.getElementById('screen-'+s).classList.add('hidden');
+    document.querySelector('.nav-item[data-screen="'+s+'"]').classList.remove('active');
+  });
+  document.getElementById('screen-'+screen).classList.remove('hidden');
+  document.querySelector('.nav-item[data-screen="'+screen+'"]').classList.add('active');
+  render();
+};
+
+// ── FIREBASE REST ──
+async function fbGet(col) {
+  const url = `${FB_BASE}/${col}?key=${FB_KEY}&pageSize=300`;
+  const r = await fetch(url);
+  const j = await r.json();
+  if (!j.documents) return [];
+  return j.documents.map(d => fsDocToObj(d));
+}
+
+async function fbSet(col, id, data) {
+  const url = `${FB_BASE}/${col}/${id}?key=${FB_KEY}`;
+  const body = { fields: objToFsFields(data) };
+  const r = await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  return r.ok;
+}
+
+async function fbAdd(col, data) {
+  const url = `${FB_BASE}/${col}?key=${FB_KEY}`;
+  const body = { fields: objToFsFields(data) };
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json();
+  if (j.name) return j.name.split('/').pop();
+  return null;
+}
+
+async function fbDelete(col, id) {
+  const url = `${FB_BASE}/${col}/${id}?key=${FB_KEY}`;
+  await fetch(url, { method: 'DELETE' });
+}
+
+function fsDocToObj(doc) {
+  const id = doc.name.split('/').pop();
+  const obj = { id };
+  const f = doc.fields || {};
+  for (const key of Object.keys(f)) {
+    const v = f[key];
+    if (v.stringValue !== undefined) obj[key] = v.stringValue;
+    else if (v.integerValue !== undefined) obj[key] = parseInt(v.integerValue);
+    else if (v.doubleValue !== undefined) obj[key] = v.doubleValue;
+    else if (v.booleanValue !== undefined) obj[key] = v.booleanValue;
+    else if (v.timestampValue !== undefined) obj[key] = v.timestampValue;
+    else obj[key] = null;
+  }
+  return obj;
+}
+
+function objToFsFields(obj) {
+  const fields = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === 'id') continue;
+    if (typeof v === 'string') fields[k] = { stringValue: v };
+    else if (typeof v === 'number' && Number.isInteger(v)) fields[k] = { integerValue: String(v) };
+    else if (typeof v === 'number') fields[k] = { doubleValue: v };
+    else if (typeof v === 'boolean') fields[k] = { booleanValue: v };
+    else if (v === null || v === undefined) fields[k] = { nullValue: null };
+    else fields[k] = { stringValue: String(v) };
+  }
+  return fields;
+}
+
+// ── LOAD DATA ──
+async function loadData() {
+  clientes = tryJson(localStorage.getItem('nickel_clientes')) || [];
+  contatos = tryJson(localStorage.getItem('nickel_contatos')) || [];
+
+  const done = () => {
+    document.getElementById('loading').classList.add('hidden');
+    cacheLocal();
+    render();
+  };
+
+  const t = setTimeout(done, 6000);
+  try {
+    const [c, ct] = await Promise.all([fbGet(COL_CLIENTES), fbGet(COL_CONTATOS)]);
+    if (c.length > 0) clientes = c;
+    if (ct.length > 0) contatos = ct;
+  } catch (e) {
+    console.warn('Firebase indisponível, usando cache local', e);
+  }
+  clearTimeout(t);
+  done();
+}
+
+function cacheLocal() {
+  try {
+    localStorage.setItem('nickel_clientes', JSON.stringify(clientes));
+    localStorage.setItem('nickel_contatos', JSON.stringify(contatos));
+  } catch {}
+}
+
+// ── DATE HELPERS ──
+function todayStr() {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+}
+
+function daysSinceContact(clientId) {
+  const logs = contatos.filter(c => c.clientId === clientId && c.type === 'contato');
+  if (logs.length === 0) return null; // never contacted
+  const last = logs.sort((a,b) => b.date.localeCompare(a.date))[0];
+  const today = new Date(todayStr());
+  const lastDate = new Date(last.date.substring(0,10));
+  return Math.floor((today - lastDate) / 86400000);
+}
+
+function urgencyOf(client) {
+  const days = daysSinceContact(client.id);
+  if (client.etapa === 'Venda') return 'done';
+  if (client.archived) return 'archived';
+  if (days === null) return 'new'; // no contact yet
+  if (days >= 3) return 'red';
+  if (days === 2) return 'amber';
+  return 'green';
+}
+
+function urgencyLabel(u) {
+  if (u === 'red') return '3+ dias sem contato';
+  if (u === 'amber') return '2 dias sem contato';
+  if (u === 'green') return 'Em dia';
+  if (u === 'new') return 'Primeiro contato';
+  return '';
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const s = d.substring(0,10);
+  const [y,m,day] = s.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function avatarInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+  return name.substring(0,2).toUpperCase();
+}
+
+function stageCssClass(etapa) {
+  const map = { 'Em atendimento': 'em-atendimento', 'Visita': 'visita', 'Proposta': 'proposta', 'Venda': 'venda' };
+  return map[etapa] || '';
+}
+
+// ── RENDER ──
+function render() {
+  if (currentScreen === 'radar') renderRadar();
+  else if (currentScreen === 'kanban') renderKanban();
+  else if (currentScreen === 'clientes') renderClientes();
+}
+
+function renderRadar() {
+  const el = document.getElementById('screen-radar');
+  const active = clientes.filter(c => !c.archived && c.etapa !== 'Venda');
+
+  const red = active.filter(c => urgencyOf(c) === 'red').sort((a,b) => (daysSinceContact(b.id)||0) - (daysSinceContact(a.id)||0));
+  const amber = active.filter(c => urgencyOf(c) === 'amber');
+  const newC = active.filter(c => urgencyOf(c) === 'new');
+  const green = active.filter(c => urgencyOf(c) === 'green');
+
+  const today = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',timeZone:'America/Sao_Paulo'});
+
+  let html = `<div class="radar-header"><h2>Meu Dia</h2><div class="date">${today}</div></div>`;
+
+  if (!active.length) {
+    html += `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p>Nenhum cliente ativo no momento.<br>Adicione clientes com o botão +</p></div>`;
+  } else {
+    if (red.length) html += `<div class="urgency-group">${urgencyGroupHtml('red','Urgente — ligar agora',red)}</div>`;
+    if (amber.length) html += `<div class="urgency-group">${urgencyGroupHtml('amber','Atenção — contatar hoje',amber)}</div>`;
+    if (newC.length) html += `<div class="urgency-group">${urgencyGroupHtml('new','Primeiro contato',newC)}</div>`;
+    if (green.length) html += `<div class="urgency-group">${urgencyGroupHtml('green','Em dia',green)}</div>`;
+  }
+
+  el.innerHTML = html;
+  el.querySelectorAll('.client-card[data-id]').forEach(card => {
+    card.addEventListener('click', e => { if (!e.target.closest('button')) openDetail(card.dataset.id); });
+  });
+  el.querySelectorAll('.btn-contact[data-id]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); openContato(btn.dataset.id); });
+  });
+  el.querySelectorAll('.btn-wpp[data-id]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); openWpp(btn.dataset.id); });
+  });
+  el.querySelectorAll('.btn-lembrar[data-id]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); openLembrei(btn.dataset.id); });
+  });
+}
+
+function urgencyGroupHtml(type, label, list) {
+  let html = `<div class="urgency-label ${type}"><div class="urgency-dot ${type}"></div>${label} (${list.length})</div>`;
+  list.forEach(c => { html += clientCardHtml(c, type); });
+  return html;
+}
+
+function clientCardHtml(c, urgency) {
+  const days = daysSinceContact(c.id);
+  const daysText = days === null ? 'Nunca contatado' : days === 0 ? 'Hoje' : days === 1 ? 'Ontem' : `${days} dias atrás`;
+  const isGestor = session && session.role === 'gestor';
+  const actionBtn = isGestor
+    ? `<button class="btn-sm btn-contact" data-id="${c.id}">✓ Falei</button>`
+    : `<button class="btn-sm btn-lembrar" data-id="${c.id}">🔔 Lembrei</button>`;
+  return `
+  <div class="client-card urgent-${urgency}" data-id="${c.id}">
+    <div class="card-row">
+      <div class="card-avatar">${avatarInitials(c.nome)}</div>
+      <div class="card-main">
+        <div class="card-name">${esc(c.nome)}</div>
+        <div class="card-detail">${esc(c.bairro||'')}${c.tipologia?' · '+esc(c.tipologia):''}</div>
+      </div>
+      <div class="card-badge ${urgency}">${daysText}</div>
+    </div>
+    <div class="card-footer">
+      <div class="card-stage">${esc(c.etapa||'Em atendimento')}</div>
+      <div class="card-actions">
+        ${c.tel ? `<button class="btn-sm btn-wpp" data-id="${c.id}">📲 WhatsApp</button>` : ''}
+        ${actionBtn}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderKanban() {
+  const el = document.getElementById('screen-kanban');
+  const stages = ['Em atendimento','Visita','Proposta','Venda'];
+  const counts = {};
+  stages.forEach(s => { counts[s] = clientes.filter(c => !c.archived && c.etapa === s).length; });
+
+  let tabs = '<div class="stage-tabs">';
+  stages.forEach(s => {
+    tabs += `<div class="stage-tab${s===currentKanbanStage?' active':''}" data-stage="${s}">${s}<span class="stage-count">${counts[s]}</span></div>`;
+  });
+  tabs += '</div>';
+
+  const list = clientes.filter(c => !c.archived && c.etapa === currentKanbanStage);
+  let cards = '';
+  if (!list.length) {
+    cards = `<div class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><p>Nenhum cliente nesta etapa</p></div>`;
+  } else {
+    list.forEach(c => {
+      const u = urgencyOf(c);
+      cards += clientCardHtml(c, u);
+    });
+  }
+
+  el.innerHTML = tabs + cards;
+  el.querySelectorAll('.stage-tab').forEach(t => {
+    t.addEventListener('click', () => { currentKanbanStage = t.dataset.stage; renderKanban(); });
+  });
+  el.querySelectorAll('.client-card[data-id]').forEach(card => {
+    card.addEventListener('click', e => { if (!e.target.closest('button')) openDetail(card.dataset.id); });
+  });
+  el.querySelectorAll('.btn-contact[data-id]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); openContato(btn.dataset.id); });
+  });
+  el.querySelectorAll('.btn-wpp[data-id]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); openWpp(btn.dataset.id); });
+  });
+  el.querySelectorAll('.btn-lembrar[data-id]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); openLembrei(btn.dataset.id); });
+  });
+}
+
+function renderClientes() {
+  const el = document.getElementById('screen-clientes');
+  const q = document.getElementById('search-q') ? document.getElementById('search-q').value.toLowerCase() : '';
+
+  let filtered = clientes.filter(c => !c.archived);
+  if (q) filtered = filtered.filter(c => c.nome.toLowerCase().includes(q) || (c.tel||'').includes(q) || (c.bairro||'').toLowerCase().includes(q));
+
+  const archivedCount = clientes.filter(c => c.archived).length;
+
+  let html = `<div class="search-bar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="search-q" type="search" placeholder="Buscar cliente…" value="${esc(q)}" oninput="renderClientes()"></div>`;
+  html += `<div class="section-title">${filtered.length} cliente${filtered.length!==1?'s':''} ativo${filtered.length!==1?'s':''}</div>`;
+
+  if (!filtered.length) {
+    html += `<div class="empty-state"><p>Nenhum cliente encontrado</p></div>`;
+  } else {
+    filtered.forEach(c => {
+      const u = urgencyOf(c);
+      const days = daysSinceContact(c.id);
+      const daysText = days === null ? 'Nunca' : days === 0 ? 'Hoje' : days === 1 ? 'Ontem' : `${days}d`;
+      html += `<div class="client-row" data-id="${c.id}">
+        <div class="cr-avatar">${avatarInitials(c.nome)}</div>
+        <div class="cr-info">
+          <div class="cr-name">${esc(c.nome)}</div>
+          <div class="cr-detail">${esc(c.bairro||'')}${c.tipologia?' · '+esc(c.tipologia):''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="badge-stage ${stageCssClass(c.etapa)}">${esc(c.etapa||'Em atendimento')}</span>
+          <span style="font-size:11px;color:var(--text-3)">${daysText}</span>
+        </div>
+      </div>`;
+    });
+  }
+
+  if (archivedCount > 0) {
+    html += `<div class="section-title" style="cursor:pointer" id="toggle-archived">▶ Arquivados (${archivedCount})</div><div id="archived-list" class="hidden">`;
+    clientes.filter(c => c.archived).forEach(c => {
+      html += `<div class="client-row" style="opacity:.5" data-id="${c.id}">
+        <div class="cr-avatar" style="background:var(--surface2);color:var(--text-3)">${avatarInitials(c.nome)}</div>
+        <div class="cr-info"><div class="cr-name">${esc(c.nome)}</div><div class="cr-detail">Arquivado</div></div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+  el.querySelectorAll('.client-row[data-id]').forEach(row => {
+    row.addEventListener('click', () => openDetail(row.dataset.id));
+  });
+  const tog = document.getElementById('toggle-archived');
+  if (tog) tog.addEventListener('click', () => {
+    const al = document.getElementById('archived-list');
+    al.classList.toggle('hidden');
+    tog.textContent = tog.textContent.startsWith('▶') ? tog.textContent.replace('▶','▼') : tog.textContent.replace('▼','▶');
+  });
+}
+
+// exposed for oninput
+window.renderClientes = () => { if (currentScreen === 'clientes') renderClientes(); };
+
+// ── CLIENT DETAIL ──
+function openDetail(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  const logs = contatos.filter(ct => ct.clientId === id).sort((a,b) => b.date.localeCompare(a.date));
+  const isGestor = session && session.role === 'gestor';
+  const stages = ['Em atendimento','Visita','Proposta','Venda'];
+  const days = daysSinceContact(id);
+  const daysText = days === null ? 'Nunca contatado' : days === 0 ? 'Hoje' : days === 1 ? 'Ontem' : `${days} dias atrás`;
+
+  let stageButtons = stages.map(s =>
+    `<button class="stage-btn${c.etapa===s?' active':''}" data-stage="${s}" data-id="${id}">${s}</button>`
+  ).join('');
+
+  let logHtml = '';
+  logs.slice(0,10).forEach(l => {
+    const icon = l.type === 'contato' ? '📞' : l.type === 'lembrei' ? '🔔' : '📝';
+    logHtml += `<div class="log-item"><div class="log-dot"></div><div class="log-content"><div class="log-date">${icon} ${fmtDate(l.date)}</div><div class="log-text">${esc(l.obs||'Contato registrado')}</div></div></div>`;
+  });
+
+  const sheet = document.getElementById('detail-sheet');
+  sheet.innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="detail-hero">
+      <div class="detail-avatar">${avatarInitials(c.nome)}</div>
+      <div class="detail-name">${esc(c.nome)}</div>
+      <div class="detail-sub">${esc(c.tel||'')} · Último: ${daysText}</div>
+      <div class="detail-stage-select">${stageButtons}</div>
+    </div>
+    <div class="action-strip">
+      ${isGestor ? `<button class="btn-falei" data-id="${id}">✓ Falei com ele/a</button>` : `<button class="btn-lembrar" data-id="${id}">🔔 Lembrei o Matheus</button>`}
+      ${c.tel ? `<button class="btn-wpp-big" data-id="${id}">📲 WhatsApp</button>` : ''}
+      ${isGestor ? `<button class="btn-agendar" data-id="${id}">📅 Agendar</button>` : ''}
+    </div>
+    <div class="detail-info">
+      <div class="info-row"><span class="label">Bairro</span><span class="val">${esc(c.bairro||'—')}</span></div>
+      <div class="info-row"><span class="label">Tipologia</span><span class="val">${esc(c.tipologia||'—')}</span></div>
+      <div class="info-row"><span class="label">Orçamento</span><span class="val">${esc(c.orcamento||'—')}</span></div>
+      ${c.obs ? `<div class="info-row"><span class="label">Obs</span><span class="val">${esc(c.obs)}</span></div>` : ''}
+    </div>
+    <div class="contact-log">
+      <div class="section-title" style="margin-top:0">Histórico</div>
+      ${logHtml || '<div style="color:var(--text-3);font-size:13px;padding:8px 0">Nenhum contato registrado ainda</div>'}
+    </div>
+    ${isGestor ? `<div style="padding:0 20px 8px;display:flex;gap:8px">
+      <button class="btn-sm" style="background:var(--blue-light);color:var(--blue);flex:1" data-edit-id="${id}">✏️ Editar</button>
+      <button class="btn-sm" style="background:var(--surface2);color:var(--text-3);flex:1" data-archive-id="${id}">${c.archived?'↩ Desarquivar':'📦 Arquivar'}</button>
+    </div>` : ''}
+  `;
+
+  sheet.querySelectorAll('.stage-btn').forEach(btn => {
+    btn.addEventListener('click', () => changeStage(btn.dataset.id, btn.dataset.stage));
+  });
+  sheet.querySelectorAll('[data-id].btn-falei').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openContato(b.dataset.id); }));
+  sheet.querySelectorAll('[data-id].btn-lembrar').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openLembrei(b.dataset.id); }));
+  sheet.querySelectorAll('[data-id].btn-wpp-big').forEach(b => b.addEventListener('click', () => openWpp(b.dataset.id)));
+  sheet.querySelectorAll('[data-id].btn-agendar').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openContato(b.dataset.id); }));
+  sheet.querySelectorAll('[data-edit-id]').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openEditClient(b.dataset.editId); }));
+  sheet.querySelectorAll('[data-archive-id]').forEach(b => b.addEventListener('click', () => toggleArchive(b.dataset.archiveId)));
+
+  openModal('modal-detail');
+}
+
+async function changeStage(id, stage) {
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  c.etapa = stage;
+  clientes = clientes.map(x => x.id === id ? c : x);
+  cacheLocal();
+  try { await fbSet(COL_CLIENTES, id, c); } catch {}
+  openDetail(id);
+  render();
+  showToast(`Movido para ${stage}`);
+}
+
+async function toggleArchive(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  c.archived = !c.archived;
+  clientes = clientes.map(x => x.id === id ? c : x);
+  cacheLocal();
+  try { await fbSet(COL_CLIENTES, id, c); } catch {}
+  closeModal('modal-detail');
+  render();
+  showToast(c.archived ? 'Cliente arquivado' : 'Cliente reativado');
+}
+
+// ── ADD/EDIT CLIENT ──
+window.openAddClient = function() {
+  if (session && session.role !== 'gestor') { showToast('Apenas o gestor pode cadastrar clientes'); return; }
+  editingClientId = null;
+  document.getElementById('modal-client-title').textContent = 'Novo Cliente';
+  ['nome','tipologia','orcamento'].forEach(f => { document.getElementById('fc-'+f).value = ''; });
+  resetBairros();
+  document.getElementById('fc-etapa').value = 'Em atendimento';
+  openModal('modal-client');
+};
+
+function openEditClient(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c) return;
+  editingClientId = id;
+  document.getElementById('modal-client-title').textContent = 'Editar Cliente';
+  document.getElementById('fc-nome').value = c.nome || '';
+  resetBairros();
+  if (c.bairro) {
+    c.bairro.split(',').map(b => b.trim()).filter(Boolean).forEach(b => addBairro(b));
+  }
+  document.getElementById('fc-tipologia').value = c.tipologia || '';
+  document.getElementById('fc-orcamento').value = c.orcamento || '';
+  document.getElementById('fc-etapa').value = c.etapa || 'Em atendimento';
+  openModal('modal-client');
+}
+
+window.saveClient = async function() {
+  const nome = document.getElementById('fc-nome').value.trim();
+  if (!nome) { showToast('Nome é obrigatório'); return; }
+  const data = {
+    nome,
+    bairro: document.getElementById('fc-bairro').value.trim(),
+    tipologia: document.getElementById('fc-tipologia').value.trim(),
+    orcamento: document.getElementById('fc-orcamento').value.trim(),
+    etapa: document.getElementById('fc-etapa').value,
+    criadoEm: editingClientId ? (clientes.find(x=>x.id===editingClientId)||{}).criadoEm || todayStr() : todayStr(),
+    archived: false
+  };
+  if (editingClientId) {
+    data.id = editingClientId;
+    clientes = clientes.map(x => x.id === editingClientId ? data : x);
+    try { await fbSet(COL_CLIENTES, editingClientId, data); } catch {}
+    showToast('Cliente atualizado');
+  } else {
+    const newId = 'c_' + Date.now();
+    data.id = newId;
+    clientes.push(data);
+    try {
+      await fbSet(COL_CLIENTES, newId, data);
+    } catch {}
+    showToast('Cliente adicionado!');
+  }
+  cacheLocal();
+  closeModal('modal-client');
+  render();
+};
+
+// ── CONTATO ──
+function openContato(id) {
+  contatoTargetId = id;
+  const c = clientes.find(x => x.id === id);
+  document.getElementById('modal-contato-title').textContent = `Falei com ${c ? c.nome.split(' ')[0] : ''}`;
+  document.getElementById('ct-obs').value = '';
+  document.getElementById('ct-next').value = '';
+  document.getElementById('ct-prazo-label').textContent = '';
+  document.querySelectorAll('.prazo-btn').forEach(b => b.classList.remove('selected'));
+  openModal('modal-contato');
+
+  // Bind prazo buttons
+  document.querySelectorAll('.prazo-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.prazo-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const dias = parseInt(btn.dataset.dias);
+      if (dias === 0) {
+        document.getElementById('ct-next').value = '';
+        document.getElementById('ct-prazo-label').textContent = 'Sem prazo definido';
+      } else {
+        const d = new Date(todayStr());
+        d.setDate(d.getDate() + dias);
+        const next = d.toLocaleDateString('sv-SE', {timeZone:'America/Sao_Paulo'});
+        document.getElementById('ct-next').value = next;
+        document.getElementById('ct-prazo-label').textContent = `→ ${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}`;
+      }
+    };
+  });
+}
+
+window.saveContato = async function() {
+  const id = contatoTargetId;
+  const obs = document.getElementById('ct-obs').value.trim();
+  const nextDate = document.getElementById('ct-next').value;
+  const log = {
+    clientId: id,
+    type: 'contato',
+    date: todayStr(),
+    obs: obs || 'Contato registrado',
+    nextDate: nextDate || '',
+    user: session.name
+  };
+  const logId = 'ct_' + Date.now();
+  log.id = logId;
+  contatos.push(log);
+  cacheLocal();
+  try { await fbSet(COL_CONTATOS, logId, log); } catch {}
+  closeModal('modal-contato');
+  render();
+  showToast('Contato registrado!');
+};
+
+// ── LEMBREI ──
+function openLembrei(id) {
+  contatoTargetId = id;
+  document.getElementById('lembrei-obs').value = '';
+  openModal('modal-lembrei');
+}
+
+window.saveLembrei = async function() {
+  const id = contatoTargetId;
+  const obs = document.getElementById('lembrei-obs').value.trim();
+  const log = {
+    clientId: id,
+    type: 'lembrei',
+    date: todayStr(),
+    obs: obs || 'Matheus lembrado',
+    user: session.name
+  };
+  const logId = 'lb_' + Date.now();
+  log.id = logId;
+  contatos.push(log);
+  cacheLocal();
+  try { await fbSet(COL_CONTATOS, logId, log); } catch {}
+  closeModal('modal-lembrei');
+  render();
+  showToast('Matheus lembrado!');
+};
+
+// ── WHATSAPP ──
+function openWpp(id) {
+  const c = clientes.find(x => x.id === id);
+  if (!c || !c.tel) return;
+  const tel = c.tel.replace(/\D/g,'');
+  const full = tel.startsWith('55') ? tel : '55' + tel;
+  window.open('https://wa.me/' + full, '_blank');
+}
+
+// ── MODAL HELPERS ──
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+window.closeModal = function(id) { document.getElementById(id).classList.remove('open'); };
+window.closeModalOnBg = function(e, id) { if (e.target === document.getElementById(id)) closeModal(id); };
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── BAIRROS DE CURITIBA ──
+// Bairros em destaque (aparecem sem digitar)
+const BAIRROS_DESTAQUE = [
+  'Batel','Ecoville','Juvevê','Vila Izabel','Cabral','Bigorrilho','Centro',
+  'Jardim Social','Água Verde','Cristo Rei','Mercês','Uberaba',
+  'Jardim das Américas','Santa Felicidade','Santo Inácio','Rebouças','Portão'
+];
+
+// Lista completa para busca
+const BAIRROS_CWB = [
+  'Abranches','Água Verde','Ahú','Alto Boqueirão','Alto da Glória','Alto da XV','Atuba',
+  'Augusta','Bacacheri','Bairro Alto','Barreirinha','Batel','Bigorrilho','Boa Vista','Boqueirão',
+  'Butiatuvinha','Cabral','Cachoeira','Cajuru','Campina do Siqueira','Campo Comprido','Campo de Santana',
+  'Capão da Imbuia','Capão Raso','Caximba','Centro','Centro Cívico','Cristo Rei','CIC','Cidade Industrial',
+  'Ecoville','Fanny','Fazendinha','Ganchinho','Guabirotuba','Guaíra','Hauer','Hugo Lange',
+  'Jardim Botânico','Jardim das Américas','Jardim Social','Juvevê','Lamenha Pequena','Lindóia',
+  'Mossunguê','Mercês','Novo Mundo','Orleans','Parolin','Pilarzinho','Pinheirinho',
+  'Portão','Prado Velho','Rebouças','Santa Cândida','Santa Felicidade','Santa Quitéria','Santo Inácio',
+  'São Braz','São Francisco','São João','São Lourenço','Seminário','Sítio Cercado','Taboão','Tarumã',
+  'Tatuquara','Tingui','Uberaba','Umbará','Vila Izabel','Vila Leopoldina','Vista Alegre','Xaxim'
+].sort();
+
+let bairrosSelecionados = [];
+
+window.bairroSearch = function(q) {
+  const dd = document.getElementById('bairro-dropdown');
+  if (bairrosSelecionados.length >= 5) { dd.style.display='none'; return; }
+  const term = q.trim().toLowerCase();
+  const pool = term ? BAIRROS_CWB : BAIRROS_DESTAQUE;
+  const results = pool.filter(b => {
+    const match = !term || b.toLowerCase().includes(term);
+    return match && !bairrosSelecionados.includes(b);
+  });
+  if (!results.length) { dd.style.display='none'; return; }
+  const header = !term ? '<div style="padding:6px 14px 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)">Mais buscados</div>' : '';
+  dd.innerHTML = header + results.slice(0,15).map(b =>
+    `<div class="bairro-opt" onclick="addBairro('${b.replace(/'/g,"\\'")}')">${b}</div>`
+  ).join('');
+  dd.style.display = 'block';
+};
+
+window.addBairro = function(b) {
+  if (bairrosSelecionados.length >= 5 || bairrosSelecionados.includes(b)) return;
+  bairrosSelecionados.push(b);
+  renderBairroTags();
+  document.getElementById('fc-bairro-input').value = '';
+  document.getElementById('bairro-dropdown').style.display = 'none';
+  document.getElementById('fc-bairro').value = bairrosSelecionados.join(', ');
+};
+
+window.removeBairro = function(b) {
+  bairrosSelecionados = bairrosSelecionados.filter(x => x !== b);
+  renderBairroTags();
+  document.getElementById('fc-bairro').value = bairrosSelecionados.join(', ');
+};
+
+function renderBairroTags() {
+  const el = document.getElementById('bairro-tags');
+  el.innerHTML = bairrosSelecionados.map(b =>
+    `<span class="bairro-tag">${b}<button onclick="removeBairro('${b.replace(/'/g,"\\'")}')" type="button">×</button></span>`
+  ).join('');
+  const inp = document.getElementById('fc-bairro-input');
+  if (inp) inp.placeholder = bairrosSelecionados.length >= 5 ? 'Máximo 5 bairros' : 'Digite para buscar bairro…';
+}
+
+function resetBairros() {
+  bairrosSelecionados = [];
+  renderBairroTags();
+  const inp = document.getElementById('fc-bairro-input');
+  if (inp) inp.value = '';
+  const dd = document.getElementById('bairro-dropdown');
+  if (dd) dd.style.display = 'none';
+  document.getElementById('fc-bairro').value = '';
+}
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', e => {
+  if (!e.target.closest('.form-group')) {
+    const dd = document.getElementById('bairro-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
+// ── BUDGET MASK ──
+window.maskBudget = function(input) {
+  let v = input.value.replace(/\D/g,'');
+  if (!v) { input.value = ''; return; }
+  const n = parseInt(v) / 100;
+  input.value = 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+};
+
+// ── ESCAPE HTML ──
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Enter key on login
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
