@@ -550,6 +550,7 @@ function markJetmob(agentId, entryDate, cqIdx){
   saveAgent(agentId,entries);
   fbSaveEntry(agentId,entry);
   rerenderAgent(agentId);
+  refreshArquivo();
   toast(now?'✓ Documentação enviada ao Jetimob':'Marcação removida');
 }
 
