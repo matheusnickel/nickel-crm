@@ -240,6 +240,7 @@
     <input type="date" class="range-inp" id="range-to">
     <button class="btn-range-clear" id="btn-range-clear" style="display:none">✕ Limpar</button>
     <span class="range-hint" id="range-hint" style="display:none"></span>
+    <button id="btn-limpar-cache" style="margin-left:auto;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,80,80,.3);background:rgba(255,80,80,.07);color:rgba(255,100,100,.8)">🗑 Limpar cache</button>
   </div>
 
   <!-- AGENTES -->
@@ -833,6 +834,12 @@ function toast(msg){var t=document.getElementById('pt-toast');t.textContent=msg;
 // 1. Carrega do Firebase (fonte de verdade compartilhada)
 // 2. Merge no localStorage local
 // 3. Renderiza
+document.getElementById('btn-limpar-cache').addEventListener('click',function(){
+  if(!confirm('Limpar cache local? Os dados do Firebase continuam intactos.'))return;
+  AGENTS.forEach(function(a){localStorage.removeItem('tgp_a_'+a.id);});
+  location.reload();
+});
+
 // desfazer nas seções de baixo
 document.addEventListener('click',function(e){
   var d=e.target.closest('.btn-desfazer');
