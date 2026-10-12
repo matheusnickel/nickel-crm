@@ -193,6 +193,8 @@
 .btn-arquivar:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:var(--text)}
 .btn-arquivar.done{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--text)}
 .btn-arquivar.done:hover{background:rgba(255,255,255,.12)}
+.btn-desfazer{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:var(--text-muted);transition:all .15s;white-space:nowrap;align-self:center}
+.btn-desfazer:hover{background:rgba(255,255,255,.14);color:var(--text)}
 .a-empty{font-size:13px;color:var(--text-muted);text-align:center;padding:20px 0}
 
 #pt-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 22px;font-size:13px;color:var(--text);opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;z-index:999}
@@ -274,6 +276,10 @@
     <div class="arquivo-section">
       <div class="arquivo-title">📦 Arquivo de CQs</div>
       <div id="arquivo-list"><div class="arq-empty">Nenhum CQ arquivado ainda.</div></div>
+    </div>
+    <div class="arquivo-section" style="margin-top:12px">
+      <div class="arquivo-title">📤 Enviados ao Jetimob</div>
+      <div id="jetimob-list"><div class="arq-empty">Nenhum CQ enviado ao Jetimob ainda.</div></div>
     </div>
   </div>
 
@@ -510,19 +516,17 @@ function histHTML(id){
   var entries=loadAgent(id);
   var allCqs=[];
   entries.forEach(function(e){(e.cqs||[]).forEach(function(c,ci){allCqs.push({nome:c.nome,tel:c.tel,bairro:c.bairro,tipologia:c.tipologia,valor:c.valor,jetmob:c.jetmob,archived:c.archived,_date:e.date,_ci:ci})})});
-  if(!allCqs.length)return'<div class="hcq-empty">Nenhum CQ registrado ainda.</div>';
-  return allCqs.map(function(c,i){
+  // ocultar CQs que foram arquivados ou enviados ao Jetimob
+  var visible=allCqs.filter(function(c){return !c.archived&&!c.jetmob});
+  if(!visible.length)return'<div class="hcq-empty">Nenhum CQ registrado ainda.</div>';
+  return visible.map(function(c,i){
     var nome=c.nome||'(sem nome)';var tel=c.tel||'—';
     var bairro=c.bairro||'—';var tipo=c.tipologia||'—';
     var val=c.valor?'R$ '+fmtValor(parseValor(c.valor)):'—';
     var dateTxt=c._date?fmtDateShort(c._date):'';
-    var jmBtn=c.jetmob
-      ?'<button class="btn-jetmob done" data-jm-id="'+id+'" data-jm-date="'+c._date+'" data-jm-ci="'+c._ci+'">✓ Documentação enviada ao Jetimob</button>'
-      :'<button class="btn-jetmob" data-jm-id="'+id+'" data-jm-date="'+c._date+'" data-jm-ci="'+c._ci+'">📤 Documentação enviada ao Jetimob</button>';
-    var arqBtn=c.archived
-      ?'<button class="btn-arquivar done" data-arq-id="'+id+'" data-arq-date="'+c._date+'" data-arq-ci="'+c._ci+'">↩ Desarquivar</button>'
-      :'<button class="btn-arquivar" data-arq-id="'+id+'" data-arq-date="'+c._date+'" data-arq-ci="'+c._ci+'">📦 Arquivar</button>';
-    return'<div class="hcq-item'+(c.jetmob?' jetmob':'')+(c.archived?' jetmob':'')+'">'
+    var jmBtn='<button class="btn-jetmob" data-jm-id="'+id+'" data-jm-date="'+c._date+'" data-jm-ci="'+c._ci+'">📤 Enviar ao Jetimob</button>';
+    var arqBtn='<button class="btn-arquivar" data-arq-id="'+id+'" data-arq-date="'+c._date+'" data-arq-ci="'+c._ci+'">📦 Arquivar</button>';
+    return'<div class="hcq-item">'
       +'<div class="hcq-head" data-hid="'+id+'" data-hi="'+i+'">'
       +'<div class="hcq-idx">'+(i+1)+'</div>'
       +'<div class="hcq-info"><div class="hcq-nome">'+nome+'</div><div class="hcq-tel">'+tel+(dateTxt?' · <span style="color:var(--gold);font-weight:600">'+dateTxt+'</span>':'')+'</div></div>'
@@ -561,27 +565,39 @@ function markArquivar(agentId, entryDate, cqIdx){
   toast(now?'CQ arquivado':'CQ desarquivado');
 }
 
-function refreshArquivo(){
-  var all=[];
-  AGENTS.forEach(function(a){
-    loadAgent(a.id).forEach(function(e){
-      (e.cqs||[]).forEach(function(c,ci){
-        if(c.archived)all.push({nome:c.nome,tel:c.tel,bairro:c.bairro,tipologia:c.tipologia,valor:c.valor,_date:e.date,_agentName:a.name});
-      });
-    });
-  });
-  var el=document.getElementById('arquivo-list');
-  if(!el)return;
-  if(!all.length){el.innerHTML='<div class="arq-empty">Nenhum CQ arquivado ainda.</div>';return;}
-  el.innerHTML=all.map(function(c,i){
+function buildArqList(items, undoLabel, undoAttr){
+  if(!items.length)return'';
+  return items.map(function(c,i){
     var val=c.valor?'R$ '+fmtValor(parseValor(c.valor)):'';
     var parts=[c._agentName,c.bairro,c.tipologia,val].filter(Boolean);
-    return'<div class="arq-item">'
+    var undoBtn='<button class="btn-desfazer" '
+      +undoAttr+'id="'+c._agentId+'" '
+      +undoAttr+'date="'+c._date+'" '
+      +undoAttr+'ci="'+c._ci+'">↩ Desfazer</button>';
+    return'<div class="arq-item" style="flex-wrap:wrap;gap:6px">'
       +'<div class="arq-idx">'+(i+1)+'</div>'
       +'<div class="arq-info"><div class="arq-nome">'+(c.nome||'(sem nome)')+'</div>'
       +'<div class="arq-sub">'+parts.join(' · ')+(c._date?' · '+fmtDateShort(c._date):'')+'</div></div>'
+      +undoBtn
       +'</div>';
   }).join('');
+}
+
+function refreshArquivo(){
+  var arqItems=[], jmItems=[];
+  AGENTS.forEach(function(a){
+    loadAgent(a.id).forEach(function(e){
+      (e.cqs||[]).forEach(function(c,ci){
+        var item={nome:c.nome,tel:c.tel,bairro:c.bairro,tipologia:c.tipologia,valor:c.valor,_date:e.date,_agentName:a.name,_agentId:a.id,_ci:ci};
+        if(c.archived)arqItems.push(item);
+        if(c.jetmob)jmItems.push(item);
+      });
+    });
+  });
+  var arqEl=document.getElementById('arquivo-list');
+  if(arqEl)arqEl.innerHTML=arqItems.length?buildArqList(arqItems,'↩ Desfazer','data-arq-'):'<div class="arq-empty">Nenhum CQ arquivado ainda.</div>';
+  var jmEl=document.getElementById('jetimob-list');
+  if(jmEl)jmEl.innerHTML=jmItems.length?buildArqList(jmItems,'↩ Desfazer','data-jm-'):'<div class="arq-empty">Nenhum CQ enviado ao Jetimob ainda.</div>';
 }
 
 function histCount(id){
@@ -817,6 +833,15 @@ function toast(msg){var t=document.getElementById('pt-toast');t.textContent=msg;
 // 1. Carrega do Firebase (fonte de verdade compartilhada)
 // 2. Merge no localStorage local
 // 3. Renderiza
+// desfazer nas seções de baixo
+document.addEventListener('click',function(e){
+  var d=e.target.closest('.btn-desfazer');
+  if(!d)return;
+  // verifica se é da seção arquivo ou jetimob pelo atributo presente
+  if(d.dataset.arqId!==undefined){markArquivar(d.dataset.arqId,d.dataset.arqDate,+d.dataset.arqCi);return;}
+  if(d.dataset.jmId!==undefined){markJetmob(d.dataset.jmId,d.dataset.jmDate,+d.dataset.jmCi);return;}
+});
+
 fbLoadAll(function(remote){
   Object.keys(remote).forEach(function(id){
     // Firebase ganha: sobrescreve localStorage com dados remotos
