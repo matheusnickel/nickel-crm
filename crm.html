@@ -232,7 +232,6 @@ a{color:inherit;text-decoration:none}
 .action-strip{display:flex;gap:8px;padding:0 20px 16px;flex-wrap:wrap}
 .action-strip button{flex:1;min-width:100px;border-radius:var(--radius-sm);padding:12px 10px;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;gap:5px;min-height:46px;touch-action:manipulation}
 .btn-falei{background:var(--blue);color:#fff}
-.btn-agendar{background:var(--blue-light);color:var(--blue)}
 .btn-wpp-big{background:var(--green-light);color:var(--green)}
 .btn-archive{background:var(--surface2);color:var(--text-2)}
 
@@ -439,7 +438,6 @@ let editingClientId = null;
 let contatoTargetId = null;
 let currentScreen = 'radar';
 let currentKanbanStage = 'Em atendimento';
-let unsubListeners = [];
 
 // ── INIT ──
 // Timeout fallback: se algo travar, mostra login após 8s
@@ -506,32 +504,30 @@ window.navTo = function(screen) {
 
 // ── FIREBASE REST ──
 async function fbGet(col) {
-  const url = `${FB_BASE}/${col}?key=${FB_KEY}&pageSize=300`;
-  const r = await fetch(url);
-  const j = await r.json();
-  if (!j.documents) return [];
-  return j.documents.map(d => fsDocToObj(d));
+  const out = [];
+  let token = '';
+  do {
+    const url = `${FB_BASE}/${col}?key=${FB_KEY}&pageSize=300` + (token ? '&pageToken=' + encodeURIComponent(token) : '');
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    (j.documents || []).forEach(d => out.push(fsDocToObj(d)));
+    token = j.nextPageToken || '';
+  } while (token);
+  return out;
 }
 
-async function fbSet(col, id, data) {
-  const url = `${FB_BASE}/${col}/${id}?key=${FB_KEY}`;
-  const body = { fields: objToFsFields(data) };
-  const r = await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  return r.ok;
+async function fbPut(col, id, data) {
+  const r = await fetch(`${FB_BASE}/${col}/${id}?key=${FB_KEY}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: objToFsFields(data) })
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
 }
 
-async function fbAdd(col, data) {
-  const url = `${FB_BASE}/${col}?key=${FB_KEY}`;
-  const body = { fields: objToFsFields(data) };
-  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  const j = await r.json();
-  if (j.name) return j.name.split('/').pop();
-  return null;
-}
-
-async function fbDelete(col, id) {
-  const url = `${FB_BASE}/${col}/${id}?key=${FB_KEY}`;
-  await fetch(url, { method: 'DELETE' });
+async function fbRemove(col, id) {
+  const r = await fetch(`${FB_BASE}/${col}/${id}?key=${FB_KEY}`, { method: 'DELETE' });
+  if (!r.ok && r.status !== 404) throw new Error('HTTP ' + r.status);
 }
 
 function fsDocToObj(doc) {
@@ -564,27 +560,69 @@ function objToFsFields(obj) {
   return fields;
 }
 
+// ── SINCRONIZAÇÃO ──
+// Alterações ainda não confirmadas pelo Firebase: { "colecao/id": "set" | "delete" }
+const PENDING_KEY = 'nickel_pending';
+function loadPending() { return tryJson(localStorage.getItem(PENDING_KEY)) || {}; }
+function savePending(p) { try { localStorage.setItem(PENDING_KEY, JSON.stringify(p)); } catch {} }
+
+// Gravações do mesmo documento saem em fila, sempre com o estado mais recente.
+const writeChain = {}, writeSeq = {};
+function sync(col, id, op) {
+  const key = col + '/' + id;
+  const p = loadPending(); p[key] = op; savePending(p);
+  const seq = writeSeq[key] = (writeSeq[key] || 0) + 1;
+  const run = async () => {
+    if (seq !== writeSeq[key]) return;
+    try {
+      const list = col === COL_CLIENTES ? clientes : contatos;
+      const cur = list.find(x => x.id === id);
+      if (op === 'delete' || !cur) await fbRemove(col, id);
+      else await fbPut(col, id, cur);
+      if (seq === writeSeq[key]) { const p = loadPending(); delete p[key]; savePending(p); }
+    } catch {
+      showToast('⚠ Sem conexão — salvo no aparelho, sincroniza depois');
+    }
+  };
+  writeChain[key] = (writeChain[key] || Promise.resolve()).then(run, run);
+  return writeChain[key];
+}
+
 // ── LOAD DATA ──
 async function loadData() {
   clientes = tryJson(localStorage.getItem('nickel_clientes')) || [];
   contatos = tryJson(localStorage.getItem('nickel_contatos')) || [];
-
-  const done = () => {
+  const show = () => {
     document.getElementById('loading').classList.add('hidden');
-    cacheLocal();
     render();
   };
-
-  const t = setTimeout(done, 6000);
+  const t = setTimeout(show, 6000);
   try {
-    const [c, ct] = await Promise.all([fbGet(COL_CLIENTES), fbGet(COL_CONTATOS)]);
-    if (c.length > 0) clientes = c;
-    if (ct.length > 0) contatos = ct;
+    const [rc, rct] = await Promise.all([fbGet(COL_CLIENTES), fbGet(COL_CONTATOS)]);
+    // Firebase é a fonte de verdade; alterações locais pendentes prevalecem e são reenviadas
+    const pending = loadPending();
+    const merge = (remote, local, col) => {
+      const map = new Map(remote.map(x => [x.id, x]));
+      for (const [key, op] of Object.entries(pending)) {
+        const [c, id] = key.split('/');
+        if (c !== col) continue;
+        if (op === 'delete') map.delete(id);
+        else { const l = local.find(x => x.id === id); if (l) map.set(id, l); }
+      }
+      return [...map.values()];
+    };
+    clientes = merge(rc, clientes, COL_CLIENTES);
+    contatos = merge(rct, contatos, COL_CONTATOS);
+    cacheLocal();
+    for (const [key, op] of Object.entries(pending)) {
+      const [c, id] = key.split('/');
+      sync(c, id, op);
+    }
   } catch (e) {
     console.warn('Firebase indisponível, usando cache local', e);
   }
   clearTimeout(t);
-  done();
+  show();
 }
 
 function cacheLocal() {
@@ -599,31 +637,69 @@ function todayStr() {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
 }
 
-function daysSinceContact(clientId) {
-  const logs = contatos.filter(c => c.clientId === clientId && c.type === 'contato');
-  if (logs.length === 0) return null; // never contacted
-  const last = logs.sort((a,b) => b.date.localeCompare(a.date))[0];
-  const today = new Date(todayStr());
-  const lastDate = new Date(last.date.substring(0,10));
-  return Math.floor((today - lastDate) / 86400000);
+// datas no formato AAAA-MM-DD, calculadas em UTC para não sofrer com fuso
+function dayDiff(from, to) { return Math.round((Date.parse(to) - Date.parse(from)) / 86400000); }
+function addDays(iso, n) {
+  const d = new Date(iso + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+function fmtLongDate(iso) {
+  return new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 }
 
+function lastContato(clientId) {
+  let last = null;
+  for (const c of contatos) {
+    if (c.clientId !== clientId || c.type !== 'contato') continue;
+    if (!last || c.date > last.date || (c.date === last.date && c.id > last.id)) last = c;
+  }
+  return last;
+}
+
+function daysSinceContact(clientId) {
+  const l = lastContato(clientId);
+  return l ? dayDiff(l.date.substring(0, 10), todayStr()) : null;
+}
+
+// dias até o retorno combinado (negativo = atrasado); null quando não há prazo
+function daysToReturn(clientId) {
+  const l = lastContato(clientId);
+  return l && l.nextDate ? dayDiff(todayStr(), l.nextDate) : null;
+}
+
+// Com prazo escolhido no "Falei", ele manda; sem prazo, vale a regra de 2/3 dias sem contato.
 function urgencyOf(client) {
-  const days = daysSinceContact(client.id);
   if (client.etapa === 'Venda') return 'done';
   if (client.archived) return 'archived';
-  if (days === null) return 'new'; // no contact yet
-  if (days >= 3) return 'red';
-  if (days === 2) return 'amber';
+  const since = daysSinceContact(client.id);
+  if (since === null) return 'new';
+  const toReturn = daysToReturn(client.id);
+  if (toReturn !== null) return toReturn < 0 ? 'red' : toReturn === 0 ? 'amber' : 'green';
+  if (since >= 3) return 'red';
+  if (since === 2) return 'amber';
   return 'green';
 }
 
-function urgencyLabel(u) {
-  if (u === 'red') return '3+ dias sem contato';
-  if (u === 'amber') return '2 dias sem contato';
-  if (u === 'green') return 'Em dia';
-  if (u === 'new') return 'Primeiro contato';
-  return '';
+// quanto maior, mais atrasado
+function overdueScore(client) {
+  const toReturn = daysToReturn(client.id);
+  if (toReturn !== null) return -toReturn;
+  const since = daysSinceContact(client.id);
+  return since === null ? 0 : since - 3;
+}
+
+function statusShort(client) {
+  const since = daysSinceContact(client.id);
+  if (since === null) return 'Nunca contatado';
+  const toReturn = daysToReturn(client.id);
+  if (toReturn !== null) {
+    if (toReturn < 0) return `Atrasado ${-toReturn}d`;
+    if (toReturn === 0) return 'Retornar hoje';
+    if (toReturn === 1) return 'Retornar amanhã';
+    return `Retornar em ${toReturn}d`;
+  }
+  return since === 0 ? 'Falei hoje' : since === 1 ? 'Falei ontem' : `${since} dias sem contato`;
 }
 
 function fmtDate(d) {
@@ -656,7 +732,7 @@ function renderRadar() {
   const el = document.getElementById('screen-radar');
   const active = clientes.filter(c => !c.archived && c.etapa !== 'Venda');
 
-  const red = active.filter(c => urgencyOf(c) === 'red').sort((a,b) => (daysSinceContact(b.id)||0) - (daysSinceContact(a.id)||0));
+  const red = active.filter(c => urgencyOf(c) === 'red').sort((a,b) => overdueScore(b) - overdueScore(a));
   const amber = active.filter(c => urgencyOf(c) === 'amber');
   const newC = active.filter(c => urgencyOf(c) === 'new');
   const green = active.filter(c => urgencyOf(c) === 'green');
@@ -696,8 +772,7 @@ function urgencyGroupHtml(type, label, list) {
 }
 
 function clientCardHtml(c, urgency) {
-  const days = daysSinceContact(c.id);
-  const daysText = days === null ? 'Nunca contatado' : days === 0 ? 'Hoje' : days === 1 ? 'Ontem' : `${days} dias atrás`;
+  const daysText = statusShort(c);
   const isGestor = session && session.role === 'gestor';
   const actionBtn = isGestor
     ? `<button class="btn-sm btn-contact" data-id="${c.id}">✓ Falei</button>`
@@ -763,74 +838,80 @@ function renderKanban() {
   });
 }
 
+let archivedOpen = false;
+
+// A barra de busca é criada uma vez; digitar só redesenha a lista, sem perder o foco.
 function renderClientes() {
   const el = document.getElementById('screen-clientes');
-  const q = document.getElementById('search-q') ? document.getElementById('search-q').value.toLowerCase() : '';
+  if (!document.getElementById('search-q')) {
+    el.innerHTML = `<div class="search-bar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="search-q" type="search" placeholder="Buscar por nome, bairro ou o que busca…" autocomplete="off"></div><div id="clientes-list"></div>`;
+    document.getElementById('search-q').addEventListener('input', renderClientesList);
+    el.addEventListener('click', e => {
+      const tog = e.target.closest('#toggle-archived');
+      if (tog) { archivedOpen = !archivedOpen; renderClientesList(); return; }
+      const row = e.target.closest('.client-row[data-id]');
+      if (row) openDetail(row.dataset.id);
+    });
+  }
+  renderClientesList();
+}
 
-  let filtered = clientes.filter(c => !c.archived);
-  if (q) filtered = filtered.filter(c => c.nome.toLowerCase().includes(q) || (c.bairro||'').toLowerCase().includes(q) || (c.tipologia||'').toLowerCase().includes(q));
+// minúsculas e sem acento, para "agua" achar "Água Verde"
+function norm(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
 
-  const archivedCount = clientes.filter(c => c.archived).length;
+function clientMatches(c, q) {
+  return !q || norm(c.nome).includes(q) || norm(c.bairro).includes(q) || norm(c.tipologia).includes(q);
+}
 
-  let html = `<div class="search-bar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input id="search-q" type="search" placeholder="Buscar cliente…" value="${esc(q)}" oninput="renderClientes()"></div>`;
-  html += `<div class="section-title">${filtered.length} cliente${filtered.length!==1?'s':''} ativo${filtered.length!==1?'s':''}</div>`;
+function renderClientesList() {
+  const q = norm(document.getElementById('search-q').value.trim());
+  const ativos = clientes.filter(c => !c.archived && clientMatches(c, q)).sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+  const arquivados = clientes.filter(c => c.archived && clientMatches(c, q));
 
-  if (!filtered.length) {
-    html += `<div class="empty-state"><p>Nenhum cliente encontrado</p></div>`;
+  let html = `<div class="section-title">${ativos.length} cliente${ativos.length !== 1 ? 's' : ''} ativo${ativos.length !== 1 ? 's' : ''}</div>`;
+  if (!ativos.length) {
+    html += `<div class="empty-state"><p>${q ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado ainda.<br>Toque no + para adicionar.'}</p></div>`;
   } else {
-    filtered.forEach(c => {
-      const u = urgencyOf(c);
-      const days = daysSinceContact(c.id);
-      const daysText = days === null ? 'Nunca' : days === 0 ? 'Hoje' : days === 1 ? 'Ontem' : `${days}d`;
+    ativos.forEach(c => {
       html += `<div class="client-row" data-id="${c.id}">
         <div class="cr-avatar">${avatarInitials(c.nome)}</div>
         <div class="cr-info">
           <div class="cr-name">${esc(c.nome)}</div>
-          <div class="cr-detail">${esc(c.bairro||'')}${c.tipologia?' · '+esc(c.tipologia):''}</div>
+          <div class="cr-detail">${esc(c.bairro || '')}${c.tipologia ? ' · ' + esc(c.tipologia) : ''}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-          <span class="badge-stage ${stageCssClass(c.etapa)}">${esc(c.etapa||'Em atendimento')}</span>
-          <span style="font-size:11px;color:var(--text-3)">${daysText}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span class="badge-stage ${stageCssClass(c.etapa)}">${esc(c.etapa || 'Em atendimento')}</span>
+          <span style="font-size:11px;color:var(--text-3)">${c.etapa === 'Venda' ? 'Vendido' : statusShort(c)}</span>
         </div>
       </div>`;
     });
   }
 
-  if (archivedCount > 0) {
-    html += `<div class="section-title" style="cursor:pointer" id="toggle-archived">▶ Arquivados (${archivedCount})</div><div id="archived-list" class="hidden">`;
-    clientes.filter(c => c.archived).forEach(c => {
-      html += `<div class="client-row" style="opacity:.5" data-id="${c.id}">
-        <div class="cr-avatar" style="background:var(--surface2);color:var(--text-3)">${avatarInitials(c.nome)}</div>
-        <div class="cr-info"><div class="cr-name">${esc(c.nome)}</div><div class="cr-detail">Arquivado</div></div>
-      </div>`;
-    });
-    html += '</div>';
+  if (arquivados.length) {
+    html += `<div class="section-title" style="cursor:pointer" id="toggle-archived">${archivedOpen ? '▼' : '▶'} Arquivados (${arquivados.length})</div>`;
+    if (archivedOpen) {
+      arquivados.forEach(c => {
+        html += `<div class="client-row" style="opacity:.55" data-id="${c.id}">
+          <div class="cr-avatar" style="background:var(--surface2);color:var(--text-3)">${avatarInitials(c.nome)}</div>
+          <div class="cr-info"><div class="cr-name">${esc(c.nome)}</div><div class="cr-detail">Arquivado</div></div>
+        </div>`;
+      });
+    }
   }
-
-  el.innerHTML = html;
-  el.querySelectorAll('.client-row[data-id]').forEach(row => {
-    row.addEventListener('click', () => openDetail(row.dataset.id));
-  });
-  const tog = document.getElementById('toggle-archived');
-  if (tog) tog.addEventListener('click', () => {
-    const al = document.getElementById('archived-list');
-    al.classList.toggle('hidden');
-    tog.textContent = tog.textContent.startsWith('▶') ? tog.textContent.replace('▶','▼') : tog.textContent.replace('▼','▶');
-  });
+  document.getElementById('clientes-list').innerHTML = html;
 }
-
-// exposed for oninput
-window.renderClientes = () => { if (currentScreen === 'clientes') renderClientes(); };
 
 // ── CLIENT DETAIL ──
 function openDetail(id) {
   const c = clientes.find(x => x.id === id);
   if (!c) return;
-  const logs = contatos.filter(ct => ct.clientId === id).sort((a,b) => b.date.localeCompare(a.date));
+  const logs = contatos.filter(ct => ct.clientId === id).sort((a,b) => b.date.localeCompare(a.date) || (b.id||'').localeCompare(a.id||''));
   const isGestor = session && session.role === 'gestor';
   const stages = ['Em atendimento','Visita','Proposta','Venda'];
-  const days = daysSinceContact(id);
-  const daysText = days === null ? 'Nunca contatado' : days === 0 ? 'Hoje' : days === 1 ? 'Ontem' : `${days} dias atrás`;
+  const since = daysSinceContact(id);
+  const daysText = since === null ? 'nunca' : since === 0 ? 'hoje' : since === 1 ? 'ontem' : `há ${since} dias`;
+  const last = lastContato(id);
+  const proximo = last && last.nextDate ? `${fmtDate(last.nextDate)} · ${statusShort(c)}` : '';
 
   let stageButtons = stages.map(s =>
     `<button class="stage-btn${c.etapa===s?' active':''}" data-stage="${s}" data-id="${id}">${s}</button>`
@@ -839,7 +920,7 @@ function openDetail(id) {
   let logHtml = '';
   logs.slice(0,10).forEach(l => {
     const icon = l.type === 'contato' ? '📞' : l.type === 'lembrei' ? '🔔' : '📝';
-    logHtml += `<div class="log-item"><div class="log-dot"></div><div class="log-content"><div class="log-date">${icon} ${fmtDate(l.date)}</div><div class="log-text">${esc(l.obs||'Contato registrado')}</div></div></div>`;
+    logHtml += `<div class="log-item"><div class="log-dot"></div><div class="log-content"><div class="log-date">${icon} ${fmtDate(l.date)}</div><div class="log-text">${esc(l.obs||'Contato registrado')}${l.nextDate ? ` <span style="color:var(--blue);font-weight:600">→ retorno ${fmtDate(l.nextDate)}</span>` : ''}</div></div></div>`;
   });
 
   const sheet = document.getElementById('detail-sheet');
@@ -849,17 +930,17 @@ function openDetail(id) {
       <div class="detail-avatar">${avatarInitials(c.nome)}</div>
       <div class="detail-name">${esc(c.nome)}</div>
       <div class="detail-sub">Último contato: ${daysText}</div>
+      ${proximo ? `<div class="detail-sub" style="color:var(--blue);font-weight:600">Próximo retorno: ${proximo}</div>` : ''}
       <div class="detail-stage-select">${stageButtons}</div>
     </div>
     <div class="action-strip">
       ${isGestor ? `<button class="btn-falei" data-id="${id}">✓ Falei com ele/a</button>` : `<button class="btn-lembrar" data-id="${id}">🔔 Lembrei o Matheus</button>`}
       ${c.tel ? `<button class="btn-wpp-big" data-id="${id}">📲 WhatsApp</button>` : ''}
-      ${isGestor ? `<button class="btn-agendar" data-id="${id}">📅 Agendar</button>` : ''}
     </div>
     <div class="detail-info">
-      <div class="info-row"><span class="label">Bairro</span><span class="val">${esc(c.bairro||'—')}</span></div>
-      <div class="info-row"><span class="label">Tipologia</span><span class="val">${esc(c.tipologia||'—')}</span></div>
-      <div class="info-row"><span class="label">Orçamento</span><span class="val">${esc(c.orcamento||'—')}</span></div>
+      <div class="info-row"><span class="label">Bairros</span><span class="val">${esc(c.bairro||'—')}</span></div>
+      <div class="info-row"><span class="label">O que busca</span><span class="val">${esc(c.tipologia||'—')}</span></div>
+      <div class="info-row"><span class="label">Budget</span><span class="val">${esc(c.orcamento||'—')}</span></div>
       ${c.obs ? `<div class="info-row"><span class="label">Obs</span><span class="val">${esc(c.obs)}</span></div>` : ''}
     </div>
     <div class="contact-log">
@@ -879,7 +960,6 @@ function openDetail(id) {
   sheet.querySelectorAll('[data-id].btn-falei').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openContato(b.dataset.id); }));
   sheet.querySelectorAll('[data-id].btn-lembrar').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openLembrei(b.dataset.id); }));
   sheet.querySelectorAll('[data-id].btn-wpp-big').forEach(b => b.addEventListener('click', () => openWpp(b.dataset.id)));
-  sheet.querySelectorAll('[data-id].btn-agendar').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openContato(b.dataset.id); }));
   sheet.querySelectorAll('[data-edit-id]').forEach(b => b.addEventListener('click', () => { closeModal('modal-detail'); openEditClient(b.dataset.editId); }));
   sheet.querySelectorAll('[data-archive-id]').forEach(b => b.addEventListener('click', () => toggleArchive(b.dataset.archiveId)));
   sheet.querySelectorAll('[data-delete-id]').forEach(b => b.addEventListener('click', () => deleteClient(b.dataset.deleteId)));
@@ -887,38 +967,38 @@ function openDetail(id) {
   openModal('modal-detail');
 }
 
-async function changeStage(id, stage) {
+function changeStage(id, stage) {
   const c = clientes.find(x => x.id === id);
-  if (!c) return;
+  if (!c || c.etapa === stage) return;
   c.etapa = stage;
-  clientes = clientes.map(x => x.id === id ? c : x);
   cacheLocal();
-  try { await fbSet(COL_CLIENTES, id, c); } catch {}
+  sync(COL_CLIENTES, id, 'set');
   openDetail(id);
   render();
   showToast(`Movido para ${stage}`);
 }
 
-async function deleteClient(id) {
+function deleteClient(id) {
   const c = clientes.find(x => x.id === id);
   if (!c) return;
   if (!confirm(`Excluir "${c.nome}" permanentemente? Esta ação não pode ser desfeita.`)) return;
+  const seusContatos = contatos.filter(x => x.clientId === id).map(x => x.id);
   clientes = clientes.filter(x => x.id !== id);
   contatos = contatos.filter(x => x.clientId !== id);
   cacheLocal();
-  try { await fbDelete(COL_CLIENTES, id); } catch {}
+  sync(COL_CLIENTES, id, 'delete');
+  seusContatos.forEach(ctId => sync(COL_CONTATOS, ctId, 'delete'));
   closeModal('modal-detail');
   render();
   showToast('Cliente excluído');
 }
 
-async function toggleArchive(id) {
+function toggleArchive(id) {
   const c = clientes.find(x => x.id === id);
   if (!c) return;
   c.archived = !c.archived;
-  clientes = clientes.map(x => x.id === id ? c : x);
   cacheLocal();
-  try { await fbSet(COL_CLIENTES, id, c); } catch {}
+  sync(COL_CLIENTES, id, 'set');
   closeModal('modal-detail');
   render();
   showToast(c.archived ? 'Cliente arquivado' : 'Cliente reativado');
@@ -951,33 +1031,30 @@ function openEditClient(id) {
   openModal('modal-client');
 }
 
-window.saveClient = async function() {
+window.saveClient = function() {
   const nome = document.getElementById('fc-nome').value.trim();
-  if (!nome) { showToast('Nome é obrigatório'); return; }
-  const data = {
+  if (!nome) { showToast('Nome é obrigatório'); document.getElementById('fc-nome').focus(); return; }
+  const campos = {
     nome,
     bairro: document.getElementById('fc-bairro').value.trim(),
     tipologia: document.getElementById('fc-tipologia').value.trim(),
     orcamento: document.getElementById('fc-orcamento').value.trim(),
-    etapa: document.getElementById('fc-etapa').value,
-    criadoEm: editingClientId ? (clientes.find(x=>x.id===editingClientId)||{}).criadoEm || todayStr() : todayStr(),
-    archived: false
+    etapa: document.getElementById('fc-etapa').value
   };
-  if (editingClientId) {
-    data.id = editingClientId;
-    clientes = clientes.map(x => x.id === editingClientId ? data : x);
-    try { await fbSet(COL_CLIENTES, editingClientId, data); } catch {}
+  const prev = editingClientId && clientes.find(x => x.id === editingClientId);
+  let id;
+  if (prev) {
+    // mantém arquivado/criadoEm e qualquer outro campo existente
+    Object.assign(prev, campos);
+    id = prev.id;
     showToast('Cliente atualizado');
   } else {
-    const newId = 'c_' + Date.now();
-    data.id = newId;
-    clientes.push(data);
-    try {
-      await fbSet(COL_CLIENTES, newId, data);
-    } catch {}
+    id = 'c_' + Date.now();
+    clientes.push({ id, ...campos, criadoEm: todayStr(), archived: false });
     showToast('Cliente adicionado!');
   }
   cacheLocal();
+  sync(COL_CLIENTES, id, 'set');
   closeModal('modal-client');
   render();
 };
@@ -990,49 +1067,46 @@ function openContato(id) {
   document.getElementById('ct-obs').value = '';
   document.getElementById('ct-next').value = '';
   document.getElementById('ct-prazo-label').textContent = '';
-  document.querySelectorAll('.prazo-btn').forEach(b => b.classList.remove('selected'));
-  openModal('modal-contato');
-
-  // Bind prazo buttons
   document.querySelectorAll('.prazo-btn').forEach(btn => {
+    btn.classList.remove('selected');
     btn.onclick = () => {
       document.querySelectorAll('.prazo-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      const dias = parseInt(btn.dataset.dias);
+      const dias = parseInt(btn.dataset.dias, 10);
+      const label = document.getElementById('ct-prazo-label');
       if (dias === 0) {
         document.getElementById('ct-next').value = '';
-        document.getElementById('ct-prazo-label').textContent = 'Sem prazo definido';
+        label.textContent = 'Sem prazo — volta para o radar em 3 dias sem contato';
       } else {
-        const d = new Date(todayStr());
-        d.setDate(d.getDate() + dias);
-        const next = d.toLocaleDateString('sv-SE', {timeZone:'America/Sao_Paulo'});
+        const next = addDays(todayStr(), dias);
         document.getElementById('ct-next').value = next;
-        document.getElementById('ct-prazo-label').textContent = `→ ${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}`;
+        label.textContent = `→ ${fmtLongDate(next)}`;
       }
     };
   });
+  openModal('modal-contato');
 }
 
-window.saveContato = async function() {
+window.saveContato = function() {
   const id = contatoTargetId;
+  if (!clientes.find(x => x.id === id)) { closeModal('modal-contato'); return; }
   const obs = document.getElementById('ct-obs').value.trim();
   const nextDate = document.getElementById('ct-next').value;
-  const log = {
+  const logId = 'ct_' + Date.now();
+  contatos.push({
+    id: logId,
     clientId: id,
     type: 'contato',
     date: todayStr(),
     obs: obs || 'Contato registrado',
     nextDate: nextDate || '',
     user: session.name
-  };
-  const logId = 'ct_' + Date.now();
-  log.id = logId;
-  contatos.push(log);
+  });
   cacheLocal();
-  try { await fbSet(COL_CONTATOS, logId, log); } catch {}
+  sync(COL_CONTATOS, logId, 'set');
   closeModal('modal-contato');
   render();
-  showToast('Contato registrado!');
+  showToast(nextDate ? `Contato registrado · retorno ${fmtDate(nextDate)}` : 'Contato registrado!');
 };
 
 // ── LEMBREI ──
@@ -1042,21 +1116,20 @@ function openLembrei(id) {
   openModal('modal-lembrei');
 }
 
-window.saveLembrei = async function() {
+window.saveLembrei = function() {
   const id = contatoTargetId;
   const obs = document.getElementById('lembrei-obs').value.trim();
-  const log = {
+  const logId = 'lb_' + Date.now();
+  contatos.push({
+    id: logId,
     clientId: id,
     type: 'lembrei',
     date: todayStr(),
     obs: obs || 'Matheus lembrado',
     user: session.name
-  };
-  const logId = 'lb_' + Date.now();
-  log.id = logId;
-  contatos.push(log);
+  });
   cacheLocal();
-  try { await fbSet(COL_CONTATOS, logId, log); } catch {}
+  sync(COL_CONTATOS, logId, 'set');
   closeModal('modal-lembrei');
   render();
   showToast('Matheus lembrado!');
@@ -1122,10 +1195,10 @@ let bairrosSelecionados = [];
 window.bairroSearch = function(q) {
   const dd = document.getElementById('bairro-dropdown');
   if (bairrosSelecionados.length >= 5) { dd.style.display='none'; return; }
-  const term = q.trim().toLowerCase();
+  const term = norm(q.trim());
   const pool = term ? BAIRROS_CWB : BAIRROS_DESTAQUE;
   const results = pool.filter(b => {
-    const match = !term || b.toLowerCase().includes(term);
+    const match = !term || norm(b).includes(term);
     return match && !bairrosSelecionados.includes(b);
   });
   if (!results.length) { dd.style.display='none'; return; }
