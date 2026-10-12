@@ -157,6 +157,11 @@
 .hcq-detail-val{font-size:13px;color:var(--text);font-weight:500}
 .hcq-detail-val.gold{color:var(--gold);font-weight:700}
 .hcq-empty{padding:14px 18px;font-size:13px;color:var(--text-muted)}
+.hcq-item.jetmob{opacity:.4;transition:opacity .3s}
+.hcq-item.jetmob .hcq-nome{text-decoration:line-through}
+.btn-jetmob{margin-top:6px;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid rgba(100,149,237,.4);background:rgba(100,149,237,.08);color:#6495ed;transition:all .15s;align-self:flex-start}
+.btn-jetmob:hover{background:rgba(100,149,237,.18);border-color:#6495ed}
+.btn-jetmob.done{border-color:rgba(168,230,61,.4);background:rgba(168,230,61,.08);color:var(--gold);cursor:default}
 
 /* ANALYTICS */
 .analytics-section{margin-top:8px}
@@ -296,8 +301,8 @@ function getDraft(id){
 var FB_KEY='AIzaSyAV1IBBj0usYroywP0i-SLFSHVJh8_S2-g';
 var FB_BASE='https://firestore.googleapis.com/v1/projects/nickel-crm/databases/(default)/documents/painel_thiago';
 
-function cqToFb(c){return{mapValue:{fields:{nome:{stringValue:c.nome||''},tel:{stringValue:c.tel||''},bairro:{stringValue:c.bairro||''},tipologia:{stringValue:c.tipologia||''},valor:{stringValue:c.valor||''}}}}}
-function fbToCq(f){var m=(f&&f.mapValue&&f.mapValue.fields)||{};return{nome:(m.nome&&m.nome.stringValue)||'',tel:(m.tel&&m.tel.stringValue)||'',bairro:(m.bairro&&m.bairro.stringValue)||'',tipologia:(m.tipologia&&m.tipologia.stringValue)||'',valor:(m.valor&&m.valor.stringValue)||''}}
+function cqToFb(c){return{mapValue:{fields:{nome:{stringValue:c.nome||''},tel:{stringValue:c.tel||''},bairro:{stringValue:c.bairro||''},tipologia:{stringValue:c.tipologia||''},valor:{stringValue:c.valor||''},jetmob:{booleanValue:!!(c.jetmob)}}}}}
+function fbToCq(f){var m=(f&&f.mapValue&&f.mapValue.fields)||{};return{nome:(m.nome&&m.nome.stringValue)||'',tel:(m.tel&&m.tel.stringValue)||'',bairro:(m.bairro&&m.bairro.stringValue)||'',tipologia:(m.tipologia&&m.tipologia.stringValue)||'',valor:(m.valor&&m.valor.stringValue)||'',jetmob:!!(m.jetmob&&m.jetmob.booleanValue)}}
 
 function fbSaveEntry(agentId,entry){
   var url=FB_BASE+'/'+agentId+'/entries/'+entry.date+'?key='+FB_KEY;
@@ -485,14 +490,17 @@ function cqItemHTML(id,idx,c,open){
 function histHTML(id){
   var entries=loadAgent(id);
   var allCqs=[];
-  entries.forEach(function(e){(e.cqs||[]).forEach(function(c){allCqs.push({nome:c.nome,tel:c.tel,bairro:c.bairro,tipologia:c.tipologia,valor:c.valor,_date:e.date})})});
+  entries.forEach(function(e){(e.cqs||[]).forEach(function(c,ci){allCqs.push({nome:c.nome,tel:c.tel,bairro:c.bairro,tipologia:c.tipologia,valor:c.valor,jetmob:c.jetmob,_date:e.date,_ci:ci})})});
   if(!allCqs.length)return'<div class="hcq-empty">Nenhum CQ registrado ainda.</div>';
   return allCqs.map(function(c,i){
     var nome=c.nome||'(sem nome)';var tel=c.tel||'—';
     var bairro=c.bairro||'—';var tipo=c.tipologia||'—';
     var val=c.valor?'R$ '+fmtValor(parseValor(c.valor)):'—';
     var dateTxt=c._date?fmtDateShort(c._date):'';
-    return'<div class="hcq-item">'
+    var jmBtn=c.jetmob
+      ?'<button class="btn-jetmob done" disabled>✓ Enviado ao JetMob</button>'
+      :'<button class="btn-jetmob" data-jm-id="'+id+'" data-jm-date="'+c._date+'" data-jm-ci="'+c._ci+'">📤 Enviar ao JetMob</button>';
+    return'<div class="hcq-item'+(c.jetmob?' jetmob':'')+'">'
       +'<div class="hcq-head" data-hid="'+id+'" data-hi="'+i+'">'
       +'<div class="hcq-idx">'+(i+1)+'</div>'
       +'<div class="hcq-info"><div class="hcq-nome">'+nome+'</div><div class="hcq-tel">'+tel+(dateTxt?' · <span style="color:var(--gold);font-weight:600">'+dateTxt+'</span>':'')+'</div></div>'
@@ -501,8 +509,20 @@ function histHTML(id){
       +'<div class="hcq-detail"><span class="hcq-detail-lbl">Bairro</span><span class="hcq-detail-val">'+bairro+'</span></div>'
       +'<div class="hcq-detail"><span class="hcq-detail-lbl">Tipologia</span><span class="hcq-detail-val">'+tipo+'</span></div>'
       +'<div class="hcq-detail"><span class="hcq-detail-lbl">Valor</span><span class="hcq-detail-val gold">'+val+'</span></div>'
+      +jmBtn
       +'</div></div>';
   }).join('');
+}
+
+function markJetmob(agentId, entryDate, cqIdx){
+  var entries=loadAgent(agentId);
+  var entry=entries.filter(function(e){return e.date===entryDate})[0];
+  if(!entry||!entry.cqs[cqIdx])return;
+  entry.cqs[cqIdx].jetmob=true;
+  saveAgent(agentId,entries);
+  fbSaveEntry(agentId,entry);
+  rerenderAgent(agentId);
+  toast('✓ Documentação enviada ao JetMob');
 }
 
 function histCount(id){
@@ -647,6 +667,9 @@ function initDelegation(){
       if(list)list.style.display=ht.classList.contains('hist-open')?'block':'none';
       return;
     }
+    // JetMob
+    var jm=e.target.closest('.btn-jetmob:not(.done)');
+    if(jm){markJetmob(jm.dataset.jmId,jm.dataset.jmDate,+jm.dataset.jmCi);return;}
     // CQ no histórico
     var hh=e.target.closest('.hcq-head');
     if(hh){hh.closest('.hcq-item').classList.toggle('open');return;}
