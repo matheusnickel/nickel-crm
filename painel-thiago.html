@@ -161,7 +161,8 @@
 .hcq-item.jetmob .hcq-nome{text-decoration:line-through}
 .btn-jetmob{margin-top:6px;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid rgba(100,149,237,.4);background:rgba(100,149,237,.08);color:#6495ed;transition:all .15s;align-self:flex-start}
 .btn-jetmob:hover{background:rgba(100,149,237,.18);border-color:#6495ed}
-.btn-jetmob.done{border-color:rgba(168,230,61,.4);background:rgba(168,230,61,.08);color:var(--gold);cursor:default}
+.btn-jetmob.done{border-color:rgba(168,230,61,.4);background:rgba(168,230,61,.08);color:var(--gold)}
+.btn-jetmob.done:hover{border-color:rgba(168,230,61,.7);background:rgba(168,230,61,.15)}
 
 /* ANALYTICS */
 .analytics-section{margin-top:8px}
@@ -190,7 +191,8 @@
 .arq-empty{font-size:13px;color:var(--text-muted);text-align:center;padding:12px 0}
 .btn-arquivar{margin-top:6px;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--text-muted);transition:all .15s;align-self:flex-start}
 .btn-arquivar:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:var(--text)}
-.btn-arquivar.done{border-color:rgba(255,255,255,.08);background:transparent;color:var(--text-muted);cursor:default;opacity:.5}
+.btn-arquivar.done{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--text)}
+.btn-arquivar.done:hover{background:rgba(255,255,255,.12)}
 .a-empty{font-size:13px;color:var(--text-muted);text-align:center;padding:20px 0}
 
 #pt-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 22px;font-size:13px;color:var(--text);opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;z-index:999}
@@ -515,10 +517,10 @@ function histHTML(id){
     var val=c.valor?'R$ '+fmtValor(parseValor(c.valor)):'—';
     var dateTxt=c._date?fmtDateShort(c._date):'';
     var jmBtn=c.jetmob
-      ?'<button class="btn-jetmob done" disabled>✓ Documentação enviada ao Jetimob</button>'
+      ?'<button class="btn-jetmob done" data-jm-id="'+id+'" data-jm-date="'+c._date+'" data-jm-ci="'+c._ci+'">✓ Documentação enviada ao Jetimob</button>'
       :'<button class="btn-jetmob" data-jm-id="'+id+'" data-jm-date="'+c._date+'" data-jm-ci="'+c._ci+'">📤 Documentação enviada ao Jetimob</button>';
     var arqBtn=c.archived
-      ?'<button class="btn-arquivar done" disabled>✓ Arquivado</button>'
+      ?'<button class="btn-arquivar done" data-arq-id="'+id+'" data-arq-date="'+c._date+'" data-arq-ci="'+c._ci+'">↩ Desarquivar</button>'
       :'<button class="btn-arquivar" data-arq-id="'+id+'" data-arq-date="'+c._date+'" data-arq-ci="'+c._ci+'">📦 Arquivar</button>';
     return'<div class="hcq-item'+(c.jetmob?' jetmob':'')+(c.archived?' jetmob':'')+'">'
       +'<div class="hcq-head" data-hid="'+id+'" data-hi="'+i+'">'
@@ -538,23 +540,25 @@ function markJetmob(agentId, entryDate, cqIdx){
   var entries=loadAgent(agentId);
   var entry=entries.filter(function(e){return e.date===entryDate})[0];
   if(!entry||!entry.cqs[cqIdx])return;
-  entry.cqs[cqIdx].jetmob=true;
+  var now=!entry.cqs[cqIdx].jetmob;
+  entry.cqs[cqIdx].jetmob=now;
   saveAgent(agentId,entries);
   fbSaveEntry(agentId,entry);
   rerenderAgent(agentId);
-  toast('✓ Documentação enviada ao Jetimob');
+  toast(now?'✓ Documentação enviada ao Jetimob':'Marcação removida');
 }
 
 function markArquivar(agentId, entryDate, cqIdx){
   var entries=loadAgent(agentId);
   var entry=entries.filter(function(e){return e.date===entryDate})[0];
   if(!entry||!entry.cqs[cqIdx])return;
-  entry.cqs[cqIdx].archived=true;
+  var now=!entry.cqs[cqIdx].archived;
+  entry.cqs[cqIdx].archived=now;
   saveAgent(agentId,entries);
   fbSaveEntry(agentId,entry);
   rerenderAgent(agentId);
   refreshArquivo();
-  toast('CQ arquivado');
+  toast(now?'CQ arquivado':'CQ desarquivado');
 }
 
 function refreshArquivo(){
@@ -722,11 +726,11 @@ function initDelegation(){
       if(list)list.style.display=ht.classList.contains('hist-open')?'block':'none';
       return;
     }
-    // JetMob
-    var jm=e.target.closest('.btn-jetmob:not(.done)');
+    // JetMob (toggle)
+    var jm=e.target.closest('.btn-jetmob');
     if(jm){markJetmob(jm.dataset.jmId,jm.dataset.jmDate,+jm.dataset.jmCi);return;}
-    // Arquivar
-    var arq=e.target.closest('.btn-arquivar:not(.done)');
+    // Arquivar (toggle)
+    var arq=e.target.closest('.btn-arquivar');
     if(arq){markArquivar(arq.dataset.arqId,arq.dataset.arqDate,+arq.dataset.arqCi);return;}
     // CQ no histórico
     var hh=e.target.closest('.hcq-head');
