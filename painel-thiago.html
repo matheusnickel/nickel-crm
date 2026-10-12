@@ -498,8 +498,8 @@ function histHTML(id){
     var val=c.valor?'R$ '+fmtValor(parseValor(c.valor)):'—';
     var dateTxt=c._date?fmtDateShort(c._date):'';
     var jmBtn=c.jetmob
-      ?'<button class="btn-jetmob done" disabled>✓ Enviado ao JetMob</button>'
-      :'<button class="btn-jetmob" data-jm-id="'+id+'" data-jm-date="'+c._date+'" data-jm-ci="'+c._ci+'">📤 Enviar ao JetMob</button>';
+      ?'<button class="btn-jetmob done" disabled>✓ Documentação enviada ao Jetimob</button>'
+      :'<button class="btn-jetmob" data-jm-id="'+id+'" data-jm-date="'+c._date+'" data-jm-ci="'+c._ci+'">📤 Documentação enviada ao Jetimob</button>';
     return'<div class="hcq-item'+(c.jetmob?' jetmob':'')+'">'
       +'<div class="hcq-head" data-hid="'+id+'" data-hi="'+i+'">'
       +'<div class="hcq-idx">'+(i+1)+'</div>'
@@ -522,7 +522,7 @@ function markJetmob(agentId, entryDate, cqIdx){
   saveAgent(agentId,entries);
   fbSaveEntry(agentId,entry);
   rerenderAgent(agentId);
-  toast('✓ Documentação enviada ao JetMob');
+  toast('✓ Documentação enviada ao Jetimob');
 }
 
 function histCount(id){
