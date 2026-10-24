@@ -9,8 +9,22 @@ const API = 'https://j8-busca-imoveis.gustavo-05e.workers.dev/v1/imoveis/';
 const HEAD = { headers: { 'User-Agent': 'Mozilla/5.0 (CarteiraNickel)', Origin: 'https://www.j8.com.br', Referer: 'https://www.j8.com.br/' } };
 const LISTA = ['Codigo', 'Categoria', 'CategoriaImovel', 'TituloImovel', 'Bairro', 'Cidade', 'Dormitorios', 'Suites', 'Vagas',
   'AreaPrivativa', 'AreaTotal', 'ValorVenda', 'OcultarPrecoSite', 'FotoDestaquePequena', 'Empreendimento', 'Status', 'DataAtualizacao'];
-const DETALHE = ['Codigo', 'Descricao', 'ValorCondominio', 'ValorIptu', 'BanheiroSocialQtd', 'AreaTerreno', 'AnoConstrucao',
-  { Foto: ['Foto', 'Ordem', 'ExibirSite'] }];
+// características "Sim/Nao" do anúncio → rótulo no PDF de informações
+const ITENS_IMOVEL = {
+  SuiteMaster: 'Suíte master', LivingHall: 'Living hall', SalaEstar: 'Sala de estar', SalaJantar: 'Sala de jantar', EstarIntimo: 'Estar íntimo',
+  Escritorio: 'Escritório', HomeTheater: 'Home theater', Lareira: 'Lareira', Lavabo: 'Lavabo', CopaCozinha: 'Copa/cozinha', Despensa: 'Despensa',
+  AreaServico: 'Área de serviço', Elevador: 'Elevador privativo', PisoAquecido: 'Piso aquecido', ArCentral: 'Ar central', AquecimentoCentral: 'Aquecimento central',
+  Piscina: 'Piscina', PiscinaAquecida: 'Piscina aquecida', Churrasqueira: 'Churrasqueira', EspacoGourmet: 'Espaço gourmet', Sauna: 'Sauna', Adega: 'Adega',
+  Deck: 'Deck', Jardim: 'Jardim', Quintal: 'Quintal', Terraco: 'Terraço', Sacada: 'Sacada', Mezanino: 'Mezanino', Edicula: 'Edícula', Biblioteca: 'Biblioteca'
+};
+const ITENS_COND = {
+  Portaria24Hrs: 'Portaria 24h', Guarita: 'Guarita', SalaoFestas: 'Salão de festas', SalaFitness: 'Academia', Playground: 'Playground',
+  Brinquedoteca: 'Brinquedoteca', SalaoJogos: 'Salão de jogos', QuadraTenis: 'Quadra de tênis', QuadraEsportes: 'Quadra poliesportiva',
+  Bosque: 'Bosque', Spa: 'Spa', Cinema: 'Cinema', PetCare: 'Pet place', GeradorEnergia: 'Gerador'
+};
+const DETALHE = ['Codigo', 'Descricao', 'ValorCondominio', 'ValorIptu', 'BanheiroSocialQtd', 'AreaTerreno', 'AreaTotal', 'AreaPrivativa', 'AnoConstrucao',
+  'Imediacoes', 'Mobiliado', 'Closet', ...Object.keys(ITENS_IMOVEL), ...Object.keys(ITENS_COND), { Foto: ['Foto', 'Ordem', 'ExibirSite'] }];
+const sim = v => /^sim$/i.test(String(v || '').trim());
 const OUT = new URL('../dados/j8.json', import.meta.url);
 const DIR = new URL('../dados/j8/', import.meta.url);
 
@@ -85,7 +99,7 @@ const fila = [];
 for (const i of imoveis) {
   let atual = null;
   try { atual = JSON.parse(await readFile(new URL(i.c + '.json', DIR), 'utf8')); } catch {}
-  if (!atual || !('texto' in atual) || atual.du !== i.du || atual.p !== i.p) fila.push(i);
+  if (!atual || !('itens' in atual) || atual.du !== i.du || atual.p !== i.p) fila.push(i);
 }
 let feitos = 0, falhas = 0;
 async function trabalhador() {
@@ -98,7 +112,11 @@ async function trabalhador() {
       const { intro, texto, destaques } = leDescricao(d.Descricao);
       const det = Object.assign({}, i, {
         cond: num(d.ValorCondominio), iptu: num(d.ValorIptu), bh: num(d.BanheiroSocialQtd),
-        at: Math.round(num(d.AreaTerreno)), ano: num(d.AnoConstrucao), intro, texto, destaques, fotos
+        at: num(d.AreaTerreno), ap: num(d.AreaPrivativa), atot: num(d.AreaTotal), ano: num(d.AnoConstrucao),
+        im: String(d.Imediacoes || '').trim(), mob: sim(d.Mobiliado), cl: num(d.Closet),
+        itens: Object.entries(ITENS_IMOVEL).filter(([k]) => sim(d[k])).map(([, v]) => v),
+        condItens: Object.entries(ITENS_COND).filter(([k]) => sim(d[k])).map(([, v]) => v),
+        intro, texto, destaques, fotos
       });
       await writeFile(new URL(i.c + '.json', DIR), JSON.stringify(det));
       feitos++;

@@ -192,7 +192,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .j8box{border:1px solid var(--orline);background:linear-gradient(180deg,rgba(255,90,31,.08),rgba(255,90,31,.02));border-radius:18px;padding:16px}
 .j8box .lbl{color:var(--or2)}
 .j8l{display:flex;flex-direction:column;gap:10px}
-.j8c{display:flex;gap:14px;background:var(--sheet);border:1px solid var(--line2);border-radius:14px;overflow:hidden;transition:border-color .15s,transform .15s}
+.j8c{display:flex;flex-direction:column;background:var(--sheet);border:1px solid var(--line2);border-radius:14px;overflow:hidden;transition:border-color .15s,transform .15s}
 .j8c:hover{border-color:var(--orline);transform:translateY(-1px)}
 .j8c .ph{display:block;width:136px;flex-shrink:0;background:#1a2440 center/cover no-repeat;min-height:112px}
 .j8c .bd{flex:1;min-width:0;padding:11px 14px 11px 0;display:flex;flex-direction:column;gap:2px}
@@ -200,11 +200,15 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .j8c .t2{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .j8c .sp{font-size:13.5px;color:var(--text2);margin-top:2px}
 .j8c .pr{font-weight:800;font-size:16px;margin-top:4px}
-.j8c .ft{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
-.j8c .go,.j8c .bk{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:13.5px;white-space:nowrap;padding:7px 11px;border-radius:9px}
-.j8c .go{color:var(--or2)}
-.j8c .go:hover{background:var(--orbg)}
+.j8top{display:flex;gap:14px}
+.j8act{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-top:1px solid var(--line)}
+.j8c .go,.j8c .bk{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:13.5px;white-space:nowrap;padding:8px 12px;border-radius:9px}
 .j8c .bk{color:#fff;background:linear-gradient(135deg,var(--or),var(--or2))}
+.j8c .bk.ghost{background:none;border:1px solid var(--line2);color:var(--text)}
+.j8c .bk.ghost:hover{border-color:var(--orline)}
+.j8c .bk.ready{background:linear-gradient(135deg,#1fbf78,#3ddc97)}
+.j8c .go{color:var(--or2);margin-left:auto}
+.j8c .go:hover{background:var(--orbg)}
 .j8c .go svg,.j8c .bk svg{width:15px;height:15px}
 .j8n{font:700 11px 'Geist Mono',monospace;letter-spacing:.06em;color:var(--or2);border:1px solid var(--orline);border-radius:99px;padding:3px 8px;white-space:nowrap}
 
@@ -270,8 +274,10 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
   .info{grid-template-columns:1fr;gap:3px}
   .info dd{margin-bottom:10px}
   .j8box{padding:12px}
-  .j8c .ph{width:104px;min-height:118px}
-  .j8c{gap:11px}
+  .j8c .ph{width:104px;min-height:104px}
+  .j8top{gap:11px}
+  .j8act .bk{flex:1 1 0}
+  .j8c .go{flex-basis:100%;margin-left:0;padding:6px}
   .rhead .big{font-size:34px}
 }
 @media (max-width:520px){
@@ -735,18 +741,191 @@ function j8Match(c) {
   j8Cache.set(key, res);
   return res;
 }
+// ── FOTOS E INFORMAÇÕES DO IMÓVEL J8 ──
+const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
+const ICON_DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
+const j8Det = new Map();
+function j8Detalhe(c) {
+  if (!j8Det.has(c)) j8Det.set(c, fetch(`dados/j8/${c}.json`, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => { j8Det.set(c, d); return d; }, e => { j8Det.delete(c); throw e; }));
+  return Promise.resolve(j8Det.get(c));
+}
+const slugify = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+// o servidor da J8 não libera as fotos para download direto; o images.weserv.nl entrega a mesma foto liberada
+const fotoLiberada = u => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) + '&output=jpg&q=95';
+// miniatura nítida e leve para o card (a da J8 tem só 96 px)
+const miniatura = f => 'https://images.weserv.nl/?url=' + encodeURIComponent(f.replace(/_p(\.\w+)$/, '$1').replace(/^https?:\/\//, '')) + '&w=320&h=320&fit=cover&q=80';
+const fotosProntas = new Map(); // celular: as fotos ficam prontas e o 2º toque abre "Salvar imagens"
+const telaDeToque = matchMedia('(pointer:coarse)').matches;
+function salvarArquivos(files) {
+  files.forEach((f, i) => setTimeout(() => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }, i * 350));
+}
+async function baixarFotos(btn, c) {
+  if (btn.dataset.busy) return;
+  const prontas = fotosProntas.get(c);
+  if (prontas) {
+    try { await navigator.share({ files: prontas }); }
+    catch (e) { if (e.name !== 'AbortError') salvarArquivos(prontas); }
+    return;
+  }
+  btn.dataset.busy = '1';
+  const original = btn.innerHTML;
+  try {
+    const d = await j8Detalhe(c);
+    const fotos = (d.fotos || []).slice(0, 10);
+    if (!fotos.length) throw new Error('sem fotos');
+    const base = `${slugify(d.b)}-${d.c}`;
+    let n = 0;
+    btn.innerHTML = `Baixando 0/${fotos.length}…`;
+    const res = await Promise.allSettled(fotos.map(async (u, k) => {
+      const r = await fetch(fotoLiberada(u)); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const b = await r.blob(); btn.innerHTML = `Baixando ${++n}/${fotos.length}…`;
+      return new File([b], `${base}-${String(k + 1).padStart(2, '0')}.jpg`, { type: 'image/jpeg' });
+    }));
+    const files = res.filter(r => r.status === 'fulfilled').map(r => r.value);
+    if (!files.length) throw new Error('nenhuma foto');
+    if (telaDeToque && navigator.canShare && navigator.canShare({ files })) {
+      fotosProntas.set(c, files);
+      btn.classList.add('ready'); btn.innerHTML = `${ICON_DL}Salvar ${files.length} fotos`;
+      toast('Fotos prontas. Toque em “Salvar fotos” e escolha “Salvar imagens”.');
+    } else {
+      salvarArquivos(files); btn.innerHTML = original;
+      toast(`${files.length} ${plural(files.length, 'foto baixada', 'fotos baixadas')}${files.length < fotos.length ? ` (${fotos.length - files.length} falharam)` : ''}.`);
+    }
+  } catch (e) { btn.innerHTML = original; toast('Não consegui baixar as fotos agora. Tente de novo.'); }
+  delete btn.dataset.busy;
+}
+
+let jsPDFProm = null;
+function carregaJsPDF() {
+  if (window.jspdf) return Promise.resolve(window.jspdf.jsPDF);
+  if (!jsPDFProm) jsPDFProm = new Promise((ok, err) => {
+    const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = () => ok(window.jspdf.jsPDF); s.onerror = () => { jsPDFProm = null; err(new Error('jsPDF')); }; document.head.appendChild(s);
+  });
+  return jsPDFProm;
+}
+async function baixarInfo(btn, c) {
+  try {
+    // se já está tudo carregado, gera na hora (o celular só deixa baixar logo após o toque)
+    let d = j8Det.get(c);
+    if (!d || d instanceof Promise || !window.jspdf) {
+      const original = btn.innerHTML; btn.innerHTML = 'Preparando…';
+      [d] = await Promise.all([j8Detalhe(c), carregaJsPDF()]);
+      btn.innerHTML = original;
+    }
+    gerarInfoPDF(d);
+  } catch (e) { toast('Não consegui gerar o PDF agora. Tente de novo.'); }
+}
+function gerarInfoPDF(d) {
+  const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, M = 18, FIM = 272;
+  const NAVY = [10, 21, 48], OR = [255, 90, 31], INK = [40, 48, 68], STONE = [118, 124, 140], PAPER = [245, 243, 238];
+  const limpa = s => String(s || '').replace(/[^\x20-\x7E -ÿ–—‘’“”•…]/g, '').replace(/\s+/g, ' ').trim();
+  const area = v => v ? v.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' m²' : '';
+  const moeda = v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const tipo = J8_ROTULO[d.t] || 'Imóvel';
+  const ehTerreno = /TERRENO|COMERCIAL/.test(d.t);
+  const prep = /^(vila|cidade)\b/i.test(d.b) ? 'na' : 'no';
+  const emp = d.e && /[a-zà-ú]/.test(d.e) ? d.e : (d.e || '').toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase());
+  const rotulo = (txt, x, y) => { doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...STONE); doc.setCharSpace(0.6); doc.text(txt.toUpperCase(), x, y); doc.setCharSpace(0); };
+  const secao = (txt, y) => { doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...OR); doc.setCharSpace(0.9); doc.text(txt.toUpperCase(), M, y); doc.setCharSpace(0); doc.setDrawColor(228, 225, 218); doc.setLineWidth(0.25); doc.line(M + doc.getTextWidth(txt.toUpperCase()) + 9, y - 1.2, W - M, y - 1.2); };
+
+  // faixa do topo
+  doc.setFillColor(...NAVY); doc.rect(0, 0, W, 28, 'F');
+  doc.setFillColor(...OR); doc.rect(M, 12.2, 2.4, 2.4, 'F');
+  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setCharSpace(1.4); doc.text('MATHEUS NICKEL', M + 5.5, 14.5);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(170, 180, 205); doc.setCharSpace(0.6); doc.text('REF. ' + d.c, W - M, 14.5, { align: 'right' }); doc.setCharSpace(0);
+
+  // título
+  let y = 44;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...OR); doc.setCharSpace(0.9);
+  doc.text(limpa(`${tipo} · ${d.b}${d.ci ? ', ' + d.ci : ''}`).toUpperCase(), M, y); doc.setCharSpace(0);
+  y += 10; doc.setFont('helvetica', 'normal'); doc.setFontSize(23); doc.setTextColor(...NAVY);
+  const tit = doc.splitTextToSize(limpa(emp || `${tipo} ${prep} ${d.b}`), W - 2 * M);
+  doc.text(tit, M, y); y += (tit.length - 1) * 9.5;
+  if (emp) { y += 7; doc.setFontSize(11.5); doc.setTextColor(...STONE); doc.text(limpa(`${tipo} ${prep} ${d.b}${d.im ? ' · Imediações: ' + d.im : ''}`), M, y); }
+
+  // valor
+  y += 9; doc.setFillColor(...PAPER); doc.roundedRect(M, y, W - 2 * M, 25, 2.5, 2.5, 'F');
+  rotulo('Valor do imóvel', M + 7, y + 8.5);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(19); doc.setTextColor(...NAVY); doc.text(d.p ? moeda(d.p) : 'Sob consulta', M + 7, y + 18.5);
+  const extras = [d.cond ? ['Condomínio', moeda(d.cond)] : null, d.iptu ? ['IPTU', moeda(d.iptu)] : null].filter(Boolean);
+  extras.forEach(([l, v], k) => { const x = W - M - 7 - (extras.length - 1 - k) * 42; doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...STONE); doc.setCharSpace(0.6); doc.text(l.toUpperCase(), x, y + 8.5, { align: 'right' }); doc.setCharSpace(0); doc.setFont('helvetica', 'normal'); doc.setFontSize(11.5); doc.setTextColor(...NAVY); doc.text(v, x, y + 18.5, { align: 'right' }); });
+  y += 25;
+
+  // números principais
+  const nums = [
+    !ehTerreno && d.q ? ['Dormitórios', String(d.q)] : null, !ehTerreno && d.s ? ['Suítes', String(d.s)] : null,
+    !ehTerreno && d.v ? ['Vagas', String(d.v)] : null, !ehTerreno && d.bh ? ['Banheiros', String(d.bh)] : null,
+    d.ap || d.a ? [ehTerreno ? 'Área' : 'Área privativa', area(d.ap || d.a)] : null,
+    d.atot && Math.round(d.atot) !== Math.round(d.ap || d.a) ? ['Área total', area(d.atot)] : null,
+    d.at && d.at > (d.ap || d.a) ? ['Terreno', area(d.at)] : null,
+    d.ano && d.ano > 1900 && d.ano <= new Date().getFullYear() + 5 ? ['Ano de construção', String(d.ano)] : null
+  ].filter(Boolean).slice(0, 8);
+  y += 11; secao('Principais', y); y += 9;
+  const cw = (W - 2 * M) / 4;
+  nums.forEach(([l, v], k) => { const x = M + (k % 4) * cw, yy = y + Math.floor(k / 4) * 15; rotulo(l, x, yy); doc.setFont('helvetica', 'normal'); doc.setFontSize(13); doc.setTextColor(...NAVY); doc.text(v, x, yy + 6.5); });
+  y += Math.ceil(nums.length / 4) * 15;
+
+  // características do imóvel e do condomínio
+  const lista = (titulo, itens, max) => {
+    itens = itens.slice(0, max); if (!itens.length || y > FIM - 20) return;
+    y += 6; secao(titulo, y); y += 8;
+    const cols = 3, w = (W - 2 * M) / cols;
+    itens.forEach((t, k) => { const x = M + (k % cols) * w, yy = y + Math.floor(k / cols) * 6.6; doc.setFillColor(...OR); doc.rect(x, yy - 1.6, 2.6, 0.5, 'F'); doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...INK); doc.text(limpa(t), x + 4.5, yy); });
+    y += Math.ceil(itens.length / cols) * 6.6;
+  };
+  // só o que chama atenção, na ordem de impacto (sala de estar, copa etc. ficam de fora)
+  const ORDEM = ['Mobiliado', 'Suíte master', 'Closet', 'Piscina aquecida', 'Piscina', 'Elevador privativo', 'Piso aquecido', 'Lareira', 'Home theater',
+    'Espaço gourmet', 'Churrasqueira', 'Adega', 'Sauna', 'Aquecimento central', 'Ar central', 'Escritório', 'Living hall', 'Estar íntimo', 'Jardim', 'Deck',
+    'Terraço', 'Sacada', 'Mezanino', 'Edícula', 'Biblioteca', 'Quintal', 'Lavabo'];
+  const caract = [d.mob ? 'Mobiliado' : '', d.cl ? 'Closet' : '', ...(d.itens || [])].filter(t => ORDEM.includes(t));
+  caract.sort((a, b) => ORDEM.indexOf(a) - ORDEM.indexOf(b));
+  if (d.cl > 1) caract[caract.indexOf('Closet')] = `${d.cl} closets`;
+  if (caract.includes('Piscina aquecida')) caract.splice(caract.indexOf('Piscina'), caract.includes('Piscina') ? 1 : 0);
+  lista('Características', caract, 9);
+  lista('No condomínio', d.condItens || [], 6);
+
+  // diferenciais do anúncio (sem repetir os números)
+  const repete = /\b(m²|m2|suítes?|vagas?|quartos?|dormit|banheiros?|terreno|área)\b/i;
+  const dif = (d.destaques || []).map(limpa).filter(t => t && !(repete.test(t) && t.length < 45) && !caract.some(x => norm(x) === norm(t))).slice(0, 5);
+  if (dif.length && y < FIM - 20) {
+    y += 6; secao('Diferenciais', y); y += 8;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...INK);
+    for (const t of dif) {
+      const ls = doc.splitTextToSize(t, W - 2 * M - 5);
+      if (y + ls.length * 5 > FIM) break;
+      doc.setFillColor(...OR); doc.rect(M, y - 1.6, 2.6, 0.5, 'F'); doc.text(ls, M + 4.5, y); y += ls.length * 5 + 1.6;
+    }
+  }
+
+  // rodapé
+  doc.setDrawColor(228, 225, 218); doc.setLineWidth(0.25); doc.line(M, 280, W - M, 280);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...NAVY); doc.text('Matheus Nickel', M, 286);
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(...STONE); doc.setFont('helvetica', 'bold'); const wNome = doc.getTextWidth('Matheus Nickel'); doc.setFont('helvetica', 'normal'); doc.text('·  Corretor de imóveis', M + wNome + 2.5, 286);
+  doc.setFontSize(7.5); doc.text('Valores e disponibilidade sujeitos a alteração.', W - M, 286, { align: 'right' });
+
+  doc.save(`informacoes-${slugify(d.b)}-${d.c}.pdf`);
+}
+
 function j8Card(i, c) {
   const tipo = J8_ROTULO[i.t] || i.t;
   const spec = [i.a ? i.a + ' m²' : '', J8_TIPO[i.t] === 'Terreno' || J8_TIPO[i.t] === 'Comercial' ? '' : i.q ? i.q + plural(i.q, ' quarto', ' quartos') + (i.s ? ` (${i.s} ${plural(i.s, 'suíte', 'suítes')})` : '') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
-  const book = `book.html?c=${encodeURIComponent(i.c)}&n=${encodeURIComponent(firstName(c.nome))}`;
+  const prontas = fotosProntas.get(i.c);
   return `<div class="j8c">
-    <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(i.f.replace(/_p(\.\w+)$/, '$1'))}')" aria-label="Abrir anúncio na J8"></a>
-    <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}</div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>
-      <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div>
-      <div class="ft">
-        <a class="bk" href="${esc(book)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Book</a>
-        <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
-      </div></div></div>`;
+    <div class="j8top">
+      <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(i.f))}')" aria-label="Abrir anúncio na J8"></a>
+      <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}</div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>
+        <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div></div>
+    </div>
+    <div class="j8act">
+      <button class="bk${prontas ? ' ready' : ''}" data-act="j8-fotos" data-c="${esc(i.c)}">${ICON_DL}${prontas ? `Salvar ${prontas.length} fotos` : 'Baixar fotos'}</button>
+      <button class="bk ghost" data-act="j8-info" data-c="${esc(i.c)}">${ICON_DOC}Baixar informações</button>
+      <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+    </div></div>`;
 }
 function j8Section(c) {
   if (j8Err) return `<span class="lbl">Imóveis da J8</span><p class="muted" style="font-size:14px">Não consegui carregar o estoque da J8 agora. Tente de novo mais tarde.</p>`;
@@ -755,6 +934,8 @@ function j8Section(c) {
   const d = new Date(j8.atualizadoEm);
   const quando = isNaN(d) ? '' : `Estoque da J8 de ${pad(d.getDate())}/${pad(d.getMonth() + 1)} · ${j8.total.toLocaleString('pt-BR')} imóveis à venda`;
   const titulo = total > 3 ? `Na J8 · os 3 melhores de ${total} para ${esc(firstName(c.nome))}` : total ? `Na J8 · ${total} ${plural(total, 'imóvel', 'imóveis')} para ${esc(firstName(c.nome))}` : 'Na J8';
+  top.forEach(i => j8Detalhe(i.c).catch(() => {})); // deixa pronto para o "Baixar informações" sair na hora
+  if (top.length) carregaJsPDF().catch(() => {});
   const corpo = top.length ? `<div class="j8l">${top.map(i => j8Card(i, c)).join('')}</div>`
     : `<p class="muted" style="font-size:14px">Nenhum imóvel à venda na J8 dentro desse perfil agora. Tente abrir mais os bairros, a metragem ou o valor.</p>`;
   return `<span class="lbl">${titulo}</span>${corpo}<div class="muted xs" style="margin-top:8px">${quando}</div>`;
@@ -1158,6 +1339,8 @@ document.addEventListener('click', e => {
     case 'f-vagas': form.vagas = +v; renderFormChips(); break;
     case 'f-origem': form.origem = form.origem === v ? '' : v; renderFormChips(); break;
     case 'f-save': saveForm(); break;
+    case 'j8-fotos': baixarFotos(el, el.dataset.c); break;
+    case 'j8-info': baixarInfo(el, el.dataset.c); break;
   }
 });
 
