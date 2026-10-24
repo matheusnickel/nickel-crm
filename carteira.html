@@ -185,6 +185,23 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .pill.comprou{background:rgba(61,220,151,.14);color:var(--ok)}
 .pill.ativo{background:var(--orbg);color:var(--or2)}
 
+/* imóveis da J8 na ficha */
+.j8box{border:1px solid var(--orline);background:linear-gradient(180deg,rgba(255,90,31,.08),rgba(255,90,31,.02));border-radius:18px;padding:16px}
+.j8box .lbl{color:var(--or2)}
+.j8l{display:flex;flex-direction:column;gap:10px}
+.j8c{display:flex;gap:14px;background:var(--sheet);border:1px solid var(--line2);border-radius:14px;overflow:hidden;transition:border-color .15s,transform .15s}
+.j8c:hover{border-color:var(--orline);transform:translateY(-1px)}
+.j8c .ph{width:136px;flex-shrink:0;background:#1a2440 center/cover no-repeat;min-height:112px}
+.j8c .bd{flex:1;min-width:0;padding:11px 14px 11px 0;display:flex;flex-direction:column;gap:2px}
+.j8c .t1{font-weight:700;font-size:15.5px;letter-spacing:-.01em}
+.j8c .t2{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.j8c .sp{font-size:13.5px;color:var(--text2);margin-top:2px}
+.j8c .ft{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
+.j8c .pr{font-weight:800;font-size:16px}
+.j8c .go{display:inline-flex;align-items:center;gap:5px;color:var(--or2);font-weight:700;font-size:13.5px;white-space:nowrap}
+.j8c .go svg{width:15px;height:15px}
+.j8n{font:700 11px 'Geist Mono',monospace;letter-spacing:.06em;color:var(--or2);border:1px solid var(--orline);border-radius:99px;padding:3px 8px;white-space:nowrap}
+
 /* folhas (modais) */
 .ov{position:fixed;inset:0;z-index:50;background:rgba(2,5,14,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px}
 .sheet{width:100%;max-width:600px;max-height:calc(100dvh - 48px);background:var(--sheet);border:1px solid var(--line2);border-radius:24px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.6)}
@@ -246,6 +263,9 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
   .sheet{max-width:none;border-radius:24px 24px 0 0;max-height:94dvh;border-bottom:none}
   .info{grid-template-columns:1fr;gap:3px}
   .info dd{margin-bottom:10px}
+  .j8box{padding:12px}
+  .j8c .ph{width:104px;min-height:118px}
+  .j8c{gap:11px}
   .rhead .big{font-size:44px}
 }
 @media (max-width:520px){
@@ -400,10 +420,22 @@ const BAIRROS_CWB = [
   'Mossunguê','Mercês','Novo Mundo','Orleans','Parolin','Pilarzinho','Pinheirinho',
   'Portão','Prado Velho','Rebouças','Riviera','Santa Cândida','Santa Felicidade','Santa Quitéria','Santo Inácio',
   'São Braz','São Francisco','São João','São Lourenço','São Miguel','Seminário','Sítio Cercado','Taboão','Tarumã',
-  'Tatuquara','Tingui','Uberaba','Umbará','Vila Izabel','Vista Alegre','Xaxim'
+  'Tatuquara','Tingui','Uberaba','Umbará','Vila Izabel','Vista Alegre','Xaxim','Bom Retiro','Champagnat','Alphaville Graciosa'
 ];
 // nomes que o mercado usa para o mesmo lugar
-const ALIASES = [['Ecoville', 'Mossunguê'], ['CIC', 'Cidade Industrial']];
+const ALIASES = [['Ecoville', 'Mossunguê'], ['CIC', 'Cidade Industrial'], ['Alto da XV', 'Alto da Rua XV'], ['Bigorrilho', 'Champagnat']];
+
+// categorias do estoque da J8 -> tipos da Carteira
+const J8_TIPO = {
+  'APARTAMENTO': 'Apartamento', 'APARTAMENTO GARDEN': 'Apartamento', 'COBERTURA': 'Cobertura',
+  'CASA': 'Casa', 'CASA CONDOMINIO FECHADO': 'Casa', 'SOBRADO': 'Casa', 'SOBRADO CONDOMINIO FECHADO': 'Casa',
+  'TERRENO': 'Terreno', 'TERRENO CONDOMINIO FECHADO': 'Terreno', 'CONJUNTO/COMERCIAL/LOJA': 'Comercial'
+};
+const J8_ROTULO = {
+  'APARTAMENTO': 'Apartamento', 'APARTAMENTO GARDEN': 'Apartamento garden', 'COBERTURA': 'Cobertura', 'CASA': 'Casa',
+  'CASA CONDOMINIO FECHADO': 'Casa em condomínio', 'SOBRADO': 'Sobrado', 'SOBRADO CONDOMINIO FECHADO': 'Sobrado em condomínio',
+  'TERRENO': 'Terreno', 'TERRENO CONDOMINIO FECHADO': 'Terreno em condomínio', 'CONJUNTO/COMERCIAL/LOJA': 'Comercial'
+};
 
 // ── UTIL ──
 const $ = s => document.querySelector(s);
@@ -487,6 +519,9 @@ function cleanClient(o) {
     bairros: Array.isArray(o.bairros) ? o.bairros.filter(Boolean) : [],
     valorMax: Number(o.valorMax) || 0,
     quartos: Number(o.quartos) || 0,
+    vagas: Number(o.vagas) || 0,
+    areaMin: Number(o.areaMin) || 0,
+    areaMax: Number(o.areaMax) || 0,
     obs: String(o.obs || ''),
     origem: String(o.origem || ''),
     status: ['ativo', 'pausado', 'comprou'].includes(o.status) ? o.status : 'ativo',
@@ -661,6 +696,71 @@ function buildMsg(c) {
 // Na base de teste os telefones são inventados: o WhatsApp abre sem número, só com a mensagem.
 const waLink = (c, msg) => `https://wa.me/${TESTE ? '' : waNumber(c.whats)}` + (msg ? '?text=' + encodeURIComponent(msg) : '');
 
+// ── ESTOQUE J8 ──
+// dados/j8.json é atualizado todo dia pelo GitHub Actions (scripts/j8-import.mjs)
+let j8 = null, j8Err = false;
+async function loadJ8() {
+  try { const r = await fetch('dados/j8.json', { cache: 'no-cache' }); if (!r.ok) throw new Error('HTTP ' + r.status); j8 = await r.json(); }
+  catch (e) { j8Err = true; }
+  renderClientes();
+  if (ui.sheet && ui.sheet.kind === 'ficha') renderFicha(ui.sheet.id);
+}
+function areaAlvo(c) {
+  if (c.areaMin && c.areaMax) return (c.areaMin + c.areaMax) / 2;
+  if (c.areaMin) return c.areaMin * 1.15;
+  if (c.areaMax) return c.areaMax * 0.85;
+  return 0;
+}
+// -1 = não serve. Quanto maior, melhor: preço perto do teto do cliente e metragem perto da que ele quer.
+function j8Score(c, i) {
+  const tipo = J8_TIPO[i.t]; if (!tipo) return -1;
+  if (c.tipos.length && !c.tipos.includes(tipo)) return -1;
+  if (!wantsBairro(c, i.b)) return -1;
+  if (c.valorMax && i.p && i.p > c.valorMax * 1.1) return -1;
+  const temQuartos = tipo !== 'Terreno' && tipo !== 'Comercial';
+  if (temQuartos && c.quartos && i.q < c.quartos) return -1;
+  if (temQuartos && c.vagas && i.v < c.vagas) return -1;
+  if (c.areaMin && i.a && i.a < c.areaMin * 0.9) return -1;
+  if (c.areaMax && i.a > c.areaMax * 1.15) return -1;
+  let s = 0;
+  if (c.valorMax && i.p) { const r = i.p / c.valorMax; s += r <= 1 ? Math.max(0, 40 - Math.abs(0.88 - r) * 70) : Math.max(0, 35 - (r - 1) * 300); }
+  else s += i.p ? 22 : 8; // preço sob consulta fica por último
+  const alvo = areaAlvo(c);
+  s += alvo && i.a ? Math.max(0, 30 - Math.abs(i.a - alvo) / alvo * 60) : 15;
+  if (temQuartos && c.quartos && i.q <= c.quartos + 1) s += 8;
+  if (temQuartos && c.vagas && i.v <= c.vagas + 1) s += 4;
+  return s;
+}
+const j8Cache = new Map();
+function j8Match(c) {
+  if (!j8) return { top: [], total: 0 };
+  const key = JSON.stringify([c.tipos, c.bairros, c.valorMax, c.quartos, c.vagas, c.areaMin, c.areaMax, j8.atualizadoEm]);
+  if (j8Cache.has(key)) return j8Cache.get(key);
+  const all = j8.imoveis.map(i => ({ i, s: j8Score(c, i) })).filter(x => x.s >= 0).sort((a, b) => b.s - a.s);
+  const res = { top: all.slice(0, 3).map(x => x.i), total: all.length };
+  j8Cache.set(key, res);
+  return res;
+}
+function j8Card(i) {
+  const tipo = J8_ROTULO[i.t] || i.t;
+  const spec = [i.a ? i.a + ' m²' : '', J8_TIPO[i.t] === 'Terreno' || J8_TIPO[i.t] === 'Comercial' ? '' : i.q ? i.q + plural(i.q, ' quarto', ' quartos') + (i.s ? ` (${i.s} ${plural(i.s, 'suíte', 'suítes')})` : '') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
+  return `<a class="j8c" href="${esc(i.u)}" target="_blank" rel="noopener">
+    <div class="ph" style="background-image:url('${esc(i.f)}')"></div>
+    <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}</div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>
+      <div class="ft"><span class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</span><span class="go">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span></div></div></a>`;
+}
+function j8Section(c) {
+  if (j8Err) return `<span class="lbl">Imóveis da J8</span><p class="muted" style="font-size:14px">Não consegui carregar o estoque da J8 agora. Tente de novo mais tarde.</p>`;
+  if (!j8) return `<span class="lbl">Imóveis da J8</span><p class="muted" style="font-size:14px">Carregando o estoque da J8…</p>`;
+  const { top, total } = j8Match(c);
+  const d = new Date(j8.atualizadoEm);
+  const quando = isNaN(d) ? '' : `Estoque da J8 de ${pad(d.getDate())}/${pad(d.getMonth() + 1)} · ${j8.total.toLocaleString('pt-BR')} imóveis à venda`;
+  const titulo = total > 3 ? `Na J8 · os 3 melhores de ${total} para ${esc(firstName(c.nome))}` : total ? `Na J8 · ${total} ${plural(total, 'imóvel', 'imóveis')} para ${esc(firstName(c.nome))}` : 'Na J8';
+  const corpo = top.length ? `<div class="j8l">${top.map(j8Card).join('')}</div>`
+    : `<p class="muted" style="font-size:14px">Nenhum imóvel à venda na J8 dentro desse perfil agora. Tente abrir mais os bairros, a metragem ou o valor.</p>`;
+  return `<span class="lbl">${titulo}</span>${corpo}<div class="muted xs" style="margin-top:8px">${quando}</div>`;
+}
+
 // ── RENDER: QUEM PROCURA ──
 function renderPTipos() {
   $('#p-tipos').innerHTML = TIPOS.map(t => `<button class="chip${ui.p.tipo === t ? ' on' : ''}" data-act="p-tipo" data-v="${t}">${t}</button>`).join('');
@@ -783,7 +883,8 @@ function renderClientes() {
   if (!rows.length) { $('#c-list').innerHTML = `<div class="empty"><h3>Ninguém encontrado</h3><p>${q ? 'Nenhum cliente com “' + esc(ui.c.q) + '” neste filtro.' : 'Nenhum cliente neste filtro.'}</p></div>`; return; }
   $('#c-list').innerHTML = rows.map(c => {
     const d = diasSemEnvio(c);
-    const side = c.status !== 'ativo' ? '' : d === null ? `<span class="dot or"></span><span class="t">Nunca recebeu</span>` : `<span class="dot${d >= ALIMENTAR_DIAS ? ' warn' : ' ok'}"></span><span class="t">${haDias(d)}</span>`;
+    const nj8 = c.status === 'ativo' ? j8Match(c).total : 0;
+    const side = (nj8 ? `<span class="j8n">${nj8} na J8</span>` : '') + (c.status !== 'ativo' ? '' : d === null ? `<span class="dot or"></span><span class="t">Nunca recebeu</span>` : `<span class="dot${d >= ALIMENTAR_DIAS ? ' warn' : ' ok'}"></span><span class="t">${haDias(d)}</span>`);
     const meta = [c.tipos.join(' · '), c.bairros.join(', '), c.valorMax ? 'até ' + fmtValor(c.valorMax) : ''].filter(Boolean).join(' · ');
     return `<button class="crow" data-act="ficha" data-id="${c.id}"><div class="av">${esc(initials(c.nome))}</div><div class="cm"><div class="nm">${esc(c.nome)}${c.status !== 'ativo' ? `<span class="pill ${c.status}">${c.status === 'pausado' ? 'Pausado' : 'Comprou'}</span>` : ''}</div><div class="meta">${esc(meta)}</div></div><div class="cs">${side}</div></button>`;
   }).join('');
@@ -838,13 +939,16 @@ function renderFicha(id, confirmDel) {
       ${wa ? `<a class="btn-or" href="${esc(waLink(c))}" target="_blank" rel="noopener">${WA_ICON.replace('<svg', '<svg width="18" height="18"')}Abrir conversa</a>` : ''}
       <button class="btn-ghost" data-act="edit" data-id="${c.id}">Editar ficha</button>
     </div>
+    <div class="j8box">${j8Section(c)}</div>
     <div><span class="lbl">Situação</span><div class="seg">${[['ativo', 'Ativo'], ['pausado', 'Pausado'], ['comprou', 'Comprou']].map(([v, l]) => `<button class="${c.status === v ? 'on' : ''}" data-act="status" data-id="${c.id}" data-v="${v}">${l}</button>`).join('')}</div></div>
     <div><span class="lbl">O que procura</span>
       <dl class="info">
         <dt>Tipo</dt><dd>${esc(c.tipos.join(', ') || '—')}</dd>
         <dt>Bairros</dt><dd><div class="bchips">${c.bairros.map(b => `<span class="b on">${esc(b)}</span>`).join('') || '—'}</div></dd>
         <dt>Até quanto investe</dt><dd>${c.valorMax ? 'R$ ' + c.valorMax.toLocaleString('pt-BR') : '—'}</dd>
+        <dt>Metragem</dt><dd>${c.areaMin && c.areaMax ? `de ${c.areaMin} a ${c.areaMax} m²` : c.areaMin ? `a partir de ${c.areaMin} m²` : c.areaMax ? `até ${c.areaMax} m²` : 'Tanto faz'}</dd>
         <dt>Quartos</dt><dd>${c.quartos ? c.quartos + ' ou mais' : 'Tanto faz'}</dd>
+        <dt>Vagas</dt><dd>${c.vagas ? c.vagas + ' ou mais' : 'Tanto faz'}</dd>
         <dt>O que mais busca</dt><dd>${esc(c.obs) || '—'}</dd>
         <dt>De onde veio</dt><dd>${esc(c.origem) || '—'}</dd>
       </dl>
@@ -877,7 +981,14 @@ function openForm(id) {
     <div><span class="lbl">Bairros *<span class="hint">todos que ele aceita</span></span><div class="chips" id="f-bairros" style="margin-bottom:10px"></div>
       <div class="ta"><input id="f-bairro" placeholder="Digite um bairro e escolha na lista" autocomplete="off" aria-label="Adicionar bairro"><div class="dd hidden" id="f-bairro-dd"></div></div><div class="err" id="e-bairros"></div></div>
     <div class="fl"><label class="lbl" for="f-valor">Até quanto investe</label><input id="f-valor" inputmode="numeric" value="${f.valorMax ? 'R$ ' + f.valorMax.toLocaleString('pt-BR') : ''}" placeholder="R$ 0" autocomplete="off"></div>
+    <div><span class="lbl">Metragem<span class="hint">área privativa, em m²</span></span>
+      <div class="row-s" style="margin-top:0;flex-wrap:nowrap">
+        <input id="f-amin" inputmode="numeric" value="${f.areaMin || ''}" placeholder="De (ex.: 120)" autocomplete="off" aria-label="Metragem mínima">
+        <span class="muted">a</span>
+        <input id="f-amax" inputmode="numeric" value="${f.areaMax || ''}" placeholder="Até (opcional)" autocomplete="off" aria-label="Metragem máxima">
+      </div><div class="err" id="e-area"></div></div>
     <div><span class="lbl">Quartos (no mínimo)</span><div class="chips" id="f-quartos"></div></div>
+    <div><span class="lbl">Vagas (no mínimo)</span><div class="chips" id="f-vagas"></div></div>
     <div class="fl"><label class="lbl" for="f-obs">O que mais ele busca</label><textarea id="f-obs" rows="3" placeholder="Ex.: piscina, 3 vagas, condomínio fechado, aceita permuta">${esc(f.obs)}</textarea></div>
     <div><span class="lbl">De onde veio</span><div class="chips sm" id="f-origem"></div></div>
   </div>
@@ -899,6 +1010,7 @@ function renderFormChips() {
   $('#f-bairros').innerHTML = f.bairros.map(b => `<span class="chip tag">${esc(b)}<button class="rm" data-act="f-bairro-rm" data-b="${esc(b)}" aria-label="Remover ${esc(b)}">×</button></span>`).join('');
   $('#f-bairros').style.display = f.bairros.length ? '' : 'none';
   $('#f-quartos').innerHTML = [0, 1, 2, 3, 4].map(n => `<button class="chip${f.quartos === n ? ' on' : ''}" data-act="f-quartos" data-v="${n}">${n ? n + '+' : 'Tanto faz'}</button>`).join('');
+  $('#f-vagas').innerHTML = [0, 1, 2, 3, 4].map(n => `<button class="chip${f.vagas === n ? ' on' : ''}" data-act="f-vagas" data-v="${n}">${n ? n + '+' : 'Tanto faz'}</button>`).join('');
   $('#f-origem').innerHTML = ORIGENS.map(o => `<button class="chip${f.origem === o ? ' on' : ''}" data-act="f-origem" data-v="${o}">${o}</button>`).join('');
 }
 function saveForm() {
@@ -909,12 +1021,15 @@ function saveForm() {
   f.whats = digits($('#f-whats').value);
   f.valorMax = parseMoney($('#f-valor').value);
   f.obs = $('#f-obs').value.trim();
+  f.areaMin = Number(digits($('#f-amin').value)) || 0;
+  f.areaMax = Number(digits($('#f-amax').value)) || 0;
   let bad = null;
   const err = (id, msg) => { $('#' + id).textContent = msg; if (msg && !bad) bad = id; };
   err('e-nome', f.nome ? '' : 'Coloque o nome do cliente.');
   err('e-whats', !f.whats || (f.whats.length >= 10 && f.whats.length <= 13) ? '' : 'Número incompleto. Use DDD + número, ex.: (41) 99999-9999.');
   err('e-tipos', f.tipos.length ? '' : 'Marque pelo menos um tipo.');
   err('e-bairros', f.bairros.length ? '' : 'Adicione pelo menos um bairro.');
+  err('e-area', f.areaMin && f.areaMax && f.areaMax < f.areaMin ? 'A metragem “até” está menor que a “de”.' : '');
   if (bad) { const el = $('#' + bad); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
   if (f.whats && !f._dupOk) {
     const dup = clientes.find(c => c.id !== f.id && digits(c.whats) && waNumber(c.whats) === waNumber(f.whats));
@@ -1041,6 +1156,7 @@ document.addEventListener('click', e => {
     case 'f-tipo': { const i = form.tipos.indexOf(v); if (i >= 0) form.tipos.splice(i, 1); else form.tipos.push(v); $('#e-tipos').textContent = ''; renderFormChips(); break; }
     case 'f-bairro-rm': form.bairros = form.bairros.filter(b => b !== el.dataset.b); renderFormChips(); break;
     case 'f-quartos': form.quartos = +v; renderFormChips(); break;
+    case 'f-vagas': form.vagas = +v; renderFormChips(); break;
     case 'f-origem': form.origem = form.origem === v ? '' : v; renderFormChips(); break;
     case 'f-save': saveForm(); break;
   }
@@ -1066,6 +1182,7 @@ function startApp() {
   clientes = applyPending(lsGet(LS_CACHE, []).map(cleanClient));
   renderAll();
   refresh();
+  loadJ8();
 }
 $('#lg-form').addEventListener('submit', e => {
   e.preventDefault();
