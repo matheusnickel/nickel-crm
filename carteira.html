@@ -201,13 +201,13 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .j8c .sp{font-size:13.5px;color:var(--text2);margin-top:2px}
 .j8c .pr{font-weight:800;font-size:16px;margin-top:4px}
 .j8top{display:flex;gap:14px}
-.j8act{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-top:1px solid var(--line)}
+.j8act{display:grid;grid-template-columns:repeat(3,1fr);align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
 .j8c .go,.j8c .bk{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:13.5px;white-space:nowrap;padding:8px 12px;border-radius:9px}
 .j8c .bk{color:#fff;background:linear-gradient(135deg,var(--or),var(--or2))}
 .j8c .bk.ghost{background:none;border:1px solid var(--line2);color:var(--text)}
 .j8c .bk.ghost:hover{border-color:var(--orline)}
 .j8c .bk.ready{background:linear-gradient(135deg,#1fbf78,#3ddc97)}
-.j8c .go{color:var(--or2);margin-left:auto}
+.j8c .go{color:var(--or2);grid-column:1 / -1;justify-self:end}
 .j8c .go:hover{background:var(--orbg)}
 .j8c .go svg,.j8c .bk svg{width:15px;height:15px}
 .j8n{font:700 11px 'Geist Mono',monospace;letter-spacing:.06em;color:var(--or2);border:1px solid var(--orline);border-radius:99px;padding:3px 8px;white-space:nowrap}
@@ -276,8 +276,9 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
   .j8box{padding:12px}
   .j8c .ph{width:104px;min-height:104px}
   .j8top{gap:11px}
-  .j8act .bk{flex:1 1 0}
-  .j8c .go{flex-basis:100%;margin-left:0;padding:6px}
+  .j8act{grid-template-columns:1fr 1fr}
+  .j8act .desc{grid-column:1 / -1}
+  .j8c .go{justify-self:center;padding:6px}
   .rhead .big{font-size:34px}
 }
 @media (max-width:520px){
@@ -743,6 +744,7 @@ function j8Match(c) {
 }
 // ── FOTOS E INFORMAÇÕES DO IMÓVEL J8 ──
 const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
+const ICON_MSG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.6A8 8 0 1 1 21 12z"/><path d="M9 11h6M9 14.5h4"/></svg>';
 const ICON_DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
 const j8Det = new Map();
 function j8Detalhe(c) {
@@ -807,9 +809,11 @@ function carregaJsPDF() {
   });
   return jsPDFProm;
 }
-// PDF só com as fotos: horizontal, sem nenhum texto, alternando foto inteira e duas fotos lado a lado
-const fotoPDF = (u, w, h) => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) + `&w=${w}&h=${h}&fit=cover&a=attention&q=88&output=jpg`;
+// PDF de fotos no padrão do Matheus ("Casa Portão - Mateus Nickel.pdf"): uma foto por página, fundo branco,
+// página 920×660 pt (em pé, 660×920, quando a foto é vertical), foto inteira centralizada e rodapé com nome e Instagram.
+const fotoPDF = u => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) + '&w=2000&h=2000&fit=inside&we&q=90&output=jpg';
 const paraDataURL = b => new Promise((ok, err) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = err; r.readAsDataURL(b); });
+const tamanhoImg = src => new Promise((ok, err) => { const im = new Image(); im.onload = () => ok([im.naturalWidth, im.naturalHeight]); im.onerror = err; im.src = src; });
 const pdfsProntos = new Map(); // celular: o PDF fica pronto e o 2º toque abre "Salvar / Enviar"
 async function baixarPDF(btn, c) {
   if (btn.dataset.busy) return;
@@ -826,30 +830,32 @@ async function baixarPDF(btn, c) {
     const [d, JsPDF] = await Promise.all([j8Detalhe(c), carregaJsPDF()]);
     const fotos = (d.fotos || []).slice(0, 10);
     if (!fotos.length) throw new Error('sem fotos');
-    const plano = []; // [[foto]] = página inteira · [[a, b]] = duas lado a lado
-    for (let k = 0, inteira = true; k < fotos.length; inteira = !inteira) {
-      if (inteira || fotos.length - k < 2) plano.push([fotos[k++]]); else { plano.push([fotos[k], fotos[k + 1]]); k += 2; }
-    }
-    const W = 297, H = 167.0625, M = 12, G = 5;           // 16:9, em mm
-    const meiaW = (W - 2 * M - G) / 2, meiaH = H - 2 * M;
     let n = 0;
     btn.innerHTML = `Montando 0/${fotos.length}…`;
-    const imgs = await Promise.all(plano.map(p => Promise.all(p.map(async u => {
-      const px = p.length === 1 ? [2200, 1238] : [1200, Math.round(1200 * meiaH / meiaW)];
-      const r = await fetch(fotoPDF(u, px[0], px[1])); if (!r.ok) throw new Error('HTTP ' + r.status);
+    const imgs = (await Promise.allSettled(fotos.map(async u => {
+      const r = await fetch(fotoPDF(u)); if (!r.ok) throw new Error('HTTP ' + r.status);
       const du = await paraDataURL(await r.blob());
+      const [w, h] = await tamanhoImg(du);
       btn.innerHTML = `Montando ${++n}/${fotos.length}…`;
-      return du;
-    }))));
-    const doc = new JsPDF({ orientation: 'landscape', unit: 'mm', format: [W, H], compress: true });
-    imgs.forEach((p, i) => {
-      if (i) doc.addPage([W, H], 'landscape');
-      if (p.length === 1) { doc.addImage(p[0], 'JPEG', 0, 0, W, H, undefined, 'FAST'); return; }
-      doc.setFillColor(245, 243, 238); doc.rect(0, 0, W, H, 'F');
-      doc.addImage(p[0], 'JPEG', M, M, meiaW, meiaH, undefined, 'FAST');
-      doc.addImage(p[1], 'JPEG', M + meiaW + G, M, meiaW, meiaH, undefined, 'FAST');
+      return { du, w, h };
+    }))).filter(r => r.status === 'fulfilled').map(r => r.value);
+    if (!imgs.length) throw new Error('nenhuma foto');
+    let doc = null;
+    imgs.forEach(({ du, w, h }) => {
+      const deitada = w >= h, PW = deitada ? 920 : 660, PH = deitada ? 660 : 920;
+      if (!doc) doc = new JsPDF({ unit: 'pt', format: [PW, PH], orientation: deitada ? 'landscape' : 'portrait', compress: true });
+      else doc.addPage([PW, PH], deitada ? 'landscape' : 'portrait');
+      doc.setFillColor(255, 255, 255); doc.rect(0, 0, PW, PH, 'F');
+      // caixa da foto: 34 pt dos lados, 36 em cima, 69 embaixo (espaço do rodapé)
+      const bx = 34, bw = PW - 68, bh = PH - 36 - 69;
+      const k = Math.min(bw / w, bh / h), iw = w * k, ih = h * k;
+      doc.addImage(du, 'JPEG', (PW - iw) / 2, 36 + (bh - ih) / 2, iw, ih, undefined, 'FAST');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5); doc.setTextColor(56, 56, 56); doc.text('M A T H E U S   N I C K E L', 34, PH - 31);
+      doc.setFontSize(9); doc.setTextColor(120, 120, 120); doc.text('@matheus.nickel', PW - 34, PH - 31, { align: 'right' });
     });
-    const pdf = new File([doc.output('blob')], `${slugify(J8_ROTULO[d.t] || 'imovel')}-${slugify(d.b)}-${d.c}.pdf`, { type: 'application/pdf' });
+    const tipo = J8_ROTULO[d.t] || 'Imóvel';
+    const pdf = new File([doc.output('blob')], `${tipo} ${d.b} - Matheus Nickel.pdf`, { type: 'application/pdf' });
     if (telaDeToque && navigator.canShare && navigator.canShare({ files: [pdf] })) {
       pdfsProntos.set(c, pdf);
       btn.classList.add('ready'); btn.innerHTML = `${ICON_DOC}Salvar PDF`;
@@ -859,6 +865,60 @@ async function baixarPDF(btn, c) {
     }
   } catch (e) { btn.innerHTML = original; toast('Não consegui montar o PDF agora. Tente de novo.'); }
   delete btn.dataset.busy;
+}
+
+// Descritivo para o cliente, no modelo do Matheus. Casa: terreno + área construída. Apartamento: só a privativa.
+const EXT_F = ['', 'uma', 'duas', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'];
+const EXT_M = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'];
+const porExtenso = (n, fem) => n >= 1 && n <= 10 && Number.isInteger(n) ? (fem ? EXT_F : EXT_M)[n] : String(n);
+const m2 = v => Math.round(v).toLocaleString('pt-BR') + ' m²';
+const listaPt = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
+function descritivo(d) {
+  const tipo = J8_ROTULO[d.t] || 'Imóvel';
+  const grupo = J8_TIPO[d.t] || '';
+  const ehCasa = grupo === 'Casa', ehApto = grupo === 'Apartamento' || grupo === 'Cobertura';
+  const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
+  const titulo = `*${emp || tipo}, ${d.b}*`;
+  // cômodos e vagas
+  const partes = [];
+  if (ehCasa) {
+    const constr = d.ac || d.ap || d.atot || d.a;
+    if (constr) partes.push(`${m2(constr)} de área construída` + (d.at && d.at > constr ? ` em terreno de ${m2(d.at)}` : ''));
+    else if (d.at) partes.push(`terreno de ${m2(d.at)}`);
+  } else if (ehApto) {
+    if (d.ap || d.a) partes.push(`${m2(d.ap || d.a)} privativos`);
+  } else if (d.a) partes.push(m2(d.a));
+  if (ehCasa || ehApto) {
+    // "dois quartos, sendo uma suíte," — a vírgula final evita ler "sendo uma suíte e uma vaga"
+    if (d.s) partes.push(d.q > d.s ? `${porExtenso(d.q)} quartos, sendo ${porExtenso(d.s, true)} ${d.s === 1 ? 'suíte' : 'suítes'},` : `${porExtenso(d.s, true)} ${d.s === 1 ? 'suíte' : 'suítes'}`);
+    else if (d.q) partes.push(`${porExtenso(d.q)} ${d.q === 1 ? 'quarto' : 'quartos'}`);
+    if (d.v) partes.push(`${porExtenso(d.v, true)} ${d.v === 1 ? 'vaga' : 'vagas'} de garagem`);
+  }
+  const nome = { Apartamento: 'apartamento', Cobertura: 'cobertura', Casa: 'casa', Terreno: 'terreno', Comercial: 'imóvel' }[grupo] || 'imóvel';
+  const fem = nome === 'casa' || nome === 'cobertura';
+  // "Um apartamento por andar" só quando é um por andar (é o diferencial); cobertura não entra nessa regra
+  const abre = grupo === 'Apartamento' && d.apa === 1 ? 'Um apartamento por andar, com ' : `${tipo} com `;
+  const linha = partes.length ? (abre + listaPt(partes) + '.').replace(/,\.$/, '.') : '';
+  const valor = `Valor de venda: ${d.p ? 'R$ ' + Math.round(d.p).toLocaleString('pt-BR') : 'sob consulta'}`;
+  const pergunta = `${fem ? 'Essa' : 'Esse'} ${nome} está dentro do que você está buscando?`;
+  return [titulo, linha, d.mob ? 'Totalmente mobiliado.' : '', valor, pergunta].filter(Boolean).join('\n\n');
+}
+function copiarTexto(txt) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(txt);
+  const ta = document.createElement('textarea'); ta.value = txt; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta);
+  ta.select(); const ok = document.execCommand('copy'); ta.remove();
+  return ok ? Promise.resolve() : Promise.reject(new Error('copy'));
+}
+async function copiarDescritivo(btn, c) {
+  const pronto = j8Det.get(c);
+  if (pronto && !(pronto instanceof Promise)) {
+    // copia no mesmo toque (o celular só deixa copiar logo após o toque)
+    copiarTexto(descritivo(pronto)).then(() => toast('Descritivo copiado. É só colar no WhatsApp.'), () => toast('Não consegui copiar. Tente de novo.'));
+    return;
+  }
+  const original = btn.innerHTML; btn.innerHTML = 'Preparando…';
+  try { await j8Detalhe(c); btn.innerHTML = original; toast('Pronto. Toque de novo em “Descritivo para cliente” para copiar.'); }
+  catch (e) { btn.innerHTML = original; toast('Não consegui preparar o descritivo agora.'); }
 }
 
 function j8Card(i, c) {
@@ -874,6 +934,7 @@ function j8Card(i, c) {
     <div class="j8act">
       <button class="bk${prontas ? ' ready' : ''}" data-act="j8-fotos" data-c="${esc(i.c)}">${ICON_DL}${prontas ? `Salvar ${prontas.length} fotos` : 'Baixar fotos'}</button>
       <button class="bk ghost${pdfsProntos.has(i.c) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.c)}">${ICON_DOC}${pdfsProntos.has(i.c) ? 'Salvar PDF' : 'Baixar PDF'}</button>
+      <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.c)}">${ICON_MSG}Descritivo para cliente</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
     </div></div>`;
 }
@@ -1291,6 +1352,7 @@ document.addEventListener('click', e => {
     case 'f-save': saveForm(); break;
     case 'j8-fotos': baixarFotos(el, el.dataset.c); break;
     case 'j8-pdf': baixarPDF(el, el.dataset.c); break;
+    case 'j8-desc': copiarDescritivo(el, el.dataset.c); break;
   }
 });
 

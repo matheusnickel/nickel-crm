@@ -23,7 +23,7 @@ const ITENS_COND = {
   Bosque: 'Bosque', Spa: 'Spa', Cinema: 'Cinema', PetCare: 'Pet place', GeradorEnergia: 'Gerador'
 };
 const DETALHE = ['Codigo', 'Descricao', 'ValorCondominio', 'ValorIptu', 'BanheiroSocialQtd', 'AreaTerreno', 'AreaTotal', 'AreaPrivativa', 'AnoConstrucao',
-  'Imediacoes', 'Mobiliado', 'Closet', ...Object.keys(ITENS_IMOVEL), ...Object.keys(ITENS_COND), { Foto: ['Foto', 'Ordem', 'ExibirSite'] }];
+  'Imediacoes', 'Mobiliado', 'Closet', 'AptosAndar', 'AreaConstruida', ...Object.keys(ITENS_IMOVEL), ...Object.keys(ITENS_COND), { Foto: ['Foto', 'Ordem', 'ExibirSite'] }];
 const sim = v => /^sim$/i.test(String(v || '').trim());
 const OUT = new URL('../dados/j8.json', import.meta.url);
 const DIR = new URL('../dados/j8/', import.meta.url);
@@ -99,7 +99,7 @@ const fila = [];
 for (const i of imoveis) {
   let atual = null;
   try { atual = JSON.parse(await readFile(new URL(i.c + '.json', DIR), 'utf8')); } catch {}
-  if (!atual || !('itens' in atual) || atual.du !== i.du || atual.p !== i.p) fila.push(i);
+  if (!atual || !('apa' in atual) || atual.du !== i.du || atual.p !== i.p) fila.push(i);
 }
 let feitos = 0, falhas = 0;
 async function trabalhador() {
@@ -114,6 +114,7 @@ async function trabalhador() {
         cond: num(d.ValorCondominio), iptu: num(d.ValorIptu), bh: num(d.BanheiroSocialQtd),
         at: num(d.AreaTerreno), ap: num(d.AreaPrivativa), atot: num(d.AreaTotal), ano: num(d.AnoConstrucao),
         im: String(d.Imediacoes || '').trim(), mob: sim(d.Mobiliado), cl: num(d.Closet),
+        apa: num(d.AptosAndar), ac: num(d.AreaConstruida),
         itens: Object.entries(ITENS_IMOVEL).filter(([k]) => sim(d[k])).map(([, v]) => v),
         condItens: Object.entries(ITENS_COND).filter(([k]) => sim(d[k])).map(([, v]) => v),
         intro, texto, destaques, fotos
