@@ -324,15 +324,6 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
               <div class="fl"><label class="lbl" for="p-link">Link do imóvel</label><input id="p-link" type="url" inputmode="url" placeholder="Cole o link do anúncio" autocomplete="off"></div>
             </div>
           </details>
-          <details class="more">
-            <summary>Mensagem do WhatsApp</summary>
-            <div class="in">
-              <div>
-                <textarea id="p-msg" rows="7" aria-label="Modelo da mensagem"></textarea>
-                <div class="row-s"><span class="muted xs">{nome}, {imovel} e {link} são trocados sozinhos.</span><button class="link xs" data-act="msg-reset">Restaurar padrão</button></div>
-              </div>
-            </div>
-          </details>
           <button class="link clear hidden" id="p-clear" data-act="p-clear">Limpar busca</button>
         </div>
         <div>
@@ -389,7 +380,7 @@ const FB_ROOT = 'https://firestore.googleapis.com/v1/projects/nickel-crm/databas
 const TESTE = new URLSearchParams(location.search).get('base') === 'teste';
 const COL = TESTE ? 'carteira_clientes_TESTE_CLAUDE' : 'carteira_clientes';
 const LS_CACHE = 'carteira_cache_' + COL, LS_PEND = 'carteira_pending_' + COL;
-const LS_MSG = 'carteira_msg', LS_AUTH = 'carteira_auth';
+const LS_AUTH = 'carteira_auth';
 const SENHA = 'flor2301';
 const ALIMENTAR_DIAS = 14; // ativo sem receber imóvel há esse tanto de dias = precisa ser alimentado
 
@@ -662,13 +653,13 @@ function imovelTxt(p) {
   if (!p.bairro) return art;
   return `${art} ${/^(vila|cidade)\b/i.test(p.bairro) ? 'na' : 'no'} ${spell(p.bairro)}`;
 }
-const msgTemplate = () => lsGet(LS_MSG, null) || MSG_PADRAO;
 function buildMsg(c) {
-  let t = msgTemplate().replace(/\{nome\}/g, firstName(c.nome)).replace(/\{imovel\}/g, imovelTxt(ui.p));
+  let t = MSG_PADRAO.replace(/\{nome\}/g, firstName(c.nome)).replace(/\{imovel\}/g, imovelTxt(ui.p));
   t = ui.p.link ? t.replace(/\{link\}/g, ui.p.link) : t.replace(/[ \t]*\{link\}[ \t]*/g, '');
   return t.replace(/\n{3,}/g, '\n\n').trim();
 }
-const waLink = (c, msg) => `https://wa.me/${waNumber(c.whats)}` + (msg ? '?text=' + encodeURIComponent(msg) : '');
+// Na base de teste os telefones são inventados: o WhatsApp abre sem número, só com a mensagem.
+const waLink = (c, msg) => `https://wa.me/${TESTE ? '' : waNumber(c.whats)}` + (msg ? '?text=' + encodeURIComponent(msg) : '');
 
 // ── RENDER: QUEM PROCURA ──
 function renderPTipos() {
@@ -1052,7 +1043,6 @@ document.addEventListener('click', e => {
     case 'f-quartos': form.quartos = +v; renderFormChips(); break;
     case 'f-origem': form.origem = form.origem === v ? '' : v; renderFormChips(); break;
     case 'f-save': saveForm(); break;
-    case 'msg-reset': try { localStorage.removeItem(LS_MSG); } catch (er) {} $('#p-msg').value = MSG_PADRAO; renderPList(); break;
   }
 });
 
@@ -1064,8 +1054,6 @@ function bindProcurar() {
   $('#p-bairro-x').addEventListener('click', () => { setPBairro(''); inp.focus(); });
   $('#p-valor').addEventListener('input', e => { maskMoney(e.target); ui.p.valor = parseMoney(e.target.value); renderPList(); });
   $('#p-link').addEventListener('input', e => { ui.p.link = e.target.value.trim(); ui.sent = {}; renderPList(); });
-  const msg = $('#p-msg'); msg.value = msgTemplate();
-  msg.addEventListener('input', () => { lsSet(LS_MSG, msg.value.trim() ? msg.value : null); renderPList(); });
   $('#b-q').addEventListener('input', e => { ui.b.q = e.target.value; renderBairros(); });
   $('#c-q').addEventListener('input', e => { ui.c.q = e.target.value; renderClientes(); });
 }
