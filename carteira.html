@@ -194,15 +194,18 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .j8l{display:flex;flex-direction:column;gap:10px}
 .j8c{display:flex;gap:14px;background:var(--sheet);border:1px solid var(--line2);border-radius:14px;overflow:hidden;transition:border-color .15s,transform .15s}
 .j8c:hover{border-color:var(--orline);transform:translateY(-1px)}
-.j8c .ph{width:136px;flex-shrink:0;background:#1a2440 center/cover no-repeat;min-height:112px}
+.j8c .ph{display:block;width:136px;flex-shrink:0;background:#1a2440 center/cover no-repeat;min-height:112px}
 .j8c .bd{flex:1;min-width:0;padding:11px 14px 11px 0;display:flex;flex-direction:column;gap:2px}
 .j8c .t1{font-weight:700;font-size:15.5px;letter-spacing:-.01em}
 .j8c .t2{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .j8c .sp{font-size:13.5px;color:var(--text2);margin-top:2px}
-.j8c .ft{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
-.j8c .pr{font-weight:800;font-size:16px}
-.j8c .go{display:inline-flex;align-items:center;gap:5px;color:var(--or2);font-weight:700;font-size:13.5px;white-space:nowrap}
-.j8c .go svg{width:15px;height:15px}
+.j8c .pr{font-weight:800;font-size:16px;margin-top:4px}
+.j8c .ft{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
+.j8c .go,.j8c .bk{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:13.5px;white-space:nowrap;padding:7px 11px;border-radius:9px}
+.j8c .go{color:var(--or2)}
+.j8c .go:hover{background:var(--orbg)}
+.j8c .bk{color:#fff;background:linear-gradient(135deg,var(--or),var(--or2))}
+.j8c .go svg,.j8c .bk svg{width:15px;height:15px}
 .j8n{font:700 11px 'Geist Mono',monospace;letter-spacing:.06em;color:var(--or2);border:1px solid var(--orline);border-radius:99px;padding:3px 8px;white-space:nowrap}
 
 /* folhas (modais) */
@@ -732,13 +735,18 @@ function j8Match(c) {
   j8Cache.set(key, res);
   return res;
 }
-function j8Card(i) {
+function j8Card(i, c) {
   const tipo = J8_ROTULO[i.t] || i.t;
   const spec = [i.a ? i.a + ' m²' : '', J8_TIPO[i.t] === 'Terreno' || J8_TIPO[i.t] === 'Comercial' ? '' : i.q ? i.q + plural(i.q, ' quarto', ' quartos') + (i.s ? ` (${i.s} ${plural(i.s, 'suíte', 'suítes')})` : '') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
-  return `<a class="j8c" href="${esc(i.u)}" target="_blank" rel="noopener">
-    <div class="ph" style="background-image:url('${esc(i.f)}')"></div>
+  const book = `book.html?c=${encodeURIComponent(i.c)}&n=${encodeURIComponent(firstName(c.nome))}`;
+  return `<div class="j8c">
+    <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(i.f.replace(/_p(\.\w+)$/, '$1'))}')" aria-label="Abrir anúncio na J8"></a>
     <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}</div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>
-      <div class="ft"><span class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</span><span class="go">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span></div></div></a>`;
+      <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div>
+      <div class="ft">
+        <a class="bk" href="${esc(book)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Book</a>
+        <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+      </div></div></div>`;
 }
 function j8Section(c) {
   if (j8Err) return `<span class="lbl">Imóveis da J8</span><p class="muted" style="font-size:14px">Não consegui carregar o estoque da J8 agora. Tente de novo mais tarde.</p>`;
@@ -747,7 +755,7 @@ function j8Section(c) {
   const d = new Date(j8.atualizadoEm);
   const quando = isNaN(d) ? '' : `Estoque da J8 de ${pad(d.getDate())}/${pad(d.getMonth() + 1)} · ${j8.total.toLocaleString('pt-BR')} imóveis à venda`;
   const titulo = total > 3 ? `Na J8 · os 3 melhores de ${total} para ${esc(firstName(c.nome))}` : total ? `Na J8 · ${total} ${plural(total, 'imóvel', 'imóveis')} para ${esc(firstName(c.nome))}` : 'Na J8';
-  const corpo = top.length ? `<div class="j8l">${top.map(j8Card).join('')}</div>`
+  const corpo = top.length ? `<div class="j8l">${top.map(i => j8Card(i, c)).join('')}</div>`
     : `<p class="muted" style="font-size:14px">Nenhum imóvel à venda na J8 dentro desse perfil agora. Tente abrir mais os bairros, a metragem ou o valor.</p>`;
   return `<span class="lbl">${titulo}</span>${corpo}<div class="muted xs" style="margin-top:8px">${quando}</div>`;
 }
