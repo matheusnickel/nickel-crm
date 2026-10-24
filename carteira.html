@@ -807,108 +807,58 @@ function carregaJsPDF() {
   });
   return jsPDFProm;
 }
-async function baixarInfo(btn, c) {
-  try {
-    // se já está tudo carregado, gera na hora (o celular só deixa baixar logo após o toque)
-    let d = j8Det.get(c);
-    if (!d || d instanceof Promise || !window.jspdf) {
-      const original = btn.innerHTML; btn.innerHTML = 'Preparando…';
-      [d] = await Promise.all([j8Detalhe(c), carregaJsPDF()]);
-      btn.innerHTML = original;
-    }
-    gerarInfoPDF(d);
-  } catch (e) { toast('Não consegui gerar o PDF agora. Tente de novo.'); }
-}
-function gerarInfoPDF(d) {
-  const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
-  const W = 210, M = 18, FIM = 272;
-  const NAVY = [10, 21, 48], OR = [255, 90, 31], INK = [40, 48, 68], STONE = [118, 124, 140], PAPER = [245, 243, 238];
-  const limpa = s => String(s || '').replace(/[^\x20-\x7E -ÿ–—‘’“”•…]/g, '').replace(/\s+/g, ' ').trim();
-  const area = v => v ? v.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' m²' : '';
-  const moeda = v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const tipo = J8_ROTULO[d.t] || 'Imóvel';
-  const ehTerreno = /TERRENO|COMERCIAL/.test(d.t);
-  const prep = /^(vila|cidade)\b/i.test(d.b) ? 'na' : 'no';
-  const emp = d.e && /[a-zà-ú]/.test(d.e) ? d.e : (d.e || '').toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase());
-  const rotulo = (txt, x, y) => { doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...STONE); doc.setCharSpace(0.6); doc.text(txt.toUpperCase(), x, y); doc.setCharSpace(0); };
-  const secao = (txt, y) => { doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...OR); doc.setCharSpace(0.9); doc.text(txt.toUpperCase(), M, y); doc.setCharSpace(0); doc.setDrawColor(228, 225, 218); doc.setLineWidth(0.25); doc.line(M + doc.getTextWidth(txt.toUpperCase()) + 9, y - 1.2, W - M, y - 1.2); };
-
-  // faixa do topo
-  doc.setFillColor(...NAVY); doc.rect(0, 0, W, 28, 'F');
-  doc.setFillColor(...OR); doc.rect(M, 12.2, 2.4, 2.4, 'F');
-  doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setCharSpace(1.4); doc.text('MATHEUS NICKEL', M + 5.5, 14.5);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(170, 180, 205); doc.setCharSpace(0.6); doc.text('REF. ' + d.c, W - M, 14.5, { align: 'right' }); doc.setCharSpace(0);
-
-  // título
-  let y = 44;
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...OR); doc.setCharSpace(0.9);
-  doc.text(limpa(`${tipo} · ${d.b}${d.ci ? ', ' + d.ci : ''}`).toUpperCase(), M, y); doc.setCharSpace(0);
-  y += 10; doc.setFont('helvetica', 'normal'); doc.setFontSize(23); doc.setTextColor(...NAVY);
-  const tit = doc.splitTextToSize(limpa(emp || `${tipo} ${prep} ${d.b}`), W - 2 * M);
-  doc.text(tit, M, y); y += (tit.length - 1) * 9.5;
-  if (emp) { y += 7; doc.setFontSize(11.5); doc.setTextColor(...STONE); doc.text(limpa(`${tipo} ${prep} ${d.b}${d.im ? ' · Imediações: ' + d.im : ''}`), M, y); }
-
-  // valor
-  y += 9; doc.setFillColor(...PAPER); doc.roundedRect(M, y, W - 2 * M, 25, 2.5, 2.5, 'F');
-  rotulo('Valor do imóvel', M + 7, y + 8.5);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(19); doc.setTextColor(...NAVY); doc.text(d.p ? moeda(d.p) : 'Sob consulta', M + 7, y + 18.5);
-  const extras = [d.cond ? ['Condomínio', moeda(d.cond)] : null, d.iptu ? ['IPTU', moeda(d.iptu)] : null].filter(Boolean);
-  extras.forEach(([l, v], k) => { const x = W - M - 7 - (extras.length - 1 - k) * 42; doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...STONE); doc.setCharSpace(0.6); doc.text(l.toUpperCase(), x, y + 8.5, { align: 'right' }); doc.setCharSpace(0); doc.setFont('helvetica', 'normal'); doc.setFontSize(11.5); doc.setTextColor(...NAVY); doc.text(v, x, y + 18.5, { align: 'right' }); });
-  y += 25;
-
-  // números principais
-  const nums = [
-    !ehTerreno && d.q ? ['Dormitórios', String(d.q)] : null, !ehTerreno && d.s ? ['Suítes', String(d.s)] : null,
-    !ehTerreno && d.v ? ['Vagas', String(d.v)] : null, !ehTerreno && d.bh ? ['Banheiros', String(d.bh)] : null,
-    d.ap || d.a ? [ehTerreno ? 'Área' : 'Área privativa', area(d.ap || d.a)] : null,
-    d.atot && Math.round(d.atot) !== Math.round(d.ap || d.a) ? ['Área total', area(d.atot)] : null,
-    d.at && d.at > (d.ap || d.a) ? ['Terreno', area(d.at)] : null,
-    d.ano && d.ano > 1900 && d.ano <= new Date().getFullYear() + 5 ? ['Ano de construção', String(d.ano)] : null
-  ].filter(Boolean).slice(0, 8);
-  y += 11; secao('Principais', y); y += 9;
-  const cw = (W - 2 * M) / 4;
-  nums.forEach(([l, v], k) => { const x = M + (k % 4) * cw, yy = y + Math.floor(k / 4) * 15; rotulo(l, x, yy); doc.setFont('helvetica', 'normal'); doc.setFontSize(13); doc.setTextColor(...NAVY); doc.text(v, x, yy + 6.5); });
-  y += Math.ceil(nums.length / 4) * 15;
-
-  // características do imóvel e do condomínio
-  const lista = (titulo, itens, max) => {
-    itens = itens.slice(0, max); if (!itens.length || y > FIM - 20) return;
-    y += 6; secao(titulo, y); y += 8;
-    const cols = 3, w = (W - 2 * M) / cols;
-    itens.forEach((t, k) => { const x = M + (k % cols) * w, yy = y + Math.floor(k / cols) * 6.6; doc.setFillColor(...OR); doc.rect(x, yy - 1.6, 2.6, 0.5, 'F'); doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...INK); doc.text(limpa(t), x + 4.5, yy); });
-    y += Math.ceil(itens.length / cols) * 6.6;
-  };
-  // só o que chama atenção, na ordem de impacto (sala de estar, copa etc. ficam de fora)
-  const ORDEM = ['Mobiliado', 'Suíte master', 'Closet', 'Piscina aquecida', 'Piscina', 'Elevador privativo', 'Piso aquecido', 'Lareira', 'Home theater',
-    'Espaço gourmet', 'Churrasqueira', 'Adega', 'Sauna', 'Aquecimento central', 'Ar central', 'Escritório', 'Living hall', 'Estar íntimo', 'Jardim', 'Deck',
-    'Terraço', 'Sacada', 'Mezanino', 'Edícula', 'Biblioteca', 'Quintal', 'Lavabo'];
-  const caract = [d.mob ? 'Mobiliado' : '', d.cl ? 'Closet' : '', ...(d.itens || [])].filter(t => ORDEM.includes(t));
-  caract.sort((a, b) => ORDEM.indexOf(a) - ORDEM.indexOf(b));
-  if (d.cl > 1) caract[caract.indexOf('Closet')] = `${d.cl} closets`;
-  if (caract.includes('Piscina aquecida')) caract.splice(caract.indexOf('Piscina'), caract.includes('Piscina') ? 1 : 0);
-  lista('Características', caract, 9);
-  lista('No condomínio', d.condItens || [], 6);
-
-  // diferenciais do anúncio (sem repetir os números)
-  const repete = /\b(m²|m2|suítes?|vagas?|quartos?|dormit|banheiros?|terreno|área)\b/i;
-  const dif = (d.destaques || []).map(limpa).filter(t => t && !(repete.test(t) && t.length < 45) && !caract.some(x => norm(x) === norm(t))).slice(0, 5);
-  if (dif.length && y < FIM - 20) {
-    y += 6; secao('Diferenciais', y); y += 8;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...INK);
-    for (const t of dif) {
-      const ls = doc.splitTextToSize(t, W - 2 * M - 5);
-      if (y + ls.length * 5 > FIM) break;
-      doc.setFillColor(...OR); doc.rect(M, y - 1.6, 2.6, 0.5, 'F'); doc.text(ls, M + 4.5, y); y += ls.length * 5 + 1.6;
-    }
+// PDF só com as fotos: horizontal, sem nenhum texto, alternando foto inteira e duas fotos lado a lado
+const fotoPDF = (u, w, h) => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) + `&w=${w}&h=${h}&fit=cover&a=attention&q=88&output=jpg`;
+const paraDataURL = b => new Promise((ok, err) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = err; r.readAsDataURL(b); });
+const pdfsProntos = new Map(); // celular: o PDF fica pronto e o 2º toque abre "Salvar / Enviar"
+async function baixarPDF(btn, c) {
+  if (btn.dataset.busy) return;
+  const pronto = pdfsProntos.get(c);
+  if (pronto) {
+    try { await navigator.share({ files: [pronto] }); }
+    catch (e) { if (e.name !== 'AbortError') salvarArquivos([pronto]); }
+    return;
   }
-
-  // rodapé
-  doc.setDrawColor(228, 225, 218); doc.setLineWidth(0.25); doc.line(M, 280, W - M, 280);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...NAVY); doc.text('Matheus Nickel', M, 286);
-  doc.setFont('helvetica', 'normal'); doc.setTextColor(...STONE); doc.setFont('helvetica', 'bold'); const wNome = doc.getTextWidth('Matheus Nickel'); doc.setFont('helvetica', 'normal'); doc.text('·  Corretor de imóveis', M + wNome + 2.5, 286);
-  doc.setFontSize(7.5); doc.text('Valores e disponibilidade sujeitos a alteração.', W - M, 286, { align: 'right' });
-
-  doc.save(`informacoes-${slugify(d.b)}-${d.c}.pdf`);
+  btn.dataset.busy = '1';
+  const original = btn.innerHTML;
+  try {
+    btn.innerHTML = 'Montando…';
+    const [d, JsPDF] = await Promise.all([j8Detalhe(c), carregaJsPDF()]);
+    const fotos = (d.fotos || []).slice(0, 10);
+    if (!fotos.length) throw new Error('sem fotos');
+    const plano = []; // [[foto]] = página inteira · [[a, b]] = duas lado a lado
+    for (let k = 0, inteira = true; k < fotos.length; inteira = !inteira) {
+      if (inteira || fotos.length - k < 2) plano.push([fotos[k++]]); else { plano.push([fotos[k], fotos[k + 1]]); k += 2; }
+    }
+    const W = 297, H = 167.0625, M = 12, G = 5;           // 16:9, em mm
+    const meiaW = (W - 2 * M - G) / 2, meiaH = H - 2 * M;
+    let n = 0;
+    btn.innerHTML = `Montando 0/${fotos.length}…`;
+    const imgs = await Promise.all(plano.map(p => Promise.all(p.map(async u => {
+      const px = p.length === 1 ? [2200, 1238] : [1200, Math.round(1200 * meiaH / meiaW)];
+      const r = await fetch(fotoPDF(u, px[0], px[1])); if (!r.ok) throw new Error('HTTP ' + r.status);
+      const du = await paraDataURL(await r.blob());
+      btn.innerHTML = `Montando ${++n}/${fotos.length}…`;
+      return du;
+    }))));
+    const doc = new JsPDF({ orientation: 'landscape', unit: 'mm', format: [W, H], compress: true });
+    imgs.forEach((p, i) => {
+      if (i) doc.addPage([W, H], 'landscape');
+      if (p.length === 1) { doc.addImage(p[0], 'JPEG', 0, 0, W, H, undefined, 'FAST'); return; }
+      doc.setFillColor(245, 243, 238); doc.rect(0, 0, W, H, 'F');
+      doc.addImage(p[0], 'JPEG', M, M, meiaW, meiaH, undefined, 'FAST');
+      doc.addImage(p[1], 'JPEG', M + meiaW + G, M, meiaW, meiaH, undefined, 'FAST');
+    });
+    const pdf = new File([doc.output('blob')], `${slugify(J8_ROTULO[d.t] || 'imovel')}-${slugify(d.b)}-${d.c}.pdf`, { type: 'application/pdf' });
+    if (telaDeToque && navigator.canShare && navigator.canShare({ files: [pdf] })) {
+      pdfsProntos.set(c, pdf);
+      btn.classList.add('ready'); btn.innerHTML = `${ICON_DOC}Salvar PDF`;
+      toast('PDF pronto. Toque em “Salvar PDF” para salvar ou mandar no WhatsApp.');
+    } else {
+      salvarArquivos([pdf]); btn.innerHTML = original; toast('PDF baixado.');
+    }
+  } catch (e) { btn.innerHTML = original; toast('Não consegui montar o PDF agora. Tente de novo.'); }
+  delete btn.dataset.busy;
 }
 
 function j8Card(i, c) {
@@ -923,7 +873,7 @@ function j8Card(i, c) {
     </div>
     <div class="j8act">
       <button class="bk${prontas ? ' ready' : ''}" data-act="j8-fotos" data-c="${esc(i.c)}">${ICON_DL}${prontas ? `Salvar ${prontas.length} fotos` : 'Baixar fotos'}</button>
-      <button class="bk ghost" data-act="j8-info" data-c="${esc(i.c)}">${ICON_DOC}Baixar informações</button>
+      <button class="bk ghost${pdfsProntos.has(i.c) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.c)}">${ICON_DOC}${pdfsProntos.has(i.c) ? 'Salvar PDF' : 'Baixar PDF'}</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
     </div></div>`;
 }
@@ -934,7 +884,7 @@ function j8Section(c) {
   const d = new Date(j8.atualizadoEm);
   const quando = isNaN(d) ? '' : `Estoque da J8 de ${pad(d.getDate())}/${pad(d.getMonth() + 1)} · ${j8.total.toLocaleString('pt-BR')} imóveis à venda`;
   const titulo = total > 3 ? `Na J8 · os 3 melhores de ${total} para ${esc(firstName(c.nome))}` : total ? `Na J8 · ${total} ${plural(total, 'imóvel', 'imóveis')} para ${esc(firstName(c.nome))}` : 'Na J8';
-  top.forEach(i => j8Detalhe(i.c).catch(() => {})); // deixa pronto para o "Baixar informações" sair na hora
+  top.forEach(i => j8Detalhe(i.c).catch(() => {})); // adianta a lista de fotos dos 3 imóveis
   if (top.length) carregaJsPDF().catch(() => {});
   const corpo = top.length ? `<div class="j8l">${top.map(i => j8Card(i, c)).join('')}</div>`
     : `<p class="muted" style="font-size:14px">Nenhum imóvel à venda na J8 dentro desse perfil agora. Tente abrir mais os bairros, a metragem ou o valor.</p>`;
@@ -1340,7 +1290,7 @@ document.addEventListener('click', e => {
     case 'f-origem': form.origem = form.origem === v ? '' : v; renderFormChips(); break;
     case 'f-save': saveForm(); break;
     case 'j8-fotos': baixarFotos(el, el.dataset.c); break;
-    case 'j8-info': baixarInfo(el, el.dataset.c); break;
+    case 'j8-pdf': baixarPDF(el, el.dataset.c); break;
   }
 });
 
