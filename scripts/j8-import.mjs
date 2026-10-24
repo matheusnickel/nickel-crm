@@ -8,7 +8,8 @@ import { writeFile, readFile, readdir, unlink, mkdir } from 'node:fs/promises';
 const API = 'https://j8-busca-imoveis.gustavo-05e.workers.dev/v1/imoveis/';
 const HEAD = { headers: { 'User-Agent': 'Mozilla/5.0 (CarteiraNickel)', Origin: 'https://www.j8.com.br', Referer: 'https://www.j8.com.br/' } };
 const LISTA = ['Codigo', 'Categoria', 'CategoriaImovel', 'TituloImovel', 'Bairro', 'Cidade', 'Dormitorios', 'Suites', 'Vagas',
-  'AreaPrivativa', 'AreaTotal', 'ValorVenda', 'OcultarPrecoSite', 'FotoDestaquePequena', 'Empreendimento', 'Status', 'DataAtualizacao'];
+  'AreaPrivativa', 'AreaTotal', 'ValorVenda', 'OcultarPrecoSite', 'FotoDestaquePequena', 'Empreendimento', 'Status', 'DataAtualizacao',
+  'AreaTerreno', 'Mobiliado', 'EmConstrucao', 'Lancamento'];
 // características "Sim/Nao" do anúncio → rótulo no PDF de informações
 const ITENS_IMOVEL = {
   SuiteMaster: 'Suíte master', LivingHall: 'Living hall', SalaEstar: 'Sala de estar', SalaJantar: 'Sala de jantar', EstarIntimo: 'Estar íntimo',
@@ -83,6 +84,11 @@ const imoveis = lista.map(v => {
     c: String(v.Codigo), t: tipo, ti: String(v.TituloImovel || '').trim(),
     b: String(v.Bairro || '').trim(), ci: String(v.Cidade || '').trim(),
     q: num(v.Dormitorios), s: num(v.Suites), v: num(v.Vagas), a: Math.round(area),
+    at: Math.round(num(v.AreaTerreno)),
+    // mobília: s = mobiliado, m = semi, n = sem, '' = não informado
+    mo: { SIM: 's', SEMI: 'm', 'NÃO': 'n', NAO: 'n' }[String(v.Mobiliado || '').trim().toUpperCase()] || '',
+    // obra: p = na planta / em construção, r = pronto
+    ob: sim(v.Lancamento) || sim(v.EmConstrucao) ? 'p' : 'r',
     p: v.OcultarPrecoSite === 'Sim' ? 0 : num(v.ValorVenda),
     f: String(v.FotoDestaquePequena || '').replace(/^http:/, 'https:'),
     e: String(v.Empreendimento || '').trim(),
