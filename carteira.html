@@ -68,9 +68,12 @@ em,.grad{font-style:normal;background:linear-gradient(90deg,var(--or),var(--or2)
 .link{color:var(--or2);font-weight:600;font-size:14px}
 .link:hover{text-decoration:underline}
 
-main{max-width:1180px;margin:0 auto;padding:26px 20px calc(120px + var(--sab))}
-.hero h1{font-size:clamp(30px,4.6vw,48px);font-weight:800;letter-spacing:-.045em;line-height:1.04;margin-top:6px;text-wrap:balance}
-.hero p{color:var(--text2);margin-top:10px;font-size:16px;max-width:62ch}
+main{max-width:1180px;margin:0 auto;padding:22px 20px calc(120px + var(--sab))}
+.phd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.phd h1{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.2}
+.phd .sub{font-size:14px;color:var(--muted)}
+.phd .cnt{font:700 13px 'Geist Mono',monospace;color:var(--or2);background:var(--orbg);border:1px solid var(--orline);border-radius:99px;padding:2px 10px;align-self:center}
+.phd .cnt:empty{display:none}
 
 /* chips e campos */
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -101,7 +104,7 @@ input:focus,textarea:focus{border-color:var(--orline);box-shadow:0 0 0 3px rgba(
 .opt .n{font-family:'Geist Mono',monospace;font-size:12.5px;color:var(--muted)}
 
 /* quem procura */
-.grid2{display:grid;grid-template-columns:390px minmax(0,1fr);gap:22px;margin-top:24px;align-items:start}
+.grid2{display:grid;grid-template-columns:390px minmax(0,1fr);gap:22px;margin-top:18px;align-items:start}
 .panel{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:20px;padding:20px;display:flex;flex-direction:column;gap:20px;position:sticky;top:86px}
 .panel .step{display:flex;align-items:center;gap:8px}
 .panel .step .k{width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,var(--or),var(--or2));color:#fff;font:700 11.5px 'Geist Mono',monospace;display:inline-flex;align-items:center;justify-content:center;letter-spacing:0}
@@ -119,7 +122,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 
 #p-head{scroll-margin-top:calc(var(--sat) + 80px)}
 .rhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:2px 2px 16px}
-.rhead .big{font-size:52px;font-weight:900;letter-spacing:-.05em;line-height:.9}
+.rhead .big{font-size:38px;font-weight:900;letter-spacing:-.05em;line-height:.9}
 .rhead .sub{font-size:18px;color:var(--text2)}
 .rhead .sub b{color:#fff}
 .group-t{display:flex;align-items:center;gap:10px;margin:22px 2px 12px}
@@ -161,7 +164,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .motivo{font-size:13.5px;color:var(--warn);font-weight:600}
 
 /* bairros */
-.bar-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:22px}
+.bar-tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px}
 .bar-tools .ta{flex:1;min-width:220px;max-width:380px}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:18px}
 .brow{text-align:left;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s,transform .15s}
@@ -266,7 +269,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
   .j8box{padding:12px}
   .j8c .ph{width:104px;min-height:118px}
   .j8c{gap:11px}
-  .rhead .big{font-size:44px}
+  .rhead .big{font-size:34px}
 }
 @media (max-width:520px){
   .cli-top{flex-wrap:wrap}
@@ -317,10 +320,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
   <main>
     <!-- QUEM PROCURA -->
     <section id="v-procurar">
-      <div class="hero">
-        <div class="kick">Tenho um imóvel</div>
-        <h1>Quem da carteira <em>procura este imóvel?</em></h1>
-      </div>
+      <div class="phd"><h1>Quem procura</h1><span class="sub">Escolha o tipo e o bairro do imóvel</span></div>
       <div class="grid2">
         <div class="panel">
           <div>
@@ -355,11 +355,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 
     <!-- BAIRROS -->
     <section id="v-bairros" class="hidden">
-      <div class="hero">
-        <div class="kick">Sua demanda</div>
-        <h1>Onde estão <em>os seus clientes.</em></h1>
-        <p>Clientes ativos por bairro. Toque num bairro para ver quem procura e mandar o imóvel.</p>
-      </div>
+      <div class="phd"><h1>Bairros</h1><span class="sub">Clientes ativos por bairro</span></div>
       <div class="bar-tools">
         <div class="ta"><input id="b-q" placeholder="Buscar bairro…" autocomplete="off" aria-label="Buscar bairro"></div>
         <div class="chips sm" id="b-tipos"></div>
@@ -369,10 +365,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 
     <!-- CLIENTES -->
     <section id="v-clientes" class="hidden">
-      <div class="hero">
-        <div class="kick">Sua carteira</div>
-        <h1 id="c-title">Clientes</h1>
-      </div>
+      <div class="phd"><h1>Clientes</h1><span class="cnt" id="c-title"></span></div>
       <div class="bar-tools">
         <div class="ta"><input id="c-q" type="search" placeholder="Nome, bairro, telefone ou o que busca…" autocomplete="off" aria-label="Buscar cliente"></div>
       </div>
@@ -871,7 +864,7 @@ function matchQ(c, q) {
 }
 function renderClientes() {
   const q = norm(ui.c.q);
-  $('#c-title').innerHTML = `${clientes.length} ${plural(clientes.length, 'cliente', 'clientes')} <em>na carteira.</em>`;
+  $('#c-title').textContent = clientes.length;
   $('#c-filtros').innerHTML = FILTROS.map(([k, l, fn]) => `<button class="chip${ui.c.f === k ? ' on' : ''}" data-act="c-f" data-v="${k}">${l}<span class="n">${clientes.filter(fn).length}</span></button>`).join('');
   const fn = (FILTROS.find(f => f[0] === ui.c.f) || FILTROS[0])[2];
   let rows = clientes.filter(c => fn(c) && matchQ(c, q));
