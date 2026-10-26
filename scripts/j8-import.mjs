@@ -1,6 +1,6 @@
 // Copia o estoque À VENDA do site da J8 (jota8) para a Carteira:
 //  - dados/j8.json          resumo de todos os imóveis (para o cruzamento com os clientes)
-//  - dados/j8/<codigo>.json detalhes + 15 primeiras fotos de cada imóvel (para o book)
+//  - dados/j8/<codigo>.json detalhes + todas as fotos do anúncio (para o book)
 // Os detalhes só são baixados de novo quando o imóvel muda (DataAtualizacao).
 // Roda 1x por dia pelo GitHub Actions (.github/workflows/j8.yml) ou à mão: node scripts/j8-import.mjs
 import { writeFile, readFile, readdir, unlink, mkdir } from 'node:fs/promises';
@@ -25,7 +25,7 @@ const ITENS_COND = {
 };
 const DETALHE = ['Codigo', 'Descricao', 'ValorCondominio', 'ValorIptu', 'BanheiroSocialQtd', 'AreaTerreno', 'AreaTotal', 'AreaPrivativa', 'AnoConstrucao',
   'Imediacoes', 'Mobiliado', 'Closet', 'AptosAndar', 'AreaConstruida', ...Object.keys(ITENS_IMOVEL), ...Object.keys(ITENS_COND), { Foto: ['Foto', 'Ordem', 'ExibirSite'] }];
-const FOTOS = 15; // quantas fotos de cada anúncio vão para "Baixar fotos" e "Baixar PDF"
+const FOTOS = 'todas'; // "Baixar fotos" e "Baixar PDF" usam todas as fotos que aparecem no anúncio (só imagens)
 const sim = v => /^sim$/i.test(String(v || '').trim());
 const OUT = new URL('../dados/j8.json', import.meta.url);
 const DIR = new URL('../dados/j8/', import.meta.url);
@@ -114,8 +114,8 @@ async function trabalhador() {
     const i = fila.shift();
     try {
       const d = await chama('detalhes', `imovel=${i.c}&pesquisa=${encodeURIComponent(JSON.stringify({ fields: DETALHE }))}`);
-      const fotos = Object.values(d.Foto || {}).filter(f => f.ExibirSite !== 'Nao' && f.Foto)
-        .sort((a, b) => num(a.Ordem) - num(b.Ordem)).slice(0, FOTOS).map(f => String(f.Foto).replace(/^http:/, 'https:'));
+      const fotos = Object.values(d.Foto || {}).filter(f => f.ExibirSite !== 'Nao' && /\.(jpe?g|png|webp)(\?|$)/i.test(String(f.Foto || ''))) // só imagens
+        .sort((a, b) => num(a.Ordem) - num(b.Ordem)).map(f => String(f.Foto).replace(/^http:/, 'https:'));
       const { intro, texto, destaques } = leDescricao(d.Descricao);
       const det = Object.assign({}, i, {
         cond: num(d.ValorCondominio), iptu: num(d.ValorIptu), bh: num(d.BanheiroSocialQtd),
