@@ -473,6 +473,14 @@ function daysSince(iso) {
 const fmtDate = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4) : '';
 const fmtShort = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : '';
 const haDias = n => n <= 0 ? 'hoje' : n === 1 ? 'ontem' : `há ${n} dias`;
+// "R$ 2,5 mi a R$ 3 mi" · "a partir de R$ 2,5 mi" · "até R$ 3 mi" (completo: "de R$ 2.500.000 a R$ 3.000.000")
+function faixaValor(c, completo) {
+  const f = completo ? v => 'R$ ' + v.toLocaleString('pt-BR') : fmtValor;
+  if (c.valorMin && c.valorMax) return (completo ? 'de ' : '') + f(c.valorMin) + ' a ' + f(c.valorMax);
+  if (c.valorMin) return 'a partir de ' + f(c.valorMin);
+  if (c.valorMax) return 'até ' + f(c.valorMax);
+  return '';
+}
 function fmtValor(v) {
   if (!v) return '';
   if (v >= 1e6) { const x = v / 1e6; const s = Number.isInteger(x) ? String(x) : x.toFixed(2).replace(/0+$/, '').replace(/\.$/, ''); return 'R$ ' + s.replace('.', ',') + ' mi'; }
@@ -533,6 +541,7 @@ function cleanClient(o) {
     whats: String(o.whats || ''),
     tipos: Array.isArray(o.tipos) ? o.tipos.filter(Boolean) : [],
     bairros: Array.isArray(o.bairros) ? o.bairros.filter(Boolean) : [],
+    valorMin: Number(o.valorMin) || 0,
     valorMax: Number(o.valorMax) || 0,
     quartos: Number(o.quartos) || 0,
     vagas: Number(o.vagas) || 0,
@@ -673,6 +682,7 @@ const wantsBairro = (c, b) => !b || c.bairros.some(x => bkey(x) === bkey(b));
 function foraDoPerfil(c, p) {
   const m = [];
   if (p.valor && c.valorMax && c.valorMax < p.valor * 0.9) m.push('budget até ' + fmtValor(c.valorMax));
+  if (p.valor && c.valorMin && p.valor < c.valorMin * 0.9) m.push('procura a partir de ' + fmtValor(c.valorMin));
   if (p.quartos && c.quartos && c.quartos > p.quartos) m.push('quer ' + c.quartos + '+ quartos');
   return m;
 }
@@ -734,6 +744,7 @@ function j8Score(c, i) {
   if (c.tipos.length && !c.tipos.includes(tipo)) return -1;
   if (!wantsBairro(c, i.b)) return -1;
   if (c.valorMax && i.p && i.p > c.valorMax * 1.1) return -1;
+  if (c.valorMin && i.p && i.p < c.valorMin) return -1;               // abaixo da faixa que ele pediu
   const temQuartos = tipo !== 'Terreno' && tipo !== 'Comercial';
   if (temQuartos && c.quartos && i.q < c.quartos) return -1;
   if (temQuartos && c.vagas && i.v < c.vagas) return -1;
@@ -757,7 +768,7 @@ function j8Score(c, i) {
 const j8Cache = new Map();
 function j8Match(c) {
   if (!j8) return { top: [], total: 0 };
-  const key = JSON.stringify([c.tipos, c.bairros, c.valorMax, c.quartos, c.vagas, c.areaMin, c.areaMax, c.terrenoMin, c.situacao, c.mobilia, j8.atualizadoEm]);
+  const key = JSON.stringify([c.tipos, c.bairros, c.valorMin, c.valorMax, c.quartos, c.vagas, c.areaMin, c.areaMax, c.terrenoMin, c.situacao, c.mobilia, j8.atualizadoEm]);
   if (j8Cache.has(key)) return j8Cache.get(key);
   const all = j8.imoveis.map(i => ({ i, s: j8Score(c, i) })).filter(x => x.s >= 0).sort((a, b) => b.s - a.s);
   const res = { todos: all.map(x => x.i), top: all.slice(0, 5).map(x => x.i), total: all.length };
@@ -1016,7 +1027,7 @@ function syncPInputs() {
 }
 function cardHTML(r) {
   const c = r.c, p = ui.p;
-  const meta = [c.tipos.join(' · '), c.valorMax ? 'até ' + fmtValor(c.valorMax) : '', c.quartos ? c.quartos + '+ quartos' : ''].filter(Boolean).map(s => `<span style="white-space:nowrap">${esc(s)}</span>`).join(' <span class="sep">|</span> ');
+  const meta = [c.tipos.join(' · '), faixaValor(c), c.quartos ? c.quartos + '+ quartos' : ''].filter(Boolean).map(s => `<span style="white-space:nowrap">${esc(s)}</span>`).join(' <span class="sep">|</span> ');
   const bchips = c.bairros.map(b => `<span class="b${p.bairro && bkey(b) === bkey(p.bairro) ? ' on' : ''}">${esc(b)}</span>`).join('');
   const sentId = ui.sent[c.id];
   let foot;
@@ -1123,7 +1134,7 @@ function renderClientes() {
     const d = diasSemEnvio(c);
     const nj8 = c.status === 'ativo' ? j8Match(c).total : 0;
     const side = (nj8 ? `<span class="j8n">${nj8} na J8</span>` : '') + (c.status !== 'ativo' ? '' : d === null ? `<span class="dot or"></span><span class="t">Sem contato</span><span class="ts">sem contato</span>` : `<span class="dot${d >= ALIMENTAR_DIAS ? ' warn' : ' ok'}"></span><span class="t">Contato ${haDias(d)}</span><span class="ts">${d === 0 ? 'hoje' : d + (d === 1 ? ' dia' : ' dias')}</span>`);
-    const meta = [c.tipos.join(' · '), c.bairros.join(', '), c.valorMax ? 'até ' + fmtValor(c.valorMax) : ''].filter(Boolean).join(' · ');
+    const meta = [c.tipos.join(' · '), c.bairros.join(', '), faixaValor(c)].filter(Boolean).join(' · ');
     return `<button class="crow" data-act="ficha" data-id="${c.id}"><div class="av">${esc(initials(c.nome))}</div><div class="cm"><div class="nm">${esc(c.nome)}${c.status !== 'ativo' ? `<span class="pill ${c.status}">${c.status === 'pausado' ? 'Pausado' : 'Comprou'}</span>` : ''}</div><div class="meta">${esc(meta)}</div></div><div class="cs">${side}</div></button>`;
   }).join('');
 }
@@ -1183,7 +1194,7 @@ function renderFicha(id, confirmDel) {
       <dl class="info">
         <dt>Tipo</dt><dd>${esc(c.tipos.join(', ') || '—')}</dd>
         <dt>Bairros</dt><dd><div class="bchips">${c.bairros.map(b => `<span class="b on">${esc(b)}</span>`).join('') || '—'}</div></dd>
-        <dt>Até quanto investe</dt><dd>${c.valorMax ? 'R$ ' + c.valorMax.toLocaleString('pt-BR') : '—'}</dd>
+        <dt>Faixa de valor</dt><dd>${faixaValor(c, true) || '—'}</dd>
         <dt>Metragem</dt><dd>${c.areaMin && c.areaMax ? `de ${c.areaMin} a ${c.areaMax} m²` : c.areaMin ? `a partir de ${c.areaMin} m²` : c.areaMax ? `até ${c.areaMax} m²` : 'Tanto faz'}</dd>
         <dt>Quartos</dt><dd>${c.quartos ? c.quartos + ' ou mais' : 'Tanto faz'}</dd>
         ${c.terrenoMin ? `<dt>Terreno</dt><dd>a partir de ${c.terrenoMin.toLocaleString('pt-BR')} m²</dd>` : ''}
@@ -1221,7 +1232,12 @@ function openForm(id) {
     <div><span class="lbl">Tipo de imóvel *<span class="hint">pode marcar mais de um</span></span><div class="chips" id="f-tipos"></div><div class="err" id="e-tipos"></div></div>
     <div><span class="lbl">Bairros *<span class="hint">todos que ele aceita</span></span><div class="chips" id="f-bairros" style="margin-bottom:10px"></div>
       <div class="ta"><input id="f-bairro" placeholder="Digite um bairro e escolha na lista" autocomplete="off" aria-label="Adicionar bairro"><div class="dd hidden" id="f-bairro-dd"></div></div><div class="err" id="e-bairros"></div></div>
-    <div class="fl"><label class="lbl" for="f-valor">Até quanto investe</label><input id="f-valor" inputmode="numeric" value="${f.valorMax ? 'R$ ' + f.valorMax.toLocaleString('pt-BR') : ''}" placeholder="R$ 0" autocomplete="off"></div>
+    <div><span class="lbl">Faixa de valor<span class="hint">de quanto a quanto ele investe</span></span>
+      <div class="row-s" style="margin-top:0;flex-wrap:nowrap">
+        <input id="f-vmin" inputmode="numeric" value="${f.valorMin ? 'R$ ' + f.valorMin.toLocaleString('pt-BR') : ''}" placeholder="De (opcional)" autocomplete="off" aria-label="Valor mínimo">
+        <span class="muted">a</span>
+        <input id="f-valor" inputmode="numeric" value="${f.valorMax ? 'R$ ' + f.valorMax.toLocaleString('pt-BR') : ''}" placeholder="Até" autocomplete="off" aria-label="Valor máximo">
+      </div><div class="err" id="e-valor"></div></div>
     <div><span class="lbl">Metragem<span class="hint">apartamento: área privativa · casa: área construída (m²)</span></span>
       <div class="row-s" style="margin-top:0;flex-wrap:nowrap">
         <input id="f-amin" inputmode="numeric" value="${f.areaMin || ''}" placeholder="De (ex.: 120)" autocomplete="off" aria-label="Metragem mínima">
@@ -1239,6 +1255,7 @@ function openForm(id) {
   <div class="sh-f"><button class="btn-ghost" data-act="close">Cancelar</button><button class="btn-or" data-act="f-save">${c ? 'Salvar alterações' : 'Cadastrar cliente'}</button></div>`, { kind: 'form', id: id || null });
   renderFormChips();
   $('#f-valor').addEventListener('input', e => maskMoney(e.target));
+  $('#f-vmin').addEventListener('input', e => maskMoney(e.target));
   $('#f-whats').addEventListener('input', () => { form._dupOk = false; $('#e-dup').innerHTML = ''; });
   typeahead($('#f-bairro'), $('#f-bairro-dd'), { exclude: () => form.bairros, onPick: b => { addFormBairro(b); return true; } });
   if (matchMedia('(min-width:901px)').matches) setTimeout(() => $('#f-nome').focus(), 30);
@@ -1268,6 +1285,7 @@ function saveForm() {
   f.nome = $('#f-nome').value.trim().replace(/\s+/g, ' ');
   f.whats = digits($('#f-whats').value);
   f.valorMax = parseMoney($('#f-valor').value);
+  f.valorMin = parseMoney($('#f-vmin').value);
   f.obs = $('#f-obs').value.trim();
   f.areaMin = Number(digits($('#f-amin').value)) || 0;
   f.areaMax = Number(digits($('#f-amax').value)) || 0;
@@ -1278,6 +1296,7 @@ function saveForm() {
   err('e-whats', !f.whats || (f.whats.length >= 10 && f.whats.length <= 13) ? '' : 'Número incompleto. Use DDD + número, ex.: (41) 99999-9999.');
   err('e-tipos', f.tipos.length ? '' : 'Marque pelo menos um tipo.');
   err('e-bairros', f.bairros.length ? '' : 'Adicione pelo menos um bairro.');
+  err('e-valor', f.valorMin && f.valorMax && f.valorMax < f.valorMin ? 'O valor “até” está menor que o “de”.' : '');
   err('e-area', f.areaMin && f.areaMax && f.areaMax < f.areaMin ? 'A metragem “até” está menor que a “de”.' : '');
   if (bad) { const el = $('#' + bad); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
   if (f.whats && !f._dupOk) {
