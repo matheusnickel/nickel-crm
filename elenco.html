@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Elenco">
 <title>Elenco · VIP Imóveis</title>
 <meta property="og:title" content="Elenco · VIP Imóveis">
-<meta property="og:description" content="Evolução e produção do time de angariação.">
+<meta property="og:description" content="Atributos, evolução e produção do time de angariação.">
 <link rel="icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,8 @@
   --text:#f4f6fb; --text2:#c6d0e6; --muted:#8d9bbb; --faint:#66759a;
   --or:#ff5a1f; --or2:#ff8a3d; --orbg:rgba(255,90,31,.12); --orline:rgba(255,122,61,.5);
   --ok:#3ddc97; --warn:#ffc65c; --red:#ff6b78; --vis:#8fa6d8;
-  /* cores das notas, como no Football Manager */
+  /* tela de jogador do Football Manager */
+  --fm0:#060d20; --fm1:#0c1631; --fm2:#0a132b; --fmhi:rgba(61,220,151,.13);
   --n1:#77839e; --n2:#e9edf5; --n3:#ffc65c; --n4:#3ddc97;
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
   color-scheme:dark;
@@ -35,9 +36,7 @@ a{color:inherit;text-decoration:none}
 .hidden{display:none!important}
 body:not(.adm) .adm{display:none!important}
 body.adm .pub{display:none!important}
-.mono{font-family:'Geist Mono',ui-monospace,monospace}
 .muted{color:var(--muted)}
-em{font-style:normal;background:linear-gradient(90deg,var(--or),var(--or2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .lbl{font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:9px}
 .lbl .hint{text-transform:none;letter-spacing:0;font-family:'Geist',sans-serif;font-weight:500;color:var(--faint);margin-left:6px}
 .kick{font-family:'Geist Mono',ui-monospace,monospace;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--or2);font-weight:600}
@@ -68,15 +67,13 @@ em{font-style:normal;background:linear-gradient(90deg,var(--or),var(--or2));-web
 .link{color:var(--or2);font-weight:600;font-size:14px}
 .link:hover{text-decoration:underline}
 
-main{max-width:1180px;margin:0 auto;padding:22px 20px calc(120px + var(--sab))}
+main{max-width:1200px;margin:0 auto;padding:22px 20px calc(120px + var(--sab))}
 .phd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
 .phd h1{font-size:24px;font-weight:800;letter-spacing:-.03em;line-height:1.2}
 .phd .sub{font-size:14px;color:var(--muted)}
-.phd .r{margin-left:auto}
-.group-t{display:flex;align-items:center;gap:10px;margin:30px 2px 14px}
+.group-t{display:flex;align-items:center;gap:10px;margin:28px 2px 12px}
 .group-t .lbl{margin:0}
 .group-t::after{content:'';flex:1;height:1px;background:var(--line)}
-.group-t .gt-r{order:2}
 
 /* chips e campos */
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -99,125 +96,120 @@ input[type=date]{min-height:48px}
 .err:empty{display:none}
 .hintp{font-size:13.5px;color:var(--muted);line-height:1.5}
 
-/* números do topo */
+/* estrelas (capacidade, potencial, papel) */
+.st5{position:relative;display:inline-block;font-size:15px;line-height:1;color:rgba(255,255,255,.14);white-space:nowrap;vertical-align:-1px}
+.st5::before{content:'★★★★★'}
+.st5 i{position:absolute;left:0;top:0;overflow:hidden;color:var(--n3);font-style:normal}
+.st5 i::before{content:'★★★★★'}
+.st5.or i{color:var(--or2)}
+
+/* nota pintada como no FM */
+.n0{color:var(--faint)}.n1{color:var(--n1)}.n2{color:var(--n2)}.n3{color:var(--n3)}.n4{color:var(--n4)}
+.dl{font:700 11.5px 'Geist Mono',monospace;white-space:nowrap}
+.dl.up{color:var(--ok)}.dl.dn{color:var(--red)}.dl.eq{color:var(--faint)}
+
+/* ── ELENCO (lista do plantel) ── */
 .tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px}
 .tools .lbl{margin:0}
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-top:16px}
-.kpis div{background:#08112a;padding:16px 18px;display:flex;flex-direction:column;gap:2px}
-.kpis b{font-size:30px;font-weight:900;letter-spacing:-.04em;line-height:1.05;font-variant-numeric:tabular-nums}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:16px}
+.kpis div{background:#08112a;padding:14px 18px;display:flex;flex-direction:column;gap:2px}
+.kpis b{font-size:28px;font-weight:900;letter-spacing:-.04em;line-height:1.05;font-variant-numeric:tabular-nums}
 .kpis span{font-size:13px;color:var(--muted)}
-.kpis .or b{color:var(--or2)}
-
-/* ── CARTA (estilo FIFA) ── */
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:22px 18px}
-.cardbtn{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;transition:transform .18s}
-.cardbtn:hover{transform:translateY(-4px)}
-.cardbtn .cap{font-size:12.5px;color:var(--muted);font-family:'Geist Mono',monospace;letter-spacing:.06em}
-.fut{--c1:#18234a;--c2:#111b3b;--c3:#0b1430;--ink:#c6d0e6;--acc:#c6d0e6;--rim:linear-gradient(160deg,#3a4870,#1c2850);
-  container-type:inline-size;width:100%;max-width:260px;aspect-ratio:.72;position:relative;filter:drop-shadow(0 16px 22px rgba(0,0,0,.5))}
-.fut-s,.fut-i{position:absolute;clip-path:polygon(0 6.5%,29% 6.5%,50% 0,71% 6.5%,100% 6.5%,100% 87%,50% 100%,0 87%)}
-.fut-s{inset:0;background:var(--rim)}
-.fut-i{inset:1.8cqw;color:var(--ink);overflow:hidden;
-  background:radial-gradient(circle at 26% 18%,rgba(255,255,255,.42),transparent 42%),repeating-linear-gradient(118deg,rgba(255,255,255,.06) 0 2px,transparent 2px 10px),linear-gradient(165deg,var(--c1),var(--c2) 52%,var(--c3))}
-.fut-o{position:absolute;left:9cqw;top:15cqw;display:flex;flex-direction:column;align-items:center;gap:1.5cqw;z-index:2}
-.fut-o b{font-size:18cqw;font-weight:900;letter-spacing:-.06em;line-height:.9;color:var(--acc);font-variant-numeric:tabular-nums}
-.fut-o span{font:700 6cqw 'Geist Mono',monospace;letter-spacing:.06em}
-.fut-o i{width:9cqw;height:1px;background:currentColor;opacity:.35}
-.fut-o small{font:700 4.6cqw 'Geist Mono',monospace;letter-spacing:.12em;opacity:.75}
-.fut-ph{position:absolute;right:6cqw;top:11cqw;width:62cqw;height:62cqw;-webkit-mask-image:linear-gradient(#000 72%,transparent);mask-image:linear-gradient(#000 72%,transparent)}
-.fut-ph img{width:100%;height:100%;object-fit:cover;border-radius:6cqw 6cqw 0 0}
-.fut-ph .ini{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24cqw;font-weight:900;letter-spacing:-.04em;opacity:.28}
-.fut-n{position:absolute;left:8cqw;right:8cqw;top:74cqw;text-align:center;font-size:8.4cqw;font-weight:800;text-transform:uppercase;letter-spacing:.02em;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:2.4cqw;border-bottom:1px solid currentColor;border-color:color-mix(in srgb,currentColor 30%,transparent)}
-.fut-st{position:absolute;left:12cqw;right:12cqw;top:88cqw;display:grid;grid-template-columns:1fr 1fr;column-gap:6cqw;row-gap:1.6cqw}
-.fut-st div{display:flex;align-items:baseline;gap:2.4cqw;font-size:7cqw;line-height:1.15}
-.fut-st div:nth-child(even){border-left:1px solid color-mix(in srgb,currentColor 30%,transparent);padding-left:5cqw}
-.fut-st b{font-weight:900;min-width:9cqw;text-align:right;font-variant-numeric:tabular-nums}
-.fut-st span{font:600 5.6cqw 'Geist Mono',monospace;letter-spacing:.04em;opacity:.85}
-.fut.t-bronze{--c1:#f2c9a5;--c2:#c88b5e;--c3:#8e5733;--ink:#2b1407;--acc:#2b1407;--rim:linear-gradient(160deg,#ffe2c8,#9a5f37)}
-.fut.t-prata{--c1:#f7f9fb;--c2:#c9d0da;--c3:#8f99a7;--ink:#151c28;--acc:#151c28;--rim:linear-gradient(160deg,#ffffff,#8c96a5)}
-.fut.t-ouro{--c1:#fcebab;--c2:#e2b851;--c3:#b07f22;--ink:#291b02;--acc:#291b02;--rim:linear-gradient(160deg,#fff6d2,#a8771c)}
-.fut.t-elite{--c1:#22336a;--c2:#132049;--c3:#080f27;--ink:#f4f6fb;--acc:#ff8a3d;--rim:linear-gradient(160deg,#ffb27a,#ff5a1f 45%,#7a2a0b)}
-.fut.t-elite .fut-i{background:radial-gradient(circle at 26% 18%,rgba(255,138,61,.35),transparent 45%),repeating-linear-gradient(118deg,rgba(255,255,255,.05) 0 2px,transparent 2px 10px),linear-gradient(165deg,var(--c1),var(--c2) 52%,var(--c3))}
-.fut.t-novo .fut-i{background:repeating-linear-gradient(118deg,rgba(255,255,255,.035) 0 2px,transparent 2px 10px),linear-gradient(165deg,var(--c1),var(--c2) 52%,var(--c3))}
-.fut.t-novo .fut-o b{opacity:.5}
-
-/* evolução do elenco */
-.evo{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:18px;overflow:hidden}
-.evr{display:grid;grid-template-columns:minmax(180px,1.3fr) minmax(200px,2fr) 92px 92px 82px;align-items:center;gap:18px;padding:14px 18px;text-align:left;width:100%;background:rgba(255,255,255,.02);border-top:1px solid var(--line);transition:background .15s}
-.evr:first-child{border-top:none}
-.evr:hover{background:rgba(255,255,255,.05)}
-.evr.hd{background:#08112a;padding:10px 18px;cursor:default;font:600 11.5px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.evr.hd:hover{background:#08112a}
+.sq{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--fm0)}
+.sqr{display:grid;grid-template-columns:minmax(220px,2.2fr) 52px 96px 96px 50px 50px 50px minmax(130px,1.4fr) 56px 56px 58px;align-items:center;gap:12px;padding:10px 16px;width:100%;text-align:left;background:var(--fm1);border-top:1px solid rgba(255,255,255,.04);font-size:14.5px;transition:background .12s}
+.sqr:nth-child(odd){background:var(--fm2)}
+.sqr:hover{background:#13214a}
+.sqr.hd{background:#08112a;cursor:default;padding:9px 16px;font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:none}
+.sqr.hd:hover{background:#08112a}
+.sqr .c{text-align:center}
 .who{display:flex;align-items:center;gap:12px;min-width:0}
-.av{width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.07);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font:700 14px 'Geist Mono',monospace;color:var(--or2);flex-shrink:0;overflow:hidden}
+.av{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font:700 13.5px 'Geist Mono',monospace;color:var(--or2);flex-shrink:0;overflow:hidden}
 .av img{width:100%;height:100%;object-fit:cover}
-.who .nm{font-size:16px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.who .mt{font-size:12.5px;color:var(--muted)}
-.evb-w{display:flex;align-items:center;gap:12px}
-.evb{position:relative;flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+.who .nm{display:block;font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who .mt{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gv{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;text-align:center}
+.num{font-weight:800;font-variant-numeric:tabular-nums;text-align:center}
+.num.v{color:var(--vis)}.num.a{color:var(--or2)}
+.evb-w{display:flex;align-items:center;gap:10px;min-width:0}
+.evb{position:relative;flex:1;height:8px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
 .evb i{position:absolute;top:0;bottom:0;border-radius:99px}
 .evb .base{left:0;background:rgba(255,138,61,.38)}
 .evb .gain{background:linear-gradient(90deg,var(--or),var(--or2));border-radius:0 99px 99px 0}
 .evb .loss{background:repeating-linear-gradient(135deg,rgba(255,107,120,.55) 0 3px,transparent 3px 6px)}
-.ovr{display:inline-flex;align-items:baseline;gap:6px;white-space:nowrap}
-.ovr b{font-size:22px;font-weight:900;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
-.dl{font:700 12px 'Geist Mono',monospace;white-space:nowrap}
-.dl.up{color:var(--ok)}.dl.dn{color:var(--red)}.dl.eq{color:var(--faint)}
-.pn{display:flex;flex-direction:column;gap:5px}
-.pn b{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
-.pn .bar{height:4px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
-.pn .bar i{display:block;height:100%;border-radius:99px;background:var(--vis)}
-.pn.a .bar i{background:linear-gradient(90deg,var(--or),var(--or2))}
-.cv{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text2)}
-.cv small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
-.lbm{display:none;font:600 10.5px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.evb-w b{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+.lbm{display:none}
 
-/* legenda */
-.legend{margin-top:30px;border:1px solid var(--line);border-radius:18px;padding:18px 20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;font-size:14px;color:var(--text2);line-height:1.5}
+.legend{margin-top:26px;border:1px solid var(--line);border-radius:16px;padding:18px 20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;font-size:14px;color:var(--text2);line-height:1.5}
 .legend h4{font:600 12px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .legend .sw{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:8px}
 .legend .sw span{display:inline-flex;align-items:center;gap:6px;font-size:13px}
 .legend .sw i{width:10px;height:10px;border-radius:3px}
 
-/* ── FICHA ── */
-.back{display:inline-flex;align-items:center;gap:8px;color:var(--text2);font-weight:600;font-size:14.5px;padding:6px 0;margin-bottom:14px}
+/* ── PERFIL DO CORRETOR (tela de jogador do FM) ── */
+.back{display:inline-flex;align-items:center;gap:8px;color:var(--text2);font-weight:600;font-size:14.5px;padding:6px 0;margin-bottom:12px}
 .back:hover{color:#fff}
-.fhero{display:grid;grid-template-columns:280px minmax(0,1fr);gap:34px;align-items:center}
-.fhero .fut{max-width:280px}
-.finfo h1{font-size:40px;font-weight:900;letter-spacing:-.045em;line-height:1.02;margin:6px 0 16px;overflow-wrap:anywhere}
-.tierp{display:inline-flex;align-items:center;gap:8px}
-.tierp i{width:10px;height:10px;border-radius:3px;transform:rotate(45deg)}
-.facts{display:flex;flex-wrap:wrap;gap:10px 28px;margin-bottom:18px}
-.facts div{display:flex;flex-direction:column}
-.facts span{font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.facts b{font-size:16px;font-weight:700}
-.stars{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-.stars div{display:flex;gap:9px;align-items:baseline;font-size:15px;font-weight:600}
-.stars div::before{content:'★';color:var(--n3);font-size:14px}
-.evol{font-size:14.5px;color:var(--text2);margin-bottom:4px}
-.evol b{color:var(--or2);font-weight:700}
-.fact{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.pf{background:var(--fm0);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.pf-h{display:flex;gap:20px;align-items:center;padding:18px 20px;background:linear-gradient(90deg,#14224a,#0b1530 60%);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.pf-ph{width:104px;height:104px;border-radius:14px;overflow:hidden;background:rgba(255,255,255,.06);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font:800 30px 'Geist Mono',monospace;color:var(--or2);flex-shrink:0}
+.pf-ph img{width:100%;height:100%;object-fit:cover}
+.pf-id{flex:1;min-width:220px}
+.pf-id h1{font-size:32px;font-weight:900;letter-spacing:-.04em;line-height:1.05;overflow-wrap:anywhere}
+.pf-id .rl{font-size:14.5px;color:var(--text2);margin-top:4px}
+.pf-id .rl b{color:var(--or2);font-weight:700}
+.pf-f{display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:12px}
+.pf-f div{display:flex;flex-direction:column;gap:2px}
+.pf-f span{font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.pf-f b{font-size:15px;font-weight:700}
+.pf-act{display:flex;gap:8px;flex-wrap:wrap;align-self:flex-start}
+.pf-tabs{display:flex;gap:2px;padding:0 12px;background:#08112a;border-bottom:1px solid var(--line);overflow-x:auto}
+.pf-tabs button{padding:12px 14px;font-weight:600;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.pf-tabs button.on{color:#fff;border-bottom-color:var(--or)}
+.pf-tabs button:hover{color:#fff}
+.pf-b{padding:16px}
 
-/* atributos (estilo Football Manager) */
-.fm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;background:#060d20;border:1px solid var(--line);border-radius:16px;overflow:hidden;padding:10px}
-.fm-c{display:flex;flex-direction:column;gap:2px;padding:0 4px}
-.fm-h{display:flex;align-items:baseline;justify-content:space-between;padding:6px 10px 10px;font:700 12.5px 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase}
-.fm-h small{display:block;font:500 12px 'Geist',sans-serif;letter-spacing:0;text-transform:none;color:var(--muted);margin-top:2px}
-.fm-h b{font-size:18px;letter-spacing:-.02em;color:var(--text)}
-.fm-r{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#0c1631;border-left:3px solid transparent;font-size:14.5px}
-.fm-r:nth-child(odd){background:#0a132b}
-.fm-r.hi{background:linear-gradient(90deg,rgba(61,220,151,.16),rgba(61,220,151,.05));border-left-color:var(--n4)}
+.fm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.fm-c{display:flex;flex-direction:column;gap:2px;min-width:0}
+.fm-h{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;padding:2px 4px 8px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.fm-h .t{font:800 12.5px 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase}
+.fm-h small{display:block;font:500 12px 'Geist',sans-serif;color:var(--muted);margin-top:2px}
+.fm-h .g{text-align:right;white-space:nowrap}
+.fm-h .g b{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}
+.fm-h .g span{display:block;font:600 10.5px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fm-r{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--fm1);border-left:3px solid transparent;font-size:14.5px}
+.fm-r:nth-child(even){background:var(--fm2)}
+.fm-r.hi{background:linear-gradient(90deg,var(--fmhi),rgba(61,220,151,.04));border-left-color:var(--n4)}
 .fm-r .an{flex:1;min-width:0;cursor:help}
-.fm-r .dl{font-size:11px}
 .nv{font-size:16px;font-weight:800;min-width:24px;text-align:right;font-variant-numeric:tabular-nums}
-.n0{color:var(--faint)}.n1{color:var(--n1)}.n2{color:var(--n2)}.n3{color:var(--n3)}.n4{color:var(--n4)}
-.fm-leg{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--muted)}
+.fm-leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin-top:12px}
 .fm-leg b{font-weight:800}
 
-.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
-.box{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.pn3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+.pnl{background:var(--fm1);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pnl h3{font:700 11.5px 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pap{display:flex;flex-direction:column;gap:2px}
+.pap button{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;text-align:left;width:100%}
+.pap button:hover{background:rgba(255,255,255,.04)}
+.pap button.on{background:var(--fmhi);box-shadow:inset 3px 0 0 var(--n4)}
+.pap .pt{flex:1;min-width:0}
+.pap .pt b{display:block;font-size:14.5px;font-weight:700}
+.pap .pt small{display:block;font-size:12px;color:var(--muted)}
+.cap{display:flex;flex-direction:column;gap:10px}
+.cap div{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;color:var(--text2)}
+.cap .st5{font-size:17px}
+.kv{display:flex;flex-direction:column;gap:2px}
+.kv span{font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.kv b{font-size:15px;font-weight:700}
+.chs{display:flex;flex-direction:column;gap:6px}
+.chs div{display:flex;gap:9px;align-items:baseline;font-size:14.5px;font-weight:600}
+.chs div::before{content:'★';color:var(--n3);font-size:13px}
+.evol{font-size:14px;color:var(--text2)}
+.evol b{color:var(--or2)}
+.nota{font-size:14px;color:var(--text2);line-height:1.5;border-left:2px solid var(--orline);padding-left:10px}
+
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.box{background:var(--fm1);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
 .box-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.box-h h3{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.box-h h3{font-size:16px;font-weight:800;letter-spacing:-.01em}
 .box-h .r{margin-left:auto}
 .chart{width:100%;height:auto;display:block}
 .chart text{font-family:'Geist Mono',monospace}
@@ -230,26 +222,26 @@ input[type=date]{min-height:48px}
 .keyl span{display:inline-flex;align-items:center;gap:6px}
 .keyl i{width:10px;height:10px;border-radius:3px;background:var(--vis)}
 .keyl .a i{background:var(--or2)}
-.empty-s{border:1px dashed var(--line2);border-radius:14px;padding:22px 18px;text-align:center;color:var(--muted);font-size:14px}
+.mud{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:14px}
+.mud div{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+.empty-s{border:1px dashed var(--line2);border-radius:12px;padding:20px 16px;text-align:center;color:var(--muted);font-size:14px}
 .empty-s .btn-or{margin-top:12px}
 .empty{border:1px dashed var(--line2);border-radius:20px;padding:40px 26px;text-align:center;color:var(--text2)}
 .empty h3{font-size:22px;font-weight:800;color:#fff;margin-bottom:6px}
 .empty .btn-or{margin-top:18px}
-
 .ls{display:flex;flex-direction:column;gap:8px}
-.li{display:flex;align-items:flex-start;gap:12px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;font-size:14px}
+.li{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:rgba(255,255,255,.015)}
 .li .d{font-family:'Geist Mono',monospace;font-size:12.5px;color:var(--muted);white-space:nowrap;padding-top:2px;min-width:44px}
 .li .w{flex:1;min-width:0;overflow-wrap:anywhere}
 .li .w small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
 .li .rm{color:var(--faint);font-size:18px;line-height:1;width:26px;height:26px;border-radius:50%;flex-shrink:0}
 .li .rm:hover{color:var(--red);background:rgba(255,107,120,.1)}
 .li .ed{color:var(--or2);font-weight:600;font-size:13px;flex-shrink:0;padding-top:1px}
+.li .ob b{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums;margin-right:6px}
 .tp{display:inline-block;font:700 10.5px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:99px;margin-right:6px;vertical-align:1px}
 .tp.visita{background:rgba(143,166,216,.15);color:var(--vis)}
 .tp.angariacao{background:var(--orbg);color:var(--or2)}
-.li .ob{display:inline-flex;align-items:baseline;gap:6px;margin-right:4px}
-.li .ob b{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}
-.more{width:100%;padding:11px;border:1px dashed var(--line2);border-radius:12px;color:var(--text2);font-weight:600;font-size:14px}
+.more{width:100%;padding:11px;border:1px dashed var(--line2);border-radius:10px;color:var(--text2);font-weight:600;font-size:14px}
 .more:hover{border-color:var(--orline);color:#fff}
 
 /* folhas (modais) */
@@ -269,15 +261,20 @@ input[type=date]{min-height:48px}
 .confirm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,107,120,.08);border:1px solid rgba(255,107,120,.35);border-radius:12px;padding:12px 14px;font-size:14px}
 .confirm .btn-del{background:var(--red);color:#fff;font-weight:700;padding:8px 14px;border-radius:10px}
 .fotoed{display:flex;align-items:center;gap:16px}
-.fotoed .pv{width:84px;height:84px;border-radius:22px;background:rgba(255,255,255,.06) center/cover no-repeat;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font:700 22px 'Geist Mono',monospace;color:var(--or2);flex-shrink:0}
+.fotoed .pv{width:84px;height:84px;border-radius:14px;background:rgba(255,255,255,.06) center/cover no-repeat;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font:700 22px 'Geist Mono',monospace;color:var(--or2);flex-shrink:0}
 .fotoed .bt{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .fotoed label{cursor:pointer}
-.liveo{display:flex;align-items:center;gap:12px;background:#08112a;border:1px solid var(--line);border-radius:14px;padding:12px 16px}
-.liveo .o b{font-size:30px;font-weight:900;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.pick{display:flex;align-items:center;gap:4px}
+.pick button{font-size:30px;line-height:1;color:rgba(255,255,255,.16);padding:2px}
+.pick button.f{color:var(--or2)}
+.pick button.h{background:linear-gradient(90deg,var(--or2) 50%,rgba(255,255,255,.16) 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pick .v{margin-left:10px;font-size:13.5px;color:var(--muted)}
+.liveo{display:flex;align-items:center;gap:12px;background:#08112a;border:1px solid var(--line);border-radius:14px;padding:12px 16px;position:sticky;top:-20px;z-index:2}
+.liveo .o b{font-size:28px;font-weight:900;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
 .liveo .o span{font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:var(--muted);margin-left:6px}
 .liveo .g{margin-left:auto;display:flex;gap:16px;font-size:13px;color:var(--muted)}
-.liveo .g b{color:var(--text);font-size:15px;margin-left:4px}
-.ag{display:flex;flex-direction:column;gap:2px}
+.liveo .g b{font-size:15px;margin-left:4px}
+.ag{display:flex;flex-direction:column}
 .ag-t{font:700 12.5px 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--or2);padding:4px 0 8px}
 .ar{display:flex;align-items:center;gap:14px;padding:10px 0;border-top:1px solid var(--line)}
 .ar .an{flex:1;min-width:0}
@@ -294,36 +291,39 @@ input[type=date]{min-height:48px}
 .fab{position:fixed;right:18px;bottom:calc(22px + var(--sab));width:58px;height:58px;border-radius:19px;background:linear-gradient(135deg,var(--or),var(--or2));color:#fff;box-shadow:0 16px 30px -8px rgba(255,90,31,.75);display:none;z-index:21;align-items:center;justify-content:center}
 .fab svg{width:26px;height:26px}
 
+@media (max-width:1060px){
+  .sqr{grid-template-columns:minmax(200px,2fr) 96px 50px 50px 50px minmax(120px,1.4fr) 50px 50px 54px}
+  .sqr .xl{display:none}
+}
 @media (max-width:900px){
   .desk{display:none!important}
   body.adm .fab{display:flex}
   .top{padding-left:16px;padding-right:16px}
   main{padding:20px 16px calc(110px + var(--sab))}
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .evr{grid-template-columns:minmax(0,1fr) auto;gap:10px 14px}
-  .evr.hd{display:none}
-  .evr .who{grid-column:1 / -1}
-  .evr .evb-w{grid-column:1 / -1}
-  .evr .cv{display:flex;flex-direction:column;gap:5px;font-size:17px;line-height:1}
-  .evr .pset{grid-column:1 / -1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-  .lbm{display:block}
+  .sqr.hd{display:none}
+  .sqr{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 8px;padding:14px}
+  .sqr .who{grid-column:1 / -1}
+  .sqr .evb-w{grid-column:1 / -1}
+  .sqr .xl{display:block}
+  .sqr .cell{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;grid-column:span 2}
+  .lbm{display:block;font:600 10px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center}
   .legend{grid-template-columns:1fr}
-  .fhero{grid-template-columns:minmax(0,1fr);gap:22px;justify-items:center}
-  .fhero .fut{max-width:250px}
-  .finfo{width:100%}
-  .finfo h1{font-size:32px}
-  .fm{grid-template-columns:minmax(0,1fr);padding:8px}
-  .fm-c + .fm-c{margin-top:12px}
-  .grid2{grid-template-columns:minmax(0,1fr)}
+  .pf-h{padding:16px}
+  .pf-ph{width:84px;height:84px}
+  .pf-id h1{font-size:26px}
+  .pf-act{width:100%}
+  .pf-act > *{flex:1}
+  .fm{grid-template-columns:minmax(0,1fr);gap:18px}
+  .pn3,.grid2{grid-template-columns:minmax(0,1fr)}
+  .pf-b{padding:12px}
   .ov{align-items:flex-end;padding:0}
   .sheet{max-width:none;border-radius:24px 24px 0 0;max-height:94dvh;border-bottom:none}
   .toast{bottom:calc(96px + var(--sab))}
 }
-@media (min-width:901px){ .evr .pset{display:contents} }
 @media (max-width:520px){
-  .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px}
   .sync .t{display:none}
-  .row2{grid-template-columns:1fr}
+  .row2,.mud{grid-template-columns:1fr}
   .liveo .g{gap:10px}
   .ar .an small{display:none}
 }
@@ -365,40 +365,55 @@ const LS_CACHE = 'elenco_cache_' + COL, LS_PEND = 'elenco_pending_' + COL;
 const LS_AUTH = 'elenco_auth', LS_PER = 'elenco_periodo';
 const SENHA = 'flor2301';
 
-// Atributos de 0 a 20, como no Football Manager. Overall (0 a 100) = média × 5.
+// Atributos de 0 a 20, como no Football Manager: Técnicos, Mentais e Campo (o "físico" do angariador)
 const GRUPOS = [
-  { k: 'tec', nome: 'Técnica', sigla: 'TÉC', sub: 'Conhecimento para angariar', attrs: [
+  { k: 'tec', nome: 'Técnicos', sigla: 'TÉC', sub: 'Conhecimento técnico para angariar', attrs: [
     ['prec', 'Precificação', 'Avalia o imóvel com dados (comparativo de mercado) e sustenta o preço certo.'],
     ['doc', 'Documentação', 'Matrícula, IPTU, mapa cadastral, ônus: sabe o que pedir e o que conferir.'],
+    ['cont', 'Contratos', 'Autorização de venda, exclusividade e comissão: explica e preenche sem erro.'],
     ['merc', 'Leitura de mercado', 'Conhece bairros, condomínios, concorrência e o que está vendendo.'],
     ['imov', 'Leitura do imóvel', 'Enxerga pontos fortes e fracos, planta, padrão de construção.'],
-    ['prosp', 'Prospecção', 'Encontra proprietários: placas, porta a porta, porteiros, rede, mapa cadastral.'],
-    ['fech', 'Fechamento', 'Sai da visita com o imóvel angariado e, sempre que dá, com exclusividade.']
+    ['apres', 'Apresentação', 'Mostra ao proprietário como a VIP vai vender: plano, fotos, divulgação.'],
+    ['ferr', 'Ferramentas', 'CRM, portais, mapa cadastral, fotos: usa tudo a favor da angariação.']
   ] },
-  { k: 'abo', nome: 'Abordagem', sigla: 'ABO', sub: 'Com o proprietário', attrs: [
-    ['prim', 'Primeiro contato', 'Chega bem, gera confiança nos primeiros minutos e abre a porta.'],
+  { k: 'men', nome: 'Mentais', sigla: 'MEN', sub: 'Cabeça na conversa com o proprietário', attrs: [
     ['com', 'Comunicação', 'Fala com clareza, segurança e no tom certo para cada proprietário.'],
     ['esc', 'Escuta', 'Entende o que o proprietário quer de verdade antes de propor.'],
     ['obj', 'Contorno de objeções', 'Responde ao "já tenho corretor", "não dou exclusividade", "meu preço é esse".'],
     ['neg', 'Negociação', 'Defende comissão, preço e condições sem perder o proprietário.'],
-    ['rel', 'Relacionamento', 'Mantém o proprietário perto depois da angariação: retorno, relatório, presença.']
+    ['comp', 'Compostura', 'Mantém a calma com proprietário difícil e sob pressão.'],
+    ['dec', 'Decisões', 'Sabe quando insistir, quando recuar e quando pedir ajuda.'],
+    ['det', 'Determinação', 'Quer muito: não se contenta com pouco e vai até o fim.'],
+    ['far', 'Faro', 'A malandragem do jogo: sente a oportunidade e pensa fora da caixa.'],
+    ['apr', 'Aprendizado', 'Absorve feedback e coloca em prática na semana seguinte.']
   ] },
-  { k: 'ati', nome: 'Atitude', sigla: 'ATI', sub: 'Como joga', attrs: [
+  { k: 'cam', nome: 'Campo', sigla: 'CAM', sub: 'O físico do angariador: rua e ritmo', attrs: [
+    ['prosp', 'Prospecção', 'Encontra proprietários: placas, porta a porta, porteiros, rede, mapa cadastral.'],
+    ['prim', 'Abordagem', 'Primeiro contato: chega bem, gera confiança e abre a porta.'],
+    ['ritmo', 'Ritmo', 'Volume: quantos contatos e visitas faz por semana.'],
+    ['fech', 'Fechamento', 'Sai da visita com o imóvel angariado e, sempre que dá, com exclusividade.'],
     ['cons', 'Constância', 'Faz todo dia, não só quando dá vontade.'],
-    ['ini', 'Iniciativa', 'Vai atrás sem precisar ser cobrado.'],
     ['res', 'Resiliência', 'Leva "não" e continua no mesmo ritmo.'],
+    ['ini', 'Iniciativa', 'Vai atrás sem precisar ser cobrado.'],
     ['org', 'Organização', 'Registra, agenda e dá retorno: nada se perde.'],
-    ['apr', 'Aprendizado', 'Absorve feedback e coloca em prática na semana seguinte.'],
-    ['far', 'Faro', 'A malandragem do jogo: sente a oportunidade e pensa fora da caixa.']
+    ['rel', 'Relacionamento', 'Mantém o proprietário perto depois da angariação: retorno, relatório, presença.']
   ] }
 ];
 const ATTRS = GRUPOS.flatMap(g => g.attrs.map(a => ({ k: a[0], nome: a[1], desc: a[2], g: g.k })));
-const TIERS = { novo: 'A avaliar', bronze: 'Bronze', prata: 'Prata', ouro: 'Ouro', elite: 'Elite' };
-const TIER_COR = { novo: '#3a4870', bronze: '#c88b5e', prata: '#c9d0da', ouro: '#e2b851', elite: '#ff5a1f' };
+const ATTR = Object.fromEntries(ATTRS.map(a => [a.k, a]));
+// Papéis, como o "Papel e tarefa" do FM: as estrelas saem da média dos atributos-chave de cada um
+const PAPEIS = [
+  { k: 'prosp', nome: 'Prospector', sub: 'Vai para a rua e encontra os imóveis', attrs: ['prosp', 'prim', 'ritmo', 'ini', 'res'] },
+  { k: 'neg', nome: 'Negociador', sub: 'Transforma visita em angariação', attrs: ['neg', 'obj', 'fech', 'com', 'comp'] },
+  { k: 'tec', nome: 'Especialista técnico', sub: 'Domina preço, papéis e contrato', attrs: ['prec', 'doc', 'cont', 'merc', 'imov'] },
+  { k: 'rel', nome: 'Relacionamento', sub: 'Mantém o proprietário perto', attrs: ['rel', 'esc', 'com', 'cons', 'org'] },
+  { k: 'est', nome: 'Estrategista', sub: 'Enxerga a jogada antes dos outros', attrs: ['far', 'dec', 'merc', 'apres', 'apr'] }
+];
 const PROD = { visita: 'Visita de angariação', angariacao: 'Angariação realizada' };
 const PERIODOS = [['mes', 'Este mês'], ['3m', '3 meses'], ['12m', '12 meses'], ['tudo', 'Tudo']];
 const SUGESTOES = ['Fecha exclusividade', 'Bom de porta a porta', 'Amigo de porteiro e zelador', 'Precifica com dados', 'Domina documentação',
   'Ótimo no telefone', 'Pensa fora da caixa', 'Não desiste no primeiro não', 'Rede forte de contatos', 'Conhece o bairro como ninguém'];
+const PERSONALIDADES = ['Determinado', 'Ambicioso', 'Profissional', 'Equilibrado', 'Competitivo', 'Comunicativo', 'Discreto', 'Inquieto'];
 
 // ── UTIL ──
 const $ = s => document.querySelector(s);
@@ -412,7 +427,6 @@ const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'o
 const fmtMes = iso => iso ? MESES[+iso.slice(5, 7) - 1] + '/' + iso.slice(0, 4) : '';
 const initials = n => { const p = String(n || '').trim().split(/\s+/).filter(Boolean); return ((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase(); };
 const firstName = n => String(n || '').trim().split(/\s+/)[0] || '';
-const nomeCarta = n => { const p = String(n || '').trim().split(/\s+/).filter(Boolean); return p.length > 1 ? p[0] + ' ' + p[p.length - 1] : (p[0] || ''); };
 const plural = (n, s, p) => n === 1 ? s : p;
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -432,25 +446,31 @@ function tempoDeCasa(iso) {
   return [a ? a + ' ' + plural(a, 'ano', 'anos') : '', r ? r + ' ' + plural(r, 'mês', 'meses') : ''].filter(Boolean).join(' e ');
 }
 
-// ── NOTAS ──
+// ── NOTAS (0 a 20) ──
 const nivel = v => typeof v !== 'number' ? 'n0' : v <= 5 ? 'n1' : v <= 10 ? 'n2' : v <= 15 ? 'n3' : 'n4';
-function media(notas, keys) { const v = keys.map(k => notas[k]).filter(x => typeof x === 'number'); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; }
-const ovr = notas => { const m = media(notas || {}, ATTRS.map(a => a.k)); return m === null ? null : Math.round(m * 5); };
-const grp = (notas, g) => { const m = media(notas || {}, GRUPOS.find(x => x.k === g).attrs.map(a => a[0])); return m === null ? null : Math.round(m * 5); };
-const tier = o => o === null ? 'novo' : o >= 85 ? 'elite' : o >= 75 ? 'ouro' : o >= 65 ? 'prata' : 'bronze';
-function delta(d) {
+const nivelNome = v => v === null ? 'a avaliar' : v <= 5 ? 'fraco' : v <= 10 ? 'razoável' : v <= 15 ? 'bom' : 'muito bom';
+function media(notas, keys) {
+  const v = keys.map(k => (notas || {})[k]).filter(x => typeof x === 'number');
+  return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length * 10) / 10 : null;
+}
+const mediaGeral = n => media(n, ATTRS.map(a => a.k));
+const mediaGrupo = (n, g) => media(n, GRUPOS.find(x => x.k === g).attrs.map(a => a[0]));
+const fmtM = v => v === null ? '–' : v.toFixed(1).replace('.', ',');
+const meioPasso = v => Math.round(v * 2) / 2;
+const estrelasDe = m => m === null ? 0 : Math.max(0.5, meioPasso(m / 4)); // 20 = 5 estrelas
+const st5 = (v, cls) => `<span class="st5 ${cls || ''}" title="${String(v).replace('.', ',')} de 5"><i style="width:${v / 5 * 100}%"></i></span>`;
+function delta(d, dec) {
   if (d === null || d === undefined) return '';
-  if (d > 0) return `<span class="dl up">▲ ${d}</span>`;
-  if (d < 0) return `<span class="dl dn">▼ ${-d}</span>`;
+  const t = dec ? Math.abs(d).toFixed(1).replace('.', ',') : Math.abs(d);
+  if (d > 0) return `<span class="dl up">▲ ${t}</span>`;
+  if (d < 0) return `<span class="dl dn">▼ ${t}</span>`;
   return `<span class="dl eq">=</span>`;
 }
-// posição na carta = a área em que a pessoa é mais forte
-function posicao(notas) {
-  const gs = GRUPOS.map(g => grp(notas, g.k));
-  let best = -1, i = -1;
-  gs.forEach((v, k) => { if (v !== null && v > best) { best = v; i = k; } });
-  return i < 0 ? 'ANG' : GRUPOS[i].sigla;
+function papeis(n) {
+  return PAPEIS.map(p => { const m = media(n, p.attrs); return Object.assign({}, p, { m, st: estrelasDe(m) }); })
+    .sort((a, b) => (b.m ?? -1) - (a.m ?? -1));
 }
+const funcao = n => mediaGeral(n) === null ? '' : papeis(n)[0].nome;
 
 // ── FIRESTORE (REST) ──
 function toFs(v) {
@@ -489,12 +509,15 @@ function cleanNotas(n) {
 function cleanCorretor(o) {
   o = o || {};
   const arr = x => Array.isArray(x) ? x : [];
+  const pot = +o.potencial;
   return {
     id: o.id,
     nome: String(o.nome || ''),
     nascimento: String(o.nascimento || ''),
     desde: String(o.desde || ''),
     foto: String(o.foto || ''),
+    personalidade: String(o.personalidade || ''),
+    potencial: Number.isFinite(pot) && pot > 0 ? Math.min(5, meioPasso(pot)) : 0,
     destaques: arr(o.destaques).map(String).filter(Boolean),
     evoluir: String(o.evoluir || ''),
     avaliacoes: arr(o.avaliacoes).filter(a => a && a.data)
@@ -553,6 +576,7 @@ function saveCorretor(c) {
   if (i < 0) corretores.push(c); else corretores[i] = c;
   persistCache();
   const p = lsGet(LS_PEND, {}); p[c.id] = c; lsSet(LS_PEND, p);
+  gravacoes++;
   queueWrite(c.id);
   render();
   return c;
@@ -561,6 +585,7 @@ function removeCorretor(id) {
   corretores = corretores.filter(c => c.id !== id);
   persistCache();
   const p = lsGet(LS_PEND, {}); p[id] = { __del: true }; lsSet(LS_PEND, p);
+  gravacoes++;
   queueWrite(id);
 }
 function applyPending(list) {
@@ -583,10 +608,12 @@ async function fetchAll() {
   } while (tok);
   return out;
 }
-let loaded = false;
+let loaded = false, gravacoes = 0;
 async function refresh(silent) {
   try {
-    corretores = applyPending(await fetchAll());
+    const g = gravacoes, srv = await fetchAll();
+    if (g !== gravacoes) return refresh(silent); // salvou algo enquanto carregava: busca de novo para não perder
+    corretores = applyPending(srv);
     persistCache(); loaded = true; failing = false;
   } catch (e) {
     failing = true;
@@ -611,15 +638,14 @@ function updateSync() {
 }
 
 // ── ESTADO DA TELA ──
-const ui = { ficha: null, per: lsGet(LS_PER, 'tudo'), sheet: null, prodAll: false, fromElenco: false };
+const ui = { ficha: null, aba: 'geral', papel: null, per: lsGet(LS_PER, 'tudo'), sheet: null, prodAll: false, fromElenco: false };
 if (!PERIODOS.some(p => p[0] === ui.per)) ui.per = 'tudo';
 let form = null;
 let admin = lsGet(LS_AUTH, false) === true;
 
 function inicioPeriodo(p) {
-  const d = new Date();
   if (p === 'tudo') return '';
-  const volta = { mes: 0, '3m': 2, '12m': 11 }[p];
+  const d = new Date(), volta = { mes: 0, '3m': 2, '12m': 11 }[p];
   d.setDate(1); d.setMonth(d.getMonth() - volta);
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-01`;
 }
@@ -631,198 +657,221 @@ function prod(c, p) {
   return { v, a, conv: v || a ? Math.round(a / Math.max(v, a) * 100) : null };
 }
 const perLabel = () => (PERIODOS.find(p => p[0] === ui.per) || PERIODOS[3])[1].toLowerCase();
-const ordenados = () => corretores.slice().sort((a, b) => (ovr(notasAtuais(b)) ?? -1) - (ovr(notasAtuais(a)) ?? -1) || a.nome.localeCompare(b.nome, 'pt-BR'));
-
-// ── CARTA ──
-function carta(c, per) {
-  const n = notasAtuais(c), o = ovr(n), t = tier(o), P = prod(c, per);
-  const g = k => { const v = grp(n, k); return v === null ? '–' : v; };
-  const ph = c.foto ? `<img src="${esc(c.foto)}" alt="">` : `<div class="ini">${esc(initials(c.nome))}</div>`;
-  const nm = nomeCarta(c.nome), fs = nm.length > 16 ? 6.2 : nm.length > 12 ? 7.2 : 8.4; // nome longo diminui para caber
-  return `<div class="fut t-${t}"><div class="fut-s"></div><div class="fut-i">
-    <div class="fut-o"><b>${o === null ? '–' : o}</b><span>${posicao(n)}</span><i></i><small>VIP</small></div>
-    <div class="fut-ph">${ph}</div>
-    <div class="fut-n" style="font-size:${fs}cqw">${esc(nm)}</div>
-    <div class="fut-st">
-      <div><b>${g('tec')}</b><span>TÉC</span></div><div><b>${P.v}</b><span>VIS</span></div>
-      <div><b>${g('abo')}</b><span>ABO</span></div><div><b>${P.a}</b><span>ANG</span></div>
-      <div><b>${g('ati')}</b><span>ATI</span></div><div><b>${P.conv === null ? '–' : P.conv + '%'}</b><span>CNV</span></div>
-    </div>
-  </div></div>`;
-}
+const ordenados = () => corretores.slice().sort((a, b) => (mediaGeral(notasAtuais(b)) ?? -1) - (mediaGeral(notasAtuais(a)) ?? -1) || a.nome.localeCompare(b.nome, 'pt-BR'));
 const avatar = c => `<span class="av">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(initials(c.nome))}</span>`;
+const perChips = () => `<div class="chips sm">${PERIODOS.map(([k, l]) => `<button class="chip${ui.per === k ? ' on' : ''}" data-act="per" data-v="${k}">${l}</button>`).join('')}</div>`;
 
-// ── ELENCO ──
+// ── ELENCO (lista do plantel, como a tela de elenco do FM) ──
 function renderElenco() {
   const lista = ordenados();
   const tot = lista.reduce((s, c) => { const p = prod(c, ui.per); s.v += p.v; s.a += p.a; return s; }, { v: 0, a: 0 });
-  const avs = lista.map(c => ovr(notasAtuais(c))).filter(x => x !== null);
-  const mediaTime = avs.length ? Math.round(avs.reduce((a, b) => a + b, 0) / avs.length) : null;
+  const ms = lista.map(c => mediaGeral(notasAtuais(c))).filter(x => x !== null);
+  const mTime = ms.length ? Math.round(ms.reduce((a, b) => a + b, 0) / ms.length * 10) / 10 : null;
   const ult = lista.reduce((m, c) => c.atualizadoEm > m ? c.atualizadoEm : m, '');
   const head = `<div class="phd"><h1>Elenco de angariação</h1><span class="sub">VIP Imóveis${ult ? ' · atualizado em ' + fmtDate(ult) : ''}</span></div>`;
 
   if (!lista.length) {
     $('#main').innerHTML = head + `<div class="empty" style="margin-top:22px"><h3>Nenhum corretor no elenco ainda</h3>
-      <p class="pub">Assim que os corretores forem cadastrados, as cartas aparecem aqui.</p>
+      <p class="pub">Assim que os corretores forem cadastrados, eles aparecem aqui.</p>
       <p class="adm">Cadastre cada corretor que faz angariação com você. As notas você coloca depois, na conversa com cada um.</p>
       <button class="btn-or adm" data-act="novo">+ Adicionar corretor</button></div>`;
     return;
   }
 
-  const maxV = Math.max(1, ...lista.map(c => prod(c, ui.per).v)), maxA = Math.max(1, ...lista.map(c => prod(c, ui.per).a));
   const linhas = lista.map(c => {
-    const av = c.avaliacoes, P = prod(c, ui.per);
-    const ini = av.length ? ovr(av[0].notas) : null, now = av.length ? ovr(ultima(c).notas) : null;
-    let bar = '<div class="evb"></div>', ov = '<span class="muted" style="font-size:13px">a avaliar</span>';
-    if (now !== null) {
-      const base = Math.min(ini ?? now, now), dif = now - (ini ?? now);
-      bar = `<div class="evb"><i class="base" style="width:${base}%"></i>` +
-        (dif > 0 ? `<i class="gain" style="left:${base}%;width:${dif}%"></i>` : dif < 0 ? `<i class="loss" style="left:${now}%;width:${-dif}%"></i>` : '') + '</div>';
-      ov = `<span class="ovr"><b>${now}</b>${av.length > 1 ? delta(dif) : ''}</span>`;
+    const n = notasAtuais(c), av = c.avaliacoes, P = prod(c, ui.per), ida = idade(c.nascimento);
+    const m = mediaGeral(n), ini = av.length ? mediaGeral(av[0].notas) : null;
+    let bar = `<span class="evb"></span><b class="muted" style="font-size:12.5px;font-weight:500;min-width:0">a avaliar</b>`;
+    if (m !== null) {
+      const base = Math.min(ini ?? m, m) * 5, dif = m - (ini ?? m);
+      bar = `<span class="evb"><i class="base" style="width:${base}%"></i>` +
+        (dif > 0 ? `<i class="gain" style="left:${base}%;width:${dif * 5}%"></i>` : dif < 0 ? `<i class="loss" style="left:${m * 5}%;width:${-dif * 5}%"></i>` : '') +
+        `</span><b class="${nivel(Math.round(m))}">${fmtM(m)}</b>${av.length > 1 ? delta(Math.round(dif * 10) / 10, true) : ''}`;
     }
-    const mt = av.length ? `${av.length} ${plural(av.length, 'avaliação', 'avaliações')} · última em ${fmtShort(ultima(c).data)}` : 'Sem avaliação ainda';
-    return `<button class="evr" data-act="abrir" data-id="${esc(c.id)}">
-      <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm" style="display:block">${esc(c.nome)}</span><span class="mt">${mt}</span></span></span>
-      <span class="evb-w">${bar}${ov}</span>
-      <span class="pset">
-        <span class="pn"><span class="lbm">Visitas</span><b>${P.v}</b><span class="bar"><i style="width:${P.v / maxV * 100}%"></i></span></span>
-        <span class="pn a"><span class="lbm">Angariações</span><b>${P.a}</b><span class="bar"><i style="width:${P.a / maxA * 100}%"></i></span></span>
-        <span class="cv"><span class="lbm">Conversão</span>${P.conv === null ? '–' : P.conv + '%'}</span>
-      </span>
+    const g = k => { const v = mediaGrupo(n, k); return `<span class="cell"><span class="lbm">${GRUPOS.find(x => x.k === k).sigla}</span><span class="gv ${nivel(v === null ? null : Math.round(v))}">${v === null ? '–' : Math.round(v)}</span></span>`; };
+    const mt = [funcao(n), av.length ? 'avaliado em ' + fmtShort(ultima(c).data) : 'sem avaliação ainda'].filter(Boolean).join(' · ');
+    return `<button class="sqr" data-act="abrir" data-id="${esc(c.id)}">
+      <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt">${esc(mt)}</span></span></span>
+      <span class="num xl cell"><span class="lbm">Idade</span>${ida ?? '–'}</span>
+      <span class="cell stc"><span class="lbm">Capacidade</span>${m === null ? '<span class="muted">–</span>' : st5(estrelasDe(m))}</span>
+      <span class="cell stc xl"><span class="lbm">Potencial</span>${c.potencial ? st5(c.potencial, 'or') : '<span class="muted">–</span>'}</span>
+      ${g('tec')}${g('men')}${g('cam')}
+      <span class="evb-w">${bar}</span>
+      <span class="num v cell"><span class="lbm">Visitas</span>${P.v}</span>
+      <span class="num a cell"><span class="lbm">Angar.</span>${P.a}</span>
+      <span class="num cell"><span class="lbm">Conv.</span>${P.conv === null ? '–' : P.conv + '%'}</span>
     </button>`;
   }).join('');
 
   $('#main').innerHTML = head + `
-    <div class="tools"><span class="lbl">Produção</span><div class="chips sm">${PERIODOS.map(([k, l]) => `<button class="chip${ui.per === k ? ' on' : ''}" data-act="per" data-v="${k}">${l}</button>`).join('')}</div></div>
+    <div class="tools"><span class="lbl">Produção</span>${perChips()}</div>
     <div class="kpis">
       <div><b>${lista.length}</b><span>${plural(lista.length, 'corretor', 'corretores')} no elenco</span></div>
       <div><b style="color:var(--vis)">${tot.v}</b><span>Visitas de angariação · ${perLabel()}</span></div>
-      <div class="or"><b>${tot.a}</b><span>Angariações realizadas · ${perLabel()}</span></div>
-      <div><b>${mediaTime === null ? '–' : mediaTime}</b><span>Overall médio do elenco</span></div>
+      <div><b style="color:var(--or2)">${tot.a}</b><span>Angariações realizadas · ${perLabel()}</span></div>
+      <div><b class="${nivel(mTime === null ? null : Math.round(mTime))}">${fmtM(mTime)}</b><span>Média do elenco (0 a 20)</span></div>
     </div>
-    <div class="group-t"><span class="lbl">Cartas</span></div>
-    <div class="cards">${lista.map(c => `<button class="cardbtn" data-act="abrir" data-id="${esc(c.id)}">${carta(c, ui.per)}<span class="cap">${TIERS[tier(ovr(notasAtuais(c)))].toUpperCase()}</span></button>`).join('')}</div>
-    <div class="group-t"><span class="lbl">Evolução e produção · ${perLabel()}</span></div>
-    <div class="evo">
-      <div class="evr hd"><span>Corretor</span><span>Overall · da 1ª avaliação até hoje</span><span>Visitas</span><span>Angariações</span><span>Conversão</span></div>
+    <div class="group-t"><span class="lbl">Plantel</span></div>
+    <div class="sq">
+      <div class="sqr hd"><span>Corretor</span><span class="c xl">Idade</span><span>Capacidade</span><span class="xl">Potencial</span><span class="c">Téc</span><span class="c">Men</span><span class="c">Cam</span><span>Média · evolução</span><span class="c">Vis</span><span class="c">Ang</span><span class="c">Conv</span></div>
       ${linhas}
     </div>
     ${legenda()}`;
 }
 function legenda() {
   return `<div class="legend">
-    <div><h4>Notas de 0 a 20</h4>18 atributos em três áreas: Técnica, Abordagem e Atitude. Como no Football Manager, a cor mostra o nível.
-      <div class="sw"><span><i style="background:var(--n1)"></i>1 a 5</span><span><i style="background:var(--n2)"></i>6 a 10</span><span><i style="background:var(--n3)"></i>11 a 15</span><span><i style="background:var(--n4)"></i>16 a 20</span></div></div>
-    <div><h4>Overall de 0 a 100</h4>É a média das notas × 5. A carta muda de cor conforme a pessoa evolui.
-      <div class="sw">${['bronze', 'prata', 'ouro', 'elite'].map((t, i) => `<span><i style="background:${TIER_COR[t]}"></i>${TIERS[t]} ${['até 64', '65–74', '75–84', '85+'][i]}</span>`).join('')}</div></div>
-    <div><h4>Na carta</h4>Embaixo do overall, a área mais forte (TÉC, ABO ou ATI). À direita, a produção do período: VIS visitas de angariação, ANG angariações realizadas e CNV conversão (angariações ÷ visitas).</div>
+    <div><h4>Notas de 0 a 20</h4>Como no Football Manager: atributos Técnicos, Mentais e de Campo, cada um com nota de 0 a 20. A cor mostra o nível.
+      <div class="sw"><span><i style="background:var(--n1)"></i>1–5 fraco</span><span><i style="background:var(--n2)"></i>6–10 razoável</span><span><i style="background:var(--n3)"></i>11–15 bom</span><span><i style="background:var(--n4)"></i>16–20 muito bom</span></div></div>
+    <div><h4>Capacidade e potencial</h4>Capacidade é a média atual das notas em estrelas (20 = 5 estrelas). Potencial é até onde o gestor enxerga que a pessoa pode chegar.</div>
+    <div><h4>Média · evolução</h4>A barra mostra a média de hoje. O trecho laranja forte é o quanto a pessoa cresceu desde a primeira avaliação. Vis, Ang e Conv são visitas de angariação, angariações realizadas e conversão no período.</div>
   </div>`;
 }
 
-// ── FICHA ──
+// ── PERFIL DO CORRETOR (tela de jogador do FM) ──
 function renderFicha(c) {
   const av = c.avaliacoes, u = ultima(c), ant = av[av.length - 2] || null;
-  const n = notasAtuais(c), o = ovr(n), t = tier(o);
-  const ida = idade(c.nascimento);
+  const n = notasAtuais(c), m = mediaGeral(n), ida = idade(c.nascimento);
+  const ps = papeis(n), fn = m === null ? '' : ps[0].nome;
+  if (!ui.papel || !PAPEIS.some(p => p.k === ui.papel)) ui.papel = m === null ? null : ps[0].k;
+  const chave = new Set(ui.papel ? PAPEIS.find(p => p.k === ui.papel).attrs : []);
   const facts = [
     ida !== null ? ['Idade', ida + ' anos'] : null,
     c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null,
     c.desde ? ['Tempo de casa', tempoDeCasa(c.desde)] : null,
-    ['Avaliações', av.length ? av.length + (u ? ' · última ' + fmtShort(u.data) : '') : 'nenhuma ainda']
+    ['Média', m === null ? 'a avaliar' : fmtM(m) + ' · ' + nivelNome(Math.round(m))],
+    ['Última avaliação', u ? fmtDate(u.data) : 'nenhuma ainda']
   ].filter(Boolean);
-
-  const col = g => {
-    const gv = grp(n, g.k), gp = ant ? grp(ant.notas, g.k) : null;
-    return `<div class="fm-c"><div class="fm-h"><span>${g.nome}<small>${g.sub}</small></span><span><b>${gv === null ? '–' : gv}</b> ${gv !== null && gp !== null ? delta(gv - gp) : ''}</span></div>
-      ${g.attrs.map(([k, nome, desc]) => {
-        const v = n[k], p = ant ? ant.notas[k] : undefined;
-        const d = typeof v === 'number' && typeof p === 'number' && v !== p ? delta(v - p) : '';
-        return `<div class="fm-r${typeof v === 'number' && v >= 16 ? ' hi' : ''}"><span class="an" title="${esc(desc)}">${nome}</span>${d}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></div>`;
-      }).join('')}</div>`;
-  };
-
-  const P = prod(c, ui.per);
-  const prodLista = c.producao.slice().sort((a, b) => b.data.localeCompare(a.data));
-  const mostra = ui.prodAll ? prodLista : prodLista.slice(0, 8);
+  const abas = [['geral', 'Visão geral'], ['dev', 'Desenvolvimento'], ['prod', 'Produção']];
 
   $('#main').innerHTML = `
     <button class="back" data-act="voltar">← Elenco</button>
-    <div class="fhero">
-      ${carta(c, ui.per)}
-      <div class="finfo">
-        <span class="kick tierp"><i style="background:${TIER_COR[t]}"></i>${TIERS[t]}${o !== null ? ' · ' + posicao(n) : ''}</span>
-        <h1>${esc(c.nome)}</h1>
-        <div class="facts">${facts.map(([a, b]) => `<div><span>${a}</span><b>${esc(b)}</b></div>`).join('')}</div>
-        ${c.destaques.length ? `<div class="stars">${c.destaques.map(d => `<div>${esc(d)}</div>`).join('')}</div>` : ''}
-        ${c.evoluir ? `<div class="evol"><b>A evoluir:</b> ${esc(c.evoluir)}</div>` : ''}
-        <div class="fact adm">
-          <button class="btn-or" data-act="aval" data-id="${esc(c.id)}">${av.length ? 'Nova avaliação' : 'Fazer a primeira avaliação'}</button>
-          <button class="btn-ghost" data-act="prod" data-id="${esc(c.id)}" data-v="visita">+ Visita</button>
-          <button class="btn-ghost" data-act="prod" data-id="${esc(c.id)}" data-v="angariacao">+ Angariação</button>
-          <button class="btn-ghost" data-act="perfil" data-id="${esc(c.id)}">Editar perfil</button>
+    <div class="pf">
+      <div class="pf-h">
+        <div class="pf-ph">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(initials(c.nome))}</div>
+        <div class="pf-id">
+          <h1>${esc(c.nome)}</h1>
+          <div class="rl">Angariador · VIP Imóveis${fn ? ` · <b>${fn}</b>` : ''}</div>
+          <div class="pf-f">${facts.map(([a, b]) => `<div><span>${a}</span><b>${esc(b)}</b></div>`).join('')}</div>
+        </div>
+        <div class="pf-act adm">
+          <button class="btn-or sm" data-act="aval" data-id="${esc(c.id)}">${av.length ? 'Nova avaliação' : 'Primeira avaliação'}</button>
+          <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="visita">+ Visita</button>
+          <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="angariacao">+ Angariação</button>
+          <button class="btn-ghost sm" data-act="perfil" data-id="${esc(c.id)}">Editar perfil</button>
         </div>
       </div>
-    </div>
-
-    <div class="group-t"><span class="lbl">Atributos${u ? ` · avaliação de ${fmtDate(u.data)}` : ''}</span></div>
-    ${u ? '' : `<div class="empty-s" style="margin-bottom:14px"><span class="pub">Avaliação em breve.</span><span class="adm">Ainda sem notas. Sente com ${esc(firstName(c.nome))} e dê a primeira nota de 0 a 20 em cada atributo.</span></div>`}
+      <div class="pf-tabs">${abas.map(([k, l]) => `<button class="${ui.aba === k ? 'on' : ''}" data-act="aba" data-v="${k}">${l}</button>`).join('')}</div>
+      <div class="pf-b">${ui.aba === 'dev' ? abaDev(c) : ui.aba === 'prod' ? abaProd(c) : abaGeral(c, n, ant, ps, chave, m)}</div>
+    </div>`;
+}
+function abaGeral(c, n, ant, ps, chave, m) {
+  const u = ultima(c);
+  const col = g => {
+    const gv = mediaGrupo(n, g.k), gp = ant ? mediaGrupo(ant.notas, g.k) : null;
+    return `<div class="fm-c"><div class="fm-h"><span><span class="t">${g.nome}</span><small>${g.sub}</small></span>
+      <span class="g"><b class="${nivel(gv === null ? null : Math.round(gv))}">${fmtM(gv)}</b>${gv !== null && gp !== null && gv !== gp ? ' ' + delta(Math.round((gv - gp) * 10) / 10, true) : ''}<span>${nivelNome(gv === null ? null : Math.round(gv))}</span></span></div>
+      ${g.attrs.map(([k, nome, desc]) => {
+        const v = n[k], p = ant ? ant.notas[k] : undefined;
+        const d = typeof v === 'number' && typeof p === 'number' && v !== p ? delta(v - p) : '';
+        return `<div class="fm-r${chave.has(k) ? ' hi' : ''}"><span class="an" title="${esc(desc)}">${nome}</span>${d}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></div>`;
+      }).join('')}</div>`;
+  };
+  const semNota = m === null;
+  return `
+    ${semNota ? `<div class="empty-s" style="margin-bottom:14px"><span class="pub">Avaliação em breve.</span><span class="adm">Ainda sem notas. Sente com ${esc(firstName(c.nome))} e dê a primeira nota de 0 a 20 em cada atributo.</span></div>` : ''}
     <div class="fm">${GRUPOS.map(col).join('')}</div>
-    <div class="fm-leg" style="margin-top:10px"><span><b class="n1">1–5</b> fraco</span><span><b class="n2">6–10</b> razoável</span><span><b class="n3">11–15</b> bom</span><span><b class="n4">16–20</b> muito bom</span>${ant ? `<span><b class="dl up">▲</b> <b class="dl dn">▼</b> mudança desde ${fmtShort(ant.data)}</span>` : ''}</div>
-
-    <div class="grid2" style="margin-top:22px">
+    <div class="fm-leg"><span><b class="n1">1–5</b> fraco</span><span><b class="n2">6–10</b> razoável</span><span><b class="n3">11–15</b> bom</span><span><b class="n4">16–20</b> muito bom</span>${ui.papel ? `<span>Em verde: atributos-chave do papel selecionado</span>` : ''}${ant ? `<span><b class="dl up">▲</b><b class="dl dn">▼</b> mudança desde ${fmtShort(ant.data)}</span>` : ''}</div>
+    <div class="pn3">
+      <div class="pnl"><h3>Papel</h3>
+        ${semNota ? '<div class="muted" style="font-size:14px">Os papéis aparecem depois da primeira avaliação.</div>' :
+          `<div class="pap">${ps.map(p => `<button class="${ui.papel === p.k ? 'on' : ''}" data-act="papel" data-v="${p.k}"><span class="pt"><b>${p.nome}</b><small>${p.sub}</small></span>${st5(p.st)}</button>`).join('')}</div>`}
+      </div>
+      <div class="pnl"><h3>Capacidade</h3>
+        <div class="cap">
+          <div><span>Capacidade atual</span>${semNota ? '<span class="muted">–</span>' : st5(estrelasDe(m))}</div>
+          <div><span>Potencial</span>${c.potencial ? st5(c.potencial, 'or') : '<span class="muted">–</span>'}</div>
+        </div>
+        <div class="kv"><span>Personalidade</span><b>${esc(c.personalidade || '–')}</b></div>
+        ${c.evoluir ? `<div class="evol"><b>A evoluir:</b> ${esc(c.evoluir)}</div>` : ''}
+      </div>
+      <div class="pnl"><h3>Características</h3>
+        ${c.destaques.length ? `<div class="chs">${c.destaques.map(d => `<div>${esc(d)}</div>`).join('')}</div>` : '<div class="muted" style="font-size:14px">Nenhuma ainda.</div>'}
+        ${u && u.obs ? `<div class="kv"><span>Última conversa · ${fmtShort(u.data)}</span></div><div class="nota">${esc(u.obs)}</div>` : ''}
+      </div>
+    </div>`;
+}
+function abaDev(c) {
+  const av = c.avaliacoes, u = ultima(c), ant = av[av.length - 2] || null;
+  let mud = '';
+  if (u && ant) {
+    const l = ATTRS.map(a => ({ a, d: (typeof u.notas[a.k] === 'number' && typeof ant.notas[a.k] === 'number') ? u.notas[a.k] - ant.notas[a.k] : 0 })).filter(x => x.d).sort((x, y) => y.d - x.d);
+    mud = l.length ? `<div class="mud">${l.map(x => `<div><span>${x.a.nome}</span>${delta(x.d)}</div>`).join('')}</div>` : '<div class="muted" style="font-size:14px">Nenhuma nota mudou.</div>';
+  }
+  const m0 = av.length ? mediaGeral(av[0].notas) : null, m1 = u ? mediaGeral(u.notas) : null;
+  return `<div class="grid2">
       <section class="box">
-        <div class="box-h"><h3>Evolução do overall</h3>${o !== null && av.length > 1 ? `<span class="r">${delta(o - ovr(av[0].notas))} <span class="muted" style="font-size:13px">desde ${fmtShort(av[0].data)}</span></span>` : ''}</div>
+        <div class="box-h"><h3>Evolução da média</h3>${m0 !== null && m1 !== null && av.length > 1 ? `<span class="r">${delta(Math.round((m1 - m0) * 10) / 10, true)} <span class="muted" style="font-size:13px">desde ${fmtShort(av[0].data)}</span></span>` : ''}</div>
         ${graficoEvo(c)}
       </section>
       <section class="box">
-        <div class="box-h"><h3>Produção</h3><div class="chips sm r">${PERIODOS.map(([k, l]) => `<button class="chip${ui.per === k ? ' on' : ''}" data-act="per" data-v="${k}">${l}</button>`).join('')}</div></div>
+        <div class="box-h"><h3>O que mudou</h3>${ant ? `<span class="muted r" style="font-size:13px">${fmtShort(ant.data)} → ${fmtShort(u.data)}</span>` : ''}</div>
+        ${ant ? mud : '<div class="empty-s">Aparece a partir da segunda avaliação: quais notas subiram e quais caíram.</div>'}
+      </section>
+    </div>
+    <section class="box" style="margin-top:16px">
+      <div class="box-h"><h3>Histórico de avaliações</h3></div>
+      ${av.length ? `<div class="ls">${av.slice().reverse().map(a => {
+        const i = av.indexOf(a), mm = mediaGeral(a.notas), pm = i > 0 ? mediaGeral(av[i - 1].notas) : null;
+        const gs = GRUPOS.map(g => `${g.sigla} ${fmtM(mediaGrupo(a.notas, g.k))}`).join(' · ');
+        return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob"><b class="${nivel(mm === null ? null : Math.round(mm))}">${fmtM(mm)}</b>${mm !== null && pm !== null ? delta(Math.round((mm - pm) * 10) / 10, true) : ''}</span><small>${gs}</small>${a.obs ? `<small>${esc(a.obs)}</small>` : ''}</span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`;
+      }).join('')}</div>` : `<div class="empty-s">As avaliações aparecem aqui, com a data de cada conversa.</div>`}
+    </section>`;
+}
+function abaProd(c) {
+  const P = prod(c, ui.per);
+  const lista = c.producao.slice().sort((a, b) => b.data.localeCompare(a.data));
+  const mostra = ui.prodAll ? lista : lista.slice(0, 10);
+  return `<div class="grid2">
+      <section class="box">
+        <div class="box-h"><h3>Produção</h3></div>
+        ${perChips()}
         <div class="sum"><div class="v"><b>${P.v}</b><span>Visitas de angariação</span></div><div class="a"><b>${P.a}</b><span>Angariações realizadas</span></div><div><b>${P.conv === null ? '–' : P.conv + '%'}</b><span>Conversão</span></div></div>
         ${graficoProd(c)}
       </section>
-    </div>
-
-    <div class="grid2" style="margin-top:20px">
       <section class="box">
-        <div class="box-h"><h3>Produção registrada</h3><span class="muted r" style="font-size:13px">${prodLista.length} ${plural(prodLista.length, 'registro', 'registros')}</span></div>
-        ${prodLista.length ? `<div class="ls">${mostra.map(p => `<div class="li"><span class="d">${fmtShort(p.data)}</span><span class="w"><span class="tp ${p.tipo}">${p.tipo === 'visita' ? 'Visita' : 'Angariação'}</span>${esc(p.imovel || '')}${p.obs ? `<small>${esc(p.obs)}</small>` : ''}</span><button class="rm adm" data-act="prod-del" data-id="${esc(c.id)}" data-v="${esc(p.id)}" aria-label="Apagar registro">×</button></div>`).join('')}
-          ${prodLista.length > mostra.length ? `<button class="more" data-act="prod-all">Ver todos os ${prodLista.length}</button>` : ''}</div>`
+        <div class="box-h"><h3>Registros</h3><span class="muted r" style="font-size:13px">${lista.length} ${plural(lista.length, 'registro', 'registros')}</span></div>
+        ${lista.length ? `<div class="ls">${mostra.map(p => `<div class="li"><span class="d">${fmtShort(p.data)}</span><span class="w"><span class="tp ${p.tipo}">${p.tipo === 'visita' ? 'Visita' : 'Angariação'}</span>${esc(p.imovel || '')}${p.obs ? `<small>${esc(p.obs)}</small>` : ''}</span><button class="rm adm" data-act="prod-del" data-id="${esc(c.id)}" data-v="${esc(p.id)}" aria-label="Apagar registro">×</button></div>`).join('')}
+          ${lista.length > mostra.length ? `<button class="more" data-act="prod-all">Ver todos os ${lista.length}</button>` : ''}</div>`
           : `<div class="empty-s">Nenhuma visita ou angariação registrada ainda.</div>`}
-      </section>
-      <section class="box">
-        <div class="box-h"><h3>Histórico de avaliações</h3></div>
-        ${av.length ? `<div class="ls">${av.slice().reverse().map(a => {
-          const i = av.indexOf(a), oo = ovr(a.notas), po = i > 0 ? ovr(av[i - 1].notas) : null;
-          return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob"><b>${oo ?? '–'}</b>${oo !== null && po !== null ? delta(oo - po) : ''}</span><span class="muted" style="font-size:13px">${TIERS[tier(oo)]}</span>${a.obs ? `<small>${esc(a.obs)}</small>` : ''}</span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`;
-        }).join('')}</div>` : `<div class="empty-s">As avaliações aparecem aqui, com a data de cada conversa.</div>`}
       </section>
     </div>`;
 }
 
 // ── GRÁFICOS ──
 function graficoEvo(c) {
-  const pts = c.avaliacoes.map(a => ({ d: a.data, o: ovr(a.notas) })).filter(p => p.o !== null);
-  if (pts.length < 2) return `<div class="empty-s">${pts.length ? `Overall atual: <b style="color:var(--text)">${pts[0].o}</b>. A linha de evolução aparece a partir da segunda avaliação.` : 'A linha de evolução aparece depois das avaliações.'}</div>`;
-  const W = 560, H = 210, L = 34, R = 18, T = 26, B = 30;
-  const vals = pts.map(p => p.o);
-  const lo = Math.max(0, Math.floor((Math.min(...vals) - 6) / 10) * 10), hi = Math.min(100, Math.ceil((Math.max(...vals) + 6) / 10) * 10);
-  const step = hi - lo > 50 ? 20 : 10;
+  const pts = c.avaliacoes.map(a => ({ d: a.data, m: mediaGeral(a.notas) })).filter(p => p.m !== null);
+  if (pts.length < 2) return `<div class="empty-s">${pts.length ? `Média atual: <b style="color:var(--text)">${fmtM(pts[0].m)}</b>. A linha de evolução aparece a partir da segunda avaliação.` : 'A linha de evolução aparece depois das avaliações.'}</div>`;
+  const W = 560, H = 210, L = 30, R = 18, T = 26, B = 30;
+  const vals = pts.map(p => p.m);
+  const lo = Math.max(0, Math.floor(Math.min(...vals) - 2)), hi = Math.min(20, Math.ceil(Math.max(...vals) + 2));
+  const step = hi - lo > 10 ? 4 : 2;
   const x = i => L + i * (W - L - R) / (pts.length - 1), y = v => T + (hi - v) * (H - T - B) / (hi - lo);
   const each = Math.ceil(pts.length / 7);
   let g = '';
   for (let v = lo; v <= hi; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(255,255,255,.07)"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#66759a">${v}</text>`;
-  const line = pts.map((p, i) => `${x(i)},${y(p.o)}`).join(' ');
+  const line = pts.map((p, i) => `${x(i)},${y(p.m)}`).join(' ');
   const area = `${x(0)},${y(lo)} ${line} ${x(pts.length - 1)},${y(lo)}`;
-  const dots = pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.o)}" r="4.5" fill="#ff8a3d" stroke="#0b1530" stroke-width="2"/>` +
-    `<text x="${x(i)}" y="${y(p.o) - 11}" text-anchor="middle" font-size="12" font-weight="700" fill="#f4f6fb">${p.o}</text>` +
+  const dots = pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.m)}" r="4.5" fill="#ff8a3d" stroke="#0c1631" stroke-width="2"/>` +
+    `<text x="${x(i)}" y="${y(p.m) - 11}" text-anchor="middle" font-size="12" font-weight="700" fill="#f4f6fb">${fmtM(p.m)}</text>` +
     (i % each === 0 || i === pts.length - 1 ? `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#8d9bbb">${fmtShort(p.d)}</text>` : '')).join('');
-  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do overall">
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução da média">
     <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a1f" stop-opacity=".28"/><stop offset="1" stop-color="#ff5a1f" stop-opacity="0"/></linearGradient></defs>
     ${g}<polygon points="${area}" fill="url(#ga)"/><polyline points="${line}" fill="none" stroke="#ff8a3d" stroke-width="2.5" stroke-linejoin="round"/>${dots}</svg>`;
 }
 function graficoProd(c) {
   const d = new Date(); d.setDate(1);
   const meses = [];
-  for (let i = 5; i >= 0; i--) { const m = new Date(d.getFullYear(), d.getMonth() - i, 1); meses.push(`${m.getFullYear()}-${pad(m.getMonth() + 1)}`); }
+  for (let i = 5; i >= 0; i--) { const mm = new Date(d.getFullYear(), d.getMonth() - i, 1); meses.push(`${mm.getFullYear()}-${pad(mm.getMonth() + 1)}`); }
   const cont = meses.map(m => ({ m, v: c.producao.filter(p => p.tipo === 'visita' && p.data.startsWith(m)).length, a: c.producao.filter(p => p.tipo === 'angariacao' && p.data.startsWith(m)).length }));
   if (!cont.some(x => x.v || x.a)) return `<div class="empty-s">Os últimos 6 meses aparecem aqui conforme as visitas e angariações forem registradas.</div>`;
   const W = 560, H = 190, L = 10, R = 10, T = 22, B = 28;
@@ -843,11 +892,14 @@ function graficoProd(c) {
 function render() {
   document.body.classList.toggle('adm', admin);
   const c = ui.ficha ? byId(ui.ficha) : null;
+  $('.fab').classList.toggle('hidden', !!c); // no perfil o botão + cobriria as notas
   if (c) renderFicha(c); else renderElenco();
 }
 function route() {
   const m = location.hash.match(/^#c\/(.+)$/);
-  ui.ficha = m ? decodeURIComponent(m[1]) : null;
+  const novo = m ? decodeURIComponent(m[1]) : null;
+  if (novo !== ui.ficha) { ui.aba = 'geral'; ui.papel = null; }
+  ui.ficha = novo;
   ui.prodAll = false;
   render();
   window.scrollTo(0, 0);
@@ -889,7 +941,7 @@ function sheetLogin() {
 function sheetPerfil(id) {
   const c = id ? byId(id) : cleanCorretor({});
   if (id && !c) return;
-  form = { tipo: 'perfil', id: id || null, foto: c.foto, destaques: c.destaques.slice(), del: false };
+  form = { tipo: 'perfil', id: id || null, foto: c.foto, destaques: c.destaques.slice(), potencial: c.potencial };
   openSheet(shHead(id ? 'Editar perfil' : 'Novo corretor', id ? esc(c.nome) : 'Adicionar ao elenco') + `<div class="sh-b">
     <div class="fotoed"><div class="pv" id="f-pv"></div><div class="bt">
       <label class="btn-ghost sm" for="f-foto">Escolher foto</label><input type="file" id="f-foto" accept="image/*" class="hidden">
@@ -899,15 +951,18 @@ function sheetPerfil(id) {
       <div class="fl"><label class="lbl" for="f-nasc">Nascimento</label><input id="f-nasc" type="date" value="${esc(c.nascimento)}"></div>
       <div class="fl"><label class="lbl" for="f-desde">Na VIP desde</label><input id="f-desde" type="date" value="${esc(c.desde)}"></div>
     </div>
-    <div><span class="lbl">Destaques<span class="hint">a "perna boa": aparece com ★ na ficha</span></span>
+    <div><span class="lbl">Potencial<span class="hint">até onde você enxerga que a pessoa pode chegar</span></span><div class="pick" id="f-pot"></div></div>
+    <div class="fl"><label class="lbl" for="f-pers">Personalidade</label><input id="f-pers" value="${esc(c.personalidade)}" placeholder="Ex.: Determinado" autocomplete="off">
+      <div class="chips" style="margin-top:10px">${PERSONALIDADES.map(p => `<button class="chip sug" data-act="pers" data-v="${esc(p)}">${esc(p)}</button>`).join('')}</div></div>
+    <div><span class="lbl">Características<span class="hint">a "perna boa": aparece com ★ no perfil</span></span>
       <div class="chips" id="f-dest"></div>
-      <div style="display:flex;gap:8px;margin-top:10px"><input id="f-dest-in" placeholder="Escreva um destaque e toque em Adicionar" autocomplete="off"><button class="btn-ghost" data-act="dest-add">Adicionar</button></div>
+      <div style="display:flex;gap:8px;margin-top:10px"><input id="f-dest-in" placeholder="Escreva e toque em Adicionar" autocomplete="off"><button class="btn-ghost" data-act="dest-add">Adicionar</button></div>
       <div class="chips" id="f-sug" style="margin-top:10px"></div></div>
     <div class="fl"><label class="lbl" for="f-evol">A evoluir<span class="hint">o principal ponto de desenvolvimento</span></label><input id="f-evol" value="${esc(c.evoluir)}" placeholder="Ex.: contorno de objeções sobre exclusividade" autocomplete="off"></div>
     <div id="f-del"></div>
   </div>
   <div class="sh-f">${id ? '<button class="danger l" data-act="del-ask">Tirar do elenco</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-perfil">Salvar</button></div>`, 'perfil');
-  renderFotoPrev(); renderDest();
+  renderFotoPrev(); renderDest(); renderPot();
   $('#f-foto').addEventListener('change', async e => {
     const f = e.target.files[0]; if (!f) return;
     try { form.foto = await lerFoto(f); renderFotoPrev(); } catch (er) { toast('Não consegui abrir essa foto. Tente outra.'); }
@@ -916,6 +971,11 @@ function sheetPerfil(id) {
   $('#f-dest-in').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addDest(e.target.value); } });
   if (!id) setTimeout(() => $('#f-nome').focus(), 50);
 }
+function renderPot() {
+  const v = form.potencial;
+  $('#f-pot').innerHTML = [1, 2, 3, 4, 5].map(i => `<button class="${v >= i ? 'f' : v >= i - 0.5 ? 'h' : ''}" data-act="pot" data-v="${i}" aria-label="${i} estrelas">★</button>`).join('') +
+    `<span class="v">${v ? String(v).replace('.', ',') + ' de 5' : 'toque nas estrelas (de novo = meia)'}</span>`;
+}
 function renderFotoPrev() {
   const pv = $('#f-pv'); if (!pv) return;
   pv.style.backgroundImage = form.foto ? `url("${form.foto}")` : '';
@@ -923,7 +983,7 @@ function renderFotoPrev() {
   $('#f-foto-rm').classList.toggle('hidden', !form.foto);
 }
 function renderDest() {
-  $('#f-dest').innerHTML = form.destaques.map((d, i) => `<span class="chip tag">★ ${esc(d)}<button class="rm" data-act="dest-rm" data-v="${i}" aria-label="Remover">×</button></span>`).join('') || '<span class="muted" style="font-size:14px">Nenhum destaque ainda.</span>';
+  $('#f-dest').innerHTML = form.destaques.map((d, i) => `<span class="chip tag">★ ${esc(d)}<button class="rm" data-act="dest-rm" data-v="${i}" aria-label="Remover">×</button></span>`).join('') || '<span class="muted" style="font-size:14px">Nenhuma ainda.</span>';
   $('#f-sug').innerHTML = SUGESTOES.filter(s => !form.destaques.includes(s)).map(s => `<button class="chip sug" data-act="dest-add" data-v="${esc(s)}">+ ${esc(s)}</button>`).join('');
 }
 function addDest(v) {
@@ -954,7 +1014,10 @@ function savePerfil() {
   if (!nome) { $('#e-nome').textContent = 'Coloque o nome.'; $('#f-nome').focus(); return; }
   if ($('#f-dest-in').value.trim()) addDest();
   const base = form.id ? byId(form.id) : { id: newId('k') };
-  const c = saveCorretor(Object.assign({}, base, { nome, nascimento: $('#f-nasc').value, desde: $('#f-desde').value, foto: form.foto, destaques: form.destaques, evoluir: $('#f-evol').value.trim() }));
+  const c = saveCorretor(Object.assign({}, base, {
+    nome, nascimento: $('#f-nasc').value, desde: $('#f-desde').value, foto: form.foto, potencial: form.potencial,
+    personalidade: $('#f-pers').value.trim(), destaques: form.destaques, evoluir: $('#f-evol').value.trim()
+  }));
   const novo = !form.id;
   closeSheet();
   if (novo) { ui.fromElenco = true; location.hash = 'c/' + encodeURIComponent(c.id); toast(`${firstName(c.nome)} entrou no elenco.`); }
@@ -968,12 +1031,12 @@ function sheetAval(id, avId) {
   if (avId && idx < 0) return;
   const atual = idx >= 0 ? c.avaliacoes[idx] : null;
   const ref = idx >= 0 ? c.avaliacoes[idx - 1] || null : ultima(c); // contra o que comparar
-  form = { tipo: 'aval', id, avId: avId || null, notas: Object.assign({}, atual ? atual.notas : ref ? ref.notas : {}), ref: ref ? ref.notas : {}, del: false };
+  form = { tipo: 'aval', id, avId: avId || null, notas: Object.assign({}, atual ? atual.notas : ref ? ref.notas : {}), ref: ref ? ref.notas : {} };
   const linhas = g => `<div class="ag"><div class="ag-t">${g.nome} · ${g.sub.toLowerCase()}</div>${g.attrs.map(([k, nome, desc]) => `
     <div class="ar"><div class="an"><b>${nome}</b><small>${desc}</small>${typeof form.ref[k] === 'number' ? `<div class="pr" id="pr-${k}"></div>` : ''}</div>
       <div class="stp"><button data-act="nota" data-k="${k}" data-v="-1" aria-label="Diminuir ${nome}">−</button><input id="n-${k}" inputmode="numeric" maxlength="2" aria-label="${nome}" value="${form.notas[k] ?? ''}" placeholder="–"><button data-act="nota" data-k="${k}" data-v="1" aria-label="Aumentar ${nome}">+</button></div></div>`).join('')}</div>`;
   openSheet(shHead(atual ? 'Editar avaliação' : 'Nova avaliação', esc(c.nome)) + `<div class="sh-b">
-    <div class="liveo"><div class="o"><b id="lv-o">–</b><span>OVERALL</span></div><div class="g">${GRUPOS.map(g => `<span>${g.sigla}<b id="lv-${g.k}">–</b></span>`).join('')}</div></div>
+    <div class="liveo"><div class="o"><b id="lv-m">–</b><span>MÉDIA</span></div><div class="g">${GRUPOS.map(g => `<span>${g.sigla}<b id="lv-${g.k}">–</b></span>`).join('')}</div></div>
     <div class="row2"><div class="fl"><label class="lbl" for="a-data">Data da conversa</label><input id="a-data" type="date" value="${atual ? atual.data : hoje()}"></div></div>
     <p class="hintp">${ref && !atual ? 'Já vem com as notas da última avaliação: mude só o que evoluiu.' : 'Nota de 0 a 20 em cada atributo, como no Football Manager. Pode deixar em branco o que ainda não deu para avaliar.'}</p>
     ${GRUPOS.map(linhas).join('')}
@@ -984,9 +1047,8 @@ function sheetAval(id, avId) {
   ATTRS.forEach(a => {
     $('#n-' + a.k).addEventListener('input', e => {
       const d = e.target.value.replace(/\D/g, '').slice(0, 2);
-      e.target.value = d;
       if (d === '') delete form.notas[a.k]; else form.notas[a.k] = Math.min(20, +d);
-      if (d !== '' && +d > 20) e.target.value = '20';
+      e.target.value = d === '' ? '' : String(form.notas[a.k]);
       pintaNota(a.k);
     });
     pintaNota(a.k);
@@ -998,10 +1060,10 @@ function pintaNota(k) {
   inp.className = nivel(v);
   const pr = $('#pr-' + k), p = form.ref[k];
   if (pr) pr.innerHTML = `antes ${p}` + (typeof v === 'number' && v !== p ? ' ' + delta(v - p) : '');
-  const o = ovr(form.notas);
-  $('#lv-o').textContent = o === null ? '–' : o;
-  $('#lv-o').style.color = o === null ? '' : TIER_COR[tier(o)];
-  GRUPOS.forEach(g => { const x = grp(form.notas, g.k); $('#lv-' + g.k).textContent = x === null ? '–' : x; });
+  const m = mediaGeral(form.notas);
+  $('#lv-m').textContent = fmtM(m);
+  $('#lv-m').className = nivel(m === null ? null : Math.round(m));
+  GRUPOS.forEach(g => { const x = mediaGrupo(form.notas, g.k), el = $('#lv-' + g.k); el.textContent = fmtM(x); el.className = nivel(x === null ? null : Math.round(x)); });
 }
 function passoNota(k, d) {
   const v = form.notas[k];
@@ -1015,13 +1077,13 @@ function saveAval() {
   const notas = cleanNotas(form.notas);
   if (!Object.keys(notas).length) { toast('Dê nota em pelo menos um atributo.'); return; }
   const obs = $('#a-obs').value.trim();
-  const avs = form.avId
+  const editando = !!form.avId;
+  const avs = editando
     ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, obs }) : a)
     : c.avaliacoes.concat([{ id: newId('a'), data, notas, obs }]);
-  const editando = !!form.avId;
   saveCorretor(Object.assign({}, c, { avaliacoes: avs }));
   closeSheet();
-  toast(editando ? 'Avaliação atualizada.' : `Avaliação salva. Overall ${ovr(notas)}.`);
+  toast(editando ? 'Avaliação atualizada.' : `Avaliação salva. Média ${fmtM(mediaGeral(notas))}.`);
 }
 
 // produção: visita de angariação / angariação realizada
@@ -1088,6 +1150,8 @@ document.addEventListener('click', e => {
       if (ui.fromElenco) { ui.fromElenco = false; history.back(); }
       else { history.replaceState(null, '', location.pathname + location.search); route(); }
       break;
+    case 'aba': ui.aba = v; ui.prodAll = false; render(); break;
+    case 'papel': ui.papel = v; render(); break;
     case 'per': ui.per = v; lsSet(LS_PER, v); render(); break;
     case 'prod-all': ui.prodAll = true; render(); break;
     case 'novo': sheetPerfil(); break;
@@ -1096,12 +1160,14 @@ document.addEventListener('click', e => {
     case 'prod': sheetProd(id, v); break;
     case 'fechar': closeSheet(); break;
     case 'foto-rm': form.foto = ''; renderFotoPrev(); break;
+    case 'pot': { const i = +v; form.potencial = form.potencial === i ? i - 0.5 : form.potencial === i - 0.5 ? 0 : i; renderPot(); break; }
+    case 'pers': $('#f-pers').value = v; break;
     case 'dest-add': addDest(v); break;
     case 'dest-rm': form.destaques.splice(+v, 1); renderDest(); break;
     case 'save-perfil': savePerfil(); break;
     case 'del-ask': {
       const c = byId(form.id);
-      $('#f-del').innerHTML = `<div class="confirm"><span>Tirar ${esc(firstName(c.nome))} do elenco? Some a carta, as avaliações e a produção.</span><button class="btn-del" data-act="del-yes">Tirar</button><button class="link" data-act="del-no">Cancelar</button></div>`;
+      $('#f-del').innerHTML = `<div class="confirm"><span>Tirar ${esc(firstName(c.nome))} do elenco? Somem as avaliações e a produção.</span><button class="btn-del" data-act="del-yes">Tirar</button><button class="link" data-act="del-no">Cancelar</button></div>`;
       $('#f-del').scrollIntoView({ block: 'nearest' });
       break;
     }
