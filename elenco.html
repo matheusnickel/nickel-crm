@@ -432,7 +432,7 @@ const LS_CACHE = 'elenco_cache_' + COL, LS_PEND = 'elenco_pending_' + COL;
 const LS_AUTH = 'elenco_auth', LS_PER = 'elenco_periodo2';
 const SENHA = 'flor2301';
 
-// Três áreas com três atributos cada, nota de 0 a 20 como no Football Manager.
+// Três áreas, nota de 0 a 20 como no Football Manager.
 // Cada atributo tem o que significa cada faixa de nota (é o guia para avaliar).
 const GRUPOS = [
   { k: 'tec', nome: 'Técnico', sigla: 'TÉC', sub: 'Conhecimento técnico para angariar', attrs: [
@@ -457,7 +457,9 @@ const GRUPOS = [
     { k: 'pre', nome: 'Presença', desc: 'Presença na bancada: está todos os dias na imobiliária, com vontade de angariar, perguntando e participando.',
       niv: ['Raramente aparece na imobiliária.', 'Aparece quando é cobrada.', 'Está na imobiliária quase todos os dias, participando.', 'Está todo dia na bancada, pergunta, participa e busca imóvel.'] },
     { k: 'org', nome: 'Organização', desc: 'O quanto a pessoa é organizada. Quando você pergunta alguma coisa, ela sabe onde está e responde sem se perder.',
-      niv: ['Não sabe onde estão as coisas; perde contatos e retornos.', 'Se organiza só quando é cobrada.', 'Sabe onde está cada coisa e dá retorno no prazo.', 'Rotina impecável; responde na hora qualquer pergunta.'] }
+      niv: ['Não sabe onde estão as coisas; perde contatos e retornos.', 'Se organiza só quando é cobrada.', 'Sabe onde está cada coisa e dá retorno no prazo.', 'Rotina impecável; responde na hora qualquer pergunta.'] },
+    { k: 'vang', nome: 'Visita de angariação', desc: 'Como a pessoa conduz a visita ao proprietário: lê o ambiente, equilibra falar e ouvir e acerta o momento de cada passo.',
+      niv: ['Ainda não conduz uma visita de angariação.', 'Conduz a visita, mas atropela ou perde o momento.', 'Conduz bem: ouve o proprietário e sabe a hora de cada passo.', 'Domina a visita: lê o ambiente, deixa o proprietário falar e acerta o momento de propor.'] }
   ] }
 ];
 const ATTRS = GRUPOS.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a)));
@@ -497,6 +499,15 @@ const CHECKS = {
     { k: 'docs', t: 'Sabe quais documentos pedir ao proprietário para fazer a angariação' },
     { k: 'aut', t: 'Preenche a autorização de venda corretamente' },
     { k: 'anx', t: 'Sabe onde anexar a documentação e qual é o próximo passo depois de angariar' }
+  ],
+  vang: [
+    { k: 'prep', t: 'Chega preparada: já levantou os dados do imóvel, a documentação e o valor de mercado antes da visita' },
+    { k: 'feel', t: 'Tem feeling: observa a casa e o ambiente, entende o que está acontecendo e sabe a hora de perguntar e a hora de não perguntar' },
+    { k: 'ouve', t: 'Sabe a hora de parar de falar: explica o necessário e deixa o proprietário falar, ouvindo mais do que fala' },
+    { k: 'perg', t: 'Faz as perguntas certas: motivo da venda, prazo, valor esperado e quem decide' },
+    { k: 'apres', t: 'Apresenta a VIP Imóveis e o plano de venda com clareza e segurança' },
+    { k: 'mom', t: 'Entende o momento certo de propor a exclusividade e de trazer o imóvel para a imobiliária, e percebe quando ainda não faz sentido' },
+    { k: 'prox', t: 'Sai da visita com o próximo passo combinado: retorno, documentos ou nova visita' }
   ]
 };
 const CHECK_KEYS = Object.values(CHECKS).flat().map(i => i.k);
@@ -656,7 +667,7 @@ const notaCheck = (checks, attr) => Math.round(CHECKS[attr].filter(i => checks[i
 // notas de hoje: as da última avaliação, com Angariação e Documentação sempre vindo do checklist
 function notasAtuais(c) {
   const n = Object.assign({}, (ultima(c) || {}).notas || {});
-  if (c.avaliacoes.length || Object.keys(c.checks).length) { n.ang = notaCheck(c.checks, 'ang'); n.doc = notaCheck(c.checks, 'doc'); }
+  if (c.avaliacoes.length || Object.keys(c.checks).length) for (const k in CHECKS) n[k] = notaCheck(c.checks, k);
   return n;
 }
 // capacidade atual: as estrelas que o gestor deu; enquanto não der, vale a sugestão das notas
@@ -833,7 +844,7 @@ function renderElenco() {
 }
 function legenda() {
   return `<div class="legend">
-    <div><h4>Atributos de 0 a 20</h4>Três áreas (Técnico, Mental e Postura) com três atributos cada. A cor mostra o nível.
+    <div><h4>Atributos de 0 a 20</h4>Três áreas: Técnico, Mental e Postura. A cor mostra o nível.
       <div class="sw">${ESCALA.map(([c, f, t]) => `<span><i style="background:var(--${c})"></i>${f}: ${t.toLowerCase()}</span>`).join('')}</div></div>
     <div><h4>Capacidade atual</h4>As estrelas que o gestor dá, com base nas notas dos atributos:
       <div class="regua" style="margin-top:8px">${REGUA_CA.map(([s, t]) => `<span><b>${fmtEst(s)} ★</b>${t}</span>`).join('')}</div>
@@ -920,7 +931,7 @@ function abaGeral(c, n, ant, ps, chave, nt) {
 // treinamentos de Angariação/Documentação, com o que já foi concluído (e quando)
 function listaChecks(c, attr) {
   const l = CHECKS[attr], feitos = l.filter(i => c.checks[i.k]).length;
-  return `<span class="fx">${feitos} de ${l.length} treinamentos concluídos · nota ${notaCheck(c.checks, attr)}</span>
+  return `<span class="fx">${feitos} de ${l.length} itens concluídos · nota ${notaCheck(c.checks, attr)}</span>
     <span class="ckl">${l.map(i => `<span class="${c.checks[i.k] ? 'ok' : ''}"><i>${c.checks[i.k] ? '✓' : ''}</i>${esc(i.t)}${c.checks[i.k] ? `<small>${fmtShort(c.checks[i.k])}</small>` : ''}</span>`).join('')}</span>`;
 }
 function abaDev(c) {
@@ -1209,7 +1220,7 @@ function sheetAval(id, avId, foco) {
   if (usaCheck) for (const k in CHECKS) form.notas[k] = notaCheck(form.checks, k);
   const linha = a => {
     if (CHECKS[a.k] && usaCheck) return `
-    <div class="ar"><div class="top2"><div class="an"><b>${a.nome}</b><small>Marque os treinamentos que a pessoa já domina. A nota sobe sozinha.</small></div><b class="nck" id="n-${a.k}"></b></div>
+    <div class="ar"><div class="top2"><div class="an"><b>${a.nome}</b><small>Marque o que a pessoa já domina. A nota sobe sozinha.</small></div><b class="nck" id="n-${a.k}"></b></div>
       <div class="ckb" id="ck-${a.k}"></div>
       <div class="rub" id="rb-${a.k}"></div></div>`;
     if (CHECKS[a.k]) return `
@@ -1454,7 +1465,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-27g';
+const VERSAO = '2026-10-27h';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
