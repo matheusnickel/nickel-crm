@@ -187,6 +187,24 @@ input[type=date]{min-height:48px}
 .fm-x{display:block;font-size:13.5px;font-weight:500;line-height:1.5;color:var(--text2);background:#08112a;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .fm-x .fx{display:block;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 .fm-x .fx b{margin-right:4px}
+.ckl{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.ckl > span{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.4;color:var(--muted)}
+.ckl > span.ok{color:var(--text2)}
+.ckl i{flex-shrink:0;width:17px;height:17px;border-radius:5px;border:1.5px solid var(--line2);display:inline-flex;align-items:center;justify-content:center;font:800 11px 'Geist',sans-serif;font-style:normal;color:#06210f;margin-top:1px}
+.ckl .ok i{background:var(--n4);border-color:var(--n4)}
+.ckl small{margin-left:auto;padding-left:8px;font:600 11px 'Geist Mono',monospace;color:var(--faint);white-space:nowrap}
+/* checklist dentro da avaliação (tocável) */
+.ckb{display:flex;flex-direction:column;gap:4px}
+.ckb button{display:flex;align-items:flex-start;gap:10px;text-align:left;padding:9px 10px;border-radius:10px;border:1px solid var(--line);font-size:14px;line-height:1.4;color:var(--text2)}
+.ckb button:hover{border-color:var(--line2)}
+.ckb button.ok{border-color:rgba(61,220,151,.4);background:rgba(61,220,151,.06);color:var(--text)}
+.ckb i{flex-shrink:0;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line2);display:inline-flex;align-items:center;justify-content:center;font:800 12px 'Geist',sans-serif;font-style:normal;color:#06210f;margin-top:1px}
+.ckb .ok i{background:var(--n4);border-color:var(--n4)}
+.ar .nck{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;min-width:40px;text-align:right}
+.regua{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--muted);line-height:1.4}
+.regua b{color:var(--n3);font-weight:700;margin-right:5px;white-space:nowrap}
+.sug{font-size:13px;color:var(--muted)}
+.sug .st5{font-size:14px;margin-left:4px}
 .pnl-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .fm-r:nth-child(even){background:var(--fm2)}
 .fm-r.hi{background:linear-gradient(90deg,var(--fmhi),rgba(61,220,151,.04));border-left-color:var(--n4)}
@@ -457,7 +475,31 @@ const TIPOS_IMOVEL = ['Casa', 'Apartamento', 'Cobertura', 'Terreno', 'Comercial'
 const PERIODOS = [['1', '1º mês'], ['2', '2º mês'], ['3', '3º mês'], ['tudo', 'Tudo']];
 const SUGESTOES = ['Muito bom angariador','Bom de porta a porta', 'Amigo de porteiro e zelador', 'Precifica com dados', 'Domina documentação',
   'Ótimo no telefone', 'Pensa fora da caixa', 'Não desiste no primeiro não', 'Rede forte de contatos', 'Conhece o bairro como ninguém'];
-const PERSONALIDADES = ['Determinado', 'Ambicioso', 'Profissional', 'Equilibrado', 'Competitivo', 'Comunicativo', 'Discreto', 'Inquieto'];
+const PERSONALIDADES = ['Determinado', 'Ambicioso', 'Profissional', 'Resiliente', 'Competitivo', 'Comunicativo', 'Equilibrado', 'Ansioso', 'Inseguro', 'Acomodado'];
+// Angariação e Documentação vêm 100% do checklist de treinamentos: cada item concluído soma pontos até 20
+const CHECKS = {
+  ang: [
+    { k: 'ud', t: 'Sabe tirar a Declaração Unificada' },
+    { k: 'mapa', t: 'Sabe usar o mapa cadastral' },
+    { k: 'guia', t: 'Sabe tirar a guia amarela' },
+    { k: 'num', t: 'Pelo link do anúncio, descobre o número da casa ou do apartamento e chega até o imóvel' },
+    { k: 'matr', t: 'Sabe tirar a matrícula do imóvel' },
+    { k: 'impl', t: 'Conhece a implantação do condomínio' },
+    { k: 'mac', t: 'Conhece os macetes para angariar' }
+  ],
+  doc: [
+    { k: 'bol', t: 'Sabe ler o boleto de condomínio' },
+    { k: 'lmatr', t: 'Sabe ler e entender a matrícula do imóvel' },
+    { k: 'cnd', t: 'Sabe o que é a CND, como tirar e para que serve' },
+    { k: 'docs', t: 'Sabe quais documentos são necessários para uma angariação' },
+    { k: 'aut', t: 'Sabe preencher a autorização de venda' },
+    { k: 'anx', t: 'Sabe onde anexar tudo e qual é o próximo passo depois de angariar' }
+  ]
+};
+const CHECK_KEYS = Object.values(CHECKS).flat().map(i => i.k);
+// réguas para dar as estrelas (a justificativa que aparece na tela)
+const REGUA_CA = [[5, 'Referência: angaria sozinha com consistência e ensina os outros.'], [4, 'Angaria sozinha, com bons resultados.'], [3, 'Angaria, mas ainda precisa de apoio em algumas etapas.'], [2, 'Em formação: conhece os passos, com pouca prática.'], [1, 'Começando agora.']];
+const REGUA_POT = [[5, 'Determinação e coração ensinável altos: tem tudo para virar referência.'], [4.5, 'Tem os dois, mas um deles ainda oscila.'], [4, 'Tem um dos dois forte; o outro precisa ser trabalhado.'], [3.5, 'Falta vontade ou abertura para aprender; o teto hoje é limitado.']];
 const BAIRROS_CWB = ['Abranches', 'Água Verde', 'Ahú', 'Alto da Glória', 'Alto da XV', 'Bacacheri', 'Batel', 'Bigorrilho', 'Boa Vista', 'Bom Retiro',
   'Cabral', 'Campina do Siqueira', 'Campo Comprido', 'Centro', 'Centro Cívico', 'Champagnat', 'Cristo Rei', 'Ecoville', 'Hugo Lange', 'Jardim Botânico',
   'Jardim Social', 'Juvevê', 'Mercês', 'Mossunguê', 'Orleans', 'Portão', 'Rebouças', 'Santa Felicidade', 'Santo Inácio', 'São Braz', 'São Francisco',
@@ -518,7 +560,6 @@ const meioPasso = v => Math.round(v * 2) / 2;
 // estrelas a partir da média de 0 a 20: arredonda a média e cada 2 pontos valem ½ estrela
 // (19–20 = 5, 17–18 = 4½, 15–16 = 4, 13–14 = 3½, 11–12 = 3 … 0–2 = ½)
 const estrelasDaMedia = m => m === null ? 0 : Math.max(0.5, Math.round(Math.round(m) / 2) / 2);
-const ESTRELAS_TAB = [['19–20', 5], ['17–18', 4.5], ['15–16', 4], ['13–14', 3.5], ['11–12', 3], ['9–10', 2.5], ['7–8', 2], ['5–6', 1.5], ['3–4', 1], ['0–2', 0.5]];
 const st5 = (v, cls) => `<span class="st5 ${cls || ''}" title="${String(v).replace('.', ',')} de 5"><i style="width:${v / 5 * 100}%"></i></span>`;
 function delta(d) {
   if (d === null || d === undefined || Number.isNaN(d)) return '';
@@ -589,10 +630,12 @@ function cleanCorretor(o) {
     foto: String(o.foto || ''),
     personalidade: String(o.personalidade || ''),
     potencial: Number.isFinite(pot) && pot > 0 ? Math.min(5, meioPasso(pot)) : 0,
+    capacidade: Number.isFinite(+o.capacidade) && +o.capacidade > 0 ? Math.min(5, meioPasso(+o.capacidade)) : 0,
+    checks: Object.fromEntries(Object.entries(o.checks && typeof o.checks === 'object' ? o.checks : {}).filter(([k, v]) => CHECK_KEYS.includes(k) && v).map(([k, v]) => [k, String(v)])),
     destaques: arr(o.destaques).map(String).filter(Boolean),
     evoluir: String(o.evoluir || ''),
     avaliacoes: arr(o.avaliacoes).filter(a => a && a.data)
-      .map(a => ({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || '') }))
+      .map(a => ({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || ''), ca: +a.ca > 0 ? Math.min(5, meioPasso(+a.ca)) : 0 }))
       .sort((a, b) => a.data < b.data ? -1 : a.data > b.data ? 1 : 0),
     producao: arr(o.producao).filter(p => p && p.data && PROD[p.tipo])
       .map(p => ({ id: String(p.id || newId('p')), data: String(p.data), tipo: p.tipo, ti: String(p.ti || ''), valor: Number(p.valor) || 0, bairro: String(p.bairro || '') })),
@@ -605,7 +648,17 @@ let corretores = [];
 const byId = id => corretores.find(c => c.id === id);
 const persistCache = () => lsSet(LS_CACHE, corretores);
 const ultima = c => c.avaliacoes[c.avaliacoes.length - 1] || null;
-const notasAtuais = c => (ultima(c) || {}).notas || {};
+// nota de Angariação/Documentação a partir dos itens concluídos do checklist
+const notaCheck = (checks, attr) => Math.round(CHECKS[attr].filter(i => checks[i.k]).length / CHECKS[attr].length * 20);
+// notas de hoje: as da última avaliação, com Angariação e Documentação sempre vindo do checklist
+function notasAtuais(c) {
+  const n = Object.assign({}, (ultima(c) || {}).notas || {});
+  if (c.avaliacoes.length || Object.keys(c.checks).length) { n.ang = notaCheck(c.checks, 'ang'); n.doc = notaCheck(c.checks, 'doc'); }
+  return n;
+}
+// capacidade atual: as estrelas que o gestor deu; enquanto não der, vale a sugestão das notas
+const capDe = c => c.capacidade || capAtual(notasAtuais(c));
+const capDaAvaliacao = a => a.ca || capAtual(a.notas);
 
 // Cada corretor grava em fila própria, sempre com a versão local mais recente.
 // O que não chegou ao Firebase fica pendente neste aparelho e é reenviado depois.
@@ -729,7 +782,7 @@ function prod(c, p) {
   return contar(c.producao.filter(x => x.data >= j.de && x.data < j.ate));
 }
 const perLabel = () => (PERIODOS.find(p => p[0] === ui.per) || PERIODOS[3])[1];
-const ordenados = () => corretores.slice().sort((a, b) => (notaDe(notasAtuais(b)) ?? -1) - (notaDe(notasAtuais(a)) ?? -1) || a.nome.localeCompare(b.nome, 'pt-BR'));
+const ordenados = () => corretores.slice().sort((a, b) => capDe(b) - capDe(a) || b.potencial - a.potencial || a.nome.localeCompare(b.nome, 'pt-BR'));
 const avatar = c => `<span class="av">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(initials(c.nome))}</span>`;
 const perChips = () => `<div class="chips sm">${PERIODOS.map(([k, l]) => `<button class="chip${ui.per === k ? ' on' : ''}" data-act="per" data-v="${k}">${l}</button>`).join('')}</div>`;
 
@@ -754,7 +807,7 @@ function renderElenco() {
     return `<button class="sqr" data-act="abrir" data-id="${esc(c.id)}">
       <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt">${esc(mt)}</span></span></span>
       <span class="num xl cell"><span class="lbm">Idade</span>${ida ?? '–'}</span>
-      <span class="cell"><span class="lbm">Capacidade atual</span>${st5(capAtual(n))}</span>
+      <span class="cell"><span class="lbm">Capacidade atual</span>${st5(capDe(c))}</span>
       <span class="cell"><span class="lbm">Capacidade potencial</span>${st5(c.potencial)}</span>
       <span class="num v cell w3"><span class="lbm">Visitas</span>${P.v}</span>
       <span class="num a cell w3"><span class="lbm">Angariações</span>${P.a}</span>
@@ -779,8 +832,10 @@ function legenda() {
   return `<div class="legend">
     <div><h4>Atributos de 0 a 20</h4>Três áreas (Técnico, Mental e Postura) com três atributos cada. A cor mostra o nível.
       <div class="sw">${ESCALA.map(([c, f, t]) => `<span><i style="background:var(--${c})"></i>${f}: ${t.toLowerCase()}</span>`).join('')}</div></div>
-    <div><h4>Capacidade atual e potencial</h4>Capacidade atual é a média das 9 notas, arredondada, virando estrelas: a cada 2 pontos, meia estrela. Capacidade potencial é até onde o gestor enxerga que a pessoa pode chegar.
-      <div class="sw">${ESTRELAS_TAB.map(([f, s]) => `<span>${f} = ${fmtEst(s)} ★</span>`).join('')}</div></div>
+    <div><h4>Capacidade atual</h4>As estrelas que o gestor dá, com base nas notas dos atributos:
+      <div class="regua" style="margin-top:8px">${REGUA_CA.map(([s, t]) => `<span><b>${fmtEst(s)} ★</b>${t}</span>`).join('')}</div>
+      <h4 style="margin-top:14px">Capacidade potencial</h4>Até onde a pessoa pode chegar:
+      <div class="regua" style="margin-top:8px">${REGUA_POT.map(([s, t]) => `<span><b>${fmtEst(s)} ★</b>${t}</span>`).join('')}</div></div>
     <div><h4>Visitas e angariações</h4>Visitas de angariação e angariações realizadas por cada um no período escolhido: 1º, 2º ou 3º mês de acompanhamento, ou tudo. No perfil de cada corretor, toque em um atributo para ver o que ele significa.</div>
   </div>`;
 }
@@ -809,7 +864,7 @@ function renderFicha(c) {
           ${facts.length ? `<div class="pf-f">${facts.map(([a, b]) => `<div><span>${a}</span><b>${esc(b)}</b></div>`).join('')}</div>` : ''}
         </div>
         <div class="capbox">
-          <div><span>Capacidade atual</span>${st5(capAtual(n))}</div>
+          <div><span>Capacidade atual</span>${st5(capDe(c))}</div>
           <div><span>Capacidade potencial</span>${st5(c.potencial)}</div>
         </div>
         <div class="pf-act adm">
@@ -834,7 +889,7 @@ function abaGeral(c, n, ant, ps, chave, nt) {
         // toque no atributo abre (e fecha) a explicação do que ele significa
         return `<button class="fm-r${chave.has(a.k) ? ' hi' : ''}${aberto ? ' open' : ''}" data-act="info" data-v="${a.k}" aria-expanded="${aberto}">
           <span class="ln"><span class="an">${a.nome}<i class="ic">i</i></span>${d}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></span>
-          ${aberto ? `<span class="fm-x">${esc(a.desc)}${typeof v === 'number' ? `<span class="fx"><b class="${nivel(v)}">Nota ${v}</b> ${esc(a.niv[faixa(v)])}</span>` : ''}</span>` : ''}
+          ${aberto ? `<span class="fm-x">${esc(a.desc)}${CHECKS[a.k] ? listaChecks(c, a.k) : typeof v === 'number' ? `<span class="fx"><b class="${nivel(v)}">Nota ${v}</b> ${esc(a.niv[faixa(v)])}</span>` : ''}</span>` : ''}
         </button>`;
       }).join('')}</div>`;
   };
@@ -859,14 +914,20 @@ function abaGeral(c, n, ant, ps, chave, nt) {
       </div>
     </div>`;
 }
+// treinamentos de Angariação/Documentação, com o que já foi concluído (e quando)
+function listaChecks(c, attr) {
+  const l = CHECKS[attr], feitos = l.filter(i => c.checks[i.k]).length;
+  return `<span class="fx">${feitos} de ${l.length} treinamentos concluídos · nota ${notaCheck(c.checks, attr)}</span>
+    <span class="ckl">${l.map(i => `<span class="${c.checks[i.k] ? 'ok' : ''}"><i>${c.checks[i.k] ? '✓' : ''}</i>${esc(i.t)}${c.checks[i.k] ? `<small>${fmtShort(c.checks[i.k])}</small>` : ''}</span>`).join('')}</span>`;
+}
 function abaDev(c) {
   const av = c.avaliacoes, u = ultima(c);
   if (!u) return `<div class="empty-s">Os gráficos de evolução aparecem depois da primeira avaliação. <span class="adm">A cada conversa, toque em "Atualizar notas" e mude só o que evoluiu.</span></div>`;
-  const e0 = capAtual(av[0].notas), e1 = capAtual(u.notas);
+  const e0 = capDaAvaliacao(av[0]), e1 = capDaAvaliacao(u);
   return `<div class="grid2">
       <section class="box">
         <div class="box-h"><h3>Evolução da capacidade atual</h3>${av.length > 1 ? `<span class="r">${deltaEst(e1 - e0)} <span class="muted" style="font-size:13px">desde ${fmtShort(av[0].data)}</span></span>` : ''}</div>
-        ${graficoLinhas(av, [{ cor: '#f7c531', val: a => notaDe(a.notas) === null ? null : capAtual(a.notas), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true)}
+        ${graficoLinhas(av, [{ cor: '#f7c531', val: a => a.ca || (notaDe(a.notas) === null ? null : capAtual(a.notas)), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true)}
       </section>
       <section class="box">
         <div class="box-h"><h3>Evolução por área</h3><span class="muted r" style="font-size:13px">média de 0 a 20</span></div>
@@ -881,7 +942,7 @@ function abaDev(c) {
     <section class="box" style="margin-top:16px">
       <div class="box-h"><h3>Histórico de avaliações</h3><span class="muted r" style="font-size:13px">${av.length} ${plural(av.length, 'conversa', 'conversas')}</span></div>
       <div class="ls">${av.slice().reverse().map(a => {
-        const i = av.indexOf(a), ea = capAtual(a.notas), ep = i > 0 ? capAtual(av[i - 1].notas) : null;
+        const i = av.indexOf(a), ea = capDaAvaliacao(a), ep = i > 0 ? capDaAvaliacao(av[i - 1]) : null;
         const gs = GRUPOS.map(g => `${g.nome} ${fmtG(mediaGrupo(a.notas, g.k))}`).join(' · ');
         return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(ea)} ${ep !== null && ea !== ep ? deltaEst(ea - ep) : ''}</span><small>${gs}</small>${a.obs ? `<small>${esc(a.obs)}</small>` : ''}</span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`;
       }).join('')}</div>
@@ -1073,7 +1134,8 @@ function sheetPerfil(id) {
 // o que muda com o tempo (potencial, personalidade, características, a evoluir) fica junto das notas
 function camposPerfil(c) {
   return `<div class="ag" id="a-perfil"><div class="ag-t">Perfil</div>
-    <div class="ar"><span class="lbl" style="margin:0">Capacidade potencial<span class="hint">até onde você enxerga que a pessoa pode chegar</span></span><div class="pick" id="f-pot"></div></div>
+    <div class="ar"><span class="lbl" style="margin:0">Capacidade potencial<span class="hint">até onde você enxerga que a pessoa pode chegar</span></span><div class="pick" id="f-pot"></div>
+      <div class="regua">${REGUA_POT.map(([s, t]) => `<span><b>${fmtEst(s)} ★</b>${t}</span>`).join('')}</div></div>
     <div class="ar"><label class="lbl" for="f-pers" style="margin:0">Personalidade</label><input id="f-pers" value="${esc(c.personalidade)}" placeholder="Ex.: Determinado" autocomplete="off">
       <div class="chips">${PERSONALIDADES.map(p => `<button class="chip sug" data-act="pers" data-v="${esc(p)}">${esc(p)}</button>`).join('')}</div></div>
     <div class="ar"><span class="lbl" style="margin:0">Características<span class="hint">a "perna boa": aparece com ★ no perfil</span></span>
@@ -1082,14 +1144,6 @@ function camposPerfil(c) {
       <div class="chips" id="f-sug"></div></div>
     <div class="ar"><label class="lbl" for="f-evol" style="margin:0">A evoluir<span class="hint">o principal ponto de desenvolvimento</span></label><input id="f-evol" value="${esc(c.evoluir)}" placeholder="Ex.: contorno de objeções" autocomplete="off"></div>
   </div>`;
-}
-function renderPot() {
-  const v = form.potencial;
-  // cada estrela tem duas metades: tocar na metade esquerda dá meia estrela, na direita, a estrela inteira
-  $('#f-pot').innerHTML = [1, 2, 3, 4, 5].map(i => `<span class="pk ${v >= i ? 'f' : v >= i - 0.5 ? 'h' : ''}">★` +
-      `<button class="e" data-act="pot" data-v="${i - 0.5}" aria-label="${fmtEst(i - 0.5)} estrela"></button><button class="d" data-act="pot" data-v="${i}" aria-label="${i} estrelas"></button></span>`).join('') +
-    `<span class="v">${v ? fmtEst(v) + ' de 5' : 'toque na metade da estrela para dar meia'}</span>` +
-    (v ? '<button class="link" data-act="pot" data-v="0" style="margin-left:12px">Limpar</button>' : '');
 }
 function renderFotoPrev() {
   const pv = $('#f-pv'); if (!pv) return;
@@ -1137,38 +1191,54 @@ function savePerfil() {
   else toast('Dados salvos.');
 }
 
-// avaliação: notas de 0 a 20, com o guia de cada faixa
+// avaliação: notas de 0 a 20 com o guia de cada faixa; Angariação e Documentação pelo checklist
 function sheetAval(id, avId, foco) {
   const c = byId(id); if (!c) return;
   const idx = avId ? c.avaliacoes.findIndex(a => a.id === avId) : -1;
   if (avId && idx < 0) return;
   const atual = idx >= 0 ? c.avaliacoes[idx] : null;
   const ref = idx >= 0 ? c.avaliacoes[idx - 1] || null : ultima(c); // contra o que comparar
-  form = { tipo: 'aval', id, avId: avId || null, notas: Object.assign({}, atual ? atual.notas : ref ? ref.notas : {}), ref: ref ? ref.notas : {},
-    potencial: c.potencial, destaques: c.destaques.slice() };
-  const linhas = g => `<div class="ag"><div class="ag-t">${g.nome}</div>${g.attrs.map(a => `
+  // numa avaliação antiga, Angariação e Documentação ficam como foram salvas; na de hoje, saem do checklist
+  const usaCheck = !atual;
+  form = { tipo: 'aval', id, avId: avId || null, usaCheck, checks: Object.assign({}, c.checks),
+    notas: Object.assign({}, atual ? atual.notas : ref ? ref.notas : {}), ref: ref ? ref.notas : {},
+    ca: atual ? atual.ca : c.capacidade, potencial: c.potencial, destaques: c.destaques.slice() };
+  if (usaCheck) for (const k in CHECKS) form.notas[k] = notaCheck(form.checks, k);
+  const linha = a => {
+    if (CHECKS[a.k] && usaCheck) return `
+    <div class="ar"><div class="top2"><div class="an"><b>${a.nome}</b><small>Marque os treinamentos que a pessoa já domina. A nota sobe sozinha.</small></div><b class="nck" id="n-${a.k}"></b></div>
+      <div class="ckb" id="ck-${a.k}"></div>
+      <div class="rub" id="rb-${a.k}"></div></div>`;
+    if (CHECKS[a.k]) return `
+    <div class="ar"><div class="top2"><div class="an"><b>${a.nome}</b><small>Pelo checklist de treinamentos, como estava nesta data.</small></div><b class="nck ${nivel(form.notas[a.k])}">${form.notas[a.k] ?? '–'}</b></div></div>`;
+    return `
     <div class="ar"><div class="top2"><div class="an"><b>${a.nome}</b><small>${esc(a.desc)}</small></div>
       <div class="stp"><button data-act="nota" data-k="${a.k}" data-v="-1" aria-label="Diminuir ${a.nome}">−</button><input id="n-${a.k}" inputmode="numeric" maxlength="2" aria-label="${a.nome}" value="${form.notas[a.k] ?? ''}" placeholder="–"><button data-act="nota" data-k="${a.k}" data-v="1" aria-label="Aumentar ${a.nome}">+</button></div></div>
-      <div class="rub" id="rb-${a.k}"></div></div>`).join('')}</div>`;
+      <div class="rub" id="rb-${a.k}"></div></div>`;
+  };
   openSheet(shHead(atual ? 'Editar avaliação' : ref ? 'Atualizar notas e perfil' : 'Primeira avaliação', esc(c.nome)) + `<div class="sh-b">
-    <div class="liveo"><span class="lc">Capacidade atual</span><span id="lv-ca"></span></div>
     <div>
-      <p class="hintp" style="margin-bottom:10px">${ref && !atual ? 'Já vem com as notas da última vez. Mude só o que evoluiu (+1 ou −1) e salve. Faça isso a cada semana ou a cada conversa.' : 'Dê a nota de 0 a 20 em cada atributo. Embaixo de cada um aparece o que aquela nota significa, para você conferir se bate com o que viu.'}</p>
+      <p class="hintp" style="margin-bottom:10px">${ref && !atual ? 'Já vem com as notas da última vez. Mude só o que evoluiu e salve. Faça isso a cada semana ou a cada conversa.' : 'Dê a nota de 0 a 20 em cada atributo. Embaixo de cada um aparece o que aquela nota significa, para você conferir se bate com o que viu.'}</p>
       <div class="escala">${ESCALA.map(([cl, f, t]) => `<div><b class="${cl}">${f}</b>${t}</div>`).join('')}</div>
     </div>
     <div class="row2"><div class="fl"><label class="lbl" for="a-data">Data da conversa</label><input id="a-data" type="date" value="${atual ? atual.data : hoje()}"></div></div>
-    ${GRUPOS.map(linhas).join('')}
+    ${GRUPOS.map(g => `<div class="ag"><div class="ag-t">${g.nome}</div>${g.attrs.map(linha).join('')}</div>`).join('')}
+    <div class="ag"><div class="ag-t">Capacidade atual</div>
+      <div class="ar"><span class="sug" id="lv-sug"></span><div class="pick" id="f-ca"></div>
+        <div class="regua">${REGUA_CA.map(([s, t]) => `<span><b>${fmtEst(s)} ★</b>${t}</span>`).join('')}</div></div></div>
     <div class="fl"><label class="lbl" for="a-obs">O que conversamos<span class="hint">opcional</span></label><textarea id="a-obs" rows="3" placeholder="Combinados, o que melhorou, o que focar até a próxima">${esc(atual ? atual.obs : '')}</textarea></div>
     ${atual ? '' : camposPerfil(c)}
     <div id="a-del"></div>
   </div>
   <div class="sh-f">${atual ? '<button class="danger l" data-act="aval-del-ask">Apagar avaliação</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-aval">Salvar</button></div>`, 'aval');
+  renderEstrelas('#f-ca', form.ca, 'ca');
   if (!atual) {
-    renderPot(); renderDest();
+    renderEstrelas('#f-pot', form.potencial, 'pot'); renderDest();
     $('#f-dest-in').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addDest(e.target.value); } });
     if (foco === 'perfil') setTimeout(() => $('#a-perfil').scrollIntoView({ block: 'start' }), 30);
   }
   ATTRS.forEach(a => {
+    if (CHECKS[a.k]) { if (usaCheck) pintaNota(a.k); return; }
     $('#n-' + a.k).addEventListener('input', e => {
       const d = e.target.value.replace(/\D/g, '').slice(0, 2);
       if (d === '') delete form.notas[a.k]; else form.notas[a.k] = Math.min(20, +d);
@@ -1177,22 +1247,46 @@ function sheetAval(id, avId, foco) {
     });
     pintaNota(a.k);
   });
+  pintaSugestao();
 }
 function pintaNota(k) {
-  const inp = $('#n-' + k); if (!inp) return;
+  const el = $('#n-' + k); if (!el) return;
   const v = form.notas[k], a = ATTRS.find(x => x.k === k), p = form.ref[k];
-  inp.className = nivel(v);
+  el.classList.remove('n0', 'n1', 'n2', 'n3', 'n4'); el.classList.add(nivel(v));
+  if (CHECKS[k]) {
+    el.textContent = v;
+    const l = CHECKS[k];
+    $('#ck-' + k).innerHTML = l.map(i => `<button class="${form.checks[i.k] ? 'ok' : ''}" data-act="check" data-k="${k}" data-v="${i.k}"><i>${form.checks[i.k] ? '✓' : ''}</i>${esc(i.t)}</button>`).join('');
+  }
   $('#rb-' + k).innerHTML = (typeof v === 'number'
     ? `<b class="${nivel(v)}">${FAIXAS[faixa(v)]}</b>${a.niv[faixa(v)]}`
     : '<span class="muted">Sem nota. Toque em + para começar em 10.</span>') +
     (typeof p === 'number' ? `<span class="pr">antes ${p}${typeof v === 'number' && v !== p ? ' ' + delta(v - p) : ''}</span>` : '');
-  $('#lv-ca').innerHTML = st5(capAtual(form.notas));
+  pintaSugestao();
+}
+// o que as notas sugerem para a capacidade atual (só referência: quem decide é o gestor)
+function pintaSugestao() {
+  const el = $('#lv-sug'); if (!el) return;
+  const s = notaDe(form.notas) === null ? 0 : capAtual(form.notas);
+  el.innerHTML = s ? `Sugestão pelas notas:${st5(s)}` : 'Dê as notas para ver a sugestão.';
+}
+function marcaCheck(attr, k) {
+  if (form.checks[k]) delete form.checks[k]; else form.checks[k] = $('#a-data').value || hoje();
+  form.notas[attr] = notaCheck(form.checks, attr);
+  pintaNota(attr);
 }
 function passoNota(k, d) {
   const v = form.notas[k];
   form.notas[k] = typeof v !== 'number' ? 10 : Math.max(0, Math.min(20, v + d));
   $('#n-' + k).value = form.notas[k];
   pintaNota(k);
+}
+// estrelas tocáveis: metade esquerda dá meia estrela, a direita dá a estrela inteira
+function renderEstrelas(sel, v, act) {
+  $(sel).innerHTML = [1, 2, 3, 4, 5].map(i => `<span class="pk ${v >= i ? 'f' : v >= i - 0.5 ? 'h' : ''}">★` +
+      `<button class="e" data-act="${act}" data-v="${i - 0.5}" aria-label="${fmtEst(i - 0.5)} estrela"></button><button class="d" data-act="${act}" data-v="${i}" aria-label="${i} estrelas"></button></span>`).join('') +
+    `<span class="v">${v ? fmtEst(v) + ' de 5' : 'toque na metade da estrela para dar meia'}</span>` +
+    (v ? `<button class="link" data-act="${act}" data-v="0" style="margin-left:12px">Limpar</button>` : '');
 }
 function saveAval() {
   const c = byId(form.id); if (!c) return closeSheet();
@@ -1204,16 +1298,19 @@ function saveAval() {
   let perfil = {};
   if (!editando) {
     if ($('#f-dest-in').value.trim()) addDest();
-    perfil = { potencial: form.potencial, personalidade: $('#f-pers').value.trim(), destaques: form.destaques, evoluir: $('#f-evol').value.trim() };
+    perfil = { checks: form.checks, capacidade: form.ca, potencial: form.potencial, personalidade: $('#f-pers').value.trim(), destaques: form.destaques, evoluir: $('#f-evol').value.trim() };
   }
-  // só vira uma nova avaliação se alguma nota mudou ou se houve anotação da conversa
-  const mudou = Object.keys(notas).length && (JSON.stringify(notas) !== JSON.stringify(cleanNotas(form.ref)) || obs);
+  // vira uma nova avaliação se alguma nota ou a capacidade atual mudou, ou se houve anotação da conversa
+  const u = ultima(c);
+  const mudou = Object.keys(notas).length && (JSON.stringify(notas) !== JSON.stringify(cleanNotas(form.ref)) || obs || form.ca !== (u ? u.ca || c.capacidade : 0));
   const avs = editando
-    ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, obs }) : a)
-    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs }]) : c.avaliacoes;
+    ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, obs, ca: form.ca }) : a)
+    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs, ca: form.ca }]) : c.avaliacoes;
+  // editando a avaliação mais recente, a capacidade atual do corretor acompanha
+  if (editando && u && u.id === form.avId) perfil = { capacidade: form.ca };
   saveCorretor(Object.assign({}, c, perfil, { avaliacoes: avs }));
   closeSheet();
-  toast(editando ? 'Avaliação atualizada.' : mudou ? `Notas salvas. Capacidade atual: ${fmtEst(capAtual(notas))} ${capAtual(notas) > 1 ? 'estrelas' : 'estrela'}.` : 'Perfil salvo. As notas não mudaram.');
+  toast(editando ? 'Avaliação atualizada.' : mudou ? 'Avaliação salva.' : 'Perfil salvo. As notas não mudaram.');
 }
 
 // produção: visita de angariação (valor, tipo, data) / angariação realizada (valor, bairro, data)
@@ -1300,7 +1397,9 @@ document.addEventListener('click', e => {
     case 'prod': sheetProd(id, v); break;
     case 'fechar': closeSheet(); break;
     case 'foto-rm': form.foto = ''; renderFotoPrev(); break;
-    case 'pot': form.potencial = +v; renderPot(); break;
+    case 'pot': form.potencial = +v; renderEstrelas('#f-pot', form.potencial, 'pot'); break;
+    case 'ca': form.ca = +v; renderEstrelas('#f-ca', form.ca, 'ca'); break;
+    case 'check': marcaCheck(el.dataset.k, v); break;
     case 'pers': $('#f-pers').value = v; break;
     case 'dest-add': addDest(v); break;
     case 'dest-rm': form.destaques.splice(+v, 1); renderDest(); break;
@@ -1351,7 +1450,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-27e';
+const VERSAO = '2026-10-27f';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
