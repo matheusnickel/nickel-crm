@@ -513,7 +513,10 @@ const mediaGrupo = (n, g) => media(n, GRUPOS.find(x => x.k === g).attrs.map(a =>
 const notaDe = n => { const m = media(n, ATTRS.map(a => a.k)); return m === null ? null : Math.round(m * 5); };
 const fmtG = v => v === null ? '–' : String(Math.round(v)); // sempre número inteiro, sem vírgula
 const meioPasso = v => Math.round(v * 2) / 2;
-const estrelas = nota => nota === null ? 0 : Math.max(0.5, meioPasso(nota / 20)); // 100 = 5 estrelas
+// estrelas a partir da média de 0 a 20: arredonda a média e cada 2 pontos valem ½ estrela
+// (19–20 = 5, 17–18 = 4½, 15–16 = 4, 13–14 = 3½, 11–12 = 3 … 0–2 = ½)
+const estrelasDaMedia = m => m === null ? 0 : Math.max(0.5, Math.round(Math.round(m) / 2) / 2);
+const ESTRELAS_TAB = [['19–20', 5], ['17–18', 4.5], ['15–16', 4], ['13–14', 3.5], ['11–12', 3], ['9–10', 2.5], ['7–8', 2], ['5–6', 1.5], ['3–4', 1], ['0–2', 0.5]];
 const st5 = (v, cls) => `<span class="st5 ${cls || ''}" title="${String(v).replace('.', ',')} de 5"><i style="width:${v / 5 * 100}%"></i></span>`;
 function delta(d) {
   if (d === null || d === undefined || Number.isNaN(d)) return '';
@@ -524,12 +527,12 @@ function delta(d) {
   return `<span class="dl eq">=</span>`;
 }
 function papeis(n) {
-  return PAPEIS.map(p => { const m = media(n, p.attrs); return Object.assign({}, p, { m, st: m === null ? 0 : Math.max(0.5, meioPasso(m / 4)) }); })
+  return PAPEIS.map(p => { const m = media(n, p.attrs); return Object.assign({}, p, { m, st: estrelasDaMedia(m) }); })
     .sort((a, b) => (b.m ?? -1) - (a.m ?? -1));
 }
 const funcao = n => notaDe(n) === null ? '' : papeis(n)[0].nome;
 // capacidade atual em estrelas (0 a 5, de meia em meia) e como escrever sem vírgula: 3½
-const capAtual = n => estrelas(notaDe(n));
+const capAtual = n => estrelasDaMedia(media(n, ATTRS.map(a => a.k)));
 const fmtEst = v => !v ? '0' : Math.floor(v) ? Math.floor(v) + (v % 1 ? '½' : '') : '½';
 function deltaEst(d) {
   if (!d) return d === 0 ? `<span class="dl eq">=</span>` : '';
@@ -774,7 +777,8 @@ function legenda() {
   return `<div class="legend">
     <div><h4>Atributos de 0 a 20</h4>Três áreas (Técnico, Mental e Postura) com três atributos cada. A cor mostra o nível.
       <div class="sw">${ESCALA.map(([c, f, t]) => `<span><i style="background:var(--${c})"></i>${f}: ${t.toLowerCase()}</span>`).join('')}</div></div>
-    <div><h4>Capacidade atual e potencial</h4>Capacidade atual é o nível de hoje, em estrelas, a partir das notas dos atributos. Capacidade potencial é até onde o gestor enxerga que a pessoa pode chegar. Toque no corretor para ver os atributos.</div>
+    <div><h4>Capacidade atual e potencial</h4>Capacidade atual é a média das 9 notas, arredondada, virando estrelas: a cada 2 pontos, meia estrela. Capacidade potencial é até onde o gestor enxerga que a pessoa pode chegar.
+      <div class="sw">${ESTRELAS_TAB.map(([f, s]) => `<span>${f} = ${fmtEst(s)} ★</span>`).join('')}</div></div>
     <div><h4>Visitas e angariações</h4>Visitas de angariação e angariações realizadas por cada um no período escolhido: 1º, 2º ou 3º mês de acompanhamento, ou tudo. No perfil de cada corretor, toque em um atributo para ver o que ele significa.</div>
   </div>`;
 }
@@ -1342,7 +1346,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-27c';
+const VERSAO = '2026-10-27d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
