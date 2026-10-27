@@ -813,7 +813,7 @@ function abaGeral(c, n, ant, ps, chave, nt) {
   const u = ultima(c);
   const col = g => {
     const gv = mediaGrupo(n, g.k), gp = ant ? mediaGrupo(ant.notas, g.k) : null;
-    return `<div class="fm-c"><div class="fm-h"><span><span class="t">${g.nome}</span><small>${g.sub}</small></span>
+    return `<div class="fm-c"><div class="fm-h"><span><span class="t">${g.nome}</span></span>
       <span class="g"><b class="${nivel(gv === null ? null : Math.round(gv))}">${fmtG(gv)}</b>${gv !== null && gp !== null && Math.round(gv) !== Math.round(gp) ? ' ' + delta(Math.round(gv) - Math.round(gp)) : ''}<span>${nivelNome(gv === null ? null : Math.round(gv))}</span></span></div>
       ${g.attrs.map(a => {
         const v = n[a.k], p = ant ? ant.notas[a.k] : undefined;
@@ -1130,7 +1130,7 @@ function sheetAval(id, avId, foco) {
   const ref = idx >= 0 ? c.avaliacoes[idx - 1] || null : ultima(c); // contra o que comparar
   form = { tipo: 'aval', id, avId: avId || null, notas: Object.assign({}, atual ? atual.notas : ref ? ref.notas : {}), ref: ref ? ref.notas : {},
     potencial: c.potencial, destaques: c.destaques.slice() };
-  const linhas = g => `<div class="ag"><div class="ag-t">${g.nome} · ${g.sub.toLowerCase()}</div>${g.attrs.map(a => `
+  const linhas = g => `<div class="ag"><div class="ag-t">${g.nome}</div>${g.attrs.map(a => `
     <div class="ar"><div class="top2"><div class="an"><b>${a.nome}</b><small>${esc(a.desc)}</small></div>
       <div class="stp"><button data-act="nota" data-k="${a.k}" data-v="-1" aria-label="Diminuir ${a.nome}">−</button><input id="n-${a.k}" inputmode="numeric" maxlength="2" aria-label="${a.nome}" value="${form.notas[a.k] ?? ''}" placeholder="–"><button data-act="nota" data-k="${a.k}" data-v="1" aria-label="Aumentar ${a.nome}">+</button></div></div>
       <div class="rub" id="rb-${a.k}"></div></div>`).join('')}</div>`;
