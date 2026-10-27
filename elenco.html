@@ -114,13 +114,14 @@ input[type=date]{min-height:48px}
 .tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px}
 .tools .lbl{margin:0}
 .tools .hintp{flex-basis:100%;margin-top:-4px}
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:16px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:16px}
 .kpis div{background:#08112a;padding:14px 18px;display:flex;flex-direction:column;gap:2px}
 .kpis b{font-size:28px;font-weight:900;letter-spacing:-.04em;line-height:1.05;font-variant-numeric:tabular-nums}
 .kpis span{font-size:13px;color:var(--muted)}
 .sq{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--fm0)}
-.sqr .nota-c b{font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}
-.sqr{display:grid;grid-template-columns:minmax(200px,2fr) 50px 96px 110px 46px 46px 46px 64px 96px 110px;align-items:center;gap:12px;padding:10px 16px;width:100%;text-align:left;background:var(--fm1);border-top:1px solid rgba(255,255,255,.04);font-size:14.5px;transition:background .12s}
+.sqr .st5{font-size:18px}
+.sqr .num{font-size:17px}
+.sqr{display:grid;grid-template-columns:minmax(220px,2.4fr) 70px 150px 170px 110px 130px;align-items:center;gap:12px;padding:10px 16px;width:100%;text-align:left;background:var(--fm1);border-top:1px solid rgba(255,255,255,.04);font-size:14.5px;transition:background .12s}
 .sqr:nth-child(odd){background:var(--fm2)}
 .sqr:hover{background:#13214a}
 .sqr.hd{background:#08112a;cursor:default;padding:9px 16px;font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:none}
@@ -160,9 +161,10 @@ input[type=date]{min-height:48px}
 .pf-f span{font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .pf-f b{font-size:15px;font-weight:700}
 .pf-f .st5{font-size:18px}
-.nota-at{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px;padding:10px 14px;border-radius:14px;background:#08112a;border:1px solid var(--line2)}
-.nota-at b{font-size:44px;font-weight:900;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums}
-.nota-at span{font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.capbox{display:flex;flex-direction:column;gap:12px;padding:14px 18px;border-radius:14px;background:#08112a;border:1px solid var(--line2)}
+.capbox div{display:flex;flex-direction:column;gap:5px}
+.capbox div > span:first-child{font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.capbox .st5{font-size:24px;align-self:flex-start}
 .pf-act{display:flex;gap:8px;flex-wrap:wrap;width:100%;padding-top:4px}
 .pf-tabs{display:flex;gap:2px;padding:0 12px;background:#08112a;border-bottom:1px solid var(--line);overflow-x:auto}
 .pf-tabs button{padding:12px 14px;font-weight:600;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
@@ -300,10 +302,8 @@ input[type=date]{min-height:48px}
 .escala div{background:#08112a;border:1px solid var(--line);border-radius:10px;padding:8px 9px;color:var(--text2)}
 .escala b{display:block;font-size:13px;font-weight:800}
 .liveo{display:flex;align-items:center;gap:12px;background:#08112a;border:1px solid var(--line);border-radius:14px;padding:12px 16px;position:sticky;top:-20px;z-index:2}
-.liveo .o b{font-size:30px;font-weight:900;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
-.liveo .o span{font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:var(--muted);margin-left:6px}
-.liveo .g{margin-left:auto;display:flex;gap:16px;font-size:13px;color:var(--muted)}
-.liveo .g b{font-size:15px;margin-left:4px}
+.liveo .lc{font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.liveo .st5{font-size:24px;margin-left:auto}
 .ag{display:flex;flex-direction:column}
 .ag-t{font:700 12.5px 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--or2);padding:4px 0 8px}
 .ar{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line)}
@@ -325,7 +325,7 @@ input[type=date]{min-height:48px}
 .fab svg{width:26px;height:26px}
 
 @media (max-width:1060px){
-  .sqr{grid-template-columns:minmax(190px,2fr) 96px 110px 46px 46px 46px 60px 80px 100px}
+  .sqr{grid-template-columns:minmax(190px,2fr) 140px 160px 90px 110px}
   .sqr .xl{display:none}
 }
 @media (max-width:900px){
@@ -333,20 +333,24 @@ input[type=date]{min-height:48px}
   body.adm .fab{display:flex}
   .top{padding-left:16px;padding-right:16px}
   main{padding:20px 16px calc(110px + var(--sab))}
-  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sqr.hd{display:none}
   .sqr{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px 8px;padding:14px;align-items:start}
   .sqr .who{grid-column:1 / -1}
   .sqr .xl{display:flex}
   .sqr .cell{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;grid-column:span 2}
   .lbm{display:block;font:600 10px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center}
+  .sqr .w3{grid-column:span 3}
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .kpis div{padding:12px}
+  .kpis b{font-size:24px}
+  .kpis span{font-size:12px}
   .legend{grid-template-columns:1fr}
   .pf-h{padding:16px;gap:14px}
   .pf-ph{width:76px;height:76px}
   .pf-id{min-width:0;flex-basis:calc(100% - 200px)}
   .pf-id h1{font-size:25px}
-  .nota-at{min-width:78px;padding:8px 10px}
-  .nota-at b{font-size:34px}
+  .capbox{padding:10px 12px;gap:8px}
+  .capbox .st5{font-size:19px}
   .pf-act > *{flex:1}
   .fm{grid-template-columns:minmax(0,1fr);gap:18px}
   .pn3,.grid2{grid-template-columns:minmax(0,1fr)}
@@ -359,7 +363,6 @@ input[type=date]{min-height:48px}
   .sync .t{display:none}
   .row2,.btn-reg{grid-template-columns:1fr}
   .escala{grid-template-columns:1fr 1fr}
-  .liveo .g{gap:10px}
   .ar .an small{display:none}
   .hb-r{grid-template-columns:110px minmax(0,1fr) 56px;gap:8px;font-size:13px}
   .pf-id{flex-basis:100%;order:3}
@@ -508,7 +511,6 @@ function media(notas, keys) {
 const mediaGrupo = (n, g) => media(n, GRUPOS.find(x => x.k === g).attrs.map(a => a.k));
 // nota atual 0 a 100 (média dos atributos × 5), como o nível do jogador no FM
 const notaDe = n => { const m = media(n, ATTRS.map(a => a.k)); return m === null ? null : Math.round(m * 5); };
-const corNota = v => v === null ? 'n0' : nivel(Math.round(v / 5));
 const fmtG = v => v === null ? '–' : String(Math.round(v)); // sempre número inteiro, sem vírgula
 const meioPasso = v => Math.round(v * 2) / 2;
 const estrelas = nota => nota === null ? 0 : Math.max(0.5, meioPasso(nota / 20)); // 100 = 5 estrelas
@@ -526,6 +528,13 @@ function papeis(n) {
     .sort((a, b) => (b.m ?? -1) - (a.m ?? -1));
 }
 const funcao = n => notaDe(n) === null ? '' : papeis(n)[0].nome;
+// capacidade atual em estrelas (0 a 5, de meia em meia) e como escrever sem vírgula: 3½
+const capAtual = n => estrelas(notaDe(n));
+const fmtEst = v => !v ? '0' : Math.floor(v) ? Math.floor(v) + (v % 1 ? '½' : '') : '½';
+function deltaEst(d) {
+  if (!d) return d === 0 ? `<span class="dl eq">=</span>` : '';
+  return `<span class="dl ${d > 0 ? 'up' : 'dn'}">${d > 0 ? '▲' : '▼'} ${fmtEst(Math.abs(d))} ★</span>`;
+}
 
 // ── FIRESTORE (REST) ──
 function toFs(v) {
@@ -723,8 +732,6 @@ const perChips = () => `<div class="chips sm">${PERIODOS.map(([k, l]) => `<butto
 function renderElenco() {
   const lista = ordenados();
   const tot = lista.reduce((s, c) => { const p = prod(c, ui.per); s.v += p.v; s.a += p.a; return s; }, { v: 0, a: 0 });
-  const ns = lista.map(c => notaDe(notasAtuais(c))).filter(x => x !== null);
-  const nTime = ns.length ? Math.round(ns.reduce((a, b) => a + b, 0) / ns.length) : null;
   const ult = lista.reduce((m, c) => c.atualizadoEm > m ? c.atualizadoEm : m, '');
   const head = `<div class="phd"><h1>Elenco de angariação</h1><span class="sub">VIP Imóveis${ult ? ' · atualizado em ' + fmtDate(ult) : ''}</span></div>`;
 
@@ -738,18 +745,14 @@ function renderElenco() {
 
   const linhas = lista.map(c => {
     const n = notasAtuais(c), av = c.avaliacoes, P = prod(c, ui.per), ida = idade(c.nascimento);
-    const nt = notaDe(n);
-    const g = k => { const v = mediaGrupo(n, k); return `<span class="cell"><span class="lbm">${GRUPOS.find(x => x.k === k).sigla}</span><span class="gv ${nivel(v === null ? null : Math.round(v))}">${fmtG(v)}</span></span>`; };
     const mt = [funcao(n), av.length ? 'avaliado em ' + fmtShort(ultima(c).data) : 'sem avaliação ainda'].filter(Boolean).join(' · ');
     return `<button class="sqr" data-act="abrir" data-id="${esc(c.id)}">
       <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt">${esc(mt)}</span></span></span>
       <span class="num xl cell"><span class="lbm">Idade</span>${ida ?? '–'}</span>
-      <span class="cell"><span class="lbm">Cap. atual</span>${st5(estrelas(nt))}</span>
-      <span class="cell"><span class="lbm">Cap. potencial</span>${st5(c.potencial)}</span>
-      ${GRUPOS.map(x => g(x.k)).join('')}
-      <span class="cell nota-c"><span class="lbm">Nota</span><b class="${corNota(nt)}">${nt ?? '–'}</b></span>
-      <span class="num v cell"><span class="lbm">Visitas</span>${P.v}</span>
-      <span class="num a cell"><span class="lbm">Angariações</span>${P.a}</span>
+      <span class="cell"><span class="lbm">Capacidade atual</span>${st5(capAtual(n))}</span>
+      <span class="cell"><span class="lbm">Capacidade potencial</span>${st5(c.potencial)}</span>
+      <span class="num v cell w3"><span class="lbm">Visitas</span>${P.v}</span>
+      <span class="num a cell w3"><span class="lbm">Angariações</span>${P.a}</span>
     </button>`;
   }).join('');
 
@@ -759,11 +762,10 @@ function renderElenco() {
       <div><b>${lista.length}</b><span>${plural(lista.length, 'corretor', 'corretores')} no elenco</span></div>
       <div><b style="color:var(--vis)">${tot.v}</b><span>Visitas de angariação · ${perLabel()}</span></div>
       <div><b style="color:var(--or2)">${tot.a}</b><span>Angariações realizadas · ${perLabel()}</span></div>
-      <div><b class="${corNota(nTime)}">${nTime ?? '–'}</b><span>Nota média do elenco (0 a 100)</span></div>
     </div>
     <div class="group-t"><span class="lbl">Plantel</span></div>
     <div class="sq">
-      <div class="sqr hd"><span>Corretor</span><span class="c xl">Idade</span><span>Cap. atual</span><span>Cap. potencial</span>${GRUPOS.map(x => `<span class="c">${x.sigla}</span>`).join('')}<span class="c">Nota</span><span class="c">Visitas</span><span class="c">Angariações</span></div>
+      <div class="sqr hd"><span>Corretor</span><span class="xl">Idade</span><span>Capacidade atual</span><span>Capacidade potencial</span><span>Visitas</span><span>Angariações</span></div>
       ${linhas}
     </div>
     ${legenda()}`;
@@ -772,7 +774,7 @@ function legenda() {
   return `<div class="legend">
     <div><h4>Atributos de 0 a 20</h4>Três áreas (Técnico, Mental e Postura) com três atributos cada. A cor mostra o nível.
       <div class="sw">${ESCALA.map(([c, f, t]) => `<span><i style="background:var(--${c})"></i>${f}: ${t.toLowerCase()}</span>`).join('')}</div></div>
-    <div><h4>Nota, capacidade atual e potencial</h4>A nota (0 a 100) é a média dos atributos × 5. Capacidade atual é essa nota em estrelas. Capacidade potencial é até onde o gestor enxerga que a pessoa pode chegar.</div>
+    <div><h4>Capacidade atual e potencial</h4>Capacidade atual é o nível de hoje, em estrelas, a partir das notas dos atributos. Capacidade potencial é até onde o gestor enxerga que a pessoa pode chegar. Toque no corretor para ver os atributos.</div>
     <div><h4>Visitas e angariações</h4>Visitas de angariação e angariações realizadas por cada um no período escolhido: 1º, 2º ou 3º mês de acompanhamento, ou tudo. No perfil de cada corretor, toque em um atributo para ver o que ele significa.</div>
   </div>`;
 }
@@ -785,10 +787,9 @@ function renderFicha(c) {
   if (!ui.papel || !PAPEIS.some(p => p.k === ui.papel)) ui.papel = nt === null ? null : ps[0].k;
   const chave = new Set(ui.papel ? PAPEIS.find(p => p.k === ui.papel).attrs : []);
   const facts = [
-    ['Capacidade atual', st5(estrelas(nt)), true],
-    ['Capacidade potencial', st5(c.potencial), true],
     ida !== null ? ['Idade', ida + ' anos'] : null,
-    c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null
+    c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null,
+    nt !== null ? ['Papel', ps[0].nome] : null
   ].filter(Boolean);
   const abas = [['geral', 'Visão geral'], ['dev', 'Desenvolvimento'], ['prod', 'Produção']];
 
@@ -799,9 +800,12 @@ function renderFicha(c) {
         <div class="pf-ph">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(initials(c.nome))}</div>
         <div class="pf-id">
           <h1>${esc(c.nome)}</h1>
-          <div class="pf-f">${facts.map(([a, b, html]) => `<div><span>${a}</span><b>${html ? b : esc(b)}</b></div>`).join('')}</div>
+          ${facts.length ? `<div class="pf-f">${facts.map(([a, b]) => `<div><span>${a}</span><b>${esc(b)}</b></div>`).join('')}</div>` : ''}
         </div>
-        <div class="nota-at"><b class="${corNota(nt)}">${nt ?? '–'}</b><span>Nota atual</span></div>
+        <div class="capbox">
+          <div><span>Capacidade atual</span>${st5(capAtual(n))}</div>
+          <div><span>Capacidade potencial</span>${st5(c.potencial)}</div>
+        </div>
         <div class="pf-act adm">
           <button class="btn-or sm" data-act="aval" data-id="${esc(c.id)}">${av.length ? 'Atualizar notas e perfil' : 'Primeira avaliação'}</button>
           <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="visita">+ Visita de angariação</button>
@@ -816,9 +820,7 @@ function renderFicha(c) {
 function abaGeral(c, n, ant, ps, chave, nt) {
   const u = ultima(c);
   const col = g => {
-    const gv = mediaGrupo(n, g.k), gp = ant ? mediaGrupo(ant.notas, g.k) : null;
-    return `<div class="fm-c"><div class="fm-h"><span><span class="t">${g.nome}</span></span>
-      <span class="g"><b class="${nivel(gv === null ? null : Math.round(gv))}">${fmtG(gv)}</b>${gv !== null && gp !== null && Math.round(gv) !== Math.round(gp) ? ' ' + delta(Math.round(gv) - Math.round(gp)) : ''}<span>${nivelNome(gv === null ? null : Math.round(gv))}</span></span></div>
+    return `<div class="fm-c"><div class="fm-h"><span class="t">${g.nome}</span></div>
       ${g.attrs.map(a => {
         const v = n[a.k], p = ant ? ant.notas[a.k] : undefined;
         const d = typeof v === 'number' && typeof p === 'number' && v !== p ? delta(v - p) : '';
@@ -854,11 +856,11 @@ function abaGeral(c, n, ant, ps, chave, nt) {
 function abaDev(c) {
   const av = c.avaliacoes, u = ultima(c);
   if (!u) return `<div class="empty-s">Os gráficos de evolução aparecem depois da primeira avaliação. <span class="adm">A cada conversa, toque em "Atualizar notas" e mude só o que evoluiu.</span></div>`;
-  const n0 = notaDe(av[0].notas), n1 = notaDe(u.notas);
+  const e0 = capAtual(av[0].notas), e1 = capAtual(u.notas);
   return `<div class="grid2">
       <section class="box">
-        <div class="box-h"><h3>Evolução da nota</h3>${av.length > 1 ? `<span class="r">${delta(n1 - n0)} <span class="muted" style="font-size:13px">desde ${fmtShort(av[0].data)}</span></span>` : ''}</div>
-        ${graficoLinhas(av, [{ cor: '#ff8a3d', val: a => notaDe(a.notas), nome: 'Nota' }], 0, 100, v => v, 'nota')}
+        <div class="box-h"><h3>Evolução da capacidade atual</h3>${av.length > 1 ? `<span class="r">${deltaEst(e1 - e0)} <span class="muted" style="font-size:13px">desde ${fmtShort(av[0].data)}</span></span>` : ''}</div>
+        ${graficoLinhas(av, [{ cor: '#f7c531', val: a => notaDe(a.notas) === null ? null : capAtual(a.notas), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true)}
       </section>
       <section class="box">
         <div class="box-h"><h3>Evolução por área</h3><span class="muted r" style="font-size:13px">média de 0 a 20</span></div>
@@ -873,9 +875,9 @@ function abaDev(c) {
     <section class="box" style="margin-top:16px">
       <div class="box-h"><h3>Histórico de avaliações</h3><span class="muted r" style="font-size:13px">${av.length} ${plural(av.length, 'conversa', 'conversas')}</span></div>
       <div class="ls">${av.slice().reverse().map(a => {
-        const i = av.indexOf(a), na = notaDe(a.notas), pn = i > 0 ? notaDe(av[i - 1].notas) : null;
+        const i = av.indexOf(a), ea = capAtual(a.notas), ep = i > 0 ? capAtual(av[i - 1].notas) : null;
         const gs = GRUPOS.map(g => `${g.nome} ${fmtG(mediaGrupo(a.notas, g.k))}`).join(' · ');
-        return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob"><b class="${corNota(na)}">${na ?? '–'}</b>${na !== null && pn !== null ? delta(na - pn) : ''}</span><small>${gs}</small>${a.obs ? `<small>${esc(a.obs)}</small>` : ''}</span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`;
+        return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(ea)} ${ep !== null && ea !== ep ? deltaEst(ea - ep) : ''}</span><small>${gs}</small>${a.obs ? `<small>${esc(a.obs)}</small>` : ''}</span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`;
       }).join('')}</div>
     </section>`;
 }
@@ -923,7 +925,7 @@ function abaProd(c) {
 
 // ── GRÁFICOS ──
 // linhas ao longo das avaliações (uma ou mais séries)
-function graficoLinhas(av, series, min, max, fmt, id) {
+function graficoLinhas(av, series, min, max, fmt, id, fixo) {
   if (av.length < 2) {
     const v = series.map(s => `${s.nome} <b style="color:var(--text)">${fmt(s.val(av[0]))}</b>`).join(' · ');
     return `<div class="empty-s">Hoje: ${v}.<br>A linha aparece a partir da segunda avaliação.</div>`;
@@ -931,13 +933,14 @@ function graficoLinhas(av, series, min, max, fmt, id) {
   const W = 560, H = 220, L = 34, R = series.length > 1 ? 48 : 18, T = 24, B = 30;
   const todos = series.flatMap(s => av.map(s.val)).filter(v => v !== null);
   const span = max - min, folga = span * 0.1;
-  const lo = Math.max(min, Math.floor((Math.min(...todos) - folga) / (span / 10)) * (span / 10));
-  const hi = Math.min(max, Math.ceil((Math.max(...todos) + folga) / (span / 10)) * (span / 10));
-  const step = (hi - lo) / 4;
+  // fixo: escala inteira de min a max, uma linha por unidade (usado nas estrelas, de 0 a 5)
+  const lo = fixo ? min : Math.max(min, Math.floor((Math.min(...todos) - folga) / (span / 10)) * (span / 10));
+  const hi = fixo ? max : Math.min(max, Math.ceil((Math.max(...todos) + folga) / (span / 10)) * (span / 10));
+  const ticks = fixo ? Array.from({ length: max - min + 1 }, (_, k) => min + k) : [0, 1, 2, 3, 4].map(k => lo + (hi - lo) / 4 * k);
   const x = i => L + i * (W - L - R) / (av.length - 1), y = v => T + (hi - v) * (H - T - B) / (hi - lo || 1);
   const each = Math.ceil(av.length / 7);
   let g = '';
-  for (let k = 0; k <= 4; k++) { const v = lo + step * k; g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(255,255,255,.07)"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#66759a">${Math.round(v)}</text>`; }
+  for (const v of ticks) g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(255,255,255,.07)"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="#66759a">${Math.round(v)}</text>`;
   const datas = av.map((a, i) => i % each === 0 || i === av.length - 1 ? `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#8d9bbb">${fmtShort(a.data)}</text>` : '').join('');
   const sv = series.map((s, si) => {
     const pts = av.map((a, i) => [i, s.val(a)]).filter(p => p[1] !== null);
@@ -1139,7 +1142,7 @@ function sheetAval(id, avId, foco) {
       <div class="stp"><button data-act="nota" data-k="${a.k}" data-v="-1" aria-label="Diminuir ${a.nome}">−</button><input id="n-${a.k}" inputmode="numeric" maxlength="2" aria-label="${a.nome}" value="${form.notas[a.k] ?? ''}" placeholder="–"><button data-act="nota" data-k="${a.k}" data-v="1" aria-label="Aumentar ${a.nome}">+</button></div></div>
       <div class="rub" id="rb-${a.k}"></div></div>`).join('')}</div>`;
   openSheet(shHead(atual ? 'Editar avaliação' : ref ? 'Atualizar notas e perfil' : 'Primeira avaliação', esc(c.nome)) + `<div class="sh-b">
-    <div class="liveo"><div class="o"><b id="lv-n">–</b><span>NOTA</span></div><div class="g">${GRUPOS.map(g => `<span>${g.sigla}<b id="lv-${g.k}">–</b></span>`).join('')}</div></div>
+    <div class="liveo"><span class="lc">Capacidade atual</span><span id="lv-ca"></span></div>
     <div>
       <p class="hintp" style="margin-bottom:10px">${ref && !atual ? 'Já vem com as notas da última vez. Mude só o que evoluiu (+1 ou −1) e salve. Faça isso a cada semana ou a cada conversa.' : 'Dê a nota de 0 a 20 em cada atributo. Embaixo de cada um aparece o que aquela nota significa, para você conferir se bate com o que viu.'}</p>
       <div class="escala">${ESCALA.map(([cl, f, t]) => `<div><b class="${cl}">${f}</b>${t}</div>`).join('')}</div>
@@ -1174,10 +1177,7 @@ function pintaNota(k) {
     ? `<b class="${nivel(v)}">${FAIXAS[faixa(v)]}</b>${a.niv[faixa(v)]}`
     : '<span class="muted">Sem nota. Toque em + para começar em 10.</span>') +
     (typeof p === 'number' ? `<span class="pr">antes ${p}${typeof v === 'number' && v !== p ? ' ' + delta(v - p) : ''}</span>` : '');
-  const nt = notaDe(form.notas);
-  $('#lv-n').textContent = nt ?? '–';
-  $('#lv-n').className = corNota(nt);
-  GRUPOS.forEach(g => { const x = mediaGrupo(form.notas, g.k), el = $('#lv-' + g.k); el.textContent = fmtG(x); el.className = nivel(x === null ? null : Math.round(x)); });
+  $('#lv-ca').innerHTML = st5(capAtual(form.notas));
 }
 function passoNota(k, d) {
   const v = form.notas[k];
@@ -1204,7 +1204,7 @@ function saveAval() {
     : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs }]) : c.avaliacoes;
   saveCorretor(Object.assign({}, c, perfil, { avaliacoes: avs }));
   closeSheet();
-  toast(editando ? 'Avaliação atualizada.' : mudou ? `Notas salvas. Nota atual ${notaDe(notas)}.` : 'Perfil salvo. As notas não mudaram.');
+  toast(editando ? 'Avaliação atualizada.' : mudou ? `Notas salvas. Capacidade atual: ${fmtEst(capAtual(notas))} ${capAtual(notas) > 1 ? 'estrelas' : 'estrela'}.` : 'Perfil salvo. As notas não mudaram.');
 }
 
 // produção: visita de angariação (valor, tipo, data) / angariação realizada (valor, bairro, data)
@@ -1342,7 +1342,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-27b';
+const VERSAO = '2026-10-27c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
