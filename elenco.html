@@ -293,10 +293,12 @@ input[type=date]{min-height:48px}
 .fotoed .bt{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .fotoed label{cursor:pointer}
 .pick{display:flex;align-items:center;gap:4px}
-.pick button{font-size:32px;line-height:1;padding:2px;background:linear-gradient(180deg,#eef1f5,#8b93a1);-webkit-background-clip:text;background-clip:text;color:transparent}
-.pick button.f{background:linear-gradient(180deg,#fff1a8,#f7c531 50%,#d99a0b)}
-.pick button.h{background:linear-gradient(90deg,#f7c531 50%,#b9c0cb 50%)}
-.pick button.f,.pick button.h{-webkit-background-clip:text;background-clip:text}
+.pick .pk{position:relative;font-size:36px;line-height:1;padding:0 2px;background:linear-gradient(180deg,#eef1f5,#8b93a1);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pick .pk.f{background:linear-gradient(180deg,#fff1a8,#f7c531 50%,#d99a0b)}
+.pick .pk.h{background:linear-gradient(90deg,#f7c531 50%,#b9c0cb 50%)}
+.pick .pk.f,.pick .pk.h{-webkit-background-clip:text;background-clip:text}
+.pick .pk button{position:absolute;top:0;bottom:0;width:50%}
+.pick .pk .e{left:0}.pick .pk .d{right:0}
 .pick .v{margin-left:10px;font-size:13.5px;color:var(--muted)}
 .escala{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;font-size:12.5px;line-height:1.35}
 .escala div{background:#08112a;border:1px solid var(--line);border-radius:10px;padding:8px 9px;color:var(--text2)}
@@ -417,16 +419,16 @@ const SENHA = 'flor2301';
 const GRUPOS = [
   { k: 'tec', nome: 'Técnico', sigla: 'TÉC', sub: 'Conhecimento técnico para angariar', attrs: [
     { k: 'ang', nome: 'Angariação', desc: 'Capacidade de angariar um imóvel do começo ao fim, colocando em prática tudo o que foi ensinado. A pergunta é simples: se um imóvel for entregue na mão dela, ela consegue angariar?',
-      niv: ['Ainda não consegue angariar sozinha.', 'Conhece os passos, mas só angaria com ajuda.', 'Angaria sozinha, do primeiro contato à autorização assinada.', 'Angaria com segurança, inclusive com exclusividade, e consegue ensinar os outros.'] },
+      niv: ['Ainda não consegue angariar sozinha.', 'Conhece os passos, mas só angaria com ajuda.', 'Angaria sozinha, do primeiro contato à autorização assinada.', 'Angaria com segurança e consegue ensinar os outros.'] },
     { k: 'doc', nome: 'Documentação', desc: 'Capacidade de ler e interpretar a documentação de um imóvel: matrícula, IPTU e boleto de condomínio. Sabe o que pedir, o que conferir e onde pode haver problema.',
       niv: ['Não sabe o que pedir nem onde olhar.', 'Sabe o que pedir, mas ainda não interpreta a matrícula.', 'Interpreta matrícula, IPTU e condomínio e identifica os problemas comuns.', 'Antecipa problemas (ônus, inventário, área divergente) antes de angariar.'] },
-    { k: 'neg', nome: 'Negociação', desc: 'Poder de persuasão para convencer o proprietário a trazer o imóvel para a carteira da VIP Imóveis. Mede se ela consegue, de fato, trazer o imóvel para a imobiliária.',
-      niv: ['Não consegue convencer o proprietário.', 'Convence só quando o proprietário já está disposto.', 'Traz o imóvel para a VIP na maioria das vezes.', 'Convence até o proprietário mais difícil, inclusive com exclusividade.'] }
+    { k: 'neg', nome: 'Negociação', desc: 'Poder de persuasão com o proprietário: convencê-lo a trazer o imóvel para a carteira da VIP Imóveis e saber apresentar e vender o imóvel durante a conversa. Mede se ela consegue, de fato, trazer o imóvel para a imobiliária.',
+      niv: ['Não consegue convencer o proprietário.', 'Convence só quando o proprietário já está disposto.', 'Traz o imóvel para a VIP na maioria das vezes.', 'Convence até o proprietário mais difícil e sabe vender o imóvel na conversa.'] }
   ] },
   { k: 'men', nome: 'Mental', sigla: 'MEN', sub: 'Cabeça do angariador', attrs: [
-    { k: 'det', nome: 'Determinação', desc: 'O quanto a pessoa é determinada a trabalhar com angariação. Dá para perceber quando ela gosta do que faz: não desiste diante de um "não" e segue firme.',
+    { k: 'det', nome: 'Determinação', desc: 'O quanto a pessoa está determinada a trabalhar com angariação de imóveis prontos. Dá para perceber quando ela gosta do que faz: não desiste diante de um "não" e segue firme.',
       niv: ['Desanima com o primeiro "não".', 'Vai bem quando está dando certo; some quando aperta.', 'Mantém o ritmo mesmo com vários "nãos" seguidos.', 'Gosta de angariar, cresce na dificuldade e puxa o time junto.'] },
-    { k: 'log', nome: 'Criatividade', desc: 'Habilidade de entender a lógica da angariação e criar caminhos novos. É a pessoa que pensa: "E se eu fizer desta maneira, será que consigo angariar este imóvel?"',
+    { k: 'log', nome: 'Criatividade', desc: 'Habilidade de entender a lógica da angariação e criar caminhos novos. É a pessoa curiosa, que pensa: "E se eu fizer desta maneira, será que consigo angariar este imóvel?"',
       niv: ['Faz sempre do mesmo jeito e trava quando não funciona.', 'Percebe o óbvio, mas não busca outro caminho.', 'Entende o motivo real do proprietário e propõe alternativas.', 'Enxerga a jogada antes de todo mundo e cria saídas fora da caixa.'] },
     { k: 'cor', nome: 'Coração ensinável', desc: 'Disposição verdadeira para ouvir e aprender. Recebe orientação sem se defender e coloca em prática o que foi ensinado.',
       niv: ['Se defende ou ignora a orientação.', 'Escuta e concorda, mas não muda.', 'Aplica o que aprendeu já na semana seguinte.', 'Pede orientação, busca aprender sozinha e evolui rápido.'] }
@@ -453,7 +455,7 @@ const PAPEIS = [
 const PROD = { visita: 'Visita de angariação', angariacao: 'Angariação realizada' };
 const TIPOS_IMOVEL = ['Casa', 'Apartamento', 'Cobertura', 'Terreno', 'Comercial'];
 const PERIODOS = [['1', '1º mês'], ['2', '2º mês'], ['3', '3º mês'], ['tudo', 'Tudo']];
-const SUGESTOES = ['Fecha exclusividade', 'Bom de porta a porta', 'Amigo de porteiro e zelador', 'Precifica com dados', 'Domina documentação',
+const SUGESTOES = ['Muito bom angariador','Bom de porta a porta', 'Amigo de porteiro e zelador', 'Precifica com dados', 'Domina documentação',
   'Ótimo no telefone', 'Pensa fora da caixa', 'Não desiste no primeiro não', 'Rede forte de contatos', 'Conhece o bairro como ninguém'];
 const PERSONALIDADES = ['Determinado', 'Ambicioso', 'Profissional', 'Equilibrado', 'Competitivo', 'Comunicativo', 'Discreto', 'Inquieto'];
 const BAIRROS_CWB = ['Abranches', 'Água Verde', 'Ahú', 'Alto da Glória', 'Alto da XV', 'Bacacheri', 'Batel', 'Bigorrilho', 'Boa Vista', 'Bom Retiro',
@@ -1078,13 +1080,16 @@ function camposPerfil(c) {
       <div class="chips" id="f-dest"></div>
       <div style="display:flex;gap:8px"><input id="f-dest-in" placeholder="Escreva e toque em Adicionar" autocomplete="off"><button class="btn-ghost" data-act="dest-add">Adicionar</button></div>
       <div class="chips" id="f-sug"></div></div>
-    <div class="ar"><label class="lbl" for="f-evol" style="margin:0">A evoluir<span class="hint">o principal ponto de desenvolvimento</span></label><input id="f-evol" value="${esc(c.evoluir)}" placeholder="Ex.: contorno de objeções sobre exclusividade" autocomplete="off"></div>
+    <div class="ar"><label class="lbl" for="f-evol" style="margin:0">A evoluir<span class="hint">o principal ponto de desenvolvimento</span></label><input id="f-evol" value="${esc(c.evoluir)}" placeholder="Ex.: contorno de objeções" autocomplete="off"></div>
   </div>`;
 }
 function renderPot() {
   const v = form.potencial;
-  $('#f-pot').innerHTML = [1, 2, 3, 4, 5].map(i => `<button class="${v >= i ? 'f' : v >= i - 0.5 ? 'h' : ''}" data-act="pot" data-v="${i}" aria-label="${i} estrelas">★</button>`).join('') +
-    `<span class="v">${v ? String(v).replace('.', ',') + ' de 5' : 'toque nas estrelas (de novo = meia)'}</span>`;
+  // cada estrela tem duas metades: tocar na metade esquerda dá meia estrela, na direita, a estrela inteira
+  $('#f-pot').innerHTML = [1, 2, 3, 4, 5].map(i => `<span class="pk ${v >= i ? 'f' : v >= i - 0.5 ? 'h' : ''}">★` +
+      `<button class="e" data-act="pot" data-v="${i - 0.5}" aria-label="${fmtEst(i - 0.5)} estrela"></button><button class="d" data-act="pot" data-v="${i}" aria-label="${i} estrelas"></button></span>`).join('') +
+    `<span class="v">${v ? fmtEst(v) + ' de 5' : 'toque na metade da estrela para dar meia'}</span>` +
+    (v ? '<button class="link" data-act="pot" data-v="0" style="margin-left:12px">Limpar</button>' : '');
 }
 function renderFotoPrev() {
   const pv = $('#f-pv'); if (!pv) return;
@@ -1295,7 +1300,7 @@ document.addEventListener('click', e => {
     case 'prod': sheetProd(id, v); break;
     case 'fechar': closeSheet(); break;
     case 'foto-rm': form.foto = ''; renderFotoPrev(); break;
-    case 'pot': { const i = +v; form.potencial = form.potencial === i ? i - 0.5 : form.potencial === i - 0.5 ? 0 : i; renderPot(); break; }
+    case 'pot': form.potencial = +v; renderPot(); break;
     case 'pers': $('#f-pers').value = v; break;
     case 'dest-add': addDest(v); break;
     case 'dest-rm': form.destaques.splice(+v, 1); renderDest(); break;
@@ -1346,7 +1351,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-27d';
+const VERSAO = '2026-10-27e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
