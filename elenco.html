@@ -478,22 +478,25 @@ const SUGESTOES = ['Muito bom angariador','Bom de porta a porta', 'Amigo de port
 const PERSONALIDADES = ['Determinado', 'Ambicioso', 'Profissional', 'Resiliente', 'Competitivo', 'Comunicativo', 'Equilibrado', 'Ansioso', 'Inseguro', 'Acomodado'];
 // Angariação e Documentação vêm 100% do checklist de treinamentos: cada item concluído soma pontos até 20
 const CHECKS = {
+  // na ordem em que acontece: achar o imóvel, confirmar a unidade, levantar os documentos
   ang: [
-    { k: 'ud', t: 'Sabe tirar a Declaração Unificada' },
-    { k: 'mapa', t: 'Sabe usar o mapa cadastral' },
-    { k: 'guia', t: 'Sabe tirar a guia amarela' },
-    { k: 'num', t: 'Pelo link do anúncio, descobre o número da casa ou do apartamento e chega até o imóvel' },
-    { k: 'matr', t: 'Sabe tirar a matrícula do imóvel' },
-    { k: 'impl', t: 'Conhece a implantação do condomínio' },
-    { k: 'mac', t: 'Conhece os macetes para angariar' }
+    { k: 'sis', t: 'Usa os sistemas de angariação (Eemovel e Mind7) para encontrar imóveis e proprietários' },
+    { k: 'pist', t: 'Analisa o anúncio e identifica as pistas do imóvel: número da fachada, número da vaga de garagem, andar e vista' },
+    { k: 'loc', t: 'A partir das pistas do anúncio, chega ao endereço e ao número da casa ou do apartamento' },
+    { k: 'mapa', t: 'Usa o mapa cadastral para localizar o imóvel e o lote' },
+    { k: 'cond', t: 'Em condomínio de casas, identifica a unidade certa no mapa cadastral contando as casas da implantação' },
+    { k: 'guia', t: 'Emite a guia amarela do imóvel' },
+    { k: 'ud', t: 'Emite a Declaração Unificada do imóvel' },
+    { k: 'udar', t: 'Usa a Declaração Unificada para conferir a área construída averbada (casa) ou a área privativa (apartamento) e confirmar que é a unidade que está angariando' },
+    { k: 'matr', t: 'Emite a matrícula atualizada do imóvel' }
   ],
   doc: [
-    { k: 'bol', t: 'Sabe ler o boleto de condomínio' },
-    { k: 'lmatr', t: 'Sabe ler e entender a matrícula do imóvel' },
-    { k: 'cnd', t: 'Sabe o que é a CND, como tirar e para que serve' },
-    { k: 'docs', t: 'Sabe quais documentos são necessários para uma angariação' },
-    { k: 'aut', t: 'Sabe preencher a autorização de venda' },
-    { k: 'anx', t: 'Sabe onde anexar tudo e qual é o próximo passo depois de angariar' }
+    { k: 'lmatr', t: 'Lê e interpreta a matrícula: quem são os proprietários, a área registrada e se há ônus' },
+    { k: 'bol', t: 'Lê e interpreta o boleto de condomínio' },
+    { k: 'cnd', t: 'Sabe o que é a CND (Certidão Negativa de Débitos), para que serve e como emitir' },
+    { k: 'docs', t: 'Sabe quais documentos pedir ao proprietário para fazer a angariação' },
+    { k: 'aut', t: 'Preenche a autorização de venda corretamente' },
+    { k: 'anx', t: 'Sabe onde anexar a documentação e qual é o próximo passo depois de angariar' }
   ]
 };
 const CHECK_KEYS = Object.values(CHECKS).flat().map(i => i.k);
@@ -1261,7 +1264,8 @@ function pintaNota(k) {
   $('#rb-' + k).innerHTML = (typeof v === 'number'
     ? `<b class="${nivel(v)}">${FAIXAS[faixa(v)]}</b>${a.niv[faixa(v)]}`
     : '<span class="muted">Sem nota. Toque em + para começar em 10.</span>') +
-    (typeof p === 'number' ? `<span class="pr">antes ${p}${typeof v === 'number' && v !== p ? ' ' + delta(v - p) : ''}</span>` : '');
+    // no checklist a comparação com a nota antiga confunde: o próprio checklist já mostra o que mudou
+    (typeof p === 'number' && !CHECKS[k] ? `<span class="pr">antes ${p}${typeof v === 'number' && v !== p ? ' ' + delta(v - p) : ''}</span>` : '');
   pintaSugestao();
 }
 // o que as notas sugerem para a capacidade atual (só referência: quem decide é o gestor)
@@ -1450,7 +1454,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-27f';
+const VERSAO = '2026-10-27g';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
