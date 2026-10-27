@@ -1335,6 +1335,24 @@ document.addEventListener('click', e => {
   }
 });
 
+// ── VERSÃO ──
+// O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
+// já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
+const VERSAO = '2026-10-27a';
+async function confereVersao() {
+  try {
+    const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
+    const m = (await r.text()).match(/const VERSAO = '([^']+)'/);
+    if (!m || m[1] === VERSAO) return;
+    const q = new URLSearchParams(location.search);
+    if (q.get('v') === m[1]) return; // já tentou esta versão: não fica em loop
+    q.set('v', m[1]);
+    location.replace(location.pathname + '?' + q + location.hash);
+  } catch (e) {}
+}
+confereVersao();
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') confereVersao(); });
+
 // ── ENTRADA ──
 if (TESTE) $('#teste-bar').classList.remove('hidden');
 $('#bairros').innerHTML = [...new Set(BAIRROS_CWB)].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(b => `<option value="${esc(b)}">`).join('');
