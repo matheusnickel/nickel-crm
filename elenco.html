@@ -98,11 +98,12 @@ input[type=date]{min-height:48px}
 .hintp{font-size:13.5px;color:var(--muted);line-height:1.5}
 
 /* estrelas (capacidade atual e potencial) */
-.st5{position:relative;display:inline-block;font-size:15px;line-height:1;color:rgba(255,255,255,.14);white-space:nowrap;vertical-align:-1px}
-.st5::before{content:'★★★★★'}
-.st5 i{position:absolute;left:0;top:0;overflow:hidden;color:var(--n3);font-style:normal}
-.st5 i::before{content:'★★★★★'}
-.st5.or i{color:var(--or2)}
+/* dourada quando tem, prateada quando não tem */
+.st5{position:relative;display:inline-block;font-size:16px;line-height:1;white-space:nowrap;vertical-align:-2px;letter-spacing:1px}
+.st5::before,.st5 i::before{content:'★★★★★';-webkit-background-clip:text;background-clip:text;color:transparent}
+.st5::before{background-image:linear-gradient(180deg,#eef1f5 0%,#b9c0cb 55%,#8b93a1 100%)}
+.st5 i{position:absolute;left:0;top:0;overflow:hidden;font-style:normal}
+.st5 i::before{background-image:linear-gradient(180deg,#fff1a8 0%,#f7c531 50%,#d99a0b 100%)}
 
 /* nota pintada como no FM */
 .n0{color:var(--faint)}.n1{color:var(--n1)}.n2{color:var(--n2)}.n3{color:var(--n3)}.n4{color:var(--n4)}
@@ -184,7 +185,6 @@ input[type=date]{min-height:48px}
 .fm-r.hi{background:linear-gradient(90deg,var(--fmhi),rgba(61,220,151,.04));border-left-color:var(--n4)}
 .fm-r .ln{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600}
 .fm-r .an{flex:1;min-width:0}
-.fm-r .rb{font-size:12.5px;color:var(--muted);line-height:1.4}
 .nv{font-size:18px;font-weight:800;min-width:24px;text-align:right;font-variant-numeric:tabular-nums}
 .fm-leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin-top:12px}
 .fm-leg b{font-weight:800}
@@ -286,9 +286,10 @@ input[type=date]{min-height:48px}
 .fotoed .bt{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .fotoed label{cursor:pointer}
 .pick{display:flex;align-items:center;gap:4px}
-.pick button{font-size:30px;line-height:1;color:rgba(255,255,255,.16);padding:2px}
-.pick button.f{color:var(--or2)}
-.pick button.h{background:linear-gradient(90deg,var(--or2) 50%,rgba(255,255,255,.16) 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pick button{font-size:32px;line-height:1;padding:2px;background:linear-gradient(180deg,#eef1f5,#8b93a1);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pick button.f{background:linear-gradient(180deg,#fff1a8,#f7c531 50%,#d99a0b)}
+.pick button.h{background:linear-gradient(90deg,#f7c531 50%,#b9c0cb 50%)}
+.pick button.f,.pick button.h{-webkit-background-clip:text;background-clip:text}
 .pick .v{margin-left:10px;font-size:13.5px;color:var(--muted)}
 .escala{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;font-size:12.5px;line-height:1.35}
 .escala div{background:#08112a;border:1px solid var(--line);border-radius:10px;padding:8px 9px;color:var(--text2)}
@@ -417,7 +418,7 @@ const GRUPOS = [
   { k: 'men', nome: 'Mental', sigla: 'MEN', sub: 'Cabeça do angariador', attrs: [
     { k: 'det', nome: 'Determinação', desc: 'Quer muito e não desiste: leva "não" e continua no mesmo ritmo.',
       niv: ['Desanima com o primeiro "não".', 'Vai bem quando está dando certo; some quando aperta.', 'Mantém o ritmo mesmo com vários "nãos" seguidos.', 'Cresce na dificuldade e puxa o time junto.'] },
-    { k: 'log', nome: 'Leitura de jogo', desc: 'A lógica e a malandragem: liga os pontos ("se é assim, por que é assim?") e enxerga o que está por trás.',
+    { k: 'log', nome: 'Criatividade', desc: 'A lógica e a malandragem: liga os pontos ("se é assim, por que é assim?"), enxerga o que está por trás e pensa fora da caixa.',
       niv: ['Aceita tudo como vem, não questiona.', 'Percebe o óbvio, mas não liga os pontos.', 'Faz as perguntas certas e entende o motivo real do proprietário.', 'Enxerga a jogada antes de todo mundo e cria saídas fora da caixa.'] },
     { k: 'cor', nome: 'Coração ensinável', desc: 'Recebe feedback de verdade e coloca em prática.',
       niv: ['Se defende ou ignora o feedback.', 'Escuta e concorda, mas não muda.', 'Aplica o feedback já na semana seguinte.', 'Pede feedback, busca aprender sozinho e evolui rápido.'] }
@@ -745,8 +746,8 @@ function renderElenco() {
     return `<button class="sqr" data-act="abrir" data-id="${esc(c.id)}">
       <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt">${esc(mt)}</span></span></span>
       <span class="num xl cell"><span class="lbm">Idade</span>${ida ?? '–'}</span>
-      <span class="cell"><span class="lbm">Cap. atual</span>${nt === null ? '<span class="muted">–</span>' : st5(estrelas(nt))}</span>
-      <span class="cell"><span class="lbm">Cap. potencial</span>${c.potencial ? st5(c.potencial, 'or') : '<span class="muted">–</span>'}</span>
+      <span class="cell"><span class="lbm">Cap. atual</span>${st5(estrelas(nt))}</span>
+      <span class="cell"><span class="lbm">Cap. potencial</span>${st5(c.potencial)}</span>
       ${GRUPOS.map(x => g(x.k)).join('')}
       <span class="evb-w">${bar}</span>
       <span class="num v cell"><span class="lbm">Visitas</span>${P.v}</span>
@@ -772,7 +773,7 @@ function renderElenco() {
 }
 function legenda() {
   return `<div class="legend">
-    <div><h4>Atributos de 0 a 20</h4>Três áreas (Técnico, Mental e Postura) com três atributos cada. Como no Football Manager, a cor mostra o nível.
+    <div><h4>Atributos de 0 a 20</h4>Três áreas (Técnico, Mental e Postura) com três atributos cada. A cor mostra o nível.
       <div class="sw">${ESCALA.map(([c, f, t]) => `<span><i style="background:var(--${c})"></i>${f}: ${t.toLowerCase()}</span>`).join('')}</div></div>
     <div><h4>Nota, capacidade atual e potencial</h4>A nota (0 a 100) é a média dos atributos × 5. Capacidade atual é essa nota em estrelas. Capacidade potencial é até onde o gestor enxerga que a pessoa pode chegar.</div>
     <div><h4>Nota · evolução</h4>A barra mostra a nota de hoje. O trecho laranja forte é o quanto a pessoa cresceu desde a primeira avaliação. Vis, Ang e Conv são visitas de angariação, angariações realizadas e conversão no período escolhido.</div>
@@ -787,11 +788,10 @@ function renderFicha(c) {
   if (!ui.papel || !PAPEIS.some(p => p.k === ui.papel)) ui.papel = nt === null ? null : ps[0].k;
   const chave = new Set(ui.papel ? PAPEIS.find(p => p.k === ui.papel).attrs : []);
   const facts = [
-    ['Capacidade atual', nt === null ? '–' : st5(estrelas(nt)), true],
-    ['Capacidade potencial', c.potencial ? st5(c.potencial, 'or') : '–', true],
+    ['Capacidade atual', st5(estrelas(nt)), true],
+    ['Capacidade potencial', st5(c.potencial), true],
     ida !== null ? ['Idade', ida + ' anos'] : null,
-    c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null,
-    ['Acompanhamento', `${mesAtual(c)}º mês · desde ${fmtShort(inicioDe(c))}`]
+    c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null
   ].filter(Boolean);
   const abas = [['geral', 'Visão geral'], ['dev', 'Desenvolvimento'], ['prod', 'Produção']];
 
@@ -825,8 +825,7 @@ function abaGeral(c, n, ant, ps, chave, nt) {
       ${g.attrs.map(a => {
         const v = n[a.k], p = ant ? ant.notas[a.k] : undefined;
         const d = typeof v === 'number' && typeof p === 'number' && v !== p ? delta(v - p) : '';
-        return `<div class="fm-r${chave.has(a.k) ? ' hi' : ''}"><div class="ln"><span class="an">${a.nome}</span>${d}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></div>
-          <div class="rb">${typeof v === 'number' ? a.niv[faixa(v)] : esc(a.desc)}</div></div>`;
+        return `<div class="fm-r${chave.has(a.k) ? ' hi' : ''}"><div class="ln"><span class="an">${a.nome}</span>${d}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></div></div>`;
       }).join('')}</div>`;
   };
   const semNota = nt === null;
