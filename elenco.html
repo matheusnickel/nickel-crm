@@ -436,11 +436,11 @@ const SENHA = 'flor2301';
 // Cada atributo tem o que significa cada faixa de nota (é o guia para avaliar).
 const GRUPOS = [
   { k: 'tec', nome: 'Técnico', sigla: 'TÉC', sub: 'Conhecimento técnico para angariar', attrs: [
-    { k: 'ang', nome: 'Angariação', desc: 'Capacidade de angariar um imóvel do começo ao fim, colocando em prática tudo o que foi ensinado. A pergunta é simples: se um imóvel for entregue na mão dela, ela consegue angariar?',
-      niv: ['Ainda não consegue angariar sozinha.', 'Conhece os passos, mas só angaria com ajuda.', 'Angaria sozinha, do primeiro contato à autorização assinada.', 'Angaria com segurança e consegue ensinar os outros.'] },
+    { k: 'ang', nome: 'Angariação', desc: 'Capacidade de angariar um imóvel do começo ao fim, colocando em prática tudo o que foi ensinado. A pergunta é simples: se um imóvel for entregue nas mãos da pessoa, ela consegue angariar?',
+      niv: ['Ainda não consegue angariar sem ajuda.', 'Conhece os passos, mas só angaria com ajuda.', 'Angaria sem ajuda, do primeiro contato à autorização assinada.', 'Angaria com segurança e consegue ensinar os outros.'] },
     { k: 'doc', nome: 'Documentação', desc: 'Capacidade de ler e interpretar a documentação de um imóvel: matrícula, IPTU e boleto de condomínio. Sabe o que pedir, o que conferir e onde pode haver problema.',
       niv: ['Não sabe o que pedir nem onde olhar.', 'Sabe o que pedir, mas ainda não interpreta a matrícula.', 'Interpreta matrícula, IPTU e condomínio e identifica os problemas comuns.', 'Antecipa problemas (ônus, inventário, área divergente) antes de angariar.'] },
-    { k: 'neg', nome: 'Negociação', desc: 'Poder de persuasão com o proprietário: convencê-lo a trazer o imóvel para a carteira da VIP Imóveis e saber apresentar e vender o imóvel durante a conversa. Mede se ela consegue, de fato, trazer o imóvel para a imobiliária.',
+    { k: 'neg', nome: 'Negociação', desc: 'Poder de persuasão com o proprietário: convencê-lo a trazer o imóvel para a carteira da VIP Imóveis e saber apresentar e vender o imóvel durante a conversa. Mede se a pessoa consegue, de fato, trazer o imóvel para a imobiliária.',
       niv: ['Não consegue convencer o proprietário.', 'Convence só quando o proprietário já está disposto.', 'Traz o imóvel para a VIP na maioria das vezes.', 'Convence até o proprietário mais difícil e sabe vender o imóvel na conversa.'] }
   ] },
   { k: 'men', nome: 'Mental', sigla: 'MEN', sub: 'Cabeça do angariador', attrs: [
@@ -449,22 +449,22 @@ const GRUPOS = [
     { k: 'log', nome: 'Criatividade', desc: 'Habilidade de entender a lógica da angariação e criar caminhos novos. É a pessoa curiosa, que pensa: "E se eu fizer desta maneira, será que consigo angariar este imóvel?"',
       niv: ['Faz sempre do mesmo jeito e trava quando não funciona.', 'Percebe o óbvio, mas não busca outro caminho.', 'Entende o motivo real do proprietário e propõe alternativas.', 'Enxerga a jogada antes de todo mundo e cria saídas fora da caixa.'] },
     { k: 'cor', nome: 'Coração ensinável', desc: 'Disposição verdadeira para ouvir e aprender. Recebe orientação sem se defender e coloca em prática o que foi ensinado.',
-      niv: ['Se defende ou ignora a orientação.', 'Escuta e concorda, mas não muda.', 'Aplica o que aprendeu já na semana seguinte.', 'Pede orientação, busca aprender sozinha e evolui rápido.'] }
+      niv: ['Se defende ou ignora a orientação.', 'Escuta e concorda, mas não muda.', 'Aplica o que aprendeu já na semana seguinte.', 'Pede orientação, busca aprender por conta própria e evolui rápido.'] }
   ] },
   { k: 'pos', nome: 'Postura', sigla: 'POS', sub: 'Como se apresenta e se comporta', attrs: [
     { k: 'com', nome: 'Comunicação', desc: 'O quanto a pessoa sabe se comunicar: tem boa oratória, fala com segurança com o proprietário e não se deixa travar pela timidez.',
-      niv: ['Tímida, se enrola para falar com o proprietário.', 'Comunica o básico, mas sem segurança.', 'Fala com clareza e segurança com qualquer proprietário.', 'Conduz a conversa e transmite autoridade.'] },
+      niv: ['Trava por timidez e se enrola para falar com o proprietário.', 'Comunica o básico, mas sem segurança.', 'Fala com clareza e segurança com qualquer proprietário.', 'Conduz a conversa e transmite autoridade.'] },
     { k: 'pre', nome: 'Presença', desc: 'Presença na bancada: está todos os dias na imobiliária, com vontade de angariar, perguntando e participando.',
-      niv: ['Raramente aparece na imobiliária.', 'Aparece quando é cobrada.', 'Está na imobiliária quase todos os dias, participando.', 'Está todo dia na bancada, pergunta, participa e busca imóvel.'] },
+      niv: ['Raramente aparece na imobiliária.', 'Só aparece quando alguém cobra.', 'Está na imobiliária quase todos os dias, participando.', 'Está todo dia na bancada, pergunta, participa e busca imóvel.'] },
     { k: 'org', nome: 'Organização', desc: 'O quanto a pessoa é organizada. Quando você pergunta alguma coisa, ela sabe onde está e responde sem se perder.',
-      niv: ['Não sabe onde estão as coisas; perde contatos e retornos.', 'Se organiza só quando é cobrada.', 'Sabe onde está cada coisa e dá retorno no prazo.', 'Rotina impecável; responde na hora qualquer pergunta.'] },
+      niv: ['Não sabe onde estão as coisas; perde contatos e retornos.', 'Só se organiza quando alguém cobra.', 'Sabe onde está cada coisa e dá retorno no prazo.', 'Rotina impecável; responde na hora qualquer pergunta.'] },
     { k: 'vang', nome: 'Visita de angariação', desc: 'Como a pessoa conduz a visita ao proprietário: lê o ambiente, equilibra falar e ouvir e acerta o momento de cada passo.',
       niv: ['Ainda não conduz uma visita de angariação.', 'Conduz a visita, mas atropela ou perde o momento.', 'Conduz bem: ouve o proprietário e sabe a hora de cada passo.', 'Domina a visita: lê o ambiente, deixa o proprietário falar e acerta o momento de propor.'] }
   ] }
 ];
 const ATTRS = GRUPOS.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a)));
 const FAIXAS = ['1–5', '6–10', '11–15', '16–20'];
-const ESCALA = [['n1', '1 a 5', 'Não sabe / não faz'], ['n2', '6 a 10', 'Faz com ajuda'], ['n3', '11 a 15', 'Faz sozinho, bem'], ['n4', '16 a 20', 'Referência, ensina os outros']];
+const ESCALA = [['n1', '1 a 5', 'Não sabe / não faz'], ['n2', '6 a 10', 'Faz com ajuda'], ['n3', '11 a 15', 'Faz sem ajuda, bem'], ['n4', '16 a 20', 'Referência, ensina os outros']];
 // Papéis, como o "Papel e tarefa" do FM: as estrelas saem da média dos atributos-chave
 const PAPEIS = [
   { k: 'tec', nome: 'Especialista técnico', sub: 'Angaria certo, com a papelada em dia', attrs: ['ang', 'doc', 'org'] },
@@ -478,7 +478,7 @@ const PERIODOS = [['1', '1º mês'], ['2', '2º mês'], ['3', '3º mês'], ['tud
 const SUGESTOES = ['Muito bom angariador','Bom de porta a porta', 'Amigo de porteiro e zelador', 'Precifica com dados', 'Domina documentação',
   'Ótimo no telefone', 'Pensa fora da caixa', 'Não desiste no primeiro não', 'Rede forte de contatos', 'Conhece o bairro como ninguém'];
 const PERSONALIDADES = ['Determinado', 'Ambicioso', 'Profissional', 'Resiliente', 'Competitivo', 'Comunicativo', 'Equilibrado', 'Ansioso', 'Inseguro', 'Acomodado'];
-// Angariação e Documentação vêm 100% do checklist de treinamentos: cada item concluído soma pontos até 20
+// Angariação, Documentação e Visita de angariação vêm 100% do checklist: cada item concluído soma pontos até 20
 const CHECKS = {
   // na ordem em que acontece: achar o imóvel, confirmar a unidade, levantar os documentos
   ang: [
@@ -501,7 +501,7 @@ const CHECKS = {
     { k: 'anx', t: 'Sabe onde anexar a documentação e qual é o próximo passo depois de angariar' }
   ],
   vang: [
-    { k: 'prep', t: 'Chega preparada: já levantou os dados do imóvel, a documentação e o valor de mercado antes da visita' },
+    { k: 'prep', t: 'Chega com a lição de casa feita: já levantou os dados do imóvel, a documentação e o valor de mercado antes da visita' },
     { k: 'feel', t: 'Tem feeling: observa a casa e o ambiente, entende o que está acontecendo e sabe a hora de perguntar e a hora de não perguntar' },
     { k: 'ouve', t: 'Sabe a hora de parar de falar: explica o necessário e deixa o proprietário falar, ouvindo mais do que fala' },
     { k: 'perg', t: 'Faz as perguntas certas: motivo da venda, prazo, valor esperado e quem decide' },
@@ -512,7 +512,7 @@ const CHECKS = {
 };
 const CHECK_KEYS = Object.values(CHECKS).flat().map(i => i.k);
 // réguas para dar as estrelas (a justificativa que aparece na tela)
-const REGUA_CA = [[5, 'Referência: angaria sozinha com consistência e ensina os outros.'], [4, 'Angaria sozinha, com bons resultados.'], [3, 'Angaria, mas ainda precisa de apoio em algumas etapas.'], [2, 'Em formação: conhece os passos, com pouca prática.'], [1, 'Começando agora.']];
+const REGUA_CA = [[5, 'Referência: angaria sem ajuda, com consistência, e ensina os outros.'], [4, 'Angaria sem ajuda, com bons resultados.'], [3, 'Angaria, mas ainda precisa de apoio em algumas etapas.'], [2, 'Em formação: conhece os passos, com pouca prática.'], [1, 'Começando agora.']];
 const REGUA_POT = [[5, 'Determinação e coração ensinável altos: tem tudo para virar referência.'], [4.5, 'Tem os dois, mas um deles ainda oscila.'], [4, 'Tem um dos dois forte; o outro precisa ser trabalhado.'], [3.5, 'Falta vontade ou abertura para aprender; o teto hoje é limitado.']];
 const BAIRROS_CWB = ['Abranches', 'Água Verde', 'Ahú', 'Alto da Glória', 'Alto da XV', 'Bacacheri', 'Batel', 'Bigorrilho', 'Boa Vista', 'Bom Retiro',
   'Cabral', 'Campina do Siqueira', 'Campo Comprido', 'Centro', 'Centro Cívico', 'Champagnat', 'Cristo Rei', 'Ecoville', 'Hugo Lange', 'Jardim Botânico',
@@ -558,7 +558,7 @@ function maisMeses(iso, k) {
 }
 const diaAntes = iso => { const [y, m, d] = iso.split('-').map(Number); return isoDe(new Date(y, m - 1, d - 1)); };
 
-// ── NOTAS (0 a 20) E NOTA ATUAL (0 a 100) ──
+// ── NOTAS (0 a 20) ──
 const nivel = v => typeof v !== 'number' ? 'n0' : v <= 5 ? 'n1' : v <= 10 ? 'n2' : v <= 15 ? 'n3' : 'n4';
 const faixa = v => v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3;
 const nivelNome = v => v === null ? 'a avaliar' : ['fraco', 'razoável', 'bom', 'muito bom'][faixa(v)];
@@ -567,14 +567,14 @@ function media(notas, keys) {
   return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
 }
 const mediaGrupo = (n, g) => media(n, GRUPOS.find(x => x.k === g).attrs.map(a => a.k));
-// nota atual 0 a 100 (média dos atributos × 5), como o nível do jogador no FM
+// média geral × 5 (uso interno: saber se já há notas e ordenar os papéis)
 const notaDe = n => { const m = media(n, ATTRS.map(a => a.k)); return m === null ? null : Math.round(m * 5); };
 const fmtG = v => v === null ? '–' : String(Math.round(v)); // sempre número inteiro, sem vírgula
 const meioPasso = v => Math.round(v * 2) / 2;
 // estrelas a partir da média de 0 a 20: arredonda a média e cada 2 pontos valem ½ estrela
 // (19–20 = 5, 17–18 = 4½, 15–16 = 4, 13–14 = 3½, 11–12 = 3 … 0–2 = ½)
 const estrelasDaMedia = m => m === null ? 0 : Math.max(0.5, Math.round(Math.round(m) / 2) / 2);
-const st5 = (v, cls) => `<span class="st5 ${cls || ''}" title="${String(v).replace('.', ',')} de 5"><i style="width:${v / 5 * 100}%"></i></span>`;
+const st5 = (v, cls) => `<span class="st5 ${cls || ''}" title="${fmtEst(v)} de 5"><i style="width:${v / 5 * 100}%"></i></span>`;
 function delta(d) {
   if (d === null || d === undefined || Number.isNaN(d)) return '';
   d = Math.round(d);
@@ -662,9 +662,9 @@ let corretores = [];
 const byId = id => corretores.find(c => c.id === id);
 const persistCache = () => lsSet(LS_CACHE, corretores);
 const ultima = c => c.avaliacoes[c.avaliacoes.length - 1] || null;
-// nota de Angariação/Documentação a partir dos itens concluídos do checklist
+// nota dos atributos de checklist a partir dos itens concluídos
 const notaCheck = (checks, attr) => Math.round(CHECKS[attr].filter(i => checks[i.k]).length / CHECKS[attr].length * 20);
-// notas de hoje: as da última avaliação, com Angariação e Documentação sempre vindo do checklist
+// notas de hoje: as da última avaliação, com os atributos de checklist sempre vindo do checklist
 function notasAtuais(c) {
   const n = Object.assign({}, (ultima(c) || {}).notas || {});
   if (c.avaliacoes.length || Object.keys(c.checks).length) for (const k in CHECKS) n[k] = notaCheck(c.checks, k);
@@ -928,7 +928,7 @@ function abaGeral(c, n, ant, ps, chave, nt) {
       </div>
     </div>`;
 }
-// treinamentos de Angariação/Documentação, com o que já foi concluído (e quando)
+// itens do checklist de um atributo, com o que já foi concluído (e quando)
 function listaChecks(c, attr) {
   const l = CHECKS[attr], feitos = l.filter(i => c.checks[i.k]).length;
   return `<span class="fx">${feitos} de ${l.length} itens concluídos · nota ${notaCheck(c.checks, attr)}</span>
@@ -936,7 +936,7 @@ function listaChecks(c, attr) {
 }
 function abaDev(c) {
   const av = c.avaliacoes, u = ultima(c);
-  if (!u) return `<div class="empty-s">Os gráficos de evolução aparecem depois da primeira avaliação. <span class="adm">A cada conversa, toque em "Atualizar notas" e mude só o que evoluiu.</span></div>`;
+  if (!u) return `<div class="empty-s">Os gráficos de evolução aparecem depois da primeira avaliação. <span class="adm">A cada conversa, toque em "Atualizar notas e perfil" e mude só o que evoluiu.</span></div>`;
   const e0 = capDaAvaliacao(av[0]), e1 = capDaAvaliacao(u);
   return `<div class="grid2">
       <section class="box">
@@ -950,7 +950,7 @@ function abaDev(c) {
     </div>
     <section class="box" style="margin-top:16px">
       <div class="box-h"><h3>Atributos</h3><span class="muted r" style="font-size:13px">${av.length > 1 ? `primeira avaliação (${fmtShort(av[0].data)}) × hoje` : 'notas de hoje'}</span></div>
-      ${graficoAtributos(av)}
+      ${graficoAtributos(c)}
       ${av.length > 1 ? '<div class="keyl"><span><i class="tick"></i>Primeira avaliação</span><span class="a"><i></i>Hoje</span></div>' : ''}
     </section>
     <section class="box" style="margin-top:16px">
@@ -1044,8 +1044,8 @@ function rotulosFinais(series, av, x, y, fmt) {
   return rs.map(r => `<text x="${x(i) + 9}" y="${r.yy}" font-size="12" font-weight="700" fill="${r.s.cor}">${fmt(r.v)}</text>`).join('');
 }
 // cada atributo: barra de hoje (laranja) e um traço branco onde estava na primeira avaliação
-function graficoAtributos(av) {
-  const a0 = av[0].notas, a1 = ultima({ avaliacoes: av }).notas, dois = av.length > 1;
+function graficoAtributos(c) {
+  const av = c.avaliacoes, a0 = av[0].notas, a1 = notasAtuais(c), dois = av.length > 1;
   return `<div class="hb">${GRUPOS.map(g => `<div class="hb-g">${g.nome}</div>` + g.attrs.map(a => {
     const v0 = a0[a.k], v1 = a1[a.k];
     return `<div class="hb-r"><span>${a.nome}</span><span class="hb-t">${typeof v1 === 'number' ? `<i class="a1" style="width:${v1 * 5}%"></i>` : ''}${dois && typeof v0 === 'number' ? `<i class="a0" style="left:calc(${v0 * 5}% - 1.5px)" title="Primeira avaliação: ${v0}"></i>` : ''}</span>
@@ -1100,8 +1100,9 @@ function closeSheet() {
   $('#sheet').innerHTML = '';
   document.body.style.overflow = '';
 }
-$('#ov').addEventListener('mousedown', e => { if (e.target.id === 'ov') closeSheet(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet) closeSheet(); });
+// tocar fora fecha a folha, menos na avaliação (um toque sem querer perderia tudo o que foi marcado)
+$('#ov').addEventListener('mousedown', e => { if (e.target.id === 'ov' && ui.sheet !== 'aval') closeSheet(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && ui.sheet !== 'aval') closeSheet(); });
 const shHead = (kick, title) => `<div class="sh-h"><div><span class="kick">${kick}</span><h2>${title}</h2></div><button class="x" data-act="fechar" aria-label="Fechar">×</button></div>`;
 
 function sheetLogin() {
@@ -1465,12 +1466,13 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-27h';
+const VERSAO = '2026-10-27i';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
     const m = (await r.text()).match(/const VERSAO = '([^']+)'/);
     if (!m || m[1] === VERSAO) return;
+    if (ui.sheet) return; // com uma avaliação aberta, não recarrega: perderia o que está sendo preenchido
     const q = new URLSearchParams(location.search);
     if (q.get('v') === m[1]) return; // já tentou esta versão: não fica em loop
     q.set('v', m[1]);
