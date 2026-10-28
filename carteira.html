@@ -181,7 +181,11 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .crow{width:100%;text-align:left;display:flex;align-items:center;gap:14px;padding:14px 16px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));border:1px solid var(--line);border-radius:16px;transition:border-color .15s}
 .crow:hover{border-color:var(--line2)}
 .crow .cm{flex:1;min-width:0}
-.crow .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px;margin-top:5px;color:var(--muted)}
+.crow .meta .mt{color:var(--or2);font-weight:600;letter-spacing:.05em}
+.crow .meta .mb{color:var(--text2)}
+.crow .meta .mv{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.crow .meta .ms{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--faint);vertical-align:middle;margin:0 9px 2px}
 .crow .cs{text-align:right;font-size:13px;flex-shrink:0;display:flex;align-items:center;gap:7px;color:var(--muted)}
 .crow .cs .ts{display:none;white-space:nowrap}
 .crow .ctt{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
@@ -304,7 +308,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
   .crow .cs{grid-column:2;justify-content:flex-start;flex-wrap:wrap;text-align:left;gap:6px 7px}
   .crow .cs:empty{display:none}
   .crow .nm{font-size:16.5px;overflow-wrap:normal;line-height:1.25}
-  .crow .meta{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-top:3px;font-size:13.5px}
+  .crow .meta{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-top:4px;font-size:12px;line-height:1.55}
   .crow .cs .t{display:none}
   .crow .cs .ts{display:inline}
   .crow .cs .j8n{margin-right:4px}
@@ -1059,8 +1063,9 @@ function renderClientes() {
     const d = diasSemEnvio(c);
     const nest = c.status === 'ativo' && carregados ? ESTOQUES.map(e => [e.nome, j8Match(c, e.id).total]).filter(x => x[1]) : [];
     const side = (nest.length ? `<span class="j8n">${nest.map(([n, q]) => q + ' ' + n).join(' · ')}</span>` : '') + (c.status !== 'ativo' ? '' : d === null ? `<span class="ctt"><span class="dot or"></span><span class="t">Sem contato</span><span class="ts">sem contato</span></span>` : `<span class="ctt"><span class="dot${d >= ALIMENTAR_DIAS ? ' warn' : ' ok'}"></span><span class="t">Contato ${haDias(d)}</span><span class="ts">${d === 0 ? 'contato hoje' : 'contato há ' + d + (d === 1 ? ' dia' : ' dias')}</span></span>`);
-    const meta = [tiposResumo(c.tipos).join(', '), c.bairros.join(', '), faixaValor(c)].filter(Boolean).join(' · ');
-    return `<button class="crow" data-act="ficha" data-id="${c.id}"><div class="av">${esc(initials(c.nome))}</div><div class="cm"><div class="nm">${esc(c.nome)}${c.status === 'arquivado' ? '<span class="pill arquivado">Arquivado</span>' : ''}</div><div class="meta">${esc(meta)}</div></div><div class="cs">${side}</div></button>`;
+    // tipo, bairros e valor com cor própria, para não virar uma frase só
+    const meta = [['mt', tiposResumo(c.tipos).join(', ')], ['mb', c.bairros.join(', ')], ['mv', faixaValor(c)]].filter(x => x[1]).map(([k, v]) => `<span class="${k}">${esc(v)}</span>`).join('<i class="ms"></i>');
+    return `<button class="crow" data-act="ficha" data-id="${c.id}"><div class="av">${esc(initials(c.nome))}</div><div class="cm"><div class="nm">${esc(c.nome)}${c.status === 'arquivado' ? '<span class="pill arquivado">Arquivado</span>' : ''}</div><div class="meta">${meta}</div></div><div class="cs">${side}</div></button>`;
   }).join('');
 }
 
@@ -1334,7 +1339,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-28a';
+const VERSAO = '2026-10-28b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
