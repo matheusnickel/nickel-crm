@@ -44,7 +44,7 @@ async function chama(metodo, query) {
   throw new Error('J8 não respondeu: ' + metodo + ' ' + query.slice(0, 80));
 }
 const pagina = p => chama('listar', 'showtotal=1&pesquisa=' + encodeURIComponent(JSON.stringify({
-  advFilter: { ExibirNoSite: 'Sim', Status: ['Venda'], Exclusivo: 'Sim', CodigoAgencia: ['1', '2', '3'] },
+  advFilter: { ExibirNoSite: 'Sim', Status: ['Venda'], CodigoAgencia: ['1', '2', '3'] }, // todos os do site, exclusivos ou não
   fields: LISTA, paginacao: { pagina: p, quantidade: 50 }, order: { ValorVenda: 'desc' }
 })));
 
