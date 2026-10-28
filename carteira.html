@@ -20,6 +20,7 @@
   --text:#f4f6fb; --text2:#c6d0e6; --muted:#8d9bbb; --faint:#66759a;
   --or:#ff5a1f; --or2:#ff8a3d; --orbg:rgba(255,90,31,.12); --orline:rgba(255,122,61,.5);
   --ok:#3ddc97; --warn:#ffc65c; --red:#ff6b78;
+  --j8:#6cb6ff; --j8line:rgba(108,182,255,.45); --gon:#b9a4ff; --gonline:rgba(185,164,255,.45);
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
   color-scheme:dark;
 }
@@ -224,10 +225,14 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .j8c .go{color:var(--or2);grid-column:1 / -1;justify-self:end}
 .j8c .go:hover{background:var(--orbg)}
 .j8c .go svg,.j8c .bk svg{width:15px;height:15px}
-.j8c .src{margin-left:8px;font:700 10px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;vertical-align:2px;border:1px solid var(--line2);color:var(--text2)}
-.j8c .src.gon{border-color:rgba(61,220,151,.45);color:var(--ok)}
+.j8c .src{display:inline-block;white-space:nowrap;margin-left:8px;font:700 10px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;vertical-align:2px;border:1px solid var(--line2);color:var(--text2)}
+.j8c .src.j8{border-color:var(--j8line);color:var(--j8)}
+.j8c .src.gon{border-color:var(--gonline);color:var(--gon)}
 .j8box .fontes{margin:2px 0 12px}
-.j8n{font:700 11px 'Geist Mono',monospace;letter-spacing:.06em;color:var(--or2);border:1px solid var(--orline);border-radius:99px;padding:3px 8px;white-space:nowrap}
+/* imobiliárias com cor fria própria: o laranja fica para o que o cliente procura */
+.j8n{display:inline-flex;align-items:center;font:700 11px 'Geist Mono',monospace;letter-spacing:.06em;background:rgba(108,182,255,.07);border:1px solid rgba(160,180,255,.28);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.j8n .j8{color:var(--j8)}.j8n .gon{color:var(--gon)}
+.j8n i{width:3px;height:3px;border-radius:50%;background:var(--faint);margin:0 7px}
 
 /* folhas (modais) */
 .ov{position:fixed;inset:0;z-index:50;background:rgba(2,5,14,.66);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px}
@@ -721,7 +726,7 @@ const waLink = (c, msg) => `https://wa.me/${TESTE ? '' : waNumber(c.whats)}` + (
 // Cada imóvel ganha: src (de qual imobiliária), tc (tipo da Carteira), rot (nome do tipo) e k (chave única "src:código").
 const ESTOQUES = [
   { id: 'j8', nome: 'J8', arq: 'dados/j8.json', det: 'dados/j8/', tipo: t => J8_TIPO[t] || '', rotulo: t => J8_ROTULO[t] || t },
-  { id: 'gon', nome: 'Gonçalves', arq: 'dados/goncalves.json', det: 'dados/goncalves/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
+  { id: 'gon', nome: 'A. Gonçalves', arq: 'dados/goncalves.json', det: 'dados/goncalves/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
 const EST = Object.fromEntries(ESTOQUES.map(e => [e.id, e]));
 const estoque = {}, estoqueErr = {};
@@ -1009,7 +1014,7 @@ function j8Section(c) {
   // mostra os 5 melhores; cada "Ver mais 5" abre os próximos da lista (que já vem do melhor para o pior)
   const mostrar = Math.min(total, ui.j8Mais[c.id] || 5);
   const top = todos.slice(0, mostrar);
-  const onde = fonte === 'todas' ? 'Na J8 e na Gonçalves' : 'Na ' + EST[fonte].nome;
+  const onde = fonte === 'todas' ? 'Na J8 e na A. Gonçalves' : 'Na ' + EST[fonte].nome;
   const titulo = total > mostrar ? `${onde} · os ${mostrar} melhores de ${total} para ${esc(firstName(c.nome))}` : total ? `${onde} · ${total} ${plural(total, 'imóvel', 'imóveis')} para ${esc(firstName(c.nome))}` : onde;
   top.forEach(i => j8Detalhe(i.k).catch(() => {})); // adianta as fotos e os dados dos imóveis que estão na tela
   if (top.length) carregaJsPDF().catch(() => {});
@@ -1061,8 +1066,8 @@ function renderClientes() {
   if (!rows.length) { $('#c-list').innerHTML = `<div class="empty"><h3>Ninguém encontrado</h3><p>${q ? 'Nenhum cliente com “' + esc(ui.c.q) + '” neste filtro.' : 'Nenhum cliente neste filtro.'}</p></div>`; return; }
   $('#c-list').innerHTML = rows.map(c => {
     const d = diasSemEnvio(c);
-    const nest = c.status === 'ativo' && carregados ? ESTOQUES.map(e => [e.nome, j8Match(c, e.id).total]).filter(x => x[1]) : [];
-    const side = (nest.length ? `<span class="j8n">${nest.map(([n, q]) => q + ' ' + n).join(' · ')}</span>` : '') + (c.status !== 'ativo' ? '' : d === null ? `<span class="ctt"><span class="dot or"></span><span class="t">Sem contato</span><span class="ts">sem contato</span></span>` : `<span class="ctt"><span class="dot${d >= ALIMENTAR_DIAS ? ' warn' : ' ok'}"></span><span class="t">Contato ${haDias(d)}</span><span class="ts">${d === 0 ? 'contato hoje' : 'contato há ' + d + (d === 1 ? ' dia' : ' dias')}</span></span>`);
+    const nest = c.status === 'ativo' && carregados ? ESTOQUES.map(e => [e.id, e.nome, j8Match(c, e.id).total]).filter(x => x[2]) : [];
+    const side = (nest.length ? `<span class="j8n">${nest.map(([k, n, q]) => `<span class="${k}">${q} ${n}</span>`).join('<i></i>')}</span>` : '') + (c.status !== 'ativo' ? '' : d === null ? `<span class="ctt"><span class="dot or"></span><span class="t">Sem contato</span><span class="ts">sem contato</span></span>` : `<span class="ctt"><span class="dot${d >= ALIMENTAR_DIAS ? ' warn' : ' ok'}"></span><span class="t">Contato ${haDias(d)}</span><span class="ts">${d === 0 ? 'contato hoje' : 'contato há ' + d + (d === 1 ? ' dia' : ' dias')}</span></span>`);
     // tipo, bairros e valor com cor própria, para não virar uma frase só
     const meta = [['mt', tiposResumo(c.tipos).join(', ')], ['mb', c.bairros.join(', ')], ['mv', faixaValor(c)]].filter(x => x[1]).map(([k, v]) => `<span class="${k}">${esc(v)}</span>`).join('<i class="ms"></i>');
     return `<button class="crow" data-act="ficha" data-id="${c.id}"><div class="av">${esc(initials(c.nome))}</div><div class="cm"><div class="nm">${esc(c.nome)}${c.status === 'arquivado' ? '<span class="pill arquivado">Arquivado</span>' : ''}</div><div class="meta">${meta}</div></div><div class="cs">${side}</div></button>`;
@@ -1339,7 +1344,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-28b';
+const VERSAO = '2026-10-28c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
