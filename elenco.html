@@ -97,7 +97,7 @@ input[type=date]{min-height:48px}
 .err:empty{display:none}
 .hintp{font-size:13.5px;color:var(--muted);line-height:1.5}
 
-/* estrelas (capacidade atual e potencial) */
+/* estrelas (capacidade atual) */
 /* dourada quando tem, prateada quando não tem */
 .st5{position:relative;display:inline-block;font-size:16px;line-height:1;white-space:nowrap;vertical-align:-2px;letter-spacing:1px}
 .st5::before,.st5 i::before{content:'★★★★★';-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -121,7 +121,7 @@ input[type=date]{min-height:48px}
 .sq{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--fm0)}
 .sqr .st5{font-size:18px}
 .sqr .num{font-size:17px}
-.sqr{display:grid;grid-template-columns:minmax(220px,2.4fr) 70px 150px 170px 110px 130px;align-items:center;gap:12px;padding:10px 16px;width:100%;text-align:left;background:var(--fm1);border-top:1px solid rgba(255,255,255,.04);font-size:14.5px;transition:background .12s}
+.sqr{display:grid;grid-template-columns:minmax(220px,2.4fr) 70px 170px 120px 140px;align-items:center;gap:12px;padding:10px 16px;width:100%;text-align:left;background:var(--fm1);border-top:1px solid rgba(255,255,255,.04);font-size:14.5px;transition:background .12s}
 .sqr:nth-child(odd){background:var(--fm2)}
 .sqr:hover{background:#13214a}
 .sqr.hd{background:#08112a;cursor:default;padding:9px 16px;font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-top:none}
@@ -165,6 +165,8 @@ input[type=date]{min-height:48px}
 .capbox div{display:flex;flex-direction:column;gap:5px}
 .capbox div > span:first-child{font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .capbox .st5{font-size:24px;align-self:flex-start}
+.sug{font-size:13px;color:var(--muted)}
+.sug .st5{font-size:14px;margin-left:4px}
 .pf-act{display:flex;gap:8px;flex-wrap:wrap;width:100%;padding-top:4px}
 .pf-tabs{display:flex;gap:2px;padding:0 12px;background:#08112a;border-bottom:1px solid var(--line);overflow-x:auto}
 .pf-tabs button{padding:12px 14px;font-weight:600;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
@@ -327,7 +329,7 @@ input[type=date]{min-height:48px}
 .fab svg{width:26px;height:26px}
 
 @media (max-width:1060px){
-  .sqr{grid-template-columns:minmax(190px,2fr) 140px 160px 90px 110px}
+  .sqr{grid-template-columns:minmax(190px,2fr) 150px 100px 120px}
   .sqr .xl{display:none}
 }
 @media (max-width:900px){
@@ -342,6 +344,7 @@ input[type=date]{min-height:48px}
   .sqr .cell{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;grid-column:span 2}
   .lbm{display:block;font:600 10px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center}
   .sqr .w3{grid-column:span 3}
+  .sqr .w4{grid-column:span 4}
   .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
   .kpis div{padding:12px}
   .kpis b{font-size:24px}
@@ -446,18 +449,9 @@ const ATTRS = GRUPOS.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a))
 const FAIXAS = ['1–5', '6–10', '11–15', '16–20'];
 const ESCALA = [['n1', '1 a 5', 'Não sabe / não faz'], ['n2', '6 a 10', 'Faz com ajuda'], ['n3', '11 a 15', 'Faz sozinho, bem'], ['n4', '16 a 20', 'Referência, ensina os outros']];
 // Papéis, como o "Papel e tarefa" do FM: as estrelas saem da média dos atributos-chave
-const PAPEIS = [
-  { k: 'tec', nome: 'Especialista técnico', sub: 'Angaria certo, com a papelada em dia', attrs: ['ang', 'doc', 'org'] },
-  { k: 'neg', nome: 'Negociador', sub: 'Transforma visita em angariação', attrs: ['neg', 'com', 'det'] },
-  { k: 'est', nome: 'Estrategista', sub: 'Enxerga a jogada antes dos outros', attrs: ['log', 'neg', 'ang'] },
-  { k: 'rel', nome: 'Relacionamento', sub: 'O proprietário lembra e confia', attrs: ['com', 'pre', 'cor'] }
-];
 const PROD = { visita: 'Visita de angariação', angariacao: 'Angariação realizada' };
 const TIPOS_IMOVEL = ['Casa', 'Apartamento', 'Cobertura', 'Terreno', 'Comercial'];
 const PERIODOS = [['1', '1º mês'], ['2', '2º mês'], ['3', '3º mês'], ['tudo', 'Tudo']];
-const SUGESTOES = ['Muito bom angariador','Bom de porta a porta', 'Amigo de porteiro e zelador', 'Precifica com dados', 'Domina documentação',
-  'Ótimo no telefone', 'Pensa fora da caixa', 'Não desiste no primeiro não', 'Rede forte de contatos', 'Conhece o bairro como ninguém'];
-const PERSONALIDADES = ['Determinado', 'Ambicioso', 'Profissional', 'Equilibrado', 'Competitivo', 'Comunicativo', 'Discreto', 'Inquieto'];
 const BAIRROS_CWB = ['Abranches', 'Água Verde', 'Ahú', 'Alto da Glória', 'Alto da XV', 'Bacacheri', 'Batel', 'Bigorrilho', 'Boa Vista', 'Bom Retiro',
   'Cabral', 'Campina do Siqueira', 'Campo Comprido', 'Centro', 'Centro Cívico', 'Champagnat', 'Cristo Rei', 'Ecoville', 'Hugo Lange', 'Jardim Botânico',
   'Jardim Social', 'Juvevê', 'Mercês', 'Mossunguê', 'Orleans', 'Portão', 'Rebouças', 'Santa Felicidade', 'Santo Inácio', 'São Braz', 'São Francisco',
@@ -515,11 +509,10 @@ const mediaGrupo = (n, g) => media(n, GRUPOS.find(x => x.k === g).attrs.map(a =>
 const notaDe = n => { const m = media(n, ATTRS.map(a => a.k)); return m === null ? null : Math.round(m * 5); };
 const fmtG = v => v === null ? '–' : String(Math.round(v)); // sempre número inteiro, sem vírgula
 const meioPasso = v => Math.round(v * 2) / 2;
-// estrelas a partir da média de 0 a 20: arredonda a média e cada 2 pontos valem ½ estrela
-// (19–20 = 5, 17–18 = 4½, 15–16 = 4, 13–14 = 3½, 11–12 = 3 … 0–2 = ½)
-const estrelasDaMedia = m => m === null ? 0 : Math.max(0.5, Math.round(Math.round(m) / 2) / 2);
-const ESTRELAS_TAB = [['19–20', 5], ['17–18', 4.5], ['15–16', 4], ['13–14', 3.5], ['11–12', 3], ['9–10', 2.5], ['7–8', 2], ['5–6', 1.5], ['3–4', 1], ['0–2', 0.5]];
-const st5 = (v, cls) => `<span class="st5 ${cls || ''}" title="${String(v).replace('.', ',')} de 5"><i style="width:${v / 5 * 100}%"></i></span>`;
+// sugestão de estrelas a partir da média de 0 a 20 (régua exigente: 5 estrelas só com média 20)
+// 20 = 5 · 17 = 4 · 14 = 3 · 11 = 2 · 8 = 1 — a cada 1½ ponto, ½ estrela
+const estrelasDaMedia = m => m === null ? 0 : Math.min(5, Math.max(0.5, Math.round((m - 5) / 3 * 2) / 2));
+const st5 = (v, cls) => `<span class="st5 ${cls || ''}" title="${fmtEst(v)} de 5"><i style="width:${v / 5 * 100}%"></i></span>`;
 function delta(d) {
   if (d === null || d === undefined || Number.isNaN(d)) return '';
   d = Math.round(d);
@@ -528,12 +521,7 @@ function delta(d) {
   if (d < 0) return `<span class="dl dn">▼ ${t}</span>`;
   return `<span class="dl eq">=</span>`;
 }
-function papeis(n) {
-  return PAPEIS.map(p => { const m = media(n, p.attrs); return Object.assign({}, p, { m, st: estrelasDaMedia(m) }); })
-    .sort((a, b) => (b.m ?? -1) - (a.m ?? -1));
-}
-const funcao = n => notaDe(n) === null ? '' : papeis(n)[0].nome;
-// capacidade atual em estrelas (0 a 5, de meia em meia) e como escrever sem vírgula: 3½
+// sugestão das notas para a capacidade atual (0 a 5, de meia em meia) e como escrever sem vírgula: 3½
 const capAtual = n => estrelasDaMedia(media(n, ATTRS.map(a => a.k)));
 const fmtEst = v => !v ? '0' : Math.floor(v) ? Math.floor(v) + (v % 1 ? '½' : '') : '½';
 function deltaEst(d) {
@@ -589,10 +577,12 @@ function cleanCorretor(o) {
     foto: String(o.foto || ''),
     personalidade: String(o.personalidade || ''),
     potencial: Number.isFinite(pot) && pot > 0 ? Math.min(5, meioPasso(pot)) : 0,
+    // capacidade atual: as estrelas que o gestor dá (0 = ainda não deu)
+    capacidade: +o.capacidade > 0 ? Math.min(5, meioPasso(+o.capacidade)) : 0,
     destaques: arr(o.destaques).map(String).filter(Boolean),
     evoluir: String(o.evoluir || ''),
     avaliacoes: arr(o.avaliacoes).filter(a => a && a.data)
-      .map(a => ({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || '') }))
+      .map(a => ({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || ''), ca: +a.ca > 0 ? Math.min(5, meioPasso(+a.ca)) : 0 }))
       .sort((a, b) => a.data < b.data ? -1 : a.data > b.data ? 1 : 0),
     producao: arr(o.producao).filter(p => p && p.data && PROD[p.tipo])
       .map(p => ({ id: String(p.id || newId('p')), data: String(p.data), tipo: p.tipo, ti: String(p.ti || ''), valor: Number(p.valor) || 0, bairro: String(p.bairro || '') })),
@@ -606,6 +596,9 @@ const byId = id => corretores.find(c => c.id === id);
 const persistCache = () => lsSet(LS_CACHE, corretores);
 const ultima = c => c.avaliacoes[c.avaliacoes.length - 1] || null;
 const notasAtuais = c => (ultima(c) || {}).notas || {};
+// capacidade atual: as estrelas que o gestor deu; enquanto não der, vale a sugestão das notas
+const capDe = c => c.capacidade || capAtual(notasAtuais(c));
+const capDaAvaliacao = a => a.ca || capAtual(a.notas);
 
 // Cada corretor grava em fila própria, sempre com a versão local mais recente.
 // O que não chegou ao Firebase fica pendente neste aparelho e é reenviado depois.
@@ -709,7 +702,7 @@ function updateSync() {
 }
 
 // ── ESTADO DA TELA ──
-const ui = { ficha: null, aba: 'geral', papel: null, info: new Set(), per: lsGet(LS_PER, 'tudo'), sheet: null, prodAll: false, fromElenco: false };
+const ui = { ficha: null, aba: 'geral', info: new Set(), per: lsGet(LS_PER, 'tudo'), sheet: null, prodAll: false, fromElenco: false };
 if (!PERIODOS.some(p => p[0] === ui.per)) ui.per = 'tudo';
 let form = null;
 let admin = lsGet(LS_AUTH, false) === true;
@@ -729,7 +722,7 @@ function prod(c, p) {
   return contar(c.producao.filter(x => x.data >= j.de && x.data < j.ate));
 }
 const perLabel = () => (PERIODOS.find(p => p[0] === ui.per) || PERIODOS[3])[1];
-const ordenados = () => corretores.slice().sort((a, b) => (notaDe(notasAtuais(b)) ?? -1) - (notaDe(notasAtuais(a)) ?? -1) || a.nome.localeCompare(b.nome, 'pt-BR'));
+const ordenados = () => corretores.slice().sort((a, b) => capDe(b) - capDe(a) || a.nome.localeCompare(b.nome, 'pt-BR'));
 const avatar = c => `<span class="av">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(initials(c.nome))}</span>`;
 const perChips = () => `<div class="chips sm">${PERIODOS.map(([k, l]) => `<button class="chip${ui.per === k ? ' on' : ''}" data-act="per" data-v="${k}">${l}</button>`).join('')}</div>`;
 
@@ -749,13 +742,12 @@ function renderElenco() {
   }
 
   const linhas = lista.map(c => {
-    const n = notasAtuais(c), av = c.avaliacoes, P = prod(c, ui.per), ida = idade(c.nascimento);
-    const mt = [funcao(n), av.length ? 'avaliado em ' + fmtShort(ultima(c).data) : 'sem avaliação ainda'].filter(Boolean).join(' · ');
+    const av = c.avaliacoes, P = prod(c, ui.per), ida = idade(c.nascimento);
+    const mt = av.length ? 'avaliado em ' + fmtShort(ultima(c).data) : 'sem avaliação ainda';
     return `<button class="sqr" data-act="abrir" data-id="${esc(c.id)}">
       <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt">${esc(mt)}</span></span></span>
       <span class="num xl cell"><span class="lbm">Idade</span>${ida ?? '–'}</span>
-      <span class="cell"><span class="lbm">Capacidade atual</span>${st5(capAtual(n))}</span>
-      <span class="cell"><span class="lbm">Capacidade potencial</span>${st5(c.potencial)}</span>
+      <span class="cell w4"><span class="lbm">Capacidade atual</span>${st5(capDe(c))}</span>
       <span class="num v cell w3"><span class="lbm">Visitas</span>${P.v}</span>
       <span class="num a cell w3"><span class="lbm">Angariações</span>${P.a}</span>
     </button>`;
@@ -770,17 +762,16 @@ function renderElenco() {
     </div>
     <div class="group-t"><span class="lbl">Plantel</span></div>
     <div class="sq">
-      <div class="sqr hd"><span>Corretor</span><span class="xl">Idade</span><span>Capacidade atual</span><span>Capacidade potencial</span><span>Visitas</span><span>Angariações</span></div>
+      <div class="sqr hd"><span>Corretor</span><span class="xl">Idade</span><span>Capacidade atual</span><span>Visitas</span><span>Angariações</span></div>
       ${linhas}
     </div>
     ${legenda()}`;
 }
 function legenda() {
   return `<div class="legend">
-    <div><h4>Atributos de 0 a 20</h4>Três áreas (Técnico, Mental e Postura) com três atributos cada. A cor mostra o nível.
+    <div><h4>Atributos de 0 a 20</h4>Três áreas: Técnico, Mental e Postura. A cor mostra o nível.
       <div class="sw">${ESCALA.map(([c, f, t]) => `<span><i style="background:var(--${c})"></i>${f}: ${t.toLowerCase()}</span>`).join('')}</div></div>
-    <div><h4>Capacidade atual e potencial</h4>Capacidade atual é a média das 9 notas, arredondada, virando estrelas: a cada 2 pontos, meia estrela. Capacidade potencial é até onde o gestor enxerga que a pessoa pode chegar.
-      <div class="sw">${ESTRELAS_TAB.map(([f, s]) => `<span>${f} = ${fmtEst(s)} ★</span>`).join('')}</div></div>
+    <div><h4>Capacidade atual</h4>As estrelas que o gestor dá em cada avaliação, a partir das notas dos atributos e do que vê no dia a dia. Conforme a pessoa evolui e conclui os treinamentos, as estrelas sobem.</div>
     <div><h4>Visitas e angariações</h4>Visitas de angariação e angariações realizadas por cada um no período escolhido: 1º, 2º ou 3º mês de acompanhamento, ou tudo. No perfil de cada corretor, toque em um atributo para ver o que ele significa.</div>
   </div>`;
 }
@@ -789,13 +780,9 @@ function legenda() {
 function renderFicha(c) {
   const av = c.avaliacoes, ant = av[av.length - 2] || null;
   const n = notasAtuais(c), nt = notaDe(n), ida = idade(c.nascimento);
-  const ps = papeis(n);
-  if (!ui.papel || !PAPEIS.some(p => p.k === ui.papel)) ui.papel = nt === null ? null : ps[0].k;
-  const chave = new Set(ui.papel ? PAPEIS.find(p => p.k === ui.papel).attrs : []);
   const facts = [
     ida !== null ? ['Idade', ida + ' anos'] : null,
-    c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null,
-    nt !== null ? ['Papel', ps[0].nome] : null
+    c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null
   ].filter(Boolean);
   const abas = [['geral', 'Visão geral'], ['dev', 'Desenvolvimento'], ['prod', 'Produção']];
 
@@ -809,22 +796,20 @@ function renderFicha(c) {
           ${facts.length ? `<div class="pf-f">${facts.map(([a, b]) => `<div><span>${a}</span><b>${esc(b)}</b></div>`).join('')}</div>` : ''}
         </div>
         <div class="capbox">
-          <div><span>Capacidade atual</span>${st5(capAtual(n))}</div>
-          <div><span>Capacidade potencial</span>${st5(c.potencial)}</div>
+          <div><span>Capacidade atual</span>${st5(capDe(c))}</div>
         </div>
         <div class="pf-act adm">
-          <button class="btn-or sm" data-act="aval" data-id="${esc(c.id)}">${av.length ? 'Atualizar notas e perfil' : 'Primeira avaliação'}</button>
+          <button class="btn-or sm" data-act="aval" data-id="${esc(c.id)}">${av.length ? 'Atualizar notas' : 'Primeira avaliação'}</button>
           <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="visita">+ Visita de angariação</button>
           <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="angariacao">+ Angariação realizada</button>
           <button class="btn-ghost sm" data-act="perfil" data-id="${esc(c.id)}">Dados pessoais</button>
         </div>
       </div>
       <div class="pf-tabs">${abas.map(([k, l]) => `<button class="${ui.aba === k ? 'on' : ''}" data-act="aba" data-v="${k}">${l}</button>`).join('')}</div>
-      <div class="pf-b">${ui.aba === 'dev' ? abaDev(c) : ui.aba === 'prod' ? abaProd(c) : abaGeral(c, n, ant, ps, chave, nt)}</div>
+      <div class="pf-b">${ui.aba === 'dev' ? abaDev(c) : ui.aba === 'prod' ? abaProd(c) : abaGeral(c, n, ant, nt)}</div>
     </div>`;
 }
-function abaGeral(c, n, ant, ps, chave, nt) {
-  const u = ultima(c);
+function abaGeral(c, n, ant, nt) {
   const col = g => {
     return `<div class="fm-c"><div class="fm-h"><span class="t">${g.nome}</span></div>
       ${g.attrs.map(a => {
@@ -832,7 +817,7 @@ function abaGeral(c, n, ant, ps, chave, nt) {
         const d = typeof v === 'number' && typeof p === 'number' && v !== p ? delta(v - p) : '';
         const aberto = ui.info.has(a.k);
         // toque no atributo abre (e fecha) a explicação do que ele significa
-        return `<button class="fm-r${chave.has(a.k) ? ' hi' : ''}${aberto ? ' open' : ''}" data-act="info" data-v="${a.k}" aria-expanded="${aberto}">
+        return `<button class="fm-r${aberto ? ' open' : ''}" data-act="info" data-v="${a.k}" aria-expanded="${aberto}">
           <span class="ln"><span class="an">${a.nome}<i class="ic">i</i></span>${d}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></span>
           ${aberto ? `<span class="fm-x">${esc(a.desc)}${typeof v === 'number' ? `<span class="fx"><b class="${nivel(v)}">Nota ${v}</b> ${esc(a.niv[faixa(v)])}</span>` : ''}</span>` : ''}
         </button>`;
@@ -842,31 +827,16 @@ function abaGeral(c, n, ant, ps, chave, nt) {
   return `
     ${semNota ? `<div class="empty-s" style="margin-bottom:14px"><span class="pub">Avaliação em breve.</span><span class="adm">Ainda sem notas. Sente com ${esc(firstName(c.nome))} e toque em "Primeira avaliação".</span></div>` : ''}
     <div class="fm">${GRUPOS.map(col).join('')}</div>
-    <div class="fm-leg"><span>Toque em um atributo para ver o que ele significa.</span>${ESCALA.map(([cl, f, t]) => `<span><b class="${cl}">${f}</b> ${t.toLowerCase()}</span>`).join('')}${ant ? `<span><b class="dl up">▲</b><b class="dl dn">▼</b> desde ${fmtShort(ant.data)}</span>` : ''}</div>
-    <div class="pn3">
-      <div class="pnl"><h3>Papel</h3>
-        ${semNota ? '<div class="muted" style="font-size:14px">Os papéis aparecem depois da primeira avaliação.</div>' :
-          `<div class="pap">${ps.map(p => `<button class="${ui.papel === p.k ? 'on' : ''}" data-act="papel" data-v="${p.k}"><span class="pt"><b>${p.nome}</b><small>${p.sub}</small></span>${st5(p.st)}</button>`).join('')}</div>
-           <div class="muted" style="font-size:12.5px">Toque num papel: os atributos-chave dele ficam em verde.</div>`}
-      </div>
-      <div class="pnl"><div class="pnl-h"><h3>Perfil</h3><button class="link adm" data-act="aval" data-id="${esc(c.id)}" data-v="perfil">Editar</button></div>
-        <div class="kv"><span>Personalidade</span><b>${esc(c.personalidade || '–')}</b></div>
-        ${c.evoluir ? `<div class="evol"><b>A evoluir:</b> ${esc(c.evoluir)}</div>` : ''}
-        ${u && u.obs ? `<div class="kv"><span>Última conversa · ${fmtShort(u.data)}</span></div><div class="nota">${esc(u.obs)}</div>` : ''}
-      </div>
-      <div class="pnl"><div class="pnl-h"><h3>Características</h3><button class="link adm" data-act="aval" data-id="${esc(c.id)}" data-v="perfil">Editar</button></div>
-        ${c.destaques.length ? `<div class="chs">${c.destaques.map(d => `<div>${esc(d)}</div>`).join('')}</div>` : '<div class="muted" style="font-size:14px">Nenhuma ainda.</div>'}
-      </div>
-    </div>`;
+    <div class="fm-leg"><span>Toque em um atributo para ver o que ele significa.</span>${ESCALA.map(([cl, f, t]) => `<span><b class="${cl}">${f}</b> ${t.toLowerCase()}</span>`).join('')}${ant ? `<span><b class="dl up">▲</b><b class="dl dn">▼</b> desde ${fmtShort(ant.data)}</span>` : ''}</div>`;
 }
 function abaDev(c) {
   const av = c.avaliacoes, u = ultima(c);
   if (!u) return `<div class="empty-s">Os gráficos de evolução aparecem depois da primeira avaliação. <span class="adm">A cada conversa, toque em "Atualizar notas" e mude só o que evoluiu.</span></div>`;
-  const e0 = capAtual(av[0].notas), e1 = capAtual(u.notas);
+  const e0 = capDaAvaliacao(av[0]), e1 = capDaAvaliacao(u);
   return `<div class="grid2">
       <section class="box">
         <div class="box-h"><h3>Evolução da capacidade atual</h3>${av.length > 1 ? `<span class="r">${deltaEst(e1 - e0)} <span class="muted" style="font-size:13px">desde ${fmtShort(av[0].data)}</span></span>` : ''}</div>
-        ${graficoLinhas(av, [{ cor: '#f7c531', val: a => notaDe(a.notas) === null ? null : capAtual(a.notas), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true)}
+        ${graficoLinhas(av, [{ cor: '#f7c531', val: a => a.ca || (notaDe(a.notas) === null ? null : capAtual(a.notas)), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true)}
       </section>
       <section class="box">
         <div class="box-h"><h3>Evolução por área</h3><span class="muted r" style="font-size:13px">média de 0 a 20</span></div>
@@ -879,11 +849,11 @@ function abaDev(c) {
       ${av.length > 1 ? '<div class="keyl"><span><i class="tick"></i>Primeira avaliação</span><span class="a"><i></i>Hoje</span></div>' : ''}
     </section>
     <section class="box" style="margin-top:16px">
-      <div class="box-h"><h3>Histórico de avaliações</h3><span class="muted r" style="font-size:13px">${av.length} ${plural(av.length, 'conversa', 'conversas')}</span></div>
+      <div class="box-h"><h3>Histórico de avaliações</h3><span class="muted r" style="font-size:13px">${av.length} ${plural(av.length, 'avaliação', 'avaliações')}</span></div>
       <div class="ls">${av.slice().reverse().map(a => {
-        const i = av.indexOf(a), ea = capAtual(a.notas), ep = i > 0 ? capAtual(av[i - 1].notas) : null;
+        const i = av.indexOf(a), ea = capDaAvaliacao(a), ep = i > 0 ? capDaAvaliacao(av[i - 1]) : null;
         const gs = GRUPOS.map(g => `${g.nome} ${fmtG(mediaGrupo(a.notas, g.k))}`).join(' · ');
-        return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(ea)} ${ep !== null && ea !== ep ? deltaEst(ea - ep) : ''}</span><small>${gs}</small>${a.obs ? `<small>${esc(a.obs)}</small>` : ''}</span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`;
+        return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(ea)} ${ep !== null && ea !== ep ? deltaEst(ea - ep) : ''}</span><small>${gs}</small></span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`;
       }).join('')}</div>
     </section>`;
 }
@@ -1004,7 +974,7 @@ function render() {
 function route() {
   const m = location.hash.match(/^#c\/(.+)$/);
   const novo = m ? decodeURIComponent(m[1]) : null;
-  if (novo !== ui.ficha) { ui.aba = 'geral'; ui.papel = null; ui.info = new Set(); }
+  if (novo !== ui.ficha) { ui.aba = 'geral'; ui.info = new Set(); }
   ui.ficha = novo;
   ui.prodAll = false;
   render();
@@ -1059,7 +1029,6 @@ function sheetPerfil(id) {
       <div class="fl"><label class="lbl" for="f-nasc">Nascimento</label><input id="f-nasc" type="date" value="${esc(c.nascimento)}"></div>
       <div class="fl"><label class="lbl" for="f-desde">Na VIP desde</label><input id="f-desde" type="date" value="${esc(c.desde)}"></div>
     </div>
-    ${id ? '' : '<p class="hintp">Personalidade, características e potencial você coloca depois, em "Atualizar notas e perfil".</p>'}
     <div id="f-del"></div>
   </div>
   <div class="sh-f">${id ? '<button class="danger l" data-act="del-ask">Tirar do elenco</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-perfil">Salvar</button></div>`, 'perfil');
@@ -1071,44 +1040,18 @@ function sheetPerfil(id) {
   });
   if (!id) setTimeout(() => $('#f-nome').focus(), 50);
 }
-// o que muda com o tempo (potencial, personalidade, características, a evoluir) fica junto das notas
-function camposPerfil(c) {
-  return `<div class="ag" id="a-perfil"><div class="ag-t">Perfil</div>
-    <div class="ar"><span class="lbl" style="margin:0">Capacidade potencial<span class="hint">até onde você enxerga que a pessoa pode chegar</span></span><div class="pick" id="f-pot"></div></div>
-    <div class="ar"><label class="lbl" for="f-pers" style="margin:0">Personalidade</label><input id="f-pers" value="${esc(c.personalidade)}" placeholder="Ex.: Determinado" autocomplete="off">
-      <div class="chips">${PERSONALIDADES.map(p => `<button class="chip sug" data-act="pers" data-v="${esc(p)}">${esc(p)}</button>`).join('')}</div></div>
-    <div class="ar"><span class="lbl" style="margin:0">Características<span class="hint">a "perna boa": aparece com ★ no perfil</span></span>
-      <div class="chips" id="f-dest"></div>
-      <div style="display:flex;gap:8px"><input id="f-dest-in" placeholder="Escreva e toque em Adicionar" autocomplete="off"><button class="btn-ghost" data-act="dest-add">Adicionar</button></div>
-      <div class="chips" id="f-sug"></div></div>
-    <div class="ar"><label class="lbl" for="f-evol" style="margin:0">A evoluir<span class="hint">o principal ponto de desenvolvimento</span></label><input id="f-evol" value="${esc(c.evoluir)}" placeholder="Ex.: contorno de objeções" autocomplete="off"></div>
-  </div>`;
-}
-function renderPot() {
-  const v = form.potencial;
-  // cada estrela tem duas metades: tocar na metade esquerda dá meia estrela, na direita, a estrela inteira
-  $('#f-pot').innerHTML = [1, 2, 3, 4, 5].map(i => `<span class="pk ${v >= i ? 'f' : v >= i - 0.5 ? 'h' : ''}">★` +
-      `<button class="e" data-act="pot" data-v="${i - 0.5}" aria-label="${fmtEst(i - 0.5)} estrela"></button><button class="d" data-act="pot" data-v="${i}" aria-label="${i} estrelas"></button></span>`).join('') +
+// estrelas tocáveis: metade esquerda dá meia estrela, a direita dá a estrela inteira
+function renderEstrelas(sel, v, act) {
+  $(sel).innerHTML = [1, 2, 3, 4, 5].map(i => `<span class="pk ${v >= i ? 'f' : v >= i - 0.5 ? 'h' : ''}">★` +
+      `<button class="e" data-act="${act}" data-v="${i - 0.5}" aria-label="${fmtEst(i - 0.5)} estrela"></button><button class="d" data-act="${act}" data-v="${i}" aria-label="${i} estrelas"></button></span>`).join('') +
     `<span class="v">${v ? fmtEst(v) + ' de 5' : 'toque na metade da estrela para dar meia'}</span>` +
-    (v ? '<button class="link" data-act="pot" data-v="0" style="margin-left:12px">Limpar</button>' : '');
+    (v ? `<button class="link" data-act="${act}" data-v="0" style="margin-left:12px">Limpar</button>` : '');
 }
 function renderFotoPrev() {
   const pv = $('#f-pv'); if (!pv) return;
   pv.style.backgroundImage = form.foto ? `url("${form.foto}")` : '';
   pv.textContent = form.foto ? '' : initials($('#f-nome') ? $('#f-nome').value : '');
   $('#f-foto-rm').classList.toggle('hidden', !form.foto);
-}
-function renderDest() {
-  $('#f-dest').innerHTML = form.destaques.map((d, i) => `<span class="chip tag">★ ${esc(d)}<button class="rm" data-act="dest-rm" data-v="${i}" aria-label="Remover">×</button></span>`).join('') || '<span class="muted" style="font-size:14px">Nenhuma ainda.</span>';
-  $('#f-sug').innerHTML = SUGESTOES.filter(s => !form.destaques.includes(s)).map(s => `<button class="chip sug" data-act="dest-add" data-v="${esc(s)}">+ ${esc(s)}</button>`).join('');
-}
-function addDest(v) {
-  const inp = $('#f-dest-in');
-  const t = String(v ?? inp.value).trim();
-  if (!t || form.destaques.includes(t)) { if (v === undefined) inp.value = ''; return; }
-  form.destaques.push(t);
-  if (v === undefined) inp.value = '';
-  renderDest();
 }
 // recorta quadrado (um pouco para cima, onde fica o rosto) e reduz para caber no Firebase
 function lerFoto(file) {
@@ -1138,37 +1081,32 @@ function savePerfil() {
   else toast('Dados salvos.');
 }
 
-// avaliação: notas de 0 a 20, com o guia de cada faixa
-function sheetAval(id, avId, foco) {
+// avaliação: notas de 0 a 20 (com o guia de cada faixa) e as estrelas da capacidade atual
+function sheetAval(id, avId) {
   const c = byId(id); if (!c) return;
   const idx = avId ? c.avaliacoes.findIndex(a => a.id === avId) : -1;
   if (avId && idx < 0) return;
   const atual = idx >= 0 ? c.avaliacoes[idx] : null;
   const ref = idx >= 0 ? c.avaliacoes[idx - 1] || null : ultima(c); // contra o que comparar
   form = { tipo: 'aval', id, avId: avId || null, notas: Object.assign({}, atual ? atual.notas : ref ? ref.notas : {}), ref: ref ? ref.notas : {},
-    potencial: c.potencial, destaques: c.destaques.slice() };
+    ca: atual ? atual.ca : c.capacidade };
   const linhas = g => `<div class="ag"><div class="ag-t">${g.nome}</div>${g.attrs.map(a => `
     <div class="ar"><div class="top2"><div class="an"><b>${a.nome}</b><small>${esc(a.desc)}</small></div>
       <div class="stp"><button data-act="nota" data-k="${a.k}" data-v="-1" aria-label="Diminuir ${a.nome}">−</button><input id="n-${a.k}" inputmode="numeric" maxlength="2" aria-label="${a.nome}" value="${form.notas[a.k] ?? ''}" placeholder="–"><button data-act="nota" data-k="${a.k}" data-v="1" aria-label="Aumentar ${a.nome}">+</button></div></div>
       <div class="rub" id="rb-${a.k}"></div></div>`).join('')}</div>`;
-  openSheet(shHead(atual ? 'Editar avaliação' : ref ? 'Atualizar notas e perfil' : 'Primeira avaliação', esc(c.nome)) + `<div class="sh-b">
-    <div class="liveo"><span class="lc">Capacidade atual</span><span id="lv-ca"></span></div>
+  openSheet(shHead(atual ? 'Editar avaliação' : ref ? 'Atualizar notas' : 'Primeira avaliação', esc(c.nome)) + `<div class="sh-b">
     <div>
-      <p class="hintp" style="margin-bottom:10px">${ref && !atual ? 'Já vem com as notas da última vez. Mude só o que evoluiu (+1 ou −1) e salve. Faça isso a cada semana ou a cada conversa.' : 'Dê a nota de 0 a 20 em cada atributo. Embaixo de cada um aparece o que aquela nota significa, para você conferir se bate com o que viu.'}</p>
+      <p class="hintp" style="margin-bottom:10px">${ref && !atual ? 'Já vem com as notas da última vez. Mude só o que evoluiu (+1 ou −1) e salve.' : 'Dê a nota de 0 a 20 em cada atributo. Embaixo de cada um aparece o que aquela nota significa, para você conferir se bate com o que viu.'}</p>
       <div class="escala">${ESCALA.map(([cl, f, t]) => `<div><b class="${cl}">${f}</b>${t}</div>`).join('')}</div>
     </div>
-    <div class="row2"><div class="fl"><label class="lbl" for="a-data">Data da conversa</label><input id="a-data" type="date" value="${atual ? atual.data : hoje()}"></div></div>
+    <div class="row2"><div class="fl"><label class="lbl" for="a-data">Data da avaliação</label><input id="a-data" type="date" value="${atual ? atual.data : hoje()}"></div></div>
     ${GRUPOS.map(linhas).join('')}
-    <div class="fl"><label class="lbl" for="a-obs">O que conversamos<span class="hint">opcional</span></label><textarea id="a-obs" rows="3" placeholder="Combinados, o que melhorou, o que focar até a próxima">${esc(atual ? atual.obs : '')}</textarea></div>
-    ${atual ? '' : camposPerfil(c)}
+    <div class="ag"><div class="ag-t">Capacidade atual</div>
+      <div class="ar"><span class="sug" id="lv-sug"></span><div class="pick" id="f-ca"></div></div></div>
     <div id="a-del"></div>
   </div>
   <div class="sh-f">${atual ? '<button class="danger l" data-act="aval-del-ask">Apagar avaliação</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-aval">Salvar</button></div>`, 'aval');
-  if (!atual) {
-    renderPot(); renderDest();
-    $('#f-dest-in').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addDest(e.target.value); } });
-    if (foco === 'perfil') setTimeout(() => $('#a-perfil').scrollIntoView({ block: 'start' }), 30);
-  }
+  renderEstrelas('#f-ca', form.ca, 'ca');
   ATTRS.forEach(a => {
     $('#n-' + a.k).addEventListener('input', e => {
       const d = e.target.value.replace(/\D/g, '').slice(0, 2);
@@ -1187,7 +1125,9 @@ function pintaNota(k) {
     ? `<b class="${nivel(v)}">${FAIXAS[faixa(v)]}</b>${a.niv[faixa(v)]}`
     : '<span class="muted">Sem nota. Toque em + para começar em 10.</span>') +
     (typeof p === 'number' ? `<span class="pr">antes ${p}${typeof v === 'number' && v !== p ? ' ' + delta(v - p) : ''}</span>` : '');
-  $('#lv-ca').innerHTML = st5(capAtual(form.notas));
+  // o que as notas sugerem para a capacidade atual (só referência: as estrelas é você quem dá)
+  const s = notaDe(form.notas) === null ? 0 : capAtual(form.notas);
+  $('#lv-sug').innerHTML = s ? `Sugestão pelas notas:${st5(s)}` : 'Dê as notas para ver a sugestão.';
 }
 function passoNota(k, d) {
   const v = form.notas[k];
@@ -1199,22 +1139,20 @@ function saveAval() {
   const c = byId(form.id); if (!c) return closeSheet();
   const data = $('#a-data').value || hoje();
   const notas = cleanNotas(form.notas);
-  const obs = $('#a-obs').value.trim();
   const editando = !!form.avId;
-  if (editando && !Object.keys(notas).length) { toast('Dê nota em pelo menos um atributo.'); return; }
-  let perfil = {};
-  if (!editando) {
-    if ($('#f-dest-in').value.trim()) addDest();
-    perfil = { potencial: form.potencial, personalidade: $('#f-pers').value.trim(), destaques: form.destaques, evoluir: $('#f-evol').value.trim() };
-  }
-  // só vira uma nova avaliação se alguma nota mudou ou se houve anotação da conversa
-  const mudou = Object.keys(notas).length && (JSON.stringify(notas) !== JSON.stringify(cleanNotas(form.ref)) || obs);
+  if (!Object.keys(notas).length) { toast('Dê nota em pelo menos um atributo.'); return; }
+  const u = ultima(c);
+  // vira uma nova avaliação se alguma nota ou as estrelas mudaram
+  const mudou = JSON.stringify(notas) !== JSON.stringify(cleanNotas(form.ref)) || form.ca !== (u ? u.ca || c.capacidade : 0);
   const avs = editando
-    ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, obs }) : a)
-    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs }]) : c.avaliacoes;
-  saveCorretor(Object.assign({}, c, perfil, { avaliacoes: avs }));
+    ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, ca: form.ca }) : a)
+    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca: form.ca }]) : c.avaliacoes;
+  // a capacidade atual do corretor acompanha a avaliação mais recente
+  const recente = !editando || (u && u.id === form.avId);
+  saveCorretor(Object.assign({}, c, recente ? { capacidade: form.ca } : {}, { avaliacoes: avs }));
   closeSheet();
-  toast(editando ? 'Avaliação atualizada.' : mudou ? `Notas salvas. Capacidade atual: ${fmtEst(capAtual(notas))} ${capAtual(notas) > 1 ? 'estrelas' : 'estrela'}.` : 'Perfil salvo. As notas não mudaram.');
+  toast(editando ? 'Avaliação atualizada.' : mudou ? 'Avaliação salva.' : 'Nada mudou desde a última avaliação.');
+
 }
 
 // produção: visita de angariação (valor, tipo, data) / angariação realizada (valor, bairro, data)
@@ -1291,20 +1229,16 @@ document.addEventListener('click', e => {
       else { history.replaceState(null, '', location.pathname + location.search); route(); }
       break;
     case 'aba': ui.aba = v; ui.prodAll = false; render(); break;
-    case 'papel': ui.papel = v; render(); break;
     case 'per': ui.per = v; lsSet(LS_PER, v); render(); break;
     case 'prod-all': ui.prodAll = true; render(); break;
     case 'novo': sheetPerfil(); break;
     case 'perfil': sheetPerfil(id); break;
-    case 'aval': sheetAval(id, el.dataset.av, v); break;
+    case 'aval': sheetAval(id, el.dataset.av); break;
     case 'info': if (ui.info.has(v)) ui.info.delete(v); else ui.info.add(v); render(); break;
     case 'prod': sheetProd(id, v); break;
     case 'fechar': closeSheet(); break;
     case 'foto-rm': form.foto = ''; renderFotoPrev(); break;
-    case 'pot': form.potencial = +v; renderPot(); break;
-    case 'pers': $('#f-pers').value = v; break;
-    case 'dest-add': addDest(v); break;
-    case 'dest-rm': form.destaques.splice(+v, 1); renderDest(); break;
+    case 'ca': form.ca = +v; renderEstrelas('#f-ca', form.ca, 'ca'); break;
     case 'save-perfil': savePerfil(); break;
     case 'del-ask': {
       const c = byId(form.id);
@@ -1352,7 +1286,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-27j';
+const VERSAO = '2026-10-27k';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
