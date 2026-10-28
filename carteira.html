@@ -185,8 +185,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .crow .cs{text-align:right;font-size:13px;flex-shrink:0;display:flex;align-items:center;gap:7px;color:var(--muted)}
 .crow .cs .ts{display:none;white-space:nowrap}
 .pill{display:inline-block;font:700 10.5px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:99px;vertical-align:middle;margin-left:6px}
-.pill.pausado{background:rgba(255,198,92,.14);color:var(--warn)}
-.pill.comprou{background:rgba(61,220,151,.14);color:var(--ok)}
+.pill.arquivado{background:rgba(255,255,255,.08);color:var(--muted)}
 .pill.ativo{background:var(--orbg);color:var(--or2)}
 
 /* imóveis da J8 na ficha */
@@ -245,6 +244,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .env-i a{color:var(--or2);word-break:break-all;font-size:13px}
 .env-i .rm{color:var(--faint);font-size:18px;line-height:1;width:24px;height:24px;border-radius:50%}
 .env-i .rm:hover{color:var(--red);background:rgba(255,107,120,.1)}
+.fimficha{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .danger{color:var(--red);font-weight:600;font-size:14px}
 .confirm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(255,107,120,.08);border:1px solid rgba(255,107,120,.35);border-radius:12px;padding:12px 14px;font-size:14px}
 .confirm .btn-del{background:var(--red);color:#fff;font-weight:700;padding:8px 14px;border-radius:10px}
@@ -322,9 +322,8 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
   <header class="top">
     <div class="brand"><i></i><b>CARTEIRA</b><span>NICKEL</span></div>
     <nav class="tabs">
-      <button data-tab="procurar" class="on">Quem procura</button>
+      <button data-tab="clientes" class="on">Clientes</button>
       <button data-tab="bairros">Bairros</button>
-      <button data-tab="clientes">Clientes</button>
     </nav>
     <div class="top-r">
       <span id="sync" class="sync"><span class="t">Carregando…</span></span>
@@ -338,41 +337,6 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
   </header>
 
   <main>
-    <!-- QUEM PROCURA -->
-    <section id="v-procurar">
-      <div class="phd"><h1>Quem procura</h1><span class="sub">Escolha o tipo e o bairro do imóvel</span></div>
-      <div class="grid2">
-        <div class="panel">
-          <div>
-            <span class="lbl step"><span class="k">1</span>Tipo</span>
-            <div class="chips" id="p-tipos"></div>
-          </div>
-          <div>
-            <span class="lbl step"><span class="k">2</span>Bairro</span>
-            <div class="ta">
-              <input id="p-bairro" class="has-x" placeholder="Digite o bairro…" autocomplete="off" aria-label="Bairro do imóvel">
-              <button id="p-bairro-x" class="x hidden" aria-label="Limpar bairro">×</button>
-              <div class="dd hidden" id="p-bairro-dd"></div>
-            </div>
-            <div class="top-b" id="p-top"></div>
-          </div>
-          <details class="more" id="p-more">
-            <summary>Mais detalhes <span class="muted" style="font-weight:500">(opcional)</span></summary>
-            <div class="in">
-              <div class="fl"><label class="lbl" for="p-valor">Valor do imóvel</label><input id="p-valor" inputmode="numeric" placeholder="R$ 0" autocomplete="off"></div>
-              <div><span class="lbl">Quartos do imóvel</span><div class="chips" id="p-quartos"></div></div>
-              <div class="fl"><label class="lbl" for="p-link">Link do imóvel</label><input id="p-link" type="url" inputmode="url" placeholder="Cole o link do anúncio" autocomplete="off"></div>
-            </div>
-          </details>
-          <button class="link clear hidden" id="p-clear" data-act="p-clear">Limpar busca</button>
-        </div>
-        <div>
-          <div id="p-head"></div>
-          <div id="p-list"></div>
-        </div>
-      </div>
-    </section>
-
     <!-- BAIRROS -->
     <section id="v-bairros" class="hidden">
       <div class="phd"><h1>Bairros</h1><span class="sub">Clientes ativos por bairro</span></div>
@@ -384,7 +348,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
     </section>
 
     <!-- CLIENTES -->
-    <section id="v-clientes" class="hidden">
+    <section id="v-clientes">
       <div class="phd"><h1>Clientes</h1><span class="cnt" id="c-title"></span></div>
       <div class="bar-tools">
         <div class="ta"><input id="c-q" type="search" placeholder="Nome, bairro, telefone ou o que busca…" autocomplete="off" aria-label="Buscar cliente"></div>
@@ -395,9 +359,8 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
   </main>
 
   <nav class="bnav">
-    <button data-tab="procurar" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>Quem procura</button>
+    <button data-tab="clientes" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M16 4.5a4 4 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6"/></svg>Clientes</button>
     <button data-tab="bairros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Bairros</button>
-    <button data-tab="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M16 4.5a4 4 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6"/></svg>Clientes</button>
   </nav>
   <button class="fab" data-act="novo" aria-label="Novo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 </div>
@@ -417,14 +380,22 @@ const LS_AUTH = 'carteira_auth';
 const SENHA = 'flor2301';
 const ALIMENTAR_DIAS = 14; // ativo sem receber imóvel há esse tanto de dias = precisa ser alimentado
 
-const TIPOS = ['Casa', 'Apartamento', 'Cobertura', 'Terreno', 'Comercial'];
-const TIPO_ART = { Casa: 'uma casa', Apartamento: 'um apartamento', Cobertura: 'uma cobertura', Terreno: 'um terreno', Comercial: 'um imóvel comercial' };
-const TIPO_LOW = { Casa: 'casa', Apartamento: 'apartamento', Cobertura: 'cobertura', Terreno: 'terreno', Comercial: 'imóvel comercial' };
+// tipos de imóvel iguais às categorias do site da J8
+const TIPOS = ['Casa', 'Casa em condomínio', 'Sobrado', 'Sobrado em condomínio', 'Apartamento', 'Apartamento garden', 'Cobertura', 'Terreno', 'Terreno em condomínio', 'Comercial'];
+// família de cada tipo (regras de metragem, quartos e terreno; descritivo do imóvel)
+const GRUPO = { 'Casa': 'Casa', 'Casa em condomínio': 'Casa', 'Sobrado': 'Casa', 'Sobrado em condomínio': 'Casa', 'Apartamento': 'Apartamento', 'Apartamento garden': 'Apartamento', 'Cobertura': 'Cobertura', 'Terreno': 'Terreno', 'Terreno em condomínio': 'Terreno', 'Comercial': 'Comercial' };
+// clientes cadastrados antes da divisão: "Casa" valia para casa, sobrado e condomínio; continua valendo
+const TIPOS_ANTIGOS = { Casa: ['Casa', 'Casa em condomínio', 'Sobrado', 'Sobrado em condomínio'], Apartamento: ['Apartamento', 'Apartamento garden'], Terreno: ['Terreno', 'Terreno em condomínio'] };
+const FAMILIAS = [['Casas', TIPOS_ANTIGOS.Casa], ['Apartamentos', TIPOS_ANTIGOS.Apartamento], ['Terrenos', TIPOS_ANTIGOS.Terreno]];
+// "Casa, Casa em condomínio, Sobrado, Sobrado em condomínio" vira "Casas" na lista
+function tiposResumo(tipos) {
+  const out = [], usados = new Set();
+  FAMILIAS.forEach(([nome, l]) => { if (l.every(t => tipos.includes(t))) { out.push(nome); l.forEach(t => usados.add(t)); } });
+  return out.concat(tipos.filter(t => !usados.has(t)));
+}
 // filtros do cliente; o código bate com os campos "ob" e "mo" do estoque da J8
-const SITUACOES = [['r', 'Pronto para morar'], ['p', 'Na planta / em construção']];
-const MOBILIAS = [['s', 'Mobiliado'], ['m', 'Semi-mobiliado'], ['n', 'Sem mobília']];
-const ORIGENS = ['Instagram', 'Indicação', 'Portal', 'Placa', 'WhatsApp', 'Outro'];
-const MSG_PADRAO = 'Oi, {nome}! Tudo bem?\n\nApareceu {imovel} que tem muito a ver com o que você está buscando.\n\n{link}\n\nQuer que eu te mande mais detalhes?';
+const SITUACOES = [['r', 'Imóveis prontos'], ['p', 'Imóveis na planta']];
+const MOBILIAS = [['s', 'Mobiliado'], ['m', 'Semi-mobiliado']];
 
 const BAIRROS_CWB = [
   'Abranches','Água Verde','Ahú','Alto Boqueirão','Alto da Glória','Alto da XV','Atuba',
@@ -443,9 +414,9 @@ const ALIASES = [['Ecoville', 'Mossunguê'], ['CIC', 'Cidade Industrial'], ['Alt
 
 // categorias do estoque da J8 -> tipos da Carteira
 const J8_TIPO = {
-  'APARTAMENTO': 'Apartamento', 'APARTAMENTO GARDEN': 'Apartamento', 'COBERTURA': 'Cobertura',
-  'CASA': 'Casa', 'CASA CONDOMINIO FECHADO': 'Casa', 'SOBRADO': 'Casa', 'SOBRADO CONDOMINIO FECHADO': 'Casa',
-  'TERRENO': 'Terreno', 'TERRENO CONDOMINIO FECHADO': 'Terreno', 'CONJUNTO/COMERCIAL/LOJA': 'Comercial'
+  'APARTAMENTO': 'Apartamento', 'APARTAMENTO GARDEN': 'Apartamento garden', 'COBERTURA': 'Cobertura',
+  'CASA': 'Casa', 'CASA CONDOMINIO FECHADO': 'Casa em condomínio', 'SOBRADO': 'Sobrado', 'SOBRADO CONDOMINIO FECHADO': 'Sobrado em condomínio',
+  'TERRENO': 'Terreno', 'TERRENO CONDOMINIO FECHADO': 'Terreno em condomínio', 'CONJUNTO/COMERCIAL/LOJA': 'Comercial'
 };
 const J8_ROTULO = {
   'APARTAMENTO': 'Apartamento', 'APARTAMENTO GARDEN': 'Apartamento garden', 'COBERTURA': 'Cobertura', 'CASA': 'Casa',
@@ -539,7 +510,10 @@ function cleanClient(o) {
     id: o.id,
     nome: String(o.nome || ''),
     whats: String(o.whats || ''),
-    tipos: Array.isArray(o.tipos) ? o.tipos.filter(Boolean) : [],
+    // tiposV 2 = já usa os tipos da J8; antes disso, "Casa", "Apartamento" e "Terreno" valiam para a família toda
+    tipos: o.tiposV === 2 ? (Array.isArray(o.tipos) ? o.tipos.filter(t => TIPOS.includes(t)) : [])
+      : [...new Set((Array.isArray(o.tipos) ? o.tipos : []).flatMap(t => TIPOS_ANTIGOS[t] || [t]).filter(t => TIPOS.includes(t)))],
+    tiposV: 2,
     bairros: Array.isArray(o.bairros) ? o.bairros.filter(Boolean) : [],
     valorMin: Number(o.valorMin) || 0,
     valorMax: Number(o.valorMax) || 0,
@@ -552,7 +526,8 @@ function cleanClient(o) {
     mobilia: Array.isArray(o.mobilia) ? o.mobilia.filter(x => MOBILIAS.some(s => s[0] === x)) : [],
     obs: String(o.obs || ''),
     origem: String(o.origem || ''),
-    status: ['ativo', 'pausado', 'comprou'].includes(o.status) ? o.status : 'ativo',
+    // pausado e comprou (de antes) viram arquivado
+    status: ['arquivado', 'pausado', 'comprou'].includes(o.status) ? 'arquivado' : 'ativo',
     criadoEm: String(o.criadoEm || ''),
     atualizadoEm: String(o.atualizadoEm || ''),
     envios: Array.isArray(o.envios) ? o.envios.filter(e => e && e.data) : []
@@ -663,11 +638,9 @@ function updateSync() {
 
 // ── ESTADO DA TELA ──
 const ui = {
-  tab: 'procurar',
-  p: { tipo: '', bairro: '', valor: 0, quartos: 0, link: '' },
+  tab: 'clientes',
   b: { q: '', tipo: '' },
   c: { q: '', f: 'ativos' },
-  sent: {},          // id do cliente -> id do envio feito agora (para desfazer)
   j8Mais: {},        // id do cliente -> quantos imóveis da J8 estão abertos na ficha (5, 10, 15...)
   sheet: null        // {kind:'ficha'|'form', id}
 };
@@ -679,13 +652,6 @@ function diasSemEnvio(c) { const l = lastEnvio(c); return l ? daysSince(l) : nul
 function precisaAlimentar(c) { if (c.status !== 'ativo') return false; const d = diasSemEnvio(c); return d === null || d >= ALIMENTAR_DIAS; }
 const wantsTipo = (c, t) => !t || !c.tipos.length || c.tipos.includes(t);
 const wantsBairro = (c, b) => !b || c.bairros.some(x => bkey(x) === bkey(b));
-function foraDoPerfil(c, p) {
-  const m = [];
-  if (p.valor && c.valorMax && c.valorMax < p.valor * 0.9) m.push('budget até ' + fmtValor(c.valorMax));
-  if (p.valor && c.valorMin && p.valor < c.valorMin * 0.9) m.push('procura a partir de ' + fmtValor(c.valorMin));
-  if (p.quartos && c.quartos && c.quartos > p.quartos) m.push('quer ' + c.quartos + '+ quartos');
-  return m;
-}
 function demanda(tipo) {
   const map = new Map();
   ativos().forEach(c => {
@@ -713,16 +679,6 @@ function allBairros() {
   clientes.forEach(c => c.bairros.forEach(b => { if (!m.has(norm(b))) m.set(norm(b), b); }));
   return [...m.values()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 }
-function imovelTxt(p) {
-  const art = p.tipo ? TIPO_ART[p.tipo] : 'um imóvel';
-  if (!p.bairro) return art;
-  return `${art} ${/^(vila|cidade)\b/i.test(p.bairro) ? 'na' : 'no'} ${spell(p.bairro)}`;
-}
-function buildMsg(c) {
-  let t = MSG_PADRAO.replace(/\{nome\}/g, firstName(c.nome)).replace(/\{imovel\}/g, imovelTxt(ui.p));
-  t = ui.p.link ? t.replace(/\{link\}/g, ui.p.link) : t.replace(/[ \t]*\{link\}[ \t]*/g, '');
-  return t.replace(/\n{3,}/g, '\n\n').trim();
-}
 // Na base de teste os telefones são inventados: o WhatsApp abre sem número, só com a mensagem.
 const waLink = (c, msg) => `https://wa.me/${TESTE ? '' : waNumber(c.whats)}` + (msg ? '?text=' + encodeURIComponent(msg) : '');
 
@@ -740,20 +696,20 @@ async function loadJ8() {
 // a ideia é mostrar os melhores imóveis que ele pode comprar, não os mais baratos.
 // Metragem, suítes e vagas a mais contam a favor.
 function j8Score(c, i) {
-  const tipo = J8_TIPO[i.t]; if (!tipo) return -1;
+  const tipo = J8_TIPO[i.t], grupo = GRUPO[tipo]; if (!tipo) return -1;
   if (c.tipos.length && !c.tipos.includes(tipo)) return -1;
   if (!wantsBairro(c, i.b)) return -1;
   if (c.valorMax && i.p && i.p > c.valorMax * 1.1) return -1;
   if (c.valorMin && i.p && i.p < c.valorMin) return -1;               // abaixo da faixa que ele pediu
-  const temQuartos = tipo !== 'Terreno' && tipo !== 'Comercial';
+  const temQuartos = grupo !== 'Terreno' && grupo !== 'Comercial';
   if (temQuartos && c.quartos && i.q < c.quartos) return -1;
   if (temQuartos && c.vagas && i.v < c.vagas) return -1;
   if (c.areaMin && i.a && i.a < c.areaMin * 0.9) return -1;
   if (c.areaMax && i.a > c.areaMax * 1.15) return -1;
-  const usaTerreno = c.terrenoMin && (tipo === 'Casa' || tipo === 'Terreno');
+  const usaTerreno = c.terrenoMin && (grupo === 'Casa' || grupo === 'Terreno');
   if (usaTerreno && (!i.at || i.at < c.terrenoMin * 0.9)) return -1;      // terreno até 10% menor
   if (c.situacao.length && !c.situacao.includes(i.ob)) return -1;          // pronto / na planta
-  if (c.mobilia.length && !c.mobilia.includes(i.mo)) return -1;            // mobiliado / semi / sem
+  if (c.mobilia.length && !c.mobilia.includes(i.mo)) return -1;            // mobiliado / semi
   let s = 0;
   if (usaTerreno) s += Math.min(10, (i.at - c.terrenoMin) / c.terrenoMin * 20); // terreno maior conta a favor
   if (c.valorMax && i.p) { const r = i.p / c.valorMax; s += r >= 0.9 ? 40 : Math.max(0, 40 - (0.9 - r) * 120); }
@@ -926,7 +882,7 @@ const m2 = v => Math.round(v).toLocaleString('pt-BR') + ' m²';
 const listaPt = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
 function descritivo(d) {
   const tipo = J8_ROTULO[d.t] || 'Imóvel';
-  const grupo = J8_TIPO[d.t] || '';
+  const grupo = GRUPO[J8_TIPO[d.t]] || '';
   const ehCasa = grupo === 'Casa', ehApto = grupo === 'Apartamento' || grupo === 'Cobertura';
   const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
   const titulo = `*${emp || tipo}, ${d.b}*`;
@@ -974,9 +930,9 @@ async function copiarDescritivo(btn, c) {
 
 function j8Card(i, c) {
   const tipo = J8_ROTULO[i.t] || i.t;
-  const ehCasa = J8_TIPO[i.t] === 'Casa';
-  const spec = [i.a ? i.a + ' m²' + (ehCasa ? ' construídos' : '') : '', ehCasa && i.at > i.a ? `terreno ${i.at.toLocaleString('pt-BR')} m²` : '', J8_TIPO[i.t] === 'Terreno' || J8_TIPO[i.t] === 'Comercial' ? '' : i.q ? i.q + plural(i.q, ' quarto', ' quartos') + (i.s ? ` (${i.s} ${plural(i.s, 'suíte', 'suítes')})` : '') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
-  const selos = [i.ob === 'p' ? 'Na planta / em construção' : '', { s: 'Mobiliado', m: 'Semi-mobiliado' }[i.mo] || ''].filter(Boolean);
+  const grupo = GRUPO[J8_TIPO[i.t]], ehCasa = grupo === 'Casa';
+  const spec = [i.a ? i.a + ' m²' + (ehCasa ? ' construídos' : '') : '', ehCasa && i.at > i.a ? `terreno ${i.at.toLocaleString('pt-BR')} m²` : '', grupo === 'Terreno' || grupo === 'Comercial' ? '' : i.q ? i.q + plural(i.q, ' quarto', ' quartos') + (i.s ? ` (${i.s} ${plural(i.s, 'suíte', 'suítes')})` : '') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
+  const selos = [i.ob === 'p' ? 'Na planta' : '', { s: 'Mobiliado', m: 'Semi-mobiliado' }[i.mo] || ''].filter(Boolean);
   const prontas = fotosProntas.get(i.c);
   return `<div class="j8c">
     <div class="j8top">
@@ -1010,86 +966,6 @@ function j8Section(c) {
   return `<span class="lbl">${titulo}</span>${corpo}<div class="muted xs" style="margin-top:8px">${quando}</div>`;
 }
 
-// ── RENDER: QUEM PROCURA ──
-function renderPTipos() {
-  $('#p-tipos').innerHTML = TIPOS.map(t => `<button class="chip${ui.p.tipo === t ? ' on' : ''}" data-act="p-tipo" data-v="${t}">${t}</button>`).join('');
-}
-function renderPQuartos() {
-  $('#p-quartos').innerHTML = [1, 2, 3, 4].map(n => `<button class="chip${ui.p.quartos === n ? ' on' : ''}" data-act="p-quartos" data-v="${n}">${n === 4 ? '4+' : n}</button>`).join('');
-}
-function renderPTop() {
-  const top = demanda(ui.p.tipo).filter(r => !ui.p.bairro || bkey(r.b) !== bkey(ui.p.bairro)).slice(0, 10);
-  $('#p-top').innerHTML = top.length ? `<div class="cap">${ui.p.tipo ? 'Mais procurados para ' + TIPO_LOW[ui.p.tipo] : 'Mais procurados na sua carteira'}</div><div class="chips sm">${top.map(r => `<button class="chip" data-act="p-bairro" data-b="${esc(r.b)}">${esc(bLabel(r.b))}<span class="n">${r.n}</span></button>`).join('')}</div>` : '';
-}
-function syncPInputs() {
-  $('#p-bairro-x').classList.toggle('hidden', !$('#p-bairro').value);
-  $('#p-clear').classList.toggle('hidden', !(ui.p.tipo || ui.p.bairro || ui.p.valor || ui.p.quartos || ui.p.link));
-}
-function cardHTML(r) {
-  const c = r.c, p = ui.p;
-  const meta = [c.tipos.join(' · '), faixaValor(c), c.quartos ? c.quartos + '+ quartos' : ''].filter(Boolean).map(s => `<span style="white-space:nowrap">${esc(s)}</span>`).join(' <span class="sep">|</span> ');
-  const bchips = c.bairros.map(b => `<span class="b${p.bairro && bkey(b) === bkey(p.bairro) ? ' on' : ''}">${esc(b)}</span>`).join('');
-  const sentId = ui.sent[c.id];
-  let foot;
-  if (sentId) foot = `<span class="dot ok"></span><span class="ok-t">Enviado agora</span><button class="link sp" data-act="desfazer" data-id="${c.id}">Desfazer</button>`;
-  else {
-    const d = diasSemEnvio(c);
-    const rec = r.jaRecebeu ? `<span class="dot warn"></span><span class="warn-t">Já recebeu este imóvel em ${fmtShort(r.jaRecebeu)}</span>`
-      : d === null ? `<span class="dot or"></span><span class="or-t">Ainda sem contato registrado</span>`
-      : `<span class="dot${d >= ALIMENTAR_DIAS ? ' warn' : ' ok'}"></span><span class="${d >= ALIMENTAR_DIAS ? 'warn-t' : ''}">Último contato ${haDias(d)}</span>`;
-    foot = rec + `<button class="link sp" data-act="ficha" data-id="${c.id}">Ver ficha</button>`;
-  }
-  const wa = c.whats && waNumber(c.whats).length >= 12
-    ? `<a class="btn-wa" href="${esc(waLink(c, buildMsg(c)))}" target="_blank" rel="noopener" data-act="enviar" data-id="${c.id}">${WA_ICON}Enviar no WhatsApp</a>`
-    : `<button class="btn-wa off" data-act="edit" data-id="${c.id}">Cadastrar WhatsApp</button>`;
-  return `<article class="cli${sentId ? ' sent' : ''}${r.motivos.length || r.jaRecebeu ? ' dim' : ''}">
-    <div class="cli-top"><div class="av">${esc(initials(c.nome))}</div>
-      <div class="cli-id" data-act="ficha" data-id="${c.id}"><div class="nm">${esc(c.nome)}</div><div class="meta">${meta}</div></div>${wa}</div>
-    ${r.motivos.length ? `<div class="motivo">Fora do perfil: ${esc(r.motivos.join(' · '))}</div>` : ''}
-    <div class="bchips">${bchips}</div>
-    ${c.obs ? `<div class="obs">${esc(c.obs)}</div>` : ''}
-    <div class="foot">${foot}</div></article>`;
-}
-function renderPList() {
-  const p = ui.p, head = $('#p-head'), list = $('#p-list');
-  syncPInputs();
-  if (!clientes.length) {
-    head.innerHTML = '';
-    list.innerHTML = `<div class="empty"><h3>Sua carteira está vazia</h3><p>Cadastre os clientes que hoje estão no WhatsApp. Depois, é só escolher o tipo e o bairro de um imóvel para ver quem procura.</p><button class="btn-or" data-act="novo">+ Cadastrar o primeiro cliente</button></div>`;
-    return;
-  }
-  if (!p.tipo && !p.bairro) {
-    const n = ativos().length, al = ativos().filter(precisaAlimentar).length;
-    head.innerHTML = '';
-    list.innerHTML = `<div class="empty"><h3>Escolha o tipo e o bairro</h3><p>Você tem <b style="color:#fff">${n} ${plural(n, 'cliente ativo', 'clientes ativos')}</b> na carteira. Marque o tipo e o bairro do imóvel e veja na hora quem procura algo assim.</p>${al ? `<div class="chips"><button class="chip" data-act="alimentar">${al} ${plural(al, 'cliente precisa', 'clientes precisam')} receber imóvel</button></div>` : ''}</div>`;
-    return;
-  }
-  const linkN = normLink(p.link);
-  const rows = ativos().filter(c => wantsTipo(c, p.tipo) && wantsBairro(c, p.bairro)).map(c => {
-    const e = linkN ? c.envios.filter(e => normLink(e.link) === linkN).sort((a, b) => a.data < b.data ? 1 : -1)[0] : null;
-    return { c, motivos: foraDoPerfil(c, p), jaRecebeu: e && e.id !== ui.sent[c.id] ? e.data : '' };
-  });
-  const frio = r => { const d = diasSemEnvio(r.c); return d === null ? 1e6 : d; };
-  const ok = rows.filter(r => !r.motivos.length).sort((a, b) => (!!a.jaRecebeu - !!b.jaRecebeu) || frio(b) - frio(a) || a.c.nome.localeCompare(b.c.nome, 'pt-BR'));
-  const quase = rows.filter(r => r.motivos.length).sort((a, b) => frio(b) - frio(a));
-  const oque = (p.tipo ? TIPO_LOW[p.tipo] : 'imóvel') + (p.bairro ? ` ${/^(vila|cidade)\b/i.test(p.bairro) ? 'na' : 'no'} <b>${esc(bLabel(spell(p.bairro)))}</b>` : ' em qualquer bairro');
-  head.innerHTML = `<div class="rhead"><span class="big">${ok.length}</span><span class="sub">${plural(ok.length, 'cliente procura', 'clientes procuram')} ${oque}</span></div>`;
-  let h = '';
-  if (ok.length) h += `<div class="list">${ok.map(cardHTML).join('')}</div>`;
-  else {
-    let alt = '';
-    if (p.bairro && p.tipo) {
-      const d = demanda('').find(r => bkey(r.b) === bkey(p.bairro));
-      if (d) alt = `<p style="margin-top:10px">No ${esc(spell(p.bairro))}, a carteira procura:</p><div class="chips">${Object.entries(d.tipos).sort((a, b) => b[1] - a[1]).map(([t, n]) => `<button class="chip" data-act="p-tipo" data-v="${esc(t)}">${esc(t)}<span class="n">${n}</span></button>`).join('')}</div>`;
-    }
-    h += quase.length
-      ? `<div class="empty"><h3>Ninguém dentro do perfil</h3><p>Tem quem procure ${oque}, mas com budget ou quartos diferentes. Veja abaixo.</p></div>`
-      : `<div class="empty"><h3>Ninguém procura isso ainda</h3><p>Nenhum cliente ativo procura ${oque}.</p>${alt}</div>`;
-  }
-  if (quase.length) h += `<div class="group-t"><span class="lbl">Procuram aqui, mas fora do perfil · ${quase.length}</span></div><div class="list">${quase.map(cardHTML).join('')}</div>`;
-  list.innerHTML = h;
-}
-
 // ── RENDER: BAIRROS ──
 function renderBairros() {
   $('#b-tipos').innerHTML = ['', ...TIPOS].map(t => `<button class="chip${ui.b.tipo === t ? ' on' : ''}" data-act="b-tipo" data-v="${t}">${t || 'Todos'}</button>`).join('');
@@ -1098,7 +974,7 @@ function renderBairros() {
   const rows = q ? all.filter(r => norm(bLabel(r.b)).includes(q)) : all;
   const max = Math.max(1, ...all.map(r => r.n));
   if (!rows.length) {
-    $('#b-list').innerHTML = `<div class="empty" style="margin-top:18px"><h3>${clientes.length ? 'Nada por aqui' : 'Sem clientes ainda'}</h3><p>${clientes.length ? 'Nenhum cliente ativo procura ' + (ui.b.tipo ? TIPO_LOW[ui.b.tipo] + ' ' : '') + (q ? 'nesse bairro.' : 'ainda.') : 'Cadastre seus clientes e os bairros que eles procuram aparecem aqui, do mais procurado para o menos.'}</p></div>`;
+    $('#b-list').innerHTML = `<div class="empty" style="margin-top:18px"><h3>${clientes.length ? 'Nada por aqui' : 'Sem clientes ainda'}</h3><p>${clientes.length ? 'Nenhum cliente ativo procura ' + (ui.b.tipo ? ui.b.tipo.toLowerCase() + ' ' : '') + (q ? 'nesse bairro.' : 'ainda.') : 'Cadastre seus clientes e os bairros que eles procuram aparecem aqui, do mais procurado para o menos.'}</p></div>`;
     return;
   }
   $('#b-list').innerHTML = `<div class="bgrid">${rows.map(r => {
@@ -1111,14 +987,12 @@ function renderBairros() {
 const FILTROS = [
   ['ativos', 'Ativos', c => c.status === 'ativo'],
   ['alimentar', 'Precisam receber imóvel', precisaAlimentar],
-  ['pausado', 'Pausados', c => c.status === 'pausado'],
-  ['comprou', 'Compraram', c => c.status === 'comprou'],
-  ['todos', 'Todos', () => true]
+  ['arquivado', 'Arquivados', c => c.status === 'arquivado']
 ];
 function matchQ(c, q) {
   if (!q) return true;
   const qd = digits(q);
-  return norm(c.nome).includes(q) || c.bairros.some(b => norm(b).includes(q)) || c.tipos.some(t => norm(t).includes(q)) || norm(c.obs).includes(q) || (qd.length >= 4 && digits(c.whats).includes(qd));
+  return norm(c.nome).includes(q) || c.bairros.some(b => norm(b).includes(q) || bkey(b) === bkey(q)) || c.tipos.some(t => norm(t).includes(q)) || norm(c.obs).includes(q) || (qd.length >= 4 && digits(c.whats).includes(qd));
 }
 function renderClientes() {
   const q = norm(ui.c.q);
@@ -1134,13 +1008,12 @@ function renderClientes() {
     const d = diasSemEnvio(c);
     const nj8 = c.status === 'ativo' ? j8Match(c).total : 0;
     const side = (nj8 ? `<span class="j8n">${nj8} na J8</span>` : '') + (c.status !== 'ativo' ? '' : d === null ? `<span class="dot or"></span><span class="t">Sem contato</span><span class="ts">sem contato</span>` : `<span class="dot${d >= ALIMENTAR_DIAS ? ' warn' : ' ok'}"></span><span class="t">Contato ${haDias(d)}</span><span class="ts">${d === 0 ? 'hoje' : d + (d === 1 ? ' dia' : ' dias')}</span>`);
-    const meta = [c.tipos.join(' · '), c.bairros.join(', '), faixaValor(c)].filter(Boolean).join(' · ');
-    return `<button class="crow" data-act="ficha" data-id="${c.id}"><div class="av">${esc(initials(c.nome))}</div><div class="cm"><div class="nm">${esc(c.nome)}${c.status !== 'ativo' ? `<span class="pill ${c.status}">${c.status === 'pausado' ? 'Pausado' : 'Comprou'}</span>` : ''}</div><div class="meta">${esc(meta)}</div></div><div class="cs">${side}</div></button>`;
+    const meta = [tiposResumo(c.tipos).join(', '), c.bairros.join(', '), faixaValor(c)].filter(Boolean).join(' · ');
+    return `<button class="crow" data-act="ficha" data-id="${c.id}"><div class="av">${esc(initials(c.nome))}</div><div class="cm"><div class="nm">${esc(c.nome)}${c.status === 'arquivado' ? '<span class="pill arquivado">Arquivado</span>' : ''}</div><div class="meta">${esc(meta)}</div></div><div class="cs">${side}</div></button>`;
   }).join('');
 }
 
 function renderAll() {
-  renderPTipos(); renderPQuartos(); renderPTop(); renderPList();
   renderBairros(); renderClientes();
   if (ui.sheet && ui.sheet.kind === 'ficha') { if (byId(ui.sheet.id)) renderFicha(ui.sheet.id); else closeSheet(); }
   updateSync();
@@ -1149,18 +1022,10 @@ function renderAll() {
 // ── NAVEGAÇÃO ──
 function go(tab) {
   ui.tab = tab;
-  ['procurar', 'bairros', 'clientes'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== tab));
+  ['bairros', 'clientes'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== tab));
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   window.scrollTo(0, 0);
 }
-function setPBairro(b) {
-  ui.p.bairro = b ? spell(b) : '';
-  $('#p-bairro').value = ui.p.bairro;
-  renderPTop(); renderPList();
-  // no celular os resultados ficam abaixo do painel: leva direto até eles
-  if (b && matchMedia('(max-width:900px)').matches) setTimeout(() => $('#p-head').scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
-}
-
 // ── FOLHAS ──
 function openSheet(html, state) {
   ui.sheet = state;
@@ -1189,10 +1054,9 @@ function renderFicha(id, confirmDel) {
       <button class="btn-ghost" data-act="edit" data-id="${c.id}">Editar ficha</button>
     </div>
     <div class="j8box">${j8Section(c)}</div>
-    <div><span class="lbl">Situação</span><div class="seg">${[['ativo', 'Ativo'], ['pausado', 'Pausado'], ['comprou', 'Comprou']].map(([v, l]) => `<button class="${c.status === v ? 'on' : ''}" data-act="status" data-id="${c.id}" data-v="${v}">${l}</button>`).join('')}</div></div>
     <div><span class="lbl">O que procura</span>
       <dl class="info">
-        <dt>Tipo</dt><dd>${esc(c.tipos.join(', ') || '—')}</dd>
+        <dt>Tipo</dt><dd>${esc(tiposResumo(c.tipos).join(', ') || '—')}</dd>
         <dt>Bairros</dt><dd><div class="bchips">${c.bairros.map(b => `<span class="b on">${esc(b)}</span>`).join('') || '—'}</div></dd>
         <dt>Faixa de valor</dt><dd>${faixaValor(c, true) || '—'}</dd>
         <dt>Metragem</dt><dd>${c.areaMin && c.areaMax ? `de ${c.areaMin} a ${c.areaMax} m²` : c.areaMin ? `a partir de ${c.areaMin} m²` : c.areaMax ? `até ${c.areaMax} m²` : 'Tanto faz'}</dd>
@@ -1201,17 +1065,18 @@ function renderFicha(id, confirmDel) {
         <dt>Vagas</dt><dd>${c.vagas ? c.vagas + ' ou mais' : 'Tanto faz'}</dd>
         <dt>Situação</dt><dd>${c.situacao.length ? SITUACOES.filter(s => c.situacao.includes(s[0])).map(s => s[1]).join(' ou ') : 'Tanto faz'}</dd>
         <dt>Mobília</dt><dd>${c.mobilia.length ? MOBILIAS.filter(s => c.mobilia.includes(s[0])).map(s => s[1]).join(' ou ') : 'Tanto faz'}</dd>
-        <dt>O que mais busca</dt><dd>${esc(c.obs) || '—'}</dd>
-        <dt>De onde veio</dt><dd>${esc(c.origem) || '—'}</dd>
+        <dt>Características do imóvel</dt><dd>${esc(c.obs) || '—'}</dd>
       </dl>
     </div>
     <div><span class="lbl">Imóveis enviados · ${envios.length}</span>
       ${envios.length ? `<div class="env">${envios.map(e => `<div class="env-i"><span class="d">${fmtShort(e.data)}</span><div class="w">${esc([e.tipo, e.bairro].filter(Boolean).join(' · ') || 'Imóvel')}${e.valor ? ' · ' + fmtValor(e.valor) : ''}${e.link ? `<br><a href="${esc(/^https?:/i.test(e.link) ? e.link : 'https://' + e.link)}" target="_blank" rel="noopener">${esc(e.link)}</a>` : ''}</div><button class="rm" data-act="env-del" data-id="${c.id}" data-e="${esc(e.id)}" aria-label="Remover envio">×</button></div>`).join('')}</div>`
-        : `<p class="muted" style="font-size:14px">Nenhum imóvel enviado ainda. Use “Quem procura” para mandar o primeiro.</p>`}
+        : `<p class="muted" style="font-size:14px">Nenhum imóvel enviado ainda. Baixar o PDF de um imóvel acima já registra o envio.</p>`}
     </div>
-    <div>${confirmDel
-      ? `<div class="confirm"><span>Excluir <b>${esc(c.nome)}</b> da carteira?</span><button class="btn-del" data-act="del-yes" data-id="${c.id}">Sim, excluir</button><button class="link" data-act="del-no" data-id="${c.id}">Cancelar</button></div>`
-      : `<button class="danger" data-act="del-ask" data-id="${c.id}">Excluir cliente</button>`}</div>
+    <div class="fimficha">${c.status === 'ativo'
+      ? `<button class="btn-ghost" data-act="arquivar" data-id="${c.id}">Arquivar cliente</button>`
+      : `<button class="btn-ghost" data-act="reativar" data-id="${c.id}">Reativar cliente</button>${confirmDel
+        ? `<div class="confirm"><span>Excluir <b>${esc(c.nome)}</b> de vez?</span><button class="btn-del" data-act="del-yes" data-id="${c.id}">Sim, excluir</button><button class="link" data-act="del-no" data-id="${c.id}">Cancelar</button></div>`
+        : `<button class="danger" data-act="del-ask" data-id="${c.id}">Excluir de vez</button>`}`}</div>
   </div>`;
   if (ui.sheet && ui.sheet.kind === 'ficha' && ui.sheet.id === id) { const sb = $('#sheet .sh-b'), top = sb ? sb.scrollTop : 0; $('#sheet').innerHTML = html; const nb = $('#sheet .sh-b'); if (nb) nb.scrollTop = top; }
   else openSheet(html, { kind: 'ficha', id });
@@ -1229,7 +1094,7 @@ function openForm(id) {
   <div class="sh-b">
     <div class="fl"><label class="lbl" for="f-nome">Nome *</label><input id="f-nome" value="${esc(f.nome)}" placeholder="Nome do cliente" autocomplete="off"><div class="err" id="e-nome"></div></div>
     <div class="fl"><label class="lbl" for="f-whats">WhatsApp</label><input id="f-whats" type="tel" inputmode="tel" value="${esc(fmtFone(f.whats))}" placeholder="(41) 99999-9999" autocomplete="off"><div class="err" id="e-whats"></div><div id="e-dup"></div></div>
-    <div><span class="lbl">Tipo de imóvel *<span class="hint">pode marcar mais de um</span></span><div class="chips" id="f-tipos"></div><div class="err" id="e-tipos"></div></div>
+    <div><span class="lbl">Tipo de imóvel *<span class="hint">pode marcar mais de um, como no site da J8</span></span><div class="chips" id="f-tipos"></div><div class="err" id="e-tipos"></div></div>
     <div><span class="lbl">Bairros *<span class="hint">todos que ele aceita</span></span><div class="chips" id="f-bairros" style="margin-bottom:10px"></div>
       <div class="ta"><input id="f-bairro" placeholder="Digite um bairro e escolha na lista" autocomplete="off" aria-label="Adicionar bairro"><div class="dd hidden" id="f-bairro-dd"></div></div><div class="err" id="e-bairros"></div></div>
     <div><span class="lbl">Faixa de valor<span class="hint">de quanto a quanto ele investe</span></span>
@@ -1249,8 +1114,7 @@ function openForm(id) {
     <div><span class="lbl">Vagas (no mínimo)</span><div class="chips" id="f-vagas"></div></div>
     <div><span class="lbl">Situação<span class="hint">nenhum marcado = tanto faz</span></span><div class="chips" id="f-sit"></div></div>
     <div><span class="lbl">Mobília<span class="hint">nenhum marcado = tanto faz</span></span><div class="chips" id="f-mob"></div></div>
-    <div class="fl"><label class="lbl" for="f-obs">O que mais ele busca</label><textarea id="f-obs" rows="3" placeholder="Ex.: piscina, 3 vagas, condomínio fechado, aceita permuta">${esc(f.obs)}</textarea></div>
-    <div><span class="lbl">De onde veio</span><div class="chips sm" id="f-origem"></div></div>
+    <div class="fl"><label class="lbl" for="f-obs">Características do imóvel</label><textarea id="f-obs" rows="3" placeholder="Ex.: piscina, churrasqueira, 3 vagas, aceita permuta">${esc(f.obs)}</textarea></div>
   </div>
   <div class="sh-f"><button class="btn-ghost" data-act="close">Cancelar</button><button class="btn-or" data-act="f-save">${c ? 'Salvar alterações' : 'Cadastrar cliente'}</button></div>`, { kind: 'form', id: id || null });
   renderFormChips();
@@ -1272,11 +1136,10 @@ function renderFormChips() {
   $('#f-bairros').style.display = f.bairros.length ? '' : 'none';
   $('#f-quartos').innerHTML = [0, 1, 2, 3, 4].map(n => `<button class="chip${f.quartos === n ? ' on' : ''}" data-act="f-quartos" data-v="${n}">${n ? n + '+' : 'Tanto faz'}</button>`).join('');
   $('#f-vagas').innerHTML = [0, 1, 2, 3, 4].map(n => `<button class="chip${f.vagas === n ? ' on' : ''}" data-act="f-vagas" data-v="${n}">${n ? n + '+' : 'Tanto faz'}</button>`).join('');
-  $('#f-origem').innerHTML = ORIGENS.map(o => `<button class="chip${f.origem === o ? ' on' : ''}" data-act="f-origem" data-v="${o}">${o}</button>`).join('');
   $('#f-sit').innerHTML = SITUACOES.map(([k, l]) => `<button class="chip${f.situacao.includes(k) ? ' on' : ''}" data-act="f-sit" data-v="${k}">${l}</button>`).join('');
   $('#f-mob').innerHTML = MOBILIAS.map(([k, l]) => `<button class="chip${f.mobilia.includes(k) ? ' on' : ''}" data-act="f-mob" data-v="${k}">${l}</button>`).join('');
   // terreno só interessa para casa e terreno
-  $('#f-terreno-box').classList.toggle('hidden', !f.tipos.some(t => t === 'Casa' || t === 'Terreno'));
+  $('#f-terreno-box').classList.toggle('hidden', !f.tipos.some(t => GRUPO[t] === 'Casa' || GRUPO[t] === 'Terreno'));
 }
 function saveForm() {
   const f = form; if (!f) return;
@@ -1370,18 +1233,6 @@ function toast(msg, action) {
 }
 
 // ── AÇÕES ──
-function registrarEnvio(id) {
-  const c = byId(id); if (!c) return;
-  const e = { id: newId('e'), data: nowLocal(), tipo: ui.p.tipo || '', bairro: ui.p.bairro || '', valor: ui.p.valor || 0, link: ui.p.link || '' };
-  ui.sent[id] = e.id;
-  saveClient(Object.assign({}, c, { envios: c.envios.concat([e]) }));
-}
-function desfazerEnvio(id) {
-  const c = byId(id), eid = ui.sent[id]; delete ui.sent[id];
-  if (!c) return;
-  saveClient(Object.assign({}, c, { envios: c.envios.filter(e => e.id !== eid) }));
-}
-
 document.addEventListener('click', e => {
   const tabBtn = e.target.closest('[data-tab]');
   if (tabBtn) { go(tabBtn.dataset.tab); return; }
@@ -1394,20 +1245,12 @@ document.addEventListener('click', e => {
     case 'menu': menu.classList.toggle('hidden'); break;
     case 'recarregar': menu.classList.add('hidden'); loaded = false; updateSync(); refresh(); break;
     case 'sair': try { localStorage.removeItem(LS_AUTH); } catch (er) {} location.reload(); break;
-    case 'p-tipo': ui.p.tipo = ui.p.tipo === v ? '' : v; if (ui.tab !== 'procurar') go('procurar'); renderPTipos(); renderPTop(); renderPList(); break;
-    case 'p-quartos': ui.p.quartos = ui.p.quartos === +v ? 0 : +v; renderPQuartos(); renderPList(); break;
-    case 'p-bairro': setPBairro(el.dataset.b); break;
-    case 'p-clear':
-      ui.p = { tipo: '', bairro: '', valor: 0, quartos: 0, link: '' }; ui.sent = {};
-      $('#p-bairro').value = ''; $('#p-valor').value = ''; $('#p-link').value = '';
-      renderPTipos(); renderPQuartos(); renderPTop(); renderPList(); break;
     case 'alimentar': ui.c.f = 'alimentar'; go('clientes'); renderClientes(); break;
-    case 'enviar': setTimeout(() => { registrarEnvio(id); toast('Envio registrado na ficha.', { label: 'Desfazer', fn: () => desfazerEnvio(id) }); }, 0); break;
-    case 'desfazer': desfazerEnvio(id); break;
     case 'ficha': if (ui.sheet && ui.sheet.kind === 'form') closeSheet(); renderFicha(id); break;
     case 'edit': openForm(id); break;
     case 'close': closeSheet(); break;
-    case 'status': { const c = byId(id); if (c && c.status !== v) { saveClient(Object.assign({}, c, { status: v })); toast(v === 'ativo' ? 'Cliente ativo de novo.' : v === 'pausado' ? 'Pausado: não aparece nas buscas até você reativar.' : 'Comprou! Saiu das buscas.'); } break; }
+    case 'arquivar': { const c = byId(id); if (c) { saveClient(Object.assign({}, c, { status: 'arquivado' })); closeSheet(); toast(`${firstName(c.nome)} foi para os arquivados.`, { label: 'Desfazer', fn: () => { const x = byId(id); if (x) saveClient(Object.assign({}, x, { status: 'ativo' })); } }); } break; }
+    case 'reativar': { const c = byId(id); if (c) { saveClient(Object.assign({}, c, { status: 'ativo' })); toast(`${firstName(c.nome)} está ativo de novo.`); } break; }
     case 'del-ask': renderFicha(id, true); break;
     case 'del-no': renderFicha(id); break;
     case 'del-yes': {
@@ -1417,8 +1260,9 @@ document.addEventListener('click', e => {
       toast(`${firstName(c.nome)} foi excluído.`, { label: 'Desfazer', fn: () => { saveClient(copia); } });
       break;
     }
-    case 'env-del': { const c = byId(id); if (c) { if (ui.sent[id] === el.dataset.e) delete ui.sent[id]; saveClient(Object.assign({}, c, { envios: c.envios.filter(x => x.id !== el.dataset.e) })); } break; }
-    case 'bairro': ui.p.tipo = ui.b.tipo; ui.p.bairro = ''; go('procurar'); renderPTipos(); setPBairro(el.dataset.b); break;
+    case 'env-del': { const c = byId(id); if (c) { saveClient(Object.assign({}, c, { envios: c.envios.filter(x => x.id !== el.dataset.e) })); } break; }
+    // bairro tocado na aba Bairros: abre os clientes ativos que procuram nele
+    case 'bairro': ui.c.q = el.dataset.b; ui.c.f = 'ativos'; $('#c-q').value = el.dataset.b; go('clientes'); renderClientes(); break;
     case 'b-tipo': ui.b.tipo = v; renderBairros(); break;
     case 'c-f': ui.c.f = v; renderClientes(); break;
     case 'f-tipo': { const i = form.tipos.indexOf(v); if (i >= 0) form.tipos.splice(i, 1); else form.tipos.push(v); $('#e-tipos').textContent = ''; renderFormChips(); break; }
@@ -1426,7 +1270,6 @@ document.addEventListener('click', e => {
     case 'f-quartos': form.quartos = +v; renderFormChips(); break;
     case 'f-vagas': form.vagas = +v; renderFormChips(); break;
     case 'f-sit': case 'f-mob': { const arr = a === 'f-sit' ? form.situacao : form.mobilia; const k = arr.indexOf(v); if (k >= 0) arr.splice(k, 1); else arr.push(v); renderFormChips(); break; }
-    case 'f-origem': form.origem = form.origem === v ? '' : v; renderFormChips(); break;
     case 'f-save': saveForm(); break;
     case 'j8-fotos': baixarFotos(el, el.dataset.c); break;
     case 'j8-pdf': baixarPDF(el, el.dataset.c, el.dataset.cli); break;
@@ -1435,14 +1278,8 @@ document.addEventListener('click', e => {
   }
 });
 
-// ── CAMPOS DA BUSCA ──
-function bindProcurar() {
-  const inp = $('#p-bairro');
-  typeahead(inp, $('#p-bairro-dd'), { exclude: () => [], onPick: b => { setPBairro(b); inp.blur(); return false; } });
-  inp.addEventListener('input', () => { if (ui.p.bairro && norm(inp.value) !== norm(ui.p.bairro)) { ui.p.bairro = ''; renderPTop(); renderPList(); } syncPInputs(); });
-  $('#p-bairro-x').addEventListener('click', () => { setPBairro(''); inp.focus(); });
-  $('#p-valor').addEventListener('input', e => { maskMoney(e.target); ui.p.valor = parseMoney(e.target.value); renderPList(); });
-  $('#p-link').addEventListener('input', e => { ui.p.link = e.target.value.trim(); ui.sent = {}; renderPList(); });
+// ── CAMPOS DE BUSCA ──
+function bindBuscas() {
   $('#b-q').addEventListener('input', e => { ui.b.q = e.target.value; renderBairros(); });
   $('#c-q').addEventListener('input', e => { ui.c.q = e.target.value; renderClientes(); });
 }
@@ -1451,7 +1288,7 @@ function bindProcurar() {
 function startApp() {
   $('#login').classList.add('hidden');
   $('#app').classList.remove('hidden');
-  bindProcurar();
+  bindBuscas();
   clientes = applyPending(lsGet(LS_CACHE, []).map(cleanClient));
   renderAll();
   refresh();
