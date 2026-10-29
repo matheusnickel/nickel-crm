@@ -439,13 +439,13 @@ const GRUPOS = [
   { k: 'pos', nome: 'Postura', sigla: 'POS', sub: 'Como se apresenta e se comporta', attrs: [
     { k: 'com', nome: 'Comunicação', desc: 'O quanto a pessoa sabe se comunicar: tem boa oratória, fala com segurança com o proprietário e não se deixa travar pela timidez.',
       niv: ['Tímida, se enrola para falar com o proprietário.', 'Comunica o básico, mas sem segurança.', 'Fala com clareza e segurança com qualquer proprietário.', 'Conduz a conversa e transmite autoridade.'] },
-    { k: 'pre', nome: 'Presença', desc: 'Presença na bancada: está todos os dias na imobiliária, com vontade de angariar, perguntando e participando.',
-      niv: ['Raramente aparece na imobiliária.', 'Aparece quando é cobrada.', 'Está na imobiliária quase todos os dias, participando.', 'Está todo dia na bancada, pergunta, participa e busca imóvel.'] },
     { k: 'org', nome: 'Organização', desc: 'O quanto a pessoa é organizada. Quando você pergunta alguma coisa, ela sabe onde está e responde sem se perder.',
       niv: ['Não sabe onde estão as coisas; perde contatos e retornos.', 'Se organiza só quando é cobrada.', 'Sabe onde está cada coisa e dá retorno no prazo.', 'Rotina impecável; responde na hora qualquer pergunta.'] }
   ] }
 ];
 const ATTRS = GRUPOS.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a)));
+// atributos que saíram da tela (Presença, em 2026-10-29): a nota antiga fica guardada, mas não aparece nem conta
+const ATTRS_ANTIGOS = ['pre'];
 const FAIXAS = ['1–5', '6–10', '11–15', '16–20'];
 const ESCALA = [['n1', '1 a 5', 'Não sabe / não faz'], ['n2', '6 a 10', 'Faz com ajuda'], ['n3', '11 a 15', 'Faz sozinho, bem'], ['n4', '16 a 20', 'Referência, ensina os outros']];
 // Papéis, como o "Papel e tarefa" do FM: as estrelas saem da média dos atributos-chave
@@ -557,9 +557,9 @@ function docFields(c) { const o = Object.assign({}, c); delete o.id; return toFs
 
 function cleanNotas(n) {
   const o = {};
-  if (n && typeof n === 'object') for (const a of ATTRS) {
-    const v = n[a.k];
-    if (v !== null && v !== undefined && v !== '' && Number.isFinite(+v)) o[a.k] = Math.max(0, Math.min(20, Math.round(+v)));
+  if (n && typeof n === 'object') for (const k of ATTRS.map(a => a.k).concat(ATTRS_ANTIGOS)) {
+    const v = n[k];
+    if (v !== null && v !== undefined && v !== '' && Number.isFinite(+v)) o[k] = Math.max(0, Math.min(20, Math.round(+v)));
   }
   return o;
 }
@@ -1138,12 +1138,14 @@ function passoNota(k, d) {
 function saveAval() {
   const c = byId(form.id); if (!c) return closeSheet();
   const data = $('#a-data').value || hoje();
-  const notas = cleanNotas(form.notas);
   const editando = !!form.avId;
-  if (!Object.keys(notas).length) { toast('Dê nota em pelo menos um atributo.'); return; }
+  // avaliação nova não leva adiante a nota de atributo que saiu da tela
+  const semAntigos = n => { const o = cleanNotas(n); ATTRS_ANTIGOS.forEach(k => delete o[k]); return o; };
+  const notas = editando ? cleanNotas(form.notas) : semAntigos(form.notas);
+  if (!ATTRS.some(a => a.k in notas)) { toast('Dê nota em pelo menos um atributo.'); return; }
   const u = ultima(c);
   // vira uma nova avaliação se alguma nota ou as estrelas mudaram
-  const mudou = JSON.stringify(notas) !== JSON.stringify(cleanNotas(form.ref)) || form.ca !== (u ? u.ca || c.capacidade : 0);
+  const mudou = JSON.stringify(semAntigos(notas)) !== JSON.stringify(semAntigos(form.ref)) || form.ca !== (u ? u.ca || c.capacidade : 0);
   const avs = editando
     ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, ca: form.ca }) : a)
     : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca: form.ca }]) : c.avaliacoes;
@@ -1286,7 +1288,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-29c';
+const VERSAO = '2026-10-29d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
