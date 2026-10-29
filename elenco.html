@@ -509,9 +509,10 @@ const mediaGrupo = (n, g) => media(n, GRUPOS.find(x => x.k === g).attrs.map(a =>
 const notaDe = n => { const m = media(n, ATTRS.map(a => a.k)); return m === null ? null : Math.round(m * 5); };
 const fmtG = v => v === null ? '–' : String(Math.round(v)); // sempre número inteiro, sem vírgula
 const meioPasso = v => Math.round(v * 2) / 2;
-// sugestão de estrelas a partir da média de 0 a 20 (régua exigente: 5 estrelas só com média 20)
-// 20 = 5 · 17 = 4 · 14 = 3 · 11 = 2 · 8 = 1 — a cada 1½ ponto, ½ estrela
-const estrelasDaMedia = m => m === null ? 0 : Math.min(5, Math.max(0.5, Math.round((m - 5) / 3 * 2) / 2));
+// sugestão de estrelas a partir da média de 0 a 20, ajustada às estrelas que o Matheus deu em 29/10
+// (Karoline 3 · Anne e Diego 2½ · Silvana, Jo e Tatiana 2): média mínima para cada nível
+const REGUA = [[19, 5], [18, 4.5], [17, 4], [15.5, 3.5], [14, 3], [12, 2.5], [9, 2], [7.5, 1.5], [6, 1]];
+const estrelasDaMedia = m => m === null ? 0 : (REGUA.find(([min]) => m >= min) || [0, 0.5])[1];
 const st5 = (v, cls) => `<span class="st5 ${cls || ''}" title="${fmtEst(v)} de 5"><i style="width:${v / 5 * 100}%"></i></span>`;
 function delta(d) {
   if (d === null || d === undefined || Number.isNaN(d)) return '';
@@ -596,9 +597,9 @@ const byId = id => corretores.find(c => c.id === id);
 const persistCache = () => lsSet(LS_CACHE, corretores);
 const ultima = c => c.avaliacoes[c.avaliacoes.length - 1] || null;
 const notasAtuais = c => (ultima(c) || {}).notas || {};
-// capacidade atual: as estrelas que o gestor deu; enquanto não der, vale a sugestão das notas
-const capDe = c => c.capacidade || capAtual(notasAtuais(c));
-const capDaAvaliacao = a => a.ca || capAtual(a.notas);
+// capacidade atual: sai da conta (média das notas na REGUA), igual para todos; estrelas dadas à mão ficam só guardadas
+const capDe = c => capAtual(notasAtuais(c));
+const capDaAvaliacao = a => capAtual(a.notas);
 
 // Cada corretor grava em fila própria, sempre com a versão local mais recente.
 // O que não chegou ao Firebase fica pendente neste aparelho e é reenviado depois.
@@ -836,7 +837,7 @@ function abaDev(c) {
   return `<div class="grid2">
       <section class="box">
         <div class="box-h"><h3>Evolução da capacidade atual</h3>${av.length > 1 ? `<span class="r">${deltaEst(e1 - e0)} <span class="muted" style="font-size:13px">desde ${fmtShort(av[0].data)}</span></span>` : ''}</div>
-        ${graficoLinhas(av, [{ cor: '#f7c531', val: a => a.ca || (notaDe(a.notas) === null ? null : capAtual(a.notas)), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true)}
+        ${graficoLinhas(av, [{ cor: '#f7c531', val: a => notaDe(a.notas) === null ? null : capAtual(a.notas), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true)}
       </section>
       <section class="box">
         <div class="box-h"><h3>Evolução por área</h3><span class="muted r" style="font-size:13px">média de 0 a 20</span></div>
@@ -1102,11 +1103,11 @@ function sheetAval(id, avId) {
     <div class="row2"><div class="fl"><label class="lbl" for="a-data">Data da avaliação</label><input id="a-data" type="date" value="${atual ? atual.data : hoje()}"></div></div>
     ${GRUPOS.map(linhas).join('')}
     <div class="ag"><div class="ag-t">Capacidade atual</div>
-      <div class="ar"><span class="sug" id="lv-sug"></span><div class="pick" id="f-ca"></div></div></div>
+      <div class="ar"><span class="sug" id="lv-sug"></span>
+        <p class="hintp" style="margin-top:8px">As estrelas saem da média das notas: ${REGUA.slice().reverse().map(([m, e]) => `${fmtEst(m)} = ${fmtEst(e)}★`).join(' · ')}</p></div></div>
     <div id="a-del"></div>
   </div>
   <div class="sh-f">${atual ? '<button class="danger l" data-act="aval-del-ask">Apagar avaliação</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-aval">Salvar</button></div>`, 'aval');
-  renderEstrelas('#f-ca', form.ca, 'ca');
   ATTRS.forEach(a => {
     $('#n-' + a.k).addEventListener('input', e => {
       const d = e.target.value.replace(/\D/g, '').slice(0, 2);
@@ -1125,9 +1126,9 @@ function pintaNota(k) {
     ? `<b class="${nivel(v)}">${FAIXAS[faixa(v)]}</b>${a.niv[faixa(v)]}`
     : '<span class="muted">Sem nota. Toque em + para começar em 10.</span>') +
     (typeof p === 'number' ? `<span class="pr">antes ${p}${typeof v === 'number' && v !== p ? ' ' + delta(v - p) : ''}</span>` : '');
-  // o que as notas sugerem para a capacidade atual (só referência: as estrelas é você quem dá)
+  // as estrelas da capacidade atual pela conta, atualizando a cada nota
   const s = notaDe(form.notas) === null ? 0 : capAtual(form.notas);
-  $('#lv-sug').innerHTML = s ? `Sugestão pelas notas:${st5(s)}` : 'Dê as notas para ver a sugestão.';
+  $('#lv-sug').innerHTML = s ? `Pela conta:${st5(s)}` : 'Dê as notas para ver as estrelas.';
 }
 function passoNota(k, d) {
   const v = form.notas[k];
@@ -1145,13 +1146,14 @@ function saveAval() {
   if (!ATTRS.some(a => a.k in notas)) { toast('Dê nota em pelo menos um atributo.'); return; }
   const u = ultima(c);
   // vira uma nova avaliação se alguma nota ou as estrelas mudaram
-  const mudou = JSON.stringify(semAntigos(notas)) !== JSON.stringify(semAntigos(form.ref)) || form.ca !== (u ? u.ca || c.capacidade : 0);
+  const mudou = JSON.stringify(semAntigos(notas)) !== JSON.stringify(semAntigos(form.ref));
+  const ca = capAtual(notas); // guardada só como registro; a tela sempre refaz a conta
   const avs = editando
-    ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, ca: form.ca }) : a)
-    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca: form.ca }]) : c.avaliacoes;
+    ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, ca }) : a)
+    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca }]) : c.avaliacoes;
   // a capacidade atual do corretor acompanha a avaliação mais recente
   const recente = !editando || (u && u.id === form.avId);
-  saveCorretor(Object.assign({}, c, recente ? { capacidade: form.ca } : {}, { avaliacoes: avs }));
+  saveCorretor(Object.assign({}, c, recente ? { capacidade: ca } : {}, { avaliacoes: avs }));
   closeSheet();
   toast(editando ? 'Avaliação atualizada.' : mudou ? 'Avaliação salva.' : 'Nada mudou desde a última avaliação.');
 
@@ -1288,7 +1290,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-29e';
+const VERSAO = '2026-10-29g';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
