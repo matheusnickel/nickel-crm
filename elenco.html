@@ -426,7 +426,7 @@ const GRUPOS = [
     { k: 'doc', nome: 'Documentação', desc: 'Capacidade de ler e interpretar a documentação de um imóvel: matrícula, IPTU e boleto de condomínio. Sabe o que pedir, o que conferir e onde pode haver problema.',
       niv: ['Não sabe o que pedir nem onde olhar.', 'Sabe o que pedir, mas ainda não interpreta a documentação.', 'Interpreta a documentação e identifica os problemas comuns.', 'Antecipa problemas (ônus, inventário, área divergente) antes de angariar.'] },
     { k: 'neg', nome: 'Negociação', desc: 'Poder de persuasão com o proprietário: convencê-lo a trazer o imóvel para a carteira da VIP Imóveis e saber apresentar e vender o imóvel durante a conversa. Mede se ela consegue, de fato, trazer o imóvel para a imobiliária.',
-      niv: ['Não consegue convencer o proprietário.', 'Convence só quando o proprietário já está disposto.', 'Traz o imóvel para a VIP na maioria das vezes.', 'Convence até o proprietário mais difícil e sabe vender o imóvel na conversa.'] }
+      niv: ['Não consegue convencer o proprietário.', 'Já tem uma base de script e convence com as perguntas básicas.', 'Traz o imóvel para a VIP na maioria das vezes.', 'Convence até o proprietário mais difícil e sabe vender o imóvel na conversa.'] }
   ] },
   { k: 'men', nome: 'Mental', sigla: 'MEN', sub: 'Cabeça do angariador', attrs: [
     { k: 'det', nome: 'Dedicação', desc: 'Quanto do tempo de trabalho a pessoa deixa disponível para a angariação de imóveis prontos. Quem divide a semana com vendas, locação ou outro trabalho tem pouco espaço para angariar; quem faz da angariação o seu foco entrega mais.',
@@ -1288,7 +1288,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-29d';
+const VERSAO = '2026-10-29e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
