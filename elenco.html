@@ -429,8 +429,8 @@ const GRUPOS = [
       niv: ['Não consegue convencer o proprietário.', 'Convence só quando o proprietário já está disposto.', 'Traz o imóvel para a VIP na maioria das vezes.', 'Convence até o proprietário mais difícil e sabe vender o imóvel na conversa.'] }
   ] },
   { k: 'men', nome: 'Mental', sigla: 'MEN', sub: 'Cabeça do angariador', attrs: [
-    { k: 'det', nome: 'Determinação', desc: 'O quanto a pessoa está determinada a trabalhar com angariação de imóveis prontos. Dá para perceber quando ela gosta do que faz: não desiste diante de um "não" e segue firme.',
-      niv: ['Desanima com o primeiro "não".', 'Vai bem quando está dando certo; some quando aperta.', 'Mantém o ritmo mesmo com vários "nãos" seguidos.', 'Gosta de angariar, cresce na dificuldade e puxa o time junto.'] },
+    { k: 'det', nome: 'Dedicação', desc: 'Quanto do tempo de trabalho a pessoa deixa disponível para a angariação de imóveis prontos. Quem divide a semana com vendas, locação ou outro trabalho tem pouco espaço para angariar; quem faz da angariação o seu foco entrega mais.',
+      niv: ['Angariação é um extra: menos de 25% do tempo.', 'Divide com outras atividades: de 25% a 50% do tempo.', 'Angariação é a prioridade: de 50% a 75% do tempo.', 'Foco total na angariação: mais de 75% do tempo.'] },
     { k: 'log', nome: 'Criatividade', desc: 'Habilidade de entender a lógica da angariação e criar caminhos novos. É a pessoa curiosa, que pensa: "E se eu fizer desta maneira, será que consigo angariar este imóvel?"',
       niv: ['Faz sempre do mesmo jeito e trava quando não funciona.', 'Percebe o óbvio, mas não busca outro caminho.', 'Entende o motivo real do proprietário e propõe alternativas.', 'Enxerga a jogada antes de todo mundo e cria saídas fora da caixa.'] },
     { k: 'cor', nome: 'Coração ensinável', desc: 'Disposição verdadeira para ouvir e aprender. Recebe orientação sem se defender e coloca em prática o que foi ensinado.',
@@ -1286,7 +1286,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-27k';
+const VERSAO = '2026-10-29a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
