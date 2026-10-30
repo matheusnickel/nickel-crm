@@ -333,7 +333,7 @@ body{text-transform:uppercase}
 button,input,textarea,select{text-transform:inherit}
 ::placeholder{text-transform:uppercase}
 .lbl .hint{text-transform:inherit}
-input[type=password],.env-i a{text-transform:none}
+input[type=password],.env-i a,.np{text-transform:none}
 .phd h1,.empty h3,.sh-h h2,.brow .bn{letter-spacing:-.01em}
 .rhead .big,.lg-card h1{letter-spacing:-.025em}
 .nm,.j8c .t1{letter-spacing:0}
@@ -511,6 +511,9 @@ function fmtFone(p) {
 }
 const initials = n => { const p = String(n || '').trim().split(/\s+/).filter(Boolean); return ((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase(); };
 const firstName = n => String(n || '').trim().split(/\s+/)[0] || '';
+// nome do cliente com a 1ª letra de cada nome maiúscula ("abrahão DA silva" → "Abrahão da Silva"); a tela inteira é maiúscula, o nome não
+const nomeProprio = n => String(n || '').trim().toLocaleLowerCase('pt-BR').split(/\s+/)
+  .map((p, k) => k && /^(da|de|do|das|dos|e)$/.test(p) ? p : p.replace(/(^|[-'’])(\p{L})/gu, (m, a, b) => a + b.toLocaleUpperCase('pt-BR'))).join(' ');
 const normLink = s => String(s || '').trim().replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/#.*$/, '').replace(/\/+$/, '').toLowerCase();
 const plural = (n, s, p) => n === 1 ? s : p;
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
@@ -1041,7 +1044,7 @@ function renderClientes() {
     const side = (nest.length ? `<span class="j8n">${nest.map(([k, n, q]) => `<span class="${k}">${q} ${n}</span>`).join('<i></i>')}</span>` : '') + (c.status !== 'ativo' ? '' : d === null ? `<span class="ctt"><span class="dot or"></span><span class="t">Sem contato</span><span class="ts">sem contato</span></span>` : `<span class="ctt"><span class="dot${d >= ALIMENTAR_DIAS ? ' warn' : ' ok'}"></span><span class="t">Contato ${haDias(d)}</span><span class="ts">${d === 0 ? 'contato hoje' : 'contato há ' + d + (d === 1 ? ' dia' : ' dias')}</span></span>`);
     // tipo, bairros e valor com cor própria, para não virar uma frase só
     const meta = [['mt', tiposResumo(c.tipos).join(', ')], ['mb', c.bairros.join(', ')], ['mv', faixaValor(c)]].filter(x => x[1]).map(([k, v]) => `<span class="${k}">${esc(v)}</span>`).join('<i class="ms"></i>');
-    return `<button class="crow" data-act="ficha" data-id="${c.id}"><div class="av">${esc(initials(c.nome))}</div><div class="cm"><div class="nm">${esc(c.nome)}${c.status === 'arquivado' ? '<span class="pill arquivado">Arquivado</span>' : ''}</div><div class="meta">${meta}</div></div><div class="cs">${side}</div></button>`;
+    return `<button class="crow" data-act="ficha" data-id="${c.id}"><div class="av">${esc(initials(c.nome))}</div><div class="cm"><div class="nm np">${esc(nomeProprio(c.nome))}${c.status === 'arquivado' ? '<span class="pill arquivado">Arquivado</span>' : ''}</div><div class="meta">${meta}</div></div><div class="cs">${side}</div></button>`;
   }).join('');
 }
 
@@ -1079,7 +1082,7 @@ function renderFicha(id, confirmDel) {
   const envios = [...c.envios].sort((a, b) => a.data < b.data ? 1 : -1);
   const wa = c.whats && waNumber(c.whats).length >= 12;
   const html = `
-  <div class="sh-h"><div class="av lg">${esc(initials(c.nome))}</div><div style="min-width:0"><div class="kick">Ficha do cliente</div><h2>${esc(c.nome)}</h2><div class="muted" style="font-size:14px;margin-top:3px">${wa ? 'WhatsApp ' + esc(fmtFone(c.whats)) : 'Sem WhatsApp cadastrado'}${c.criadoEm ? ' · desde ' + fmtDate(c.criadoEm) : ''}</div>${(() => { const dd = diasSemEnvio(c); return `<div class="ultc${dd === null || dd >= ALIMENTAR_DIAS ? ' warn' : ''}">${dd === null ? 'Ainda sem contato registrado' : dd === 0 ? 'Último contato: hoje' : `Sem falar com ${esc(firstName(c.nome))} há ${dd} ${plural(dd, 'dia', 'dias')}`}</div>`; })()}</div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="sh-h"><div class="av lg">${esc(initials(c.nome))}</div><div style="min-width:0"><div class="kick">Ficha do cliente</div><h2 class="np">${esc(nomeProprio(c.nome))}</h2><div class="muted" style="font-size:14px;margin-top:3px">${wa ? 'WhatsApp ' + esc(fmtFone(c.whats)) : 'Sem WhatsApp cadastrado'}${c.criadoEm ? ' · desde ' + fmtDate(c.criadoEm) : ''}</div>${(() => { const dd = diasSemEnvio(c); return `<div class="ultc${dd === null || dd >= ALIMENTAR_DIAS ? ' warn' : ''}">${dd === null ? 'Ainda sem contato registrado' : dd === 0 ? 'Último contato: hoje' : `Sem falar com ${esc(firstName(c.nome))} há ${dd} ${plural(dd, 'dia', 'dias')}`}</div>`; })()}</div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
   <div class="sh-b">
     <div class="acts">
       ${wa ? `<a class="btn-or" href="${esc(waLink(c))}" target="_blank" rel="noopener">${WA_ICON.replace('<svg', '<svg width="18" height="18"')}Abrir conversa</a>` : ''}
@@ -1106,7 +1109,7 @@ function renderFicha(id, confirmDel) {
     <div class="fimficha">${c.status === 'ativo'
       ? `<button class="btn-ghost" data-act="arquivar" data-id="${c.id}">Arquivar cliente</button>`
       : `<button class="btn-ghost" data-act="reativar" data-id="${c.id}">Reativar cliente</button>${confirmDel
-        ? `<div class="confirm"><span>Excluir <b>${esc(c.nome)}</b> de vez?</span><button class="btn-del" data-act="del-yes" data-id="${c.id}">Sim, excluir</button><button class="link" data-act="del-no" data-id="${c.id}">Cancelar</button></div>`
+        ? `<div class="confirm"><span>Excluir <b class="np">${esc(nomeProprio(c.nome))}</b> de vez?</span><button class="btn-del" data-act="del-yes" data-id="${c.id}">Sim, excluir</button><button class="link" data-act="del-no" data-id="${c.id}">Cancelar</button></div>`
         : `<button class="danger" data-act="del-ask" data-id="${c.id}">Excluir de vez</button>`}`}</div>
   </div>`;
   if (ui.sheet && ui.sheet.kind === 'ficha' && ui.sheet.id === id) { const sb = $('#sheet .sh-b'), top = sb ? sb.scrollTop : 0; $('#sheet').innerHTML = html; const nb = $('#sheet .sh-b'); if (nb) nb.scrollTop = top; }
@@ -1121,7 +1124,7 @@ function openForm(id) {
   form._dupOk = false;
   const f = form;
   openSheet(`
-  <div class="sh-h"><div style="min-width:0"><div class="kick">${c ? 'Editar ficha' : 'Novo cliente'}</div><h2>${c ? esc(c.nome) : 'Quem é e o que procura'}</h2></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="sh-h"><div style="min-width:0"><div class="kick">${c ? 'Editar ficha' : 'Novo cliente'}</div><h2${c ? ' class="np"' : ''}>${c ? esc(nomeProprio(c.nome)) : 'Quem é e o que procura'}</h2></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
   <div class="sh-b">
     <div class="fl"><label class="lbl" for="f-nome">Nome *</label><input id="f-nome" value="${esc(f.nome)}" placeholder="Nome do cliente" autocomplete="off"><div class="err" id="e-nome"></div></div>
     <div class="fl"><label class="lbl" for="f-whats">WhatsApp</label><input id="f-whats" type="tel" inputmode="tel" value="${esc(fmtFone(f.whats))}" placeholder="(41) 99999-9999" autocomplete="off"><div class="err" id="e-whats"></div><div id="e-dup"></div></div>
@@ -1314,7 +1317,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-30e';
+const VERSAO = '2026-10-30f';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
