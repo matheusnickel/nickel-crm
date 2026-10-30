@@ -216,6 +216,10 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .j8c .selos span{font:600 10.5px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--or2);border:1px solid var(--orline);border-radius:99px;padding:2px 8px}
 .j8act{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
 .j8act .desc{grid-column:1 / -1}
+.j8c .cpl{display:flex;flex-direction:column;justify-content:center;min-height:38px;padding:4px 10px;border:1px dashed var(--line2);border-radius:9px;font-size:14px;color:#fff;line-height:1.2;min-width:0;overflow-wrap:anywhere}
+.j8c .cpl span{font:600 10px 'Geist Mono',monospace;letter-spacing:.08em;color:var(--muted)}
+.j8c .cpl b{font-weight:800}
+.j8c .cpl.vazio{color:var(--faint);font-size:12.5px}
 .j8c .go,.j8c .bk{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:13.5px;white-space:nowrap;padding:8px 12px;border-radius:9px}
 .j8c .bk{color:#fff;background:linear-gradient(135deg,var(--or),var(--or2))}
 .j8c .bk.ghost{background:none;border:1px solid var(--line2);color:var(--text)}
@@ -785,7 +789,6 @@ function j8Match(c, fonte = 'todas') {
   return res;
 }
 // ── FOTOS E INFORMAÇÕES DO IMÓVEL (J8 ou Gonçalves) ──
-const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
 const ICON_MSG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.6A8 8 0 1 1 21 12z"/><path d="M9 11h6M9 14.5h4"/></svg>';
 const ICON_DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
 const j8Det = new Map();
@@ -795,9 +798,6 @@ function j8Detalhe(k) {
   if (!j8Det.has(k)) j8Det.set(k, fetch(`${e.det}${c}.json`, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => { prepara(e, d); j8Det.set(k, d); return d; }, er => { j8Det.delete(k); throw er; }));
   return Promise.resolve(j8Det.get(k));
 }
-const slugify = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-// os servidores das imobiliárias não liberam as fotos para download direto; o images.weserv.nl entrega a mesma foto liberada
-const fotoLiberada = u => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) + '&output=jpg&q=95';
 // miniatura nítida e leve para o card (a do anúncio tem só 96 px)
 const miniatura = f => 'https://images.weserv.nl/?url=' + encodeURIComponent(f.replace(/_p(\.\w+)$/, '$1').replace(/^https?:\/\//, '')) + '&w=320&h=320&fit=cover&q=80';
 // baixa as fotos 6 por vez (anúncio pode ter 30, 60, 90 fotos); devolve no formato do Promise.allSettled, na ordem do anúncio
@@ -807,7 +807,6 @@ async function emLotes(lista, fn, n = 6) {
   await Promise.all(Array.from({ length: Math.min(n, lista.length) }, trab));
   return out;
 }
-const fotosProntas = new Map(); // celular: as fotos ficam prontas e o 2º toque abre "Salvar imagens"
 const telaDeToque = matchMedia('(pointer:coarse)').matches;
 function salvarArquivos(files) {
   files.forEach((f, i) => setTimeout(() => {
@@ -822,41 +821,6 @@ function fotosDoBook(d) {
   const k = d.f ? fotos.findIndex(u => nomeFoto(u) === nomeFoto(d.f)) : -1;
   if (k > 0) fotos.unshift(fotos.splice(k, 1)[0]);
   return fotos;
-}
-async function baixarFotos(btn, c) {
-  if (btn.dataset.busy) return;
-  const prontas = fotosProntas.get(c);
-  if (prontas) {
-    try { await navigator.share({ files: prontas }); }
-    catch (e) { if (e.name !== 'AbortError') salvarArquivos(prontas); }
-    return;
-  }
-  btn.dataset.busy = '1';
-  const original = btn.innerHTML;
-  try {
-    const d = await j8Detalhe(c);
-    const fotos = fotosDoBook(d);
-    if (!fotos.length) throw new Error('sem fotos');
-    const base = `${slugify(d.b)}-${d.c}`;
-    let n = 0;
-    btn.innerHTML = `Baixando 0/${fotos.length}…`;
-    const res = await emLotes(fotos, async (u, k) => {
-      const r = await fetch(fotoLiberada(u)); if (!r.ok) throw new Error('HTTP ' + r.status);
-      const b = await r.blob(); btn.innerHTML = `Baixando ${++n}/${fotos.length}…`;
-      return new File([b], `${base}-${String(k + 1).padStart(2, '0')}.jpg`, { type: 'image/jpeg' });
-    });
-    const files = res.filter(r => r.status === 'fulfilled').map(r => r.value);
-    if (!files.length) throw new Error('nenhuma foto');
-    if (telaDeToque && navigator.canShare && navigator.canShare({ files })) {
-      fotosProntas.set(c, files);
-      btn.classList.add('ready'); btn.innerHTML = `${ICON_DL}Salvar ${files.length} fotos`;
-      toast('Fotos prontas. Toque em “Salvar fotos” e escolha “Salvar imagens”.');
-    } else {
-      salvarArquivos(files); btn.innerHTML = original;
-      toast(`${files.length} ${plural(files.length, 'foto baixada', 'fotos baixadas')}${files.length < fotos.length ? ` (${fotos.length - files.length} falharam)` : ''}.`);
-    }
-  } catch (e) { btn.innerHTML = original; toast('Não consegui baixar as fotos agora. Tente de novo.'); }
-  delete btn.dataset.busy;
 }
 
 let jsPDFProm = null;
@@ -993,7 +957,8 @@ function j8Card(i, c) {
   const grupo = GRUPO[i.tc], ehCasa = grupo === 'Casa';
   const spec = [i.a ? i.a + ' m²' + (ehCasa ? ' construídos' : '') : '', ehCasa && i.at > i.a ? `terreno ${i.at.toLocaleString('pt-BR')} m²` : '', grupo === 'Terreno' || grupo === 'Comercial' ? '' : i.q ? i.q + plural(i.q, ' quarto', ' quartos') + (i.s ? ` (${i.s} ${plural(i.s, 'suíte', 'suítes')})` : '') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
   const selos = [i.ob === 'p' ? 'Na planta' : '', { s: 'Mobiliado', m: 'Semi-mobiliado' }[i.mo] || ''].filter(Boolean);
-  const prontas = fotosProntas.get(i.k);
+  // complemento do cadastro (nº do apartamento, casa…): só a J8 informa; a A. Gonçalves esconde
+  const unid = i.cp ? `<b>${esc(i.cp)}</b>${i.bl ? ` · Bloco ${esc(i.bl)}` : ''}` : '';
   return `<div class="j8c">
     <div class="j8top">
       <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
@@ -1001,8 +966,8 @@ function j8Card(i, c) {
         <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div></div>
     </div>
     <div class="j8act">
-      <button class="bk${prontas ? ' ready' : ''}" data-act="j8-fotos" data-c="${esc(i.k)}">${ICON_DL}${prontas ? `Salvar ${prontas.length} fotos` : 'Baixar fotos'}</button>
-      <button class="bk ghost${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${esc(c.id)}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
+      <div class="cpl${unid ? '' : ' vazio'}"><span>Complemento</span>${unid || 'Não informado'}</div>
+      <button class="bk${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${esc(c.id)}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
       <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo para cliente</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
     </div></div>`;
@@ -1331,7 +1296,6 @@ document.addEventListener('click', e => {
     case 'f-vagas': form.vagas = +v; renderFormChips(); break;
     case 'f-sit': case 'f-mob': { const arr = a === 'f-sit' ? form.situacao : form.mobilia; const k = arr.indexOf(v); if (k >= 0) arr.splice(k, 1); else arr.push(v); renderFormChips(); break; }
     case 'f-save': saveForm(); break;
-    case 'j8-fotos': baixarFotos(el, el.dataset.c); break;
     case 'j8-pdf': baixarPDF(el, el.dataset.c, el.dataset.cli); break;
     case 'j8-mais': ui.j8Mais[id] = (ui.j8Mais[id] || 5) + 5; renderFicha(id); break;
     case 'fonte': ui.fonte = v; lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
@@ -1346,7 +1310,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-30a';
+const VERSAO = '2026-10-30b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

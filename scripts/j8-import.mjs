@@ -9,7 +9,7 @@ const API = 'https://j8-busca-imoveis.gustavo-05e.workers.dev/v1/imoveis/';
 const HEAD = { headers: { 'User-Agent': 'Mozilla/5.0 (CarteiraNickel)', Origin: 'https://www.j8.com.br', Referer: 'https://www.j8.com.br/' } };
 const LISTA = ['Codigo', 'Categoria', 'CategoriaImovel', 'TituloImovel', 'Bairro', 'Cidade', 'Dormitorios', 'Suites', 'Vagas',
   'AreaPrivativa', 'AreaTotal', 'ValorVenda', 'OcultarPrecoSite', 'FotoDestaquePequena', 'Empreendimento', 'Status', 'DataAtualizacao',
-  'AreaTerreno', 'Mobiliado', 'EmConstrucao', 'Lancamento'];
+  'AreaTerreno', 'Mobiliado', 'EmConstrucao', 'Lancamento', 'Complemento', 'Bloco'];
 // características "Sim/Nao" do anúncio → rótulo no PDF de informações
 const ITENS_IMOVEL = {
   SuiteMaster: 'Suíte master', LivingHall: 'Living hall', SalaEstar: 'Sala de estar', SalaJantar: 'Sala de jantar', EstarIntimo: 'Estar íntimo',
@@ -33,6 +33,8 @@ const DIR = new URL('../dados/j8/', import.meta.url);
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };
 const slug = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const espera = ms => new Promise(s => setTimeout(s, ms));
+// complemento/bloco do cadastro (nº do apartamento, casa 8…); ignora o que veio preenchido com lixo
+const unidade = v => { const s = String(v || '').trim(); return /^(\.+|-+|0+|complemento|bloco|[uú]nic[oa]|novo|usado|venda|a venda|lan[cç]amento)$/i.test(s) ? '' : s; };
 
 async function chama(metodo, query) {
   const url = `${API}${metodo}?key=&${query}`;
@@ -93,6 +95,7 @@ const imoveis = lista.map(v => {
     p: v.OcultarPrecoSite === 'Sim' ? 0 : num(v.ValorVenda),
     f: String(v.FotoDestaquePequena || '').replace(/^http:/, 'https:'),
     e: String(v.Empreendimento || '').trim(),
+    cp: unidade(v.Complemento), bl: unidade(v.Bloco),
     u: `https://www.j8.com.br/imovel/${slug(tipo.split(' ')[0] || 'imovel')}-${Math.round(area)}m2-venda-${slug(v.Bairro)}-${v.Codigo}`,
     du: String(v.DataAtualizacao || '')
   };
