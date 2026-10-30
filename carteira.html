@@ -815,6 +815,14 @@ function salvarArquivos(files) {
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }, i * 350));
 }
+// o book abre pela foto de destaque do anúncio (a do cartão); a A. Gonçalves costuma marcar o destaque no meio da lista
+const nomeFoto = u => String(u || '').split('/').pop().replace(/_p(\.\w+)$/, '$1');
+function fotosDoBook(d) {
+  const fotos = (d.fotos || []).slice();
+  const k = d.f ? fotos.findIndex(u => nomeFoto(u) === nomeFoto(d.f)) : -1;
+  if (k > 0) fotos.unshift(fotos.splice(k, 1)[0]);
+  return fotos;
+}
 async function baixarFotos(btn, c) {
   if (btn.dataset.busy) return;
   const prontas = fotosProntas.get(c);
@@ -827,7 +835,7 @@ async function baixarFotos(btn, c) {
   const original = btn.innerHTML;
   try {
     const d = await j8Detalhe(c);
-    const fotos = (d.fotos || []);
+    const fotos = fotosDoBook(d);
     if (!fotos.length) throw new Error('sem fotos');
     const base = `${slugify(d.b)}-${d.c}`;
     let n = 0;
@@ -888,7 +896,7 @@ async function baixarPDF(btn, c, cli) {
   try {
     btn.innerHTML = 'Montando…';
     const [d, JsPDF] = await Promise.all([j8Detalhe(c), carregaJsPDF()]);
-    const fotos = (d.fotos || []);
+    const fotos = fotosDoBook(d);
     if (!fotos.length) throw new Error('sem fotos');
     let n = 0;
     btn.innerHTML = `Montando 0/${fotos.length}…`;
@@ -930,9 +938,6 @@ async function baixarPDF(btn, c, cli) {
 }
 
 // Descritivo para o cliente, no modelo do Matheus. Casa: terreno + área construída. Apartamento: só a privativa.
-const EXT_F = ['', 'uma', 'duas', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'];
-const EXT_M = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'];
-const porExtenso = (n, fem) => n >= 1 && n <= 10 && Number.isInteger(n) ? (fem ? EXT_F : EXT_M)[n] : String(n);
 const m2 = v => Math.round(v).toLocaleString('pt-BR') + ' m²';
 const listaPt = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
 function descritivo(d) {
@@ -951,10 +956,10 @@ function descritivo(d) {
     if (d.ap || d.a) partes.push(`${m2(d.ap || d.a)} privativos`);
   } else if (d.a) partes.push(m2(d.a));
   if (ehCasa || ehApto) {
-    // "dois quartos, sendo uma suíte," — a vírgula final evita ler "sendo uma suíte e uma vaga"
-    if (d.s) partes.push(d.q > d.s ? `${porExtenso(d.q)} quartos, sendo ${porExtenso(d.s, true)} ${d.s === 1 ? 'suíte' : 'suítes'},` : `${porExtenso(d.s, true)} ${d.s === 1 ? 'suíte' : 'suítes'}`);
-    else if (d.q) partes.push(`${porExtenso(d.q)} ${d.q === 1 ? 'quarto' : 'quartos'}`);
-    if (d.v) partes.push(`${porExtenso(d.v, true)} ${d.v === 1 ? 'vaga' : 'vagas'} de garagem`);
+    // em número, como o Matheus escreve: "3 quartos, sendo 1 suíte," — a vírgula final evita ler "sendo 1 suíte e 2 vagas"
+    if (d.s) partes.push(d.q > d.s ? `${d.q} quartos, sendo ${d.s} ${d.s === 1 ? 'suíte' : 'suítes'},` : `${d.s} ${d.s === 1 ? 'suíte' : 'suítes'}`);
+    else if (d.q) partes.push(`${d.q} ${d.q === 1 ? 'quarto' : 'quartos'}`);
+    if (d.v) partes.push(`${d.v} ${d.v === 1 ? 'vaga' : 'vagas'} de garagem`);
   }
   const nome = { Apartamento: 'apartamento', Cobertura: 'cobertura', Casa: 'casa', Terreno: 'terreno', Comercial: 'imóvel' }[grupo] || 'imóvel';
   const fem = nome === 'casa' || nome === 'cobertura';
@@ -1341,7 +1346,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-28d';
+const VERSAO = '2026-10-30a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
