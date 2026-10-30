@@ -1153,7 +1153,9 @@ function openForm(id) {
   renderFormChips();
   $('#f-valor').addEventListener('input', e => maskMoney(e.target));
   $('#f-vmin').addEventListener('input', e => maskMoney(e.target));
-  $('#f-whats').addEventListener('input', () => { form._dupOk = false; $('#e-dup').innerHTML = ''; });
+  // avisa já enquanto digita o WhatsApp se ele é de outro cliente, sem esperar o salvar
+  $('#f-whats').addEventListener('input', () => { form._dupOk = false; avisaRepetido(); });
+  avisaRepetido();
   typeahead($('#f-bairro'), $('#f-bairro-dd'), { exclude: () => form.bairros, onPick: b => { addFormBairro(b); return true; } });
   if (matchMedia('(min-width:901px)').matches) setTimeout(() => $('#f-nome').focus(), 30);
 }
@@ -1173,6 +1175,15 @@ function renderFormChips() {
   $('#f-mob').innerHTML = MOBILIAS.map(([k, l]) => `<button class="chip${f.mobilia.includes(k) ? ' on' : ''}" data-act="f-mob" data-v="${k}">${l}</button>`).join('');
   // terreno só interessa para casa e terreno
   $('#f-terreno-box').classList.toggle('hidden', !f.tipos.some(t => GRUPO[t] === 'Casa' || GRUPO[t] === 'Terreno'));
+}
+// outro cliente com o mesmo WhatsApp (o mesmo número, com ou sem 55, parênteses ou traço)
+function avisaRepetido() {
+  if (!form || !$('#e-dup')) return null;
+  const v = $('#f-whats').value, w = digits(v).length >= 10 ? waNumber(v) : '';
+  const dup = w ? clientes.find(c => c.id !== form.id && digits(c.whats) && waNumber(c.whats) === w) : null;
+  const salvar = form.id ? 'salvar' : 'cadastrar';
+  $('#e-dup').innerHTML = dup ? `<div class="dup" style="margin-top:8px">Já existe um cliente com esse WhatsApp: <b class="np">${esc(nomeProprio(dup.nome))}</b>${dup.status === 'arquivado' ? ' (arquivado)' : ''}. <button data-act="ficha" data-id="${dup.id}">Abrir ficha</button> ou toque em ${salvar} de novo para ${salvar} assim mesmo.</div>` : '';
+  return dup;
 }
 function saveForm() {
   const f = form; if (!f) return;
@@ -1194,12 +1205,11 @@ function saveForm() {
   err('e-valor', f.valorMin && f.valorMax && f.valorMax < f.valorMin ? 'O valor “até” está menor que o “de”.' : '');
   err('e-area', f.areaMin && f.areaMax && f.areaMax < f.areaMin ? 'A metragem “até” está menor que a “de”.' : '');
   if (bad) { const el = $('#' + bad); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
-  if (f.whats && !f._dupOk) {
-    const dup = clientes.find(c => c.id !== f.id && digits(c.whats) && waNumber(c.whats) === waNumber(f.whats));
-    if (dup) {
-      $('#e-dup').innerHTML = `<div class="dup" style="margin-top:8px">Já existe um cliente com esse WhatsApp: <b>${esc(dup.nome)}</b>. <button data-act="ficha" data-id="${dup.id}">Abrir ficha</button> ou toque em salvar de novo para cadastrar assim mesmo.</div>`;
-      f._dupOk = true; return;
-    }
+  // repetido: o 1º toque em salvar só mostra o aviso (e leva a tela até ele); o 2º salva assim mesmo
+  if (!f._dupOk && avisaRepetido()) {
+    f._dupOk = true;
+    $('#e-dup').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    return;
   }
   const isNew = !f.id;
   const data = Object.assign({}, f); delete data._dupOk;
@@ -1317,7 +1327,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-30f';
+const VERSAO = '2026-10-30g';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
