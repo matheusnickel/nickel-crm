@@ -33,8 +33,8 @@ const DIR = new URL('../dados/j8/', import.meta.url);
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };
 const slug = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const espera = ms => new Promise(s => setTimeout(s, ms));
-// complemento/bloco do cadastro (nº do apartamento, casa 8…); ignora o que veio preenchido com lixo
-const unidade = v => { const s = String(v || '').trim(); return /^(\.+|-+|0+|complemento|bloco|[uú]nic[oa]|novo|usado|venda|a venda|lan[cç]amento)$/i.test(s) ? '' : s; };
+// complemento/bloco do cadastro (nº do apartamento, casa 8…), copiados exatamente como estão na J8
+const unidade = v => String(v || '').trim();
 
 async function chama(metodo, query) {
   const url = `${API}${metodo}?key=&${query}`;

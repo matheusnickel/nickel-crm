@@ -219,6 +219,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .j8c .cpl{display:flex;flex-direction:column;justify-content:center;min-height:38px;padding:4px 10px;border:1px dashed var(--line2);border-radius:9px;font-size:14px;color:#fff;line-height:1.2;min-width:0;overflow-wrap:anywhere}
 .j8c .cpl span{font:600 10px 'Geist Mono',monospace;letter-spacing:.08em;color:var(--muted)}
 .j8c .cpl b{font-weight:800}
+.j8c .cpl small{font-size:11.5px;color:var(--text2)}
 .j8c .cpl.vazio{color:var(--faint);font-size:12.5px}
 .j8c .go,.j8c .bk{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:13.5px;white-space:nowrap;padding:8px 12px;border-radius:9px}
 .j8c .bk{color:#fff;background:linear-gradient(135deg,var(--or),var(--or2))}
@@ -957,8 +958,9 @@ function j8Card(i, c) {
   const grupo = GRUPO[i.tc], ehCasa = grupo === 'Casa';
   const spec = [i.a ? i.a + ' m²' + (ehCasa ? ' construídos' : '') : '', ehCasa && i.at > i.a ? `terreno ${i.at.toLocaleString('pt-BR')} m²` : '', grupo === 'Terreno' || grupo === 'Comercial' ? '' : i.q ? i.q + plural(i.q, ' quarto', ' quartos') + (i.s ? ` (${i.s} ${plural(i.s, 'suíte', 'suítes')})` : '') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
   const selos = [i.ob === 'p' ? 'Na planta' : '', { s: 'Mobiliado', m: 'Semi-mobiliado' }[i.mo] || ''].filter(Boolean);
-  // complemento do cadastro (nº do apartamento, casa…): só a J8 informa; a A. Gonçalves esconde
-  const unid = i.cp ? `<b>${esc(i.cp)}</b>${i.bl ? ` · Bloco ${esc(i.bl)}` : ''}` : '';
+  // complemento do cadastro copiado exatamente como está na J8 (a A. Gonçalves esconde); o rótulo diz de que é
+  const deQue = { Apartamento: 'do apartamento', Cobertura: 'da cobertura', Casa: 'da casa', Terreno: 'do terreno' }[grupo] || 'do imóvel';
+  const unid = i.cp ? `<b>${esc(i.cp)}</b>${i.bl ? `<small>Bloco: ${esc(i.bl)}</small>` : ''}` : '';
   return `<div class="j8c">
     <div class="j8top">
       <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
@@ -966,7 +968,7 @@ function j8Card(i, c) {
         <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div></div>
     </div>
     <div class="j8act">
-      <div class="cpl${unid ? '' : ' vazio'}"><span>Complemento</span>${unid || 'Não informado'}</div>
+      <div class="cpl${unid ? '' : ' vazio'}"><span>Complemento ${deQue}</span>${unid || 'Não informado'}</div>
       <button class="bk${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${esc(c.id)}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
       <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo para cliente</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
@@ -1310,7 +1312,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-30b';
+const VERSAO = '2026-10-30c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
