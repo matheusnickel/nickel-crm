@@ -221,6 +221,7 @@ details.more .in{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .j8c .cpl b{font-weight:800}
 .j8c .cpl small{font-size:11.5px;color:var(--text2)}
 .j8c .cpl.vazio{color:var(--faint);font-size:12.5px}
+.j8c .cpl.end{grid-column:1 / -1}
 .j8c .go,.j8c .bk{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:13.5px;white-space:nowrap;padding:8px 12px;border-radius:9px}
 .j8c .bk{color:#fff;background:linear-gradient(135deg,var(--or),var(--or2))}
 .j8c .bk.ghost{background:none;border:1px solid var(--line2);color:var(--text)}
@@ -968,6 +969,7 @@ function j8Card(i, c) {
         <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div></div>
     </div>
     <div class="j8act">
+      <div class="cpl end${i.en ? '' : ' vazio'}"><span>Endereço</span>${i.en ? `<b>${esc(i.en)}</b>` : 'Não informado'}</div>
       <div class="cpl${unid ? '' : ' vazio'}"><span>Complemento ${deQue}</span>${unid || 'Não informado'}</div>
       <button class="bk${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${esc(c.id)}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
       <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo para cliente</button>
@@ -1312,7 +1314,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-30c';
+const VERSAO = '2026-10-30d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

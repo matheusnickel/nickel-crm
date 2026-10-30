@@ -9,7 +9,7 @@ const API = 'https://j8-busca-imoveis.gustavo-05e.workers.dev/v1/imoveis/';
 const HEAD = { headers: { 'User-Agent': 'Mozilla/5.0 (CarteiraNickel)', Origin: 'https://www.j8.com.br', Referer: 'https://www.j8.com.br/' } };
 const LISTA = ['Codigo', 'Categoria', 'CategoriaImovel', 'TituloImovel', 'Bairro', 'Cidade', 'Dormitorios', 'Suites', 'Vagas',
   'AreaPrivativa', 'AreaTotal', 'ValorVenda', 'OcultarPrecoSite', 'FotoDestaquePequena', 'Empreendimento', 'Status', 'DataAtualizacao',
-  'AreaTerreno', 'Mobiliado', 'EmConstrucao', 'Lancamento', 'Complemento', 'Bloco'];
+  'AreaTerreno', 'Mobiliado', 'EmConstrucao', 'Lancamento', 'Complemento', 'Bloco', 'TipoEndereco', 'Endereco', 'Numero'];
 // características "Sim/Nao" do anúncio → rótulo no PDF de informações
 const ITENS_IMOVEL = {
   SuiteMaster: 'Suíte master', LivingHall: 'Living hall', SalaEstar: 'Sala de estar', SalaJantar: 'Sala de jantar', EstarIntimo: 'Estar íntimo',
@@ -96,6 +96,8 @@ const imoveis = lista.map(v => {
     f: String(v.FotoDestaquePequena || '').replace(/^http:/, 'https:'),
     e: String(v.Empreendimento || '').trim(),
     cp: unidade(v.Complemento), bl: unidade(v.Bloco),
+    // endereço completo do cadastro (o site da J8 esconde o número), como está lá: "Alameda Júlia da Costa, 1945"
+    en: [[unidade(v.TipoEndereco), unidade(v.Endereco)].filter(Boolean).join(' '), unidade(v.Numero)].filter(Boolean).join(', '),
     u: `https://www.j8.com.br/imovel/${slug(tipo.split(' ')[0] || 'imovel')}-${Math.round(area)}m2-venda-${slug(v.Bairro)}-${v.Codigo}`,
     du: String(v.DataAtualizacao || '')
   };
