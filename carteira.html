@@ -959,9 +959,9 @@ function j8Card(i, c) {
   const grupo = GRUPO[i.tc], ehCasa = grupo === 'Casa';
   const spec = [i.a ? i.a + ' m²' + (ehCasa ? ' construídos' : '') : '', ehCasa && i.at > i.a ? `terreno ${i.at.toLocaleString('pt-BR')} m²` : '', grupo === 'Terreno' || grupo === 'Comercial' ? '' : i.q ? i.q + plural(i.q, ' quarto', ' quartos') + (i.s ? ` (${i.s} ${plural(i.s, 'suíte', 'suítes')})` : '') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
   const selos = [i.ob === 'p' ? 'Na planta' : '', { s: 'Mobiliado', m: 'Semi-mobiliado' }[i.mo] || ''].filter(Boolean);
-  // complemento do cadastro copiado exatamente como está na J8 (a A. Gonçalves esconde); o rótulo diz de que é
+  // complemento e bloco copiados exatamente como estão no cadastro (a A. Gonçalves só informa o bloco); o rótulo diz de que é
   const deQue = { Apartamento: 'do apartamento', Cobertura: 'da cobertura', Casa: 'da casa', Terreno: 'do terreno' }[grupo] || 'do imóvel';
-  const unid = i.cp ? `<b>${esc(i.cp)}</b>${i.bl ? `<small>Bloco: ${esc(i.bl)}</small>` : ''}` : '';
+  const unid = i.cp ? `<b>${esc(i.cp)}</b>${i.bl ? `<small>Bloco: ${esc(i.bl)}</small>` : ''}` : i.bl ? `<b>Bloco: ${esc(i.bl)}</b>` : '';
   return `<div class="j8c">
     <div class="j8top">
       <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
@@ -1314,7 +1314,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-30d';
+const VERSAO = '2026-10-30e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

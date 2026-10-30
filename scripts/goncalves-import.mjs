@@ -53,6 +53,20 @@ function registro(html) {
   return null;
 }
 
+// o endereço que o anúncio mostra no topo: <p class="endereco">Rua Alberto Klemtz, 1321, Portão - Curitiba/PR</p>
+// fica só rua e número (bairro e cidade já aparecem no card); sem esse trecho, usa o cadastro
+const entidades = s => s.replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#039;|&apos;/g, "'").replace(/&nbsp;/g, ' ');
+function enderecoDoSite(html, o) {
+  const m = html.match(/<p class="endereco">([\s\S]*?)<\/p>/);
+  if (!m) return [[o.TipoEndereco, o.Endereco].map(x => String(x || '').trim()).filter(Boolean).join(' '), String(o.Numero || '').trim()].filter(Boolean).join(', ');
+  let s = entidades(m[1].replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+  const k = s.lastIndexOf(' - ');
+  if (k > 0) s = s.slice(0, k);
+  const partes = s.split(', ');
+  if (partes.length > 1 && slug(partes[partes.length - 1]) === slug(o.Bairro)) partes.pop();
+  return partes.join(', ').trim();
+}
+
 await mkdir(DIR, { recursive: true });
 const codigos = JSON.parse(await pega(`${SITE}/wp-admin/admin-ajax.php?action=listar_codigos_imoveis`));
 if (!Array.isArray(codigos) || codigos.length < 100) throw new Error('Lista de códigos estranha: ' + String(codigos).slice(0, 80));
@@ -67,7 +81,8 @@ async function trabalhador() {
   while (fila.length) {
     const c = String(fila.shift());
     try {
-      const o = registro(await pega(`${SITE}/imovel/${c}/venda/imovel/`));
+      const html = await pega(`${SITE}/imovel/${c}/venda/imovel/`);
+      const o = registro(html);
       if (!o || String(o.Codigo) !== c) throw new Error('sem registro');
       const venda = /venda/i.test(o.Status || '') || (o.FinalidadeStatus || {}).VENDA;
       if (!venda || /\bteste\b/i.test(o.TituloSite || '')) { aluguel++; continue; }
@@ -86,6 +101,9 @@ async function trabalhador() {
         p: num(o.ValorVenda),
         f: String(o.FotoDestaquePequena || o.FotoDestaque || ''),
         e: String(o.Empreendimento || '').trim(),
+        // endereço copiado do anúncio ("Rua Alberto Klemtz, 1321"): o cadastro do Vista vem sem o número
+        en: enderecoDoSite(html, o),
+        cp: String(o.Complemento || '').trim(), bl: String(o.Bloco || '').trim(),
         u: `${SITE}/imovel/${c}/venda/${slug([t, o.Dormitorios ? o.Dormitorios + ' quartos' : '', o.Empreendimento, o.Bairro, o.Cidade].filter(Boolean).join(' '))}/`,
         du: String(o.DataHoraAtualizacao || '')
       };
