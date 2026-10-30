@@ -2,10 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "nickel-crm",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "-p", "3000", "."],
+      "name": "Nickel CRM",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "const h=require('http'),fs=require('fs'),p=require('path');h.createServer((q,r)=>{let f=p.join('C:/Users/Matheus Nickel/OneDrive/Desktop/nickel-crm',q.url==='/'?'/dashboard-gestor.html':q.url);fs.readFile(f,(e,d)=>{if(e){r.writeHead(404);r.end();}else{const m={'html':'text/html','js':'application/javascript','css':'text/css','json':'application/json','svg':'image/svg+xml'};r.writeHead(200,{'Content-Type':m[f.split('.').pop()]||'text/plain'});r.end(d);}});}).listen(3000)"],
       "port": 3000
+    },
+    {
+      "name": "Carteira",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "const h=require('http'),fs=require('fs'),p=require('path');h.createServer((q,r)=>{const u=decodeURIComponent(q.url.split('?')[0]);let f=p.join('C:/Users/Matheus Nickel/OneDrive/Desktop/1308/nickel-crm',u==='/'?'/carteira.html':u);fs.readFile(f,(e,d)=>{if(e){r.writeHead(404);r.end();}else{const m={'html':'text/html; charset=utf-8','js':'application/javascript','css':'text/css','json':'application/json','svg':'image/svg+xml'};r.writeHead(200,{'Content-Type':m[f.split('.').pop()]||'text/plain'});r.end(d);}});}).listen(3140)"],
+      "port": 3140
     }
   ]
 }

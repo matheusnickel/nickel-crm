@@ -2,16 +2,16 @@ import { fbUpsertEntry, fbDeleteEntry, fbSeedIfFirstTime, fbListen, fbGetTeam, f
 
 // ── USERS (deve vir antes de TEAM) ───────────────────────
 const USERS = {
-  deisy:      { name: 'Deyse Brito',         role: 'agent',  password: 'nickel123' },
-  luis:       { name: 'Luiz Davaro',         role: 'agent',  password: 'nickel123' },
-  jhonnathan: { name: 'Jhonnathan Pinheiro', role: 'agent',  password: 'nickel123' },
-  joao:       { name: 'João Andrade',        role: 'agent',  password: 'nickel123' },
-  felipe:     { name: 'Felipe Moreira',      role: 'agent',  password: 'nickel123' },
-  karen:      { name: 'Karen Abreu',         role: 'agent',  password: 'nickel123' },
-  alex:       { name: 'Aleksander Vaz',      role: 'agent',  password: 'nickel123' },
-  konrad:     { name: 'Konrad Horst',        role: 'agent',  password: 'nickel123' },
-  fernanda:   { name: 'Fernanda Prochnow',   role: 'agent',  password: 'nickel123' },
-  matheus:    { name: 'Matheus',             role: 'gestor', password: 'nickel123' },
+  deisy:      { name: 'Deyse Brito',         role: 'agent',  password: 'flor2301' },
+  luis:       { name: 'Luiz Davaro',         role: 'agent',  password: 'flor2301' },
+  jhonnathan: { name: 'Jhonnathan Pinheiro', role: 'agent',  password: 'flor2301' },
+  joao:       { name: 'João Andrade',        role: 'agent',  password: 'flor2301' },
+  felipe:     { name: 'Felipe Moreira',      role: 'agent',  password: 'flor2301' },
+  karen:      { name: 'Karen Abreu',         role: 'agent',  password: 'flor2301' },
+  alex:       { name: 'Aleksander Vaz',      role: 'agent',  password: 'flor2301' },
+  konrad:     { name: 'Konrad Horst',        role: 'agent',  password: 'flor2301' },
+  fernanda:   { name: 'Fernanda Prochnow',   role: 'agent',  password: 'flor2301' },
+  matheus:    { name: 'Matheus',             role: 'gestor', password: 'flor2301' },
 };
 
 // ── TEAM (após USERS) ────────────────────────────────────
