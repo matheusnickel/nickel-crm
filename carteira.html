@@ -300,7 +300,9 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .col:hover i,.col.on i{opacity:1}
 .col.on i{box-shadow:0 0 0 2px var(--card),0 0 0 3px #e0662c}
 .col b{font-size:12px;font-weight:600;color:var(--text2)}
-.cx{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+.cx{display:flex;gap:2px;font-size:11.5px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+.cx span{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:visible}
+.cx span:last-child{color:var(--text);font-weight:600}
 .m-tab{margin-top:12px;font-size:13px}
 .m-tab summary{cursor:pointer;color:var(--tq2);font-weight:600}
 .m-tab table{width:100%;border-collapse:collapse;margin-top:8px;font-variant-numeric:tabular-nums}
@@ -1381,30 +1383,35 @@ function renderMetricas() {
   // imóveis enviados: por dia (o período escolhido), por semana (no mínimo 12) ou por mês (12 meses)
   const datas = base.flatMap(c => c.envios.map(e => e.data)).filter(Boolean);
   const hoje = new Date(), dataDe = n => { const t = new Date(); t.setDate(t.getDate() - n); return pad(t.getDate()) + '/' + pad(t.getMonth() + 1); };
-  let nb, idx, rot, faixa, agora;
+  let nb, idx, rot, eixo, faixa;
   if (E === 'mes') {
-    nb = 12; agora = 'Este mês'; faixa = 'nos últimos 12 meses';
+    nb = 12; faixa = 'nos últimos 12 meses';
     const m0 = hoje.getFullYear() * 12 + hoje.getMonth();
     idx = d => nb - 1 - (m0 - (+d.slice(0, 4) * 12 + +d.slice(5, 7) - 1));
     rot = i => { const t = new Date(hoje.getFullYear(), hoje.getMonth() - (nb - 1 - i), 1); return t.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('. de ', '/').replace('.', ''); };
+    eixo = rot;
   } else if (E === 'semana') {
-    nb = Math.max(12, Math.ceil(P / 7)); agora = 'Esta semana'; faixa = `nas últimas ${nb} semanas`;
+    nb = Math.max(12, Math.ceil(P / 7)); faixa = `nas últimas ${nb} semanas`;
     idx = d => nb - 1 - Math.floor(daysSince(d) / 7);
     rot = i => 'Semana de ' + dataDe((nb - 1 - i) * 7 + 6);
+    eixo = i => dataDe((nb - 1 - i) * 7 + 6);
   } else {
-    nb = P; agora = 'Hoje'; faixa = `nos últimos ${P} dias`;
+    nb = P; faixa = `nos últimos ${P} dias`;
     idx = d => nb - 1 - daysSince(d);
     rot = i => dataDe(nb - 1 - i);
+    eixo = i => nb <= 7 ? rot(i) : rot(i).slice(0, 2); // 30 e 90 dias: só o número do dia
   }
+  // data embaixo das colunas (no máximo 12, contando a partir de hoje) e o número em cima de cada coluna quando cabe
+  const cada = Math.ceil(nb / 12), todosNumeros = nb <= 14;
   const cont = Array(nb).fill(0);
   datas.forEach(d => { const i = idx(d); if (i >= 0 && i < nb) cont[i]++; });
   const total = cont.reduce((s, n) => s + n, 0), mx = Math.max(...cont), im = cont.lastIndexOf(mx);
-  const colunas = cont.map((n, i) => `<button class="col" data-act="m-col" data-r="${esc(rot(i))}" data-n="${n}" aria-label="${esc(rot(i))}: ${n}">${n && i === im ? `<b>${n}</b>` : ''}<i style="height:${n ? Math.max(3, n / Math.max(1, mx) * 82) : 0}%"></i></button>`).join('');
+  const colunas = cont.map((n, i) => `<button class="col" data-act="m-col" data-r="${esc(rot(i))}" data-n="${n}" aria-label="${esc(rot(i))}: ${n}">${n && (todosNumeros || i === im) ? `<b>${n}</b>` : ''}<i style="height:${n ? Math.max(3, n / Math.max(1, mx) * 82) : 0}%"></i></button>`).join('');
   const tabela = cont.map((n, i) => [rot(i), n]).reverse().map(([r, n]) => `<tr><td>${esc(r)}</td><td>${n}</td></tr>`).join('');
   const grafico = `<div class="m-card m-full"><div class="m-h"><h3>Imóveis enviados</h3>
       <div class="chips sm">${[['dia', 'Por dia'], ['semana', 'Por semana'], ['mes', 'Por mês']].map(([k, l]) => `<button class="chip${E === k ? ' on' : ''}" data-act="m-e" data-v="${k}">${l}</button>`).join('')}</div></div>
     <p class="m-sub"><b class="m-tot">${total}</b> ${plural(total, 'imóvel enviado', 'imóveis enviados')} ${faixa} · <span class="m-read" id="m-read">${total ? 'toque numa coluna para ver o valor' : 'nenhum envio ainda'}</span></p>
-    <div class="cols">${colunas}</div><div class="cx"><span>${esc(rot(0))}</span><span>${agora}</span></div>
+    <div class="cols">${colunas}</div><div class="cx">${cont.map((n, i) => `<span>${(nb - 1 - i) % cada === 0 ? esc(eixo(i)) : ''}</span>`).join('')}</div>
     <details class="m-tab"><summary>Ver em tabela</summary><table><tr><th>${{ dia: 'Dia', semana: 'Semana', mes: 'Mês' }[E]}</th><th>Imóveis</th></tr>${tabela}</table></details></div>`;
 
   // onde falta imóvel: bairros em que clientes ativos têm até 3 opções no estoque das imobiliárias
@@ -1771,7 +1778,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31e';
+const VERSAO = '2026-10-31f';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
