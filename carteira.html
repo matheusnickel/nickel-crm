@@ -878,9 +878,12 @@ let carregados = false;
 const IMOVEL = new Map(); // "src:código" -> imóvel
 const ABREV_RUA = { prof: 'professor', profa: 'professora', dr: 'doutor', des: 'desembargador', gal: 'general', gen: 'general', cel: 'coronel', pres: 'presidente',
   eng: 'engenheiro', sen: 'senador', dep: 'deputado', cap: 'capitao', maj: 'major', ten: 'tenente', sto: 'santo', sta: 'santa', mal: 'marechal', alm: 'almirante', pe: 'padre' };
+// grafias diferentes do mesmo nome: letra dobrada ("Perretto" × "Perreto") e algarismo romano ("Burgel II" × "Burgel 2")
+const ROMANOS = { i: '1', ii: '2', iii: '3', iv: '4', v: '5', vi: '6', vii: '7', viii: '8', ix: '9', x: '10' };
+const palavras = s => norm(s).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean).map(p => ROMANOS[p] || p.replace(/([a-z])\1+/g, '$1'));
 function chaveEndereco(en) {
   const m = norm(en).match(/^(.*?),\s*(\d+)/); if (!m) return '';
-  const rua = m[1].replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean).map(p => ABREV_RUA[p] || p)
+  const rua = palavras(m[1]).map(p => ABREV_RUA[p] || p)
     .filter((p, k) => !(k === 0 && /^(rua|r|avenida|av|alameda|al|travessa|tv|rodovia|rod|estrada|praca|largo)$/.test(p)) && !/^(de|da|do|dos|das|e)$/.test(p));
   return rua.join(' ') + '#' + m[2];
 }
@@ -904,7 +907,7 @@ function marcaRepetidos() {
   ESTOQUES.forEach(e => (estoque[e.id] ? estoque[e.id].imoveis : []).forEach(i => {
     IMOVEL.set(i.k, i); i.rep = ''; i.irmaos = []; i.chaves = [];
     const g = GRUPO[i.tc]; if (!g) return;
-    i.chaves = [chaveEndereco(i.en), i.e && i.b ? 'cond:' + norm(i.e) + '|' + bkey(i.b) : ''].filter(Boolean).map(ch => g + '|' + ch);
+    i.chaves = [chaveEndereco(i.en), i.e && i.b ? 'cond:' + palavras(i.e).join(' ') + '|' + bkey(i.b) : ''].filter(Boolean).map(ch => g + '|' + ch);
     i.chaves.forEach(k => { if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(i); });
   }));
   const ordem = Object.fromEntries(ESTOQUES.map((e, n) => [e.id, n]));
@@ -1851,7 +1854,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31i';
+const VERSAO = '2026-10-31j';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
