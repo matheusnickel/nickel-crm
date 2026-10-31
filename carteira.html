@@ -261,6 +261,49 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .dup{background:var(--warnbg);border-radius:10px;padding:12px 14px;font-size:14px;color:#6d4f12}
 .dup button{color:var(--text);text-decoration:underline;font-weight:700}
 
+/* métricas: cores dos gráficos validadas (laranja #e0662c = envios; verde-água #0f9f8f = barras) */
+.mfil{display:flex;flex-direction:column;gap:8px;margin-top:20px}
+.kpi .meter{display:block;height:6px;border-radius:99px;background:var(--bg2);overflow:hidden;margin:4px 0 2px}
+.kpi .meter i{display:block;height:100%;border-radius:99px;background:#0f9f8f}
+.kpi.warn .meter i{background:#d9a03c}
+.kpi .dl{font-size:12.5px;font-weight:600;color:var(--muted)}
+.kpi .dl.up{color:var(--ok)}.kpi .dl.down{color:var(--warn)}
+.m-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.m-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--sh1);min-width:0}
+.m-full{grid-column:1 / -1}
+.m-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.m-h h3{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text2)}
+.m-read{font-size:13px;color:var(--muted)}
+.m-sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+.m-vazio{font-size:14px;color:var(--muted)}
+.cols{display:flex;align-items:flex-end;gap:2px;height:160px;margin-top:12px;border-bottom:1px solid var(--line2)}
+.col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;padding:0}
+.col i{display:block;width:100%;max-width:24px;background:#e0662c;border-radius:4px 4px 0 0;opacity:.85;transition:opacity .15s}
+.col:hover i,.col.on i{opacity:1}
+.col.on i{box-shadow:0 0 0 2px var(--card),0 0 0 3px #e0662c}
+.col b{font-size:12px;font-weight:600;color:var(--text2)}
+.cx{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+.m-tab{margin-top:12px;font-size:13px}
+.m-tab summary{cursor:pointer;color:var(--tq2);font-weight:600}
+.m-tab table{width:100%;border-collapse:collapse;margin-top:8px;font-variant-numeric:tabular-nums}
+.m-tab th,.m-tab td{text-align:left;padding:6px 0;border-bottom:1px solid var(--line)}
+.m-tab th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.m-tab td:last-child,.m-tab th:last-child{text-align:right}
+.hb{display:flex;flex-direction:column;gap:2px}
+.hb-l{display:grid;grid-template-columns:minmax(0,9.5rem) minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;text-align:left;padding:7px 0;font-size:14px}
+button.hb-l{border-radius:8px}
+button.hb-l:hover .hb-r{color:var(--tq2)}
+.hb-r{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb-t{height:10px;background:var(--bg);border-radius:0 4px 4px 0}
+.hb-t i{display:block;height:100%;background:#0f9f8f;border-radius:0 4px 4px 0}
+.hb-v{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hb-v small{font-weight:400;color:var(--muted);font-size:12px}
+.m-fila{display:flex;flex-direction:column}
+.m-cli{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%;text-align:left;padding:10px 0;border-top:1px solid var(--line)}
+.m-cli:first-child{border-top:none}
+.m-cli .nm{font-size:15px}
+.m-cli:hover .nm{color:var(--tq2)}
+
 /* computador largo: a ficha abre ao lado da lista, sem cobrir a tela */
 @media (min-width:1100px){
   .ov.dock{left:auto;width:var(--dockw);top:calc(var(--sat) + var(--toph));background:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;align-items:stretch}
@@ -268,6 +311,7 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
   @keyframes entra{from{transform:translateX(30px);opacity:.3}}
   body.docked main{max-width:none;margin:0 var(--dockw) 0 0;padding-left:36px;padding-right:32px}
   body.docked .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.docked .m-grid{grid-template-columns:minmax(0,1fr)}
 }
 
 /* login */
@@ -305,6 +349,9 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
   .j8top{gap:12px}
   .j8c .go{justify-self:center}
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .m-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+  .m-card{padding:16px}
+  .hb-l{grid-template-columns:minmax(0,7.5rem) minmax(0,1fr) auto;gap:10px;font-size:13.5px}
 }
 @media (max-width:520px){
   .sync .t{display:none}
@@ -356,6 +403,7 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
     <nav class="tabs">
       <button data-tab="clientes" class="on">Clientes</button>
       <button data-tab="bairros">Bairros</button>
+      <button data-tab="metricas">Métricas</button>
     </nav>
     <div class="top-r">
       <span id="sync" class="sync"><span class="t">Carregando…</span></span>
@@ -379,6 +427,13 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
       <div id="b-list"></div>
     </section>
 
+    <!-- MÉTRICAS -->
+    <section id="v-metricas" class="hidden">
+      <div class="phd"><div class="ttl"><span class="kick">Como a carteira está</span><h1>Métricas</h1></div></div>
+      <div class="mfil" id="m-fil"></div>
+      <div id="m-body"></div>
+    </section>
+
     <!-- CLIENTES -->
     <section id="v-clientes">
       <div class="phd"><div class="ttl"><span class="kick" id="c-hoje"></span><h1>Clientes</h1></div><span class="cnt" id="c-title"></span></div>
@@ -394,6 +449,7 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
   <nav class="bnav">
     <button data-tab="clientes" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M16 4.5a4 4 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6"/></svg>Clientes</button>
     <button data-tab="bairros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Bairros</button>
+    <button data-tab="metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</button>
   </nav>
   <button class="fab" data-act="novo" aria-label="Novo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 </div>
@@ -686,6 +742,7 @@ const ui = {
   tab: 'clientes',
   b: { q: '', tipo: '' },
   c: { q: '', f: 'ativos' },
+  m: { p: 30, g: '' }, // métricas: período em dias e família de imóvel ('' = todas)
   j8Mais: {},        // id do cliente -> quantos imóveis estão abertos na ficha (5, 10, 15...)
   fonte: lsGet('carteira_fonte', 'todas'), // imobiliária escolhida na ficha: todas, j8 ou gon
   sheet: null        // {kind:'ficha'|'form', id}
@@ -754,6 +811,7 @@ async function loadEstoques() {
   }));
   carregados = true; j8Cache.clear();
   renderClientes();
+  if (ui.tab === 'metricas') renderMetricas();
   if (ui.sheet && ui.sheet.kind === 'ficha') renderFicha(ui.sheet.id);
 }
 // de qual imobiliária mostrar na ficha: 'todas', 'j8' ou 'gon' (fica salvo neste aparelho)
@@ -861,6 +919,80 @@ function registrarContatoJ8(cliId, d) {
   const e = { id: newId('e'), data: nowLocal(), tipo: d.tc || '', bairro: d.b || '', valor: d.p || 0, link: d.u || '', ref: refDe(d), via: 'PDF ' + EST[d.src].nome };
   return saveClient(Object.assign({}, cl, { envios: cl.envios.concat([e]) }));
 }
+// quem assina o book (capa e rodapé)
+const CORRETOR = { nome: 'MATHEUS NICKEL', cargo: 'Corretor de Imóveis', creci: 'CRECI-PR 53436', insta: '@matheus.nickel', whats: '(41) 98500-0305' };
+const WA_PATH = WA_ICON.match(/ d="([^"]+)"/)[1];
+// ícones do Instagram e do WhatsApp desenhados num canvas e postos no PDF como imagem
+const iconesPDF = {};
+function iconePDF(tipo, cor) {
+  const k = tipo + cor; if (iconesPDF[k]) return iconesPDF[k];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 96;
+  const g = cv.getContext('2d'); g.scale(4, 4); g.fillStyle = g.strokeStyle = cor;
+  if (tipo === 'insta') {
+    // quadrado de cantos redondos, a lente e o pontinho do flash
+    g.lineWidth = 2; g.beginPath(); g.moveTo(8.5, 3); g.arcTo(21, 3, 21, 21, 5.5); g.arcTo(21, 21, 3, 21, 5.5); g.arcTo(3, 21, 3, 3, 5.5); g.arcTo(3, 3, 21, 3, 5.5); g.closePath(); g.stroke();
+    g.beginPath(); g.arc(12, 12, 4.3, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.arc(17.2, 6.8, 1.3, 0, Math.PI * 2); g.fill();
+  } else g.fill(new Path2D(WA_PATH));
+  return iconesPDF[k] = cv.toDataURL('image/png');
+}
+// corta a foto para preencher exatamente a caixa (sem faixas brancas), como na capa
+async function recorte({ du, w, h }, bw, bh) {
+  const el = new Image(); el.src = du; await el.decode();
+  const cv = document.createElement('canvas'); cv.width = 1300; cv.height = Math.round(1300 * bh / bw);
+  const k = Math.max(cv.width / w, cv.height / h);
+  cv.getContext('2d').drawImage(el, (cv.width - w * k) / 2, (cv.height - h * k) / 2, w * k, h * k);
+  return cv.toDataURL('image/jpeg', .88);
+}
+function rodapePDF(doc, PW, PH) {
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.5); doc.setTextColor(56, 56, 56); doc.text('M A T H E U S   N I C K E L', 34, PH - 31);
+  doc.setFontSize(9); doc.setTextColor(120, 120, 120); doc.text(CORRETOR.insta, PW - 34, PH - 31, { align: 'right' });
+  doc.addImage(iconePDF('insta', '#787878'), 'PNG', PW - 34 - doc.getTextWidth(CORRETOR.insta) - 14, PH - 39.5, 9.5, 9.5);
+}
+// o que entra na capa: casa = área construída + terreno; apartamento e cobertura = área privativa
+function specsPDF(d) {
+  const grupo = GRUPO[d.tc] || '', ehCasa = grupo === 'Casa', ehApto = grupo === 'Apartamento' || grupo === 'Cobertura', l = [];
+  if (ehCasa) { const constr = d.ac || d.ap || d.atot || d.a; if (constr) l.push(`${m2(constr)} de área construída`); if (d.at && d.at > constr) l.push(`Terreno de ${m2(d.at)}`); }
+  else if (ehApto) { if (d.ap || d.a) l.push(`${m2(d.ap || d.a)} privativos`); }
+  else if (d.a || d.at) l.push(m2(d.a || d.at));
+  if (ehCasa || ehApto) {
+    if (d.s) l.push(d.q > d.s ? `${d.q} quartos, sendo ${d.s} ${d.s === 1 ? 'suíte' : 'suítes'}` : `${d.s} ${d.s === 1 ? 'suíte' : 'suítes'}`);
+    else if (d.q) l.push(`${d.q} ${d.q === 1 ? 'quarto' : 'quartos'}`);
+    if (d.v) l.push(`${d.v} ${d.v === 1 ? 'vaga' : 'vagas'} de garagem`);
+  }
+  if (d.mob) l.push('Totalmente mobiliado');
+  return l;
+}
+// capa: foto à esquerda; à direita, para quem é a seleção, o imóvel, uma frase de curadoria e o cartão do corretor
+const CAPA = { fx: 34, fy: 36, fw: 520, fh: 660 - 36 - 69 };
+function capaPDF(doc, d, fotoCortada, cl) {
+  const PW = 920, { fx, fy, fw, fh } = CAPA;
+  doc.setFillColor(255, 255, 255); doc.rect(0, 0, PW, 660, 'F');
+  doc.addImage(fotoCortada, 'JPEG', fx, fy, fw, fh, undefined, 'FAST');
+  const x = fx + fw + 40, w = PW - 34 - x, tipo = d.rot || 'Imóvel';
+  const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
+  let y = fy + 40;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(224, 102, 44);
+  doc.text(cl ? 'SELEÇÃO PARA ' + firstName(cl.nome).toLocaleUpperCase('pt-BR') : 'SELEÇÃO EXCLUSIVA', x, y, { charSpace: 1.6 });
+  y += 34;
+  doc.setFontSize(24); doc.setTextColor(44, 46, 51);
+  const tl = doc.splitTextToSize(emp || tipo, w); doc.text(tl, x, y, { lineHeightFactor: 1.15 }); y += (tl.length - 1) * 27.6 + 22;
+  doc.setFontSize(10.5); doc.setTextColor(135, 135, 135); doc.text(emp ? `${tipo} · ${d.b}` : d.b, x, y);
+  y += 24; doc.setDrawColor(224, 102, 44); doc.setLineWidth(1); doc.line(x, y, x + 36, y); y += 26;
+  doc.setFontSize(11); doc.setTextColor(56, 56, 56);
+  specsPDF(d).forEach(s => { doc.text(s, x, y); y += 18; });
+  y += 14; doc.setFontSize(10.5); doc.setTextColor(110, 110, 110);
+  doc.text(doc.splitTextToSize('Selecionei este imóvel a partir do que você procura. Nas próximas páginas, as fotos de cada ambiente, para você conhecer com calma.', w), x, y, { lineHeightFactor: 1.55 });
+  // cartão do corretor, alinhado com o pé da foto
+  const yb = fy + fh;
+  doc.setDrawColor(225, 225, 225); doc.setLineWidth(.6); doc.line(x, yb - 104, x + w, yb - 104);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(44, 46, 51); doc.text(CORRETOR.nome, x, yb - 78, { charSpace: 2 });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(120, 120, 120); doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, yb - 62);
+  doc.setFontSize(10); doc.setTextColor(56, 56, 56);
+  doc.addImage(iconePDF('insta', '#383838'), 'PNG', x, yb - 37.5, 11, 11); doc.text(CORRETOR.insta, x + 18, yb - 28.5);
+  doc.addImage(iconePDF('wa', '#383838'), 'PNG', x, yb - 11, 11, 11); doc.text(CORRETOR.whats, x + 18, yb - 2);
+}
 async function baixarPDF(btn, c, cli) {
   if (btn.dataset.busy) return;
   const pronto = pdfsProntos.get(c);
@@ -886,19 +1018,18 @@ async function baixarPDF(btn, c, cli) {
       return { du, w, h };
     })).filter(r => r.status === 'fulfilled').map(r => r.value);
     if (!imgs.length) throw new Error('nenhuma foto');
-    let doc = null;
+    // 1ª página: capa com a foto de destaque menor e o cartão de apresentação; depois todas as fotos, uma por página
+    const doc = new JsPDF({ unit: 'pt', format: [920, 660], orientation: 'landscape', compress: true });
+    capaPDF(doc, d, await recorte(imgs[0], CAPA.fw, CAPA.fh), byId(cli));
     imgs.forEach(({ du, w, h }) => {
       const deitada = w >= h, PW = deitada ? 920 : 660, PH = deitada ? 660 : 920;
-      if (!doc) doc = new JsPDF({ unit: 'pt', format: [PW, PH], orientation: deitada ? 'landscape' : 'portrait', compress: true });
-      else doc.addPage([PW, PH], deitada ? 'landscape' : 'portrait');
+      doc.addPage([PW, PH], deitada ? 'landscape' : 'portrait');
       doc.setFillColor(255, 255, 255); doc.rect(0, 0, PW, PH, 'F');
       // caixa da foto: 34 pt dos lados, 36 em cima, 69 embaixo (espaço do rodapé)
       const bx = 34, bw = PW - 68, bh = PH - 36 - 69;
       const k = Math.min(bw / w, bh / h), iw = w * k, ih = h * k;
       doc.addImage(du, 'JPEG', (PW - iw) / 2, 36 + (bh - ih) / 2, iw, ih, undefined, 'FAST');
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9.5); doc.setTextColor(56, 56, 56); doc.text('M A T H E U S   N I C K E L', 34, PH - 31);
-      doc.setFontSize(9); doc.setTextColor(120, 120, 120); doc.text('@matheus.nickel', PW - 34, PH - 31, { align: 'right' });
+      rodapePDF(doc, PW, PH);
     });
     const tipo = d.rot || 'Imóvel';
     const pdf = new File([doc.output('blob')], `${tipo} ${d.b} - Matheus Nickel.pdf`, { type: 'application/pdf' });
@@ -1042,15 +1173,15 @@ function renderPainel() {
   const agora = new Date(), h = agora.getHours();
   $('#c-hoje').textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + (h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite') + ', Matheus';
   const A = ativos();
-  const semana = A.filter(c => { const d = diasSemEnvio(c); return d !== null && d <= 6; }).length;
+  const hoje = A.filter(c => diasSemEnvio(c) === 0).length;
   const alimentar = clientes.filter(precisaAlimentar).length;
-  const pot = fmtValor(A.reduce((s, c) => s + (c.valorMax || c.valorMin || 0), 0)).replace(/^R\$ /, '').split(' ');
+  const mes = nowLocal().slice(0, 7), novos = clientes.filter(c => c.criadoEm.slice(0, 7) === mes).length;
   const tile = (k, cor, v, s, f) => `<${f ? `button data-act="c-f" data-v="${f}"` : 'div'} class="kpi${cor ? ' ' + cor : ''}${f && ui.c.f === f ? ' on' : ''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span></${f ? 'button' : 'div'}>`;
   $('#c-kpis').innerHTML =
     tile('Ativos', '', A.length, `de ${clientes.length} na carteira`, 'ativos') +
     tile('Precisam de imóvel', 'warn', alimentar, `há ${ALIMENTAR_DIAS} dias ou mais sem receber`, 'alimentar') +
-    tile('Receberam na semana', 'ok', semana, 'imóvel enviado nos últimos 7 dias') +
-    tile('Potencial de compra', 'or', pot[0] ? `<small style="margin:0 4px 0 0">R$</small>${esc(pot[0])}${pot[1] ? `<small>${esc(pot[1])}</small>` : ''}` : '—', 'soma do teto dos clientes ativos');
+    tile('Receberam hoje', 'ok', hoje, `${plural(hoje, 'cliente recebeu', 'clientes receberam')} imóvel hoje`) +
+    tile('Novos no mês', 'or', novos, `${plural(novos, 'cadastrado', 'cadastrados')} em ${agora.toLocaleDateString('pt-BR', { month: 'long' })}`);
 }
 function renderClientes() {
   const q = norm(ui.c.q);
@@ -1075,8 +1206,91 @@ function renderClientes() {
   }).join('');
 }
 
+// ── RENDER: MÉTRICAS ──
+// Só números que mudam o que fazer amanhã: se a carteira está em dia, o ritmo de envios, onde falta imóvel
+// (onde angariar), quem atender primeiro e o perfil de quem compra. Período e tipo filtram tudo de uma vez.
+const M_PERIODOS = [[7, '7 dias'], [30, '30 dias'], [90, '90 dias']];
+const M_GRUPOS = [['', 'Todos'], ['Casa', 'Casas'], ['Apartamento', 'Apartamentos'], ['Cobertura', 'Coberturas'], ['Terreno', 'Terrenos'], ['Comercial', 'Comerciais']];
+const M_FAIXAS = [['Até R$ 1 mi', 0, 1e6], ['R$ 1 a 2 mi', 1e6, 2e6], ['R$ 2 a 3 mi', 2e6, 3e6], ['R$ 3 a 5 mi', 3e6, 5e6], ['R$ 5 a 10 mi', 5e6, 1e7], ['Acima de R$ 10 mi', 1e7, Infinity]];
+const POUCA_OPCAO = 3; // cliente com até 3 imóveis compatíveis no estoque = falta imóvel para ele
+// barras horizontais com rótulo e valor escritos (a própria lista serve de tabela); linha = [rótulo, valor, detalhe, atributos do botão]
+function barras(linhas, vazio) {
+  if (!linhas.length) return `<p class="m-vazio">${vazio}</p>`;
+  const max = Math.max(1, ...linhas.map(l => l[1]));
+  return `<div class="hb">${linhas.map(([r, v, det, at]) => `<${at ? 'button ' + at : 'div'} class="hb-l"><span class="hb-r">${esc(r)}</span><span class="hb-t"><i style="width:${v ? Math.max(3, v / max * 100) : 0}%"></i></span><span class="hb-v">${v}${det ? ` <small>${det}</small>` : ''}</span></${at ? 'button' : 'div'}>`).join('')}</div>`;
+}
+function renderMetricas() {
+  const P = ui.m.p, G = ui.m.g;
+  $('#m-fil').innerHTML = `<div class="chips sm">${M_PERIODOS.map(([k, l]) => `<button class="chip${P === k ? ' on' : ''}" data-act="m-p" data-v="${k}">${l}</button>`).join('')}</div>`
+    + `<div class="chips sm">${M_GRUPOS.map(([k, l]) => `<button class="chip${G === k ? ' on' : ''}" data-act="m-g" data-v="${k}">${l}</button>`).join('')}</div>`;
+  const doGrupo = c => !G || !c.tipos.length || c.tipos.some(t => GRUPO[t] === G);
+  const base = clientes.filter(doGrupo), A = base.filter(c => c.status === 'ativo');
+  const envs = base.flatMap(c => c.envios.map(e => ({ c, d: daysSince(e.data) }))).filter(x => x.d !== null && x.d >= 0);
+  const noP = envs.filter(x => x.d < P), antes = envs.filter(x => x.d >= P && x.d < 2 * P);
+  const emDia = A.filter(c => { const d = diasSemEnvio(c); return d !== null && d < ALIMENTAR_DIAS; }).length;
+  const pct = A.length ? Math.round(emDia / A.length * 100) : 0;
+  const atendidos = new Set(noP.map(x => x.c.id)).size;
+  const novosEm = (de, ate) => base.filter(c => { const d = daysSince(c.criadoEm); return d !== null && d >= de && d < ate; }).length;
+  const novos = novosEm(0, P);
+  const delta = (a, b) => { const x = a - b; return `<span class="dl${x > 0 ? ' up' : x < 0 ? ' down' : ''}">${x > 0 ? '+' + x : x < 0 ? '−' + -x : 'Igual'} vs ${P} dias anteriores</span>`; };
+  const tile = (k, cor, v, s) => `<div class="kpi${cor ? ' ' + cor : ''}"><span class="k">${k}</span><span class="v">${v}</span>${s}</div>`;
+  const tiles = tile('Carteira em dia', pct >= 80 ? 'ok' : 'warn', `${pct}<small>%</small>`, `<span class="meter"><i style="width:${pct}%"></i></span><span class="s">${emDia} de ${A.length} ativos receberam imóvel nos últimos ${ALIMENTAR_DIAS} dias</span>`)
+    + tile('Imóveis enviados', 'or', noP.length, `${delta(noP.length, antes.length)}<span class="s">nos últimos ${P} dias</span>`)
+    + tile('Clientes atendidos', '', atendidos, `<span class="s">de ${A.length} ativos receberam imóvel nos últimos ${P} dias</span>`)
+    + tile('Novos clientes', '', novos, `${delta(novos, novosEm(P, 2 * P))}<span class="s">cadastrados nos últimos ${P} dias</span>`);
+
+  // envios por dia (90 dias: por semana); toque ou passe o mouse na coluna para ler o valor
+  const passo = P > 30 ? 7 : 1, nb = Math.ceil(P / passo), cont = Array(nb).fill(0);
+  noP.forEach(x => { cont[nb - 1 - Math.floor(x.d / passo)]++; });
+  const dataDe = n => { const t = new Date(); t.setDate(t.getDate() - n); return pad(t.getDate()) + '/' + pad(t.getMonth() + 1); };
+  const rot = i => passo === 1 ? dataDe(nb - 1 - i) : 'Semana de ' + dataDe((nb - 1 - i) * passo + passo - 1);
+  const mx = Math.max(...cont), im = cont.lastIndexOf(mx);
+  const colunas = cont.map((n, i) => `<button class="col" data-act="m-col" data-r="${esc(rot(i))}" data-n="${n}" aria-label="${esc(rot(i))}: ${n}">${n && i === im ? `<b>${n}</b>` : ''}<i style="height:${n ? Math.max(3, n / Math.max(1, mx) * 82) : 0}%"></i></button>`).join('');
+  const tabela = cont.map((n, i) => [rot(i), n]).reverse().map(([r, n]) => `<tr><td>${esc(r)}</td><td>${n}</td></tr>`).join('');
+  const grafico = `<div class="m-card m-full"><div class="m-h"><h3>Imóveis enviados ${passo === 1 ? 'por dia' : 'por semana'}</h3><span class="m-read" id="m-read">${noP.length ? 'Toque numa coluna para ver o dia' : 'Nenhum envio no período'}</span></div>
+    <div class="cols">${colunas}</div><div class="cx"><span>${esc(rot(0))}</span><span>${passo === 1 ? 'Hoje' : 'Esta semana'}</span></div>
+    <details class="m-tab"><summary>Ver em tabela</summary><table><tr><th>${passo === 1 ? 'Dia' : 'Semana'}</th><th>Imóveis</th></tr>${tabela}</table></details></div>`;
+
+  // onde falta imóvel: bairros em que clientes ativos têm até 3 opções no estoque das imobiliárias
+  let falta;
+  if (!carregados) falta = '<p class="m-vazio">Carregando os estoques…</p>';
+  else {
+    const m = new Map();
+    A.forEach(c => {
+      const pouca = j8Match(c).total <= POUCA_OPCAO, vistos = new Set();
+      c.bairros.forEach(b => { const k = bkey(b); if (vistos.has(k)) return; vistos.add(k); if (!m.has(k)) m.set(k, { b: canonBairro(b), n: 0, p: 0 }); const r = m.get(k); r.n++; if (pouca) r.p++; });
+    });
+    falta = barras([...m.values()].filter(r => r.p).sort((a, b) => b.p - a.p || b.n - a.n).slice(0, 8)
+      .map(r => [bLabel(r.b), r.p, `de ${r.n} ${plural(r.n, 'cliente', 'clientes')}`, `data-act="bairro" data-b="${esc(r.b)}"`]),
+      `Todos os clientes ativos têm mais de ${POUCA_OPCAO} imóveis compatíveis no estoque.`);
+  }
+  // quem atender primeiro: os que estão há mais tempo sem receber imóvel (quem nunca recebeu vem antes)
+  const fila = A.filter(precisaAlimentar).sort((a, b) => { const da = diasSemEnvio(a), db = diasSemEnvio(b); return (db === null ? 1e6 : db) - (da === null ? 1e6 : da); });
+  const primeiro = fila.length ? `<div class="m-fila">${fila.slice(0, 5).map(c => { const [cor, frase] = contatoTxt(c); return `<button class="m-cli" data-act="ficha" data-id="${c.id}"><span class="nm np">${esc(nomeProprio(c.nome))}</span><span class="ctt ${cor}"><span class="dot"></span>${frase}</span></button>`; }).join('')}</div>${fila.length > 5 ? `<button class="link" data-act="alimentar" style="margin-top:12px">Ver os ${fila.length} que precisam de imóvel</button>` : ''}`
+    : `<p class="m-vazio">Todos os ativos receberam imóvel nos últimos ${ALIMENTAR_DIAS} dias.</p>`;
+  // perfil: faixa do teto de compra e tipos procurados
+  const teto = c => c.valorMax || c.valorMin;
+  const faixas = M_FAIXAS.map(([r, de, ate]) => [r, A.filter(c => teto(c) && teto(c) > de && teto(c) <= ate).length]);
+  const semValor = A.filter(c => !teto(c)).length;
+  if (semValor) faixas.push(['Sem valor informado', semValor]);
+  const tipos = M_GRUPOS.slice(1).map(([g, r]) => [r, A.filter(c => c.tipos.some(t => GRUPO[t] === g)).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]);
+
+  $('#m-body').innerHTML = `<div class="kpis">${tiles}</div><div class="m-grid">${grafico}
+    <div class="m-card"><div class="m-h"><h3>Onde falta imóvel</h3></div><p class="m-sub">Bairros com clientes ativos que têm até ${POUCA_OPCAO} imóveis compatíveis na J8 e na A. Gonçalves. É onde vale angariar.</p>${falta}</div>
+    <div class="m-card"><div class="m-h"><h3>Quem atender primeiro</h3></div><p class="m-sub">Há mais tempo sem receber imóvel.</p>${primeiro}</div>
+    <div class="m-card"><div class="m-h"><h3>Faixa de valor dos ativos</h3></div><p class="m-sub">Pelo teto de compra de cada cliente.</p>${barras(faixas.filter(x => x[1] || x[0] !== 'Sem valor informado'), 'Nenhum cliente ativo.')}</div>
+    <div class="m-card"><div class="m-h"><h3>O que procuram</h3></div><p class="m-sub">Clientes ativos por tipo de imóvel (um cliente pode buscar mais de um).</p>${barras(tipos, 'Nenhum cliente ativo.')}</div></div>`;
+}
+function leColuna(c) {
+  const n = +c.dataset.n, r = $('#m-read');
+  if (r) r.textContent = `${c.dataset.r}: ${n} ${plural(n, 'imóvel enviado', 'imóveis enviados')}`;
+  document.querySelectorAll('.col.on').forEach(x => x.classList.remove('on')); c.classList.add('on');
+}
+document.addEventListener('mouseover', e => { const c = e.target.closest('.col'); if (c) leColuna(c); });
+
 function renderAll() {
   renderBairros(); renderClientes();
+  if (ui.tab === 'metricas') renderMetricas();
   if (ui.sheet && ui.sheet.kind === 'ficha') { if (byId(ui.sheet.id)) renderFicha(ui.sheet.id); else closeSheet(); }
   updateSync();
 }
@@ -1084,7 +1298,8 @@ function renderAll() {
 // ── NAVEGAÇÃO ──
 function go(tab) {
   ui.tab = tab;
-  ['bairros', 'clientes'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== tab));
+  ['bairros', 'clientes', 'metricas'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== tab));
+  if (tab === 'metricas') renderMetricas();
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   window.scrollTo(0, 0);
 }
@@ -1165,7 +1380,7 @@ function openForm(id) {
   form._dupOk = false;
   const f = form;
   openSheet(`
-  <div class="sh-h"><div style="min-width:0"><div class="kick">${c ? 'Editar ficha' : 'Novo cliente'}</div><h2${c ? ' class="np"' : ''}>${c ? esc(nomeProprio(c.nome)) : 'Quem é e o que procura'}</h2></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="sh-h"><div style="min-width:0">${c ? `<div class="kick">Editar ficha</div><h2 class="np">${esc(nomeProprio(c.nome))}</h2>` : '<h2>Novo cliente</h2>'}</div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
   <div class="sh-b">
     <div class="fl"><label class="lbl" for="f-nome">Nome *</label><input id="f-nome" value="${esc(f.nome)}" placeholder="Nome do cliente" autocomplete="off"><div class="err" id="e-nome"></div></div>
     <div class="fl"><label class="lbl" for="f-whats">WhatsApp</label><input id="f-whats" type="tel" inputmode="tel" value="${esc(fmtFone(f.whats))}" placeholder="(41) 99999-9999" autocomplete="off"><div class="err" id="e-whats"></div><div id="e-dup"></div></div>
@@ -1348,6 +1563,9 @@ document.addEventListener('click', e => {
     case 'bairro': ui.c.q = el.dataset.b; ui.c.f = 'ativos'; $('#c-q').value = el.dataset.b; go('clientes'); renderClientes(); break;
     case 'b-tipo': ui.b.tipo = v; renderBairros(); break;
     case 'c-f': ui.c.f = v; renderClientes(); break;
+    case 'm-p': ui.m.p = +v; renderMetricas(); break;
+    case 'm-g': ui.m.g = v; renderMetricas(); break;
+    case 'm-col': leColuna(el); break;
     case 'f-tipo': { const i = form.tipos.indexOf(v); if (i >= 0) form.tipos.splice(i, 1); else form.tipos.push(v); $('#e-tipos').textContent = ''; renderFormChips(); break; }
     case 'f-bairro-rm': form.bairros = form.bairros.filter(b => b !== el.dataset.b); renderFormChips(); break;
     case 'f-quartos': form.quartos = +v; renderFormChips(); break;
@@ -1368,7 +1586,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31b';
+const VERSAO = '2026-10-31c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
