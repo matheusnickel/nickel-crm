@@ -212,6 +212,7 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .j8mais:hover{background:var(--orbg)}
 .j8mais .muted{font-weight:400}
 .j8c .env8{font-size:12.5px;color:var(--ok);font-weight:600;margin-top:4px}
+.j8c .dupl{align-self:flex-start;font-size:12px;font-weight:600;color:var(--warn);background:var(--warnbg);border-radius:6px;padding:2px 8px;margin-top:5px}
 .j8c .selos{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
 .j8c .selos span{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tq2);background:var(--tqbg);border-radius:99px;padding:2px 9px}
 .j8act{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:8px;padding:12px;border-top:1px solid var(--line)}
@@ -869,11 +870,71 @@ const EST = Object.fromEntries(ESTOQUES.map(e => [e.id, e]));
 const estoque = {}, estoqueErr = {};
 const prepara = (e, i) => Object.assign(i, { src: e.id, tc: e.tipo(i.t), rot: e.rotulo(i.t), k: e.id + ':' + i.c });
 let carregados = false;
+
+// ── O MESMO IMÓVEL EM MAIS DE UMA IMOBILIÁRIA ──
+// Mesmo endereço (rua e número) ou mesmo condomínio no mesmo bairro, mesma família de tipo, metragem parecida e preço
+// parecido. Num prédio com várias unidades iguais quem separa é o preço. Preferência: J8, depois A. Gonçalves, depois SIS3
+// (a ordem de ESTOQUES): em "Todas" fica só o da preferida; nas abas de cada imobiliária todos aparecem, com o aviso.
+const IMOVEL = new Map(); // "src:código" -> imóvel
+const ABREV_RUA = { prof: 'professor', profa: 'professora', dr: 'doutor', des: 'desembargador', gal: 'general', gen: 'general', cel: 'coronel', pres: 'presidente',
+  eng: 'engenheiro', sen: 'senador', dep: 'deputado', cap: 'capitao', maj: 'major', ten: 'tenente', sto: 'santo', sta: 'santa', mal: 'marechal', alm: 'almirante', pe: 'padre' };
+function chaveEndereco(en) {
+  const m = norm(en).match(/^(.*?),\s*(\d+)/); if (!m) return '';
+  const rua = m[1].replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean).map(p => ABREV_RUA[p] || p)
+    .filter((p, k) => !(k === 0 && /^(rua|r|avenida|av|alameda|al|travessa|tv|rodovia|rod|estrada|praca|largo)$/.test(p)) && !/^(de|da|do|dos|das|e)$/.test(p));
+  return rua.join(' ') + '#' + m[2];
+}
+// número da unidade no complemento ("603", "ap 11", "CASA 27", "62 - Bloco 3" → 603, 11, 27, 62); unidades diferentes nunca são o mesmo imóvel
+const numUnidade = i => (String(i.cp || '').match(/\d+/) || [''])[0].replace(/^0+(?=\d)/, '');
+const outraUnidade = (x, y) => { const a = numUnidade(x), b = numUnidade(y); return !!(a && b && a !== b); };
+// quanto menor, mais parecido; -1 = não é o mesmo imóvel
+function diferenca(x, y) {
+  if (outraUnidade(x, y)) return -1;
+  const da = x.a && y.a ? Math.abs(x.a - y.a) / Math.max(x.a, y.a) : 1;
+  const dp = x.p && y.p ? Math.abs(x.p - y.p) / Math.max(x.p, y.p) : null;
+  const iguais = x.q === y.q && x.s === y.s && x.v === y.v;
+  if (da <= .03 && dp !== null && dp <= .05) return da + dp;                // metragem e preço batem
+  if (da <= .01 && dp === null && x.q && x.q === y.q) return .5 + da;         // um deles sem preço: metragem e quartos idênticos
+  if (da <= .01 && iguais && dp !== null && dp <= .15) return .3 + dp;      // tudo idêntico, preço desatualizado numa delas
+  return -1;
+}
+function marcaRepetidos() {
+  IMOVEL.clear();
+  const grupos = new Map();
+  ESTOQUES.forEach(e => (estoque[e.id] ? estoque[e.id].imoveis : []).forEach(i => {
+    IMOVEL.set(i.k, i); i.rep = ''; i.irmaos = []; i.chaves = [];
+    const g = GRUPO[i.tc]; if (!g) return;
+    i.chaves = [chaveEndereco(i.en), i.e && i.b ? 'cond:' + norm(i.e) + '|' + bkey(i.b) : ''].filter(Boolean).map(ch => g + '|' + ch);
+    i.chaves.forEach(k => { if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(i); });
+  }));
+  const ordem = Object.fromEntries(ESTOQUES.map((e, n) => [e.id, n]));
+  // cada imóvel procura o par mais parecido numa imobiliária preferida; vira repetido do principal dele
+  for (const i of [...IMOVEL.values()].sort((a, b) => ordem[a.src] - ordem[b.src])) {
+    let melhor = null, menor = Infinity;
+    for (const k of i.chaves) {
+      for (const o of grupos.get(k)) {
+        if (ordem[o.src] >= ordem[i.src]) continue;
+        if (o.rep && outraUnidade(i, IMOVEL.get(o.rep))) continue; // o par já é de outra unidade do mesmo prédio
+        const d = diferenca(i, o); if (d >= 0 && d < menor) { menor = d; melhor = o; }
+      }
+    }
+    if (!melhor) continue;
+    const principal = melhor.rep ? IMOVEL.get(melhor.rep) : melhor;
+    i.rep = principal.k;
+    principal.irmaos.push(i.k);
+  }
+  // todos do mesmo grupo se conhecem (para o aviso "também na…" e para saber se já foi enviado por outra imobiliária)
+  for (const p of IMOVEL.values()) if (!p.rep && p.irmaos.length) {
+    const familia = [p.k, ...p.irmaos];
+    familia.forEach(k => { const x = IMOVEL.get(k); x.irmaos = familia.filter(o => o !== k); });
+  }
+}
 async function loadEstoques() {
   await Promise.all(ESTOQUES.map(async e => {
     try { const r = await fetch(e.arq, { cache: 'no-cache' }); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); j.imoveis.forEach(i => prepara(e, i)); estoque[e.id] = j; }
     catch (er) { estoqueErr[e.id] = true; }
   }));
+  marcaRepetidos();
   carregados = true; j8Cache.clear();
   renderClientes();
   if (ui.tab === 'metricas') renderMetricas();
@@ -925,7 +986,8 @@ function j8Match(c, fonte = 'todas') {
   const fontes = fonte === 'todas' ? ESTOQUES.map(e => e.id) : [fonte];
   const key = JSON.stringify([fontes, c.tipos, c.bairros, c.valorMin, c.valorMax, c.quartos, c.vagas, c.areaMin, c.areaMax, c.terrenoMin, c.situacao, c.mobilia]);
   if (j8Cache.has(key)) return j8Cache.get(key);
-  const all = fontes.flatMap(f => estoque[f] ? estoque[f].imoveis : []).map(i => ({ i, s: j8Score(c, i) })).filter(x => x.s >= 0).sort((a, b) => b.s - a.s);
+  // em "Todas" o imóvel repetido aparece uma vez só, pela imobiliária preferida
+  const all = fontes.flatMap(f => estoque[f] ? estoque[f].imoveis : []).filter(i => fonte !== 'todas' || !i.rep).map(i => ({ i, s: j8Score(c, i) })).filter(x => x.s >= 0).sort((a, b) => b.s - a.s);
   const res = { todos: all.map(x => x.i), top: all.slice(0, 5).map(x => x.i), total: all.length };
   j8Cache.set(key, res);
   return res;
@@ -1228,7 +1290,13 @@ function j8Card(i, c) {
   return `<div class="j8c">
     <div class="j8top">
       <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
-      <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}<span class="src ${i.src}">${EST[i.src].nome}</span></div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>${(() => { const e = c && c.envios.filter(x => x.ref === refDe(i)).sort((a, b) => a.data < b.data ? 1 : -1)[0]; return e ? `<div class="env8">✓ Enviado para ${esc(firstName(c.nome))} em ${fmtShort(e.data)}</div>` : ''; })()}${selos.length ? `<div class="selos">${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
+      <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}<span class="src ${i.src}">${EST[i.src].nome}</span></div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>${(() => {
+        // enviado por esta imobiliária ou por outra que anuncia o mesmo imóvel
+        const refs = new Map([[refDe(i), i]].concat((i.irmaos || []).map(k => IMOVEL.get(k)).filter(Boolean).map(x => [refDe(x), x])));
+        const e = c && c.envios.filter(x => refs.has(x.ref)).sort((a, b) => a.data < b.data ? 1 : -1)[0];
+        const por = e && refs.get(e.ref) !== i ? ` pela ${EST[refs.get(e.ref).src].nome}` : '';
+        return e ? `<div class="env8">✓ Enviado para ${esc(nomeProprio(firstName(c.nome)))} em ${fmtShort(e.data)}${por}</div>` : '';
+      })()}${(i.irmaos || []).length ? `<div class="dupl">Mesmo imóvel ${listaPt([...new Set(i.irmaos.map(k => IMOVEL.get(k)).filter(Boolean).map(x => 'na ' + EST[x.src].nome))])}</div>` : ''}${selos.length ? `<div class="selos">${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
         <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div></div>
     </div>
     <div class="j8act">
@@ -1292,7 +1360,7 @@ function renderImoveis() {
 }
 function imoveisFiltrados() {
   const f = ui.i, palavras = norm(f.q).split(/\s+/).filter(Boolean);
-  let l = (f.fonte === 'todas' ? ESTOQUES.map(e => e.id) : [f.fonte]).flatMap(id => estoque[id] ? estoque[id].imoveis : []).filter(i => i.tc);
+  let l = (f.fonte === 'todas' ? ESTOQUES.map(e => e.id) : [f.fonte]).flatMap(id => estoque[id] ? estoque[id].imoveis : []).filter(i => i.tc && (f.fonte !== 'todas' || !i.rep));
   if (f.tipo) l = l.filter(i => i.tc === f.tipo);
   if (f.quartos) l = l.filter(i => i.q >= f.quartos);
   if (f.vmin) l = l.filter(i => i.p >= f.vmin);
@@ -1355,9 +1423,8 @@ function renderClientes() {
   if (!clientes.length) { $('#c-list').innerHTML = `<div class="empty"><h3>Sua carteira está vazia</h3><p>Comece pelos clientes que estão no seu WhatsApp agora.</p><button class="btn-or" data-act="novo">+ Cadastrar cliente</button></div>`; return; }
   if (!rows.length) { $('#c-list').innerHTML = `<div class="empty"><h3>Ninguém encontrado</h3><p>${q ? 'Nenhum cliente com “' + esc(ui.c.q) + '” neste filtro.' : 'Nenhum cliente neste filtro.'}</p></div>`; return; }
   $('#c-list').innerHTML = rows.map(c => {
-    const nest = c.status === 'ativo' && carregados ? ESTOQUES.map(e => [e.id, e.nome, j8Match(c, e.id).total]).filter(x => x[2]) : [];
+    const tot = c.status === 'ativo' && carregados ? j8Match(c).total : 0; // sem contar duas vezes o mesmo imóvel
     // só o total ("9 imóveis compatíveis"); quanto há em cada imobiliária aparece dentro da ficha. E "Recebeu imóvel há 6 dias"
-    const tot = nest.reduce((s, x) => s + x[2], 0);
     const [cor, frase] = contatoTxt(c);
     const side = (tot ? `<span class="est"><b>${tot} ${plural(tot, 'imóvel compatível', 'imóveis compatíveis')}</b></span>` : '') + (c.status === 'ativo' ? `<span class="ctt ${cor}"><span class="dot"></span>${frase}</span>` : '');
     // tipo, bairros e valor com cor própria, para não virar uma frase só
@@ -1784,7 +1851,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31h';
+const VERSAO = '2026-10-31i';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

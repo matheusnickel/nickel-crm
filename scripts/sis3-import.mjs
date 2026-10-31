@@ -85,8 +85,11 @@ function ficha(html, c, info) {
   const emp = det['Condomínio'] || '';
   const t = tipoCarteira(tipoSite, /condom/i.test(tipoSite));
   const fotos = [...new Set([...html.matchAll(/data-image="(https:\/\/www\.infocenterhost2\.com\.br\/crm\/fotosimovel\/\d+\/[^"]+\.(?:jpe?g|png|webp))"/gi)].map(m => m[1]))];
-  // endereço com número, sem o bairro (o cartão já mostra): "Rua Soldado Giovani Dal'Negro, 270"
-  const rua = ld.address && ld.address.streetAddress ? texto(ld.address.streetAddress).replace(/\s+-\s+[^-]+$/, '') : (det['Endereço'] || '');
+  // endereço com número, sem o bairro (o cartão já mostra): "Rua Soldado Giovani Dal'Negro, 270". Às vezes a SIS3 põe a
+  // unidade depois do número ("Rua Carmelo Rangel, 180 - 602", "…, 831 - 62 - Bloco 3"): ela vira o complemento, copiada como está
+  const endCompleto = ld.address && ld.address.streetAddress ? texto(ld.address.streetAddress).replace(/\s+-\s+[^-]+$/, '') : (det['Endereço'] || '');
+  const mUnid = endCompleto.match(/^(.*?,\s*\d+[A-Za-z]?)\s+-\s+(.+)$/);
+  const rua = mUnid ? mUnid[1] : endCompleto, unidade = mUnid ? mUnid[2].trim() : '';
   const ap = metros(det['Área privativa'] || icone['area-privativa']), atot = metros(det['Área total'] || icone['area-total']), aterr = metros(det['Área terreno'] || icone['area-terreno']);
   const casa = /^(Casa|Sobrado)/.test(t);
   const mob = composicao.concat(infra).some(x => /^mobiliad/i.test(norm(x))) || /\bmobiliad/i.test(det['Mobília'] || '');
@@ -99,7 +102,7 @@ function ficha(html, c, info) {
     p: reais(det['Valor do imóvel']) || Number(ld.offers && ld.offers.price) || 0,
     f: fotos[0] ? fotos[0].replace(/(\.\w+)$/, '_640$1') : '',
     e: emp && !/^(nao|não)\b/i.test(emp) ? emp : '',
-    en: rua, cp: '', bl: '', ref: det['Referência'] || '',
+    en: rua, cp: unidade, bl: '', ref: det['Referência'] || '',
     u: info.u, du: ''
   };
   const detalhe = Object.assign({}, i, {
