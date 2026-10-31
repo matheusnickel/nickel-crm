@@ -13,7 +13,11 @@
 <link rel="icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+// tema escolhido no menu (Claro ou Original), aplicado antes de desenhar para não piscar
+try { const t = JSON.parse(localStorage.getItem('carteira_tema')); if (t === 'original') document.documentElement.dataset.tema = t; } catch (e) {}
+</script>
 <style>
 /* Carteira · visual de alto padrão na linha do site da SIS3: Open Sans fina, fundo claro, cartões brancos.
    Cores com função: laranja = ação e imóveis das imobiliárias; verde-água = contato em dia e o que está selecionado;
@@ -31,6 +35,7 @@
   --sh2:0 2px 4px rgba(40,42,46,.04),0 24px 48px -18px rgba(40,42,46,.22);
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
   --toph:64px; --dockw:min(580px,44vw);
+  --topbg:rgba(255,255,255,.92); --dupt:#6d4f12;
   color-scheme:light;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -48,7 +53,7 @@ em{font-style:normal;color:var(--or)}
 .kick{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--or2);font-weight:600}
 
 /* topo */
-.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:18px;height:calc(var(--sat) + var(--toph));padding:var(--sat) 28px 0;background:rgba(255,255,255,.9);backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:18px;height:calc(var(--sat) + var(--toph));padding:var(--sat) 28px 0;background:var(--topbg);backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:9px;font-size:13px;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap}
 .brand i{width:7px;height:7px;background:var(--or);transform:rotate(45deg);flex-shrink:0}
 .brand b{font-weight:700}.brand span{color:var(--muted);font-weight:300}
@@ -90,9 +95,9 @@ main{max-width:1180px;margin:0 auto;padding:30px 28px calc(120px + var(--sab));t
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:22px}
 .kpi{position:relative;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px 15px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--sh1);transition:border-color .15s,transform .15s;min-width:0;overflow:hidden}
 .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--faint)}
-.kpi.warn{background:linear-gradient(180deg,var(--warnbg),#fff 70%)}.kpi.warn::before{background:#e0b25a}
-.kpi.ok{background:linear-gradient(180deg,var(--tqbg),#fff 70%)}.kpi.ok::before{background:var(--tq)}
-.kpi.or{background:linear-gradient(180deg,var(--orbg),#fff 70%)}.kpi.or::before{background:var(--or)}
+.kpi.warn{background:linear-gradient(180deg,var(--warnbg),var(--card) 70%)}.kpi.warn::before{background:#e0b25a}
+.kpi.ok{background:linear-gradient(180deg,var(--tqbg),var(--card) 70%)}.kpi.ok::before{background:var(--tq)}
+.kpi.or{background:linear-gradient(180deg,var(--orbg),var(--card) 70%)}.kpi.or::before{background:var(--or)}
 button.kpi:hover{border-color:var(--line2);transform:translateY(-1px)}
 .kpi.on{border-color:var(--text2);box-shadow:var(--sh2)}
 .kpi .k{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -120,7 +125,7 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .ta{position:relative}
 .ta .x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;font-size:20px;color:var(--muted)}
 .ta input.has-x{padding-right:44px}
-#c-q,#b-q{padding-left:42px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237cc1ba' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") 14px 50%/18px no-repeat}
+#c-q,#i-q{padding-left:42px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237cc1ba' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") 14px 50%/18px no-repeat}
 #c-q{padding-right:44px}
 .kbd{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:var(--muted);border:1px solid var(--line2);border-radius:5px;padding:1px 7px;pointer-events:none}
 .dd{position:absolute;left:0;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px;z-index:30;box-shadow:var(--sh2);max-height:300px;overflow:auto}
@@ -271,7 +276,7 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .danger{color:var(--red);font-weight:600;font-size:14px}
 .confirm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--redbg);border-radius:10px;padding:12px 14px;font-size:14px}
 .confirm .btn-del{background:var(--red);color:#fff;font-weight:600;padding:8px 14px;border-radius:8px}
-.dup{background:var(--warnbg);border-radius:10px;padding:12px 14px;font-size:14px;color:#6d4f12}
+.dup{background:var(--warnbg);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--dupt)}
 .dup button{color:var(--text);text-decoration:underline;font-weight:700}
 
 /* métricas: cores dos gráficos validadas (laranja #e0662c = envios; verde-água #0f9f8f = barras) */
@@ -311,11 +316,43 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .hb-t i{display:block;height:100%;background:#0f9f8f;border-radius:0 4px 4px 0}
 .hb-v{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .hb-v small{font-weight:400;color:var(--muted);font-size:12px}
-.m-fila{display:flex;flex-direction:column}
-.m-cli{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;width:100%;text-align:left;padding:10px 0;border-top:1px solid var(--line)}
-.m-cli:first-child{border-top:none}
-.m-cli .nm{font-size:15px}
-.m-cli:hover .nm{color:var(--tq2)}
+
+.m-h .chips{gap:6px}
+.m-tot{font-weight:700;color:var(--text)}
+
+/* aba Imóveis */
+.ifil{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.imais{font-size:14px}
+.imais summary{cursor:pointer;color:var(--tq2);font-weight:600;padding:4px 0;width:max-content}
+.imais-b{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.iml{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-top:16px;align-items:start}
+
+/* menu: escolha do tema */
+.menu-tema{display:flex;flex-direction:column;gap:2px;padding:4px 0 6px 10px;border-left:2px solid var(--line2);margin:0 0 4px 12px}
+.menu-tema button{display:flex;align-items:center;gap:10px;font-weight:500}
+.menu-tema button.on{color:var(--tq2);font-weight:700}
+.menu-tema button.on::after{content:'✓';margin-left:auto}
+.sw{width:16px;height:16px;border-radius:50%;border:1px solid var(--line2);flex-shrink:0}
+.sw.claro{background:linear-gradient(135deg,#f3f4f2 50%,#7cc1ba 50%)}
+.sw.original{background:linear-gradient(135deg,#050b1a 50%,#ff5a1f 50%)}
+
+/* tema Original: as cores escuras da primeira versão (azul-marinho e laranja), com o mesmo layout */
+:root[data-tema="original"]{
+  --bg:#050b1a; --bg2:rgba(255,255,255,.07); --card:#0c1631; --sheet:#0b1530;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.16);
+  --text:#f4f6fb; --text2:#c6d0e6; --muted:#8d9bbb; --faint:#66759a;
+  --ink:#f4f6fb; --onink:#0a1530;
+  --or:#ff5a1f; --or-h:#ff7a3d; --or2:#ff8a3d; --orbg:rgba(255,90,31,.14); --orline:rgba(255,122,61,.5);
+  --tq:#ff6a2b; --tq2:#ff9a5c; --tqbg:rgba(255,106,43,.14);
+  --ok:#3ddc97; --okbg:rgba(61,220,151,.13); --warn:#ffc65c; --warnbg:rgba(255,198,92,.13); --red:#ff6b78; --redbg:rgba(255,107,120,.12);
+  --sh1:0 1px 2px rgba(0,0,0,.3); --sh2:0 24px 48px -18px rgba(0,0,0,.7);
+  --topbg:rgba(5,11,26,.86); --dupt:#ffd58a;
+  color-scheme:dark;
+}
+:root[data-tema="original"] body{font-family:'Geist','Open Sans',system-ui,sans-serif;background-image:radial-gradient(800px 420px at 100% -5%,rgba(255,90,31,.13),transparent 60%),radial-gradient(700px 520px at -10% 105%,rgba(40,90,220,.14),transparent 60%);background-attachment:fixed}
+:root[data-tema="original"] .av span{background:rgba(255,255,255,.07)!important;color:var(--or2)!important}
+:root[data-tema="original"] .chip.on,:root[data-tema="original"] .tabs button.on{background:linear-gradient(135deg,#ff5a1f,#ff8a3d);border-color:transparent}
+:root[data-tema="original"] .btn-or,:root[data-tema="original"] .fab,:root[data-tema="original"] .j8c .bk:not(.ghost):not(.ready){background:linear-gradient(135deg,#ff5a1f,#ff8a3d)}
 
 /* computador largo: a ficha abre ao lado da lista, sem cobrir a tela */
 @media (min-width:1100px){
@@ -335,14 +372,14 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .lg-card form{display:flex;flex-direction:column;gap:12px}
 
 /* navegação de baixo (celular) */
-.bnav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:none;background:rgba(255,255,255,.94);backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);border-top:1px solid var(--line);padding:8px 8px calc(8px + var(--sab))}
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:none;background:var(--topbg);backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);border-top:1px solid var(--line);padding:8px 8px calc(8px + var(--sab))}
 .bnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:4px}
 .bnav svg{width:22px;height:22px}
 .bnav button.on{color:var(--text)}.bnav button.on svg{color:var(--tq)}
 .fab{position:fixed;right:18px;bottom:calc(82px + var(--sab));width:58px;height:58px;border-radius:50%;background:var(--or);color:#fff;box-shadow:0 18px 30px -12px rgba(224,102,44,.7);display:none;z-index:21;align-items:center;justify-content:center}
 .fab svg{width:24px;height:24px}
 
-.toast{position:fixed;left:50%;bottom:calc(28px + var(--sab));transform:translateX(-50%);z-index:60;background:var(--ink);color:#fff;font-size:14px;padding:13px 18px;border-radius:12px;box-shadow:var(--sh2);display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px)}
+.toast{position:fixed;left:50%;bottom:calc(28px + var(--sab));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--onink);font-size:14px;padding:13px 18px;border-radius:12px;box-shadow:var(--sh2);display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px)}
 .toast button{color:#ffb185;font-weight:700}
 
 @media (max-width:900px){
@@ -363,6 +400,12 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
   .j8c .go{justify-self:center}
   .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .m-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+  .imais-b{grid-template-columns:minmax(0,1fr)}
+  /* no celular os filtros de imobiliária e tipo deslizam para o lado, numa linha só */
+  .ifil > .chips{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:2px 16px;scrollbar-width:none}
+  .ifil > .chips::-webkit-scrollbar{display:none}
+  .ifil > .chips .chip{flex-shrink:0}
+  .iml{grid-template-columns:minmax(0,1fr)}
   .m-card{padding:16px}
   .hb-l{grid-template-columns:minmax(0,7.5rem) minmax(0,1fr) auto;gap:10px;font-size:13.5px}
 }
@@ -415,7 +458,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
     <div class="brand"><i></i><b>CARTEIRA</b><span>NICKEL</span></div>
     <nav class="tabs">
       <button data-tab="clientes" class="on">Clientes</button>
-      <button data-tab="bairros">Bairros</button>
+      <button data-tab="imoveis">Imóveis</button>
       <button data-tab="metricas">Métricas</button>
     </nav>
     <div class="top-r">
@@ -424,20 +467,25 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
       <button class="avatar" data-act="menu" aria-label="Menu">M</button>
       <div id="menu" class="menu hidden">
         <button data-act="recarregar">Atualizar dados</button>
+        <button data-act="tema">Alterar tema</button>
+        <div id="menu-tema" class="menu-tema hidden">
+          <button data-act="tema-set" data-v="claro"><i class="sw claro"></i>Claro</button>
+          <button data-act="tema-set" data-v="original"><i class="sw original"></i>Original (escuro)</button>
+        </div>
         <button data-act="sair">Sair deste aparelho</button>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- BAIRROS -->
-    <section id="v-bairros" class="hidden">
-      <div class="phd"><div class="ttl"><span class="kick">Onde a carteira procura</span><h1>Bairros</h1></div><span class="sub">Clientes ativos por bairro</span></div>
+    <!-- IMÓVEIS: o estoque da J8 e da A. Gonçalves junto, para buscar sem cliente -->
+    <section id="v-imoveis" class="hidden">
+      <div class="phd"><div class="ttl"><span class="kick">J8 e A. Gonçalves</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
       <div class="bar-tools">
-        <div class="ta"><input id="b-q" placeholder="Buscar bairro…" autocomplete="off" aria-label="Buscar bairro"></div>
-        <div class="chips sm" id="b-tipos"></div>
+        <div class="ta"><input id="i-q" type="search" placeholder="Bairro, rua, empreendimento ou código…" autocomplete="off" aria-label="Buscar imóvel"></div>
       </div>
-      <div id="b-list"></div>
+      <div class="ifil" id="i-fil"></div>
+      <div id="i-list"></div>
     </section>
 
     <!-- MÉTRICAS -->
@@ -461,7 +509,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 
   <nav class="bnav">
     <button data-tab="clientes" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M16 4.5a4 4 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6"/></svg>Clientes</button>
-    <button data-tab="bairros"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>Bairros</button>
+    <button data-tab="imoveis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V21H3z"/><path d="M9.5 21v-6h5v6"/></svg>Imóveis</button>
     <button data-tab="metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</button>
   </nav>
   <button class="fab" data-act="novo" aria-label="Novo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -753,9 +801,9 @@ function updateSync() {
 // ── ESTADO DA TELA ──
 const ui = {
   tab: 'clientes',
-  b: { q: '', tipo: '' },
+  i: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false }, // aba Imóveis
   c: { q: '', f: 'ativos' },
-  m: { p: 30, g: '' }, // métricas: período em dias e família de imóvel ('' = todas)
+  m: { p: 30, g: '', e: 'dia' }, // métricas: período em dias, família de imóvel ('' = todas) e envios por dia/semana/mês
   capaDe: null,      // imóvel ("j8:12345") com a grade de fotos aberta para escolher a capa do book
   j8Mais: {},        // id do cliente -> quantos imóveis estão abertos na ficha (5, 10, 15...)
   fonte: lsGet('carteira_fonte', 'todas'), // imobiliária escolhida na ficha: todas, j8 ou gon
@@ -826,6 +874,7 @@ async function loadEstoques() {
   carregados = true; j8Cache.clear();
   renderClientes();
   if (ui.tab === 'metricas') renderMetricas();
+  if (ui.tab === 'imoveis') renderImoveis();
   if (ui.sheet && ui.sheet.kind === 'ficha') renderFicha(ui.sheet.id);
 }
 // de qual imobiliária mostrar na ficha: 'todas', 'j8' ou 'gon' (fica salvo neste aparelho)
@@ -991,18 +1040,26 @@ function diferenciais(lista, ordem, n) {
   if (tem.has('Piscina aquecida')) tem.delete('Piscina');
   return ordem.filter(x => tem.has(x)).slice(0, n);
 }
-const CURADORIA = 'Selecionei este imóvel a partir do que você procura. Nas próximas páginas, as fotos de cada ambiente, para você conhecer com calma.';
-// capa (920×660): à esquerda a foto da capa inteira, sem corte, a frase de curadoria e o cartão do corretor;
-// à direita, para quem é a seleção, o imóvel, a ficha técnica e os diferenciais
-const CAPA = { x: 34, y: 36, w: 540, hMax: 430, pe: 591, rx: 614, rw: 272 };
+// capa (920×660): à esquerda a foto da capa ocupando a coluna e o cartão do corretor; à direita, para quem é a
+// seleção, o imóvel, a ficha técnica e os diferenciais. A foto da capa não se repete nas páginas seguintes.
+const CAPA = { x: 34, y: 36, w: 540, pe: 591, rx: 614, rw: 272 };
+// a foto preenche a coluna da esquerda (até o cartão); foto deitada perde no máximo 30% das laterais (o enquadramento
+// fica parecido com a miniatura da escolha da capa), nunca o centro
+async function fotoDaCapa({ du, w, h }) {
+  const bw = CAPA.w, bh = CAPA.pe - 60 - CAPA.y, r = w / h, rb = bw / bh;
+  if (r <= rb) return { du, pw: bh * r, ph: bh }; // em pé ou quase quadrada: inteira, na altura toda
+  const rc = Math.max(rb, r * .7);
+  const el = new Image(); el.src = du; await el.decode();
+  const cv = document.createElement('canvas'); cv.height = Math.min(h, 1400); cv.width = Math.round(cv.height * rc);
+  const sw = h * rc;
+  cv.getContext('2d').drawImage(el, (w - sw) / 2, 0, sw, h, 0, 0, cv.width, cv.height);
+  return { du: cv.toDataURL('image/jpeg', .9), pw: bw, ph: bw / rc };
+}
 function capaPDF(doc, d, foto, cl) {
-  const { x, y: fy, w, hMax, pe, rx, rw } = CAPA, tipo = d.rot || 'Imóvel';
+  const { x, y: fy, w, pe, rx, rw } = CAPA, tipo = d.rot || 'Imóvel';
   doc.setFillColor(255, 255, 255); doc.rect(0, 0, 920, 660, 'F');
-  const k = Math.min(w / foto.w, hMax / foto.h), pw = foto.w * k, ph = foto.h * k;
-  doc.addImage(foto.du, 'JPEG', x + (w - pw) / 2, fy, pw, ph, undefined, 'FAST');
-  // a frase de curadoria, em letra de leitura, logo abaixo da foto
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(14); doc.setTextColor(80, 80, 80);
-  doc.text(doc.splitTextToSize(CURADORIA, w - 40), x, fy + ph + 38, { lineHeightFactor: 1.5 });
+  doc.addImage(foto.du, 'JPEG', x + (w - foto.pw) / 2, fy, foto.pw, foto.ph, undefined, 'FAST');
+  doc.setFont('helvetica', 'normal');
   // cartão do corretor no pé da página: nome e CRECI à esquerda, Instagram e WhatsApp à direita
   doc.setDrawColor(228, 228, 228); doc.setLineWidth(.6); doc.line(x, pe - 44, x + w, pe - 44);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(44, 46, 51); doc.text(CORRETOR.nome, x, pe - 18, { charSpace: 2 });
@@ -1073,10 +1130,10 @@ async function baixarPDF(btn, c, cli) {
       return { du, w, h };
     })).filter(r => r.status === 'fulfilled').map(r => r.value);
     if (!imgs.length) throw new Error('nenhuma foto');
-    // 1ª página: capa com a foto de destaque menor e o cartão de apresentação; depois todas as fotos, uma por página
+    // 1ª página: capa com a foto da capa e o cartão de apresentação; depois as outras fotos, uma por página
     const doc = new JsPDF({ unit: 'pt', format: [920, 660], orientation: 'landscape', compress: true });
-    capaPDF(doc, d, imgs[0], byId(cli));
-    imgs.forEach(({ du, w, h }) => {
+    capaPDF(doc, d, await fotoDaCapa(imgs[0]), byId(cli));
+    imgs.slice(1).forEach(({ du, w, h }) => {
       const deitada = w >= h, PW = deitada ? 920 : 660, PH = deitada ? 660 : 920;
       doc.addPage([PW, PH], deitada ? 'landscape' : 'portrait');
       doc.setFillColor(255, 255, 255); doc.rect(0, 0, PW, PH, 'F');
@@ -1163,14 +1220,14 @@ function j8Card(i, c) {
   return `<div class="j8c">
     <div class="j8top">
       <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
-      <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}<span class="src ${i.src}">${EST[i.src].nome}</span></div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>${(() => { const e = c.envios.filter(x => x.ref === refDe(i)).sort((a, b) => a.data < b.data ? 1 : -1)[0]; return e ? `<div class="env8">✓ Enviado para ${esc(firstName(c.nome))} em ${fmtShort(e.data)}</div>` : ''; })()}${selos.length ? `<div class="selos">${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
+      <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}<span class="src ${i.src}">${EST[i.src].nome}</span></div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>${(() => { const e = c && c.envios.filter(x => x.ref === refDe(i)).sort((a, b) => a.data < b.data ? 1 : -1)[0]; return e ? `<div class="env8">✓ Enviado para ${esc(firstName(c.nome))} em ${fmtShort(e.data)}</div>` : ''; })()}${selos.length ? `<div class="selos">${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
         <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div></div>
     </div>
     <div class="j8act">
       <div class="cpl end${i.en ? '' : ' vazio'}"><span>Endereço</span>${i.en ? `<b>${esc(i.en)}</b>` : 'Não informado'}</div>
       <div class="cpl${unid ? '' : ' vazio'}"><span>Complemento ${deQue}</span>${unid || 'Não informado'}</div>
       <button class="cpl capa" data-act="j8-capa" data-c="${esc(i.k)}"><span>Foto da capa</span><b><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i>Trocar</b></button>
-      <button class="bk pdf${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${esc(c.id)}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
+      <button class="bk pdf${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
       <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo para cliente</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
     </div>${ui.capaDe === i.k ? escolheCapa(i) : ''}</div>`;
@@ -1180,7 +1237,7 @@ const miniCapa = u => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.re
 function escolheCapa(i) {
   const d = j8Det.get(i.k);
   if (!d || d instanceof Promise) {
-    j8Detalhe(i.k).then(() => { if (ui.capaDe === i.k && fichaAberta()) renderFicha(fichaAberta()); }, () => {});
+    j8Detalhe(i.k).then(() => { if (ui.capaDe === i.k) redesenhaCartoes(); }, () => {});
     return '<div class="capas"><p class="muted" style="font-size:13.5px">Carregando as fotos…</p></div>';
   }
   const atual = fotoCapa(d);
@@ -1208,21 +1265,48 @@ function j8Section(c) {
   return `<span class="lbl">${titulo}</span>${chips}${falhou.length ? `<p class="muted" style="font-size:13px">Não consegui carregar o estoque da ${falhou.join(' e da ')} agora.</p>` : ''}${corpo}<div class="muted xs" style="margin-top:8px">Estoque ${quando}</div>`;
 }
 
-// ── RENDER: BAIRROS ──
-function renderBairros() {
-  $('#b-tipos').innerHTML = ['', ...TIPOS].map(t => `<button class="chip${ui.b.tipo === t ? ' on' : ''}" data-act="b-tipo" data-v="${t}">${t || 'Todos'}</button>`).join('');
-  const all = demanda(ui.b.tipo);
-  const q = norm(ui.b.q);
-  const rows = q ? all.filter(r => norm(bLabel(r.b)).includes(q)) : all;
-  const max = Math.max(1, ...all.map(r => r.n));
-  if (!rows.length) {
-    $('#b-list').innerHTML = `<div class="empty" style="margin-top:18px"><h3>${clientes.length ? 'Nada por aqui' : 'Sem clientes ainda'}</h3><p>${clientes.length ? 'Nenhum cliente ativo procura ' + (ui.b.tipo ? ui.b.tipo.toLowerCase() + ' ' : '') + (q ? 'nesse bairro.' : 'ainda.') : 'Cadastre seus clientes e os bairros que eles procuram aparecem aqui, do mais procurado para o menos.'}</p></div>`;
-    return;
-  }
-  $('#b-list').innerHTML = `<div class="bgrid">${rows.map(r => {
-    const tipos = Object.entries(r.tipos).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${esc(t)} ${n}`).join(' · ');
-    return `<button class="brow" data-act="bairro" data-b="${esc(r.b)}"><div class="bt"><span class="bn">${esc(bLabel(r.b))}</span><span class="bc"><b>${r.n}</b>${plural(r.n, 'cliente', 'clientes')}</span></div><div class="bar"><i style="width:${Math.max(6, Math.round(r.n / max * 100))}%"></i></div><div class="bx">${tipos}</div></button>`;
-  }).join('')}</div>`;
+// ── RENDER: IMÓVEIS ──
+// O estoque da J8 e da A. Gonçalves junto, como num site: busca, filtros e os mesmos cartões da ficha (PDF, descritivo,
+// foto da capa), sem cliente. Mostra 20 por vez.
+const I_PASSO = 20;
+const I_ORDENS = [['maior', 'Maior valor'], ['menor', 'Menor valor'], ['recentes', 'Atualizados por último']];
+function renderImoveis() {
+  const f = ui.i, chip = (act, k, l) => `<button class="chip${String(f[act.slice(2)]) === String(k) ? ' on' : ''}" data-act="${act}" data-v="${esc(k)}">${l}</button>`;
+  const din = v => v ? 'R$ ' + v.toLocaleString('pt-BR') : '';
+  $('#i-fil').innerHTML = `<div class="chips sm">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => chip('i-fonte', k, l)).join('')}</div>
+    <div class="chips sm">${['', ...TIPOS].map(t => chip('i-tipo', t, t || 'Todos os tipos')).join('')}</div>
+    <details class="imais"${f.mais ? ' open' : ''}><summary>Mais filtros</summary><div class="imais-b">
+      <div><span class="lbl">Valor</span><div class="row-s" style="margin-top:0;flex-wrap:nowrap"><input id="i-vmin" inputmode="numeric" placeholder="De" value="${din(f.vmin)}" aria-label="Valor mínimo"><span class="muted">a</span><input id="i-vmax" inputmode="numeric" placeholder="Até" value="${din(f.vmax)}" aria-label="Valor máximo"></div></div>
+      <div><span class="lbl">Quartos (no mínimo)</span><div class="chips sm">${[0, 1, 2, 3, 4].map(n => chip('i-quartos', n, n ? n + '+' : 'Tanto faz')).join('')}</div></div>
+      <div><span class="lbl">Ordenar</span><div class="chips sm">${I_ORDENS.map(([k, l]) => chip('i-ordem', k, l)).join('')}</div></div>
+    </div></details>`;
+  renderImoveisLista();
+}
+function imoveisFiltrados() {
+  const f = ui.i, palavras = norm(f.q).split(/\s+/).filter(Boolean);
+  let l = (f.fonte === 'todas' ? ESTOQUES.map(e => e.id) : [f.fonte]).flatMap(id => estoque[id] ? estoque[id].imoveis : []).filter(i => i.tc);
+  if (f.tipo) l = l.filter(i => i.tc === f.tipo);
+  if (f.quartos) l = l.filter(i => i.q >= f.quartos);
+  if (f.vmin) l = l.filter(i => i.p >= f.vmin);
+  if (f.vmax) l = l.filter(i => i.p && i.p <= f.vmax);
+  if (palavras.length) l = l.filter(i => { const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, i.cp, i.bl].join(' ')); return palavras.every(p => t.includes(p)); });
+  const ordem = { maior: (a, b) => b.p - a.p, menor: (a, b) => (a.p || 9e15) - (b.p || 9e15), recentes: (a, b) => String(b.du).localeCompare(String(a.du)) }[f.ordem];
+  return l.sort(ordem);
+}
+function renderImoveisLista() {
+  if (!carregados) { $('#i-list').innerHTML = '<p class="muted" style="margin-top:18px">Carregando os estoques…</p>'; return; }
+  const l = imoveisFiltrados(), tela = l.slice(0, ui.i.n), resto = l.length - tela.length;
+  $('#i-total').textContent = `${l.length.toLocaleString('pt-BR')} ${plural(l.length, 'imóvel', 'imóveis')}`;
+  tela.slice(0, 6).forEach(i => j8Detalhe(i.k).catch(() => {})); // adianta fotos e dados dos primeiros
+  if (tela.length) carregaJsPDF().catch(() => {});
+  $('#i-list').innerHTML = l.length
+    ? `<div class="iml">${tela.map(i => j8Card(i)).join('')}</div>${resto > 0 ? `<button class="j8mais" data-act="i-mais">Ver mais ${Math.min(I_PASSO, resto)} <span class="muted">· ${resto.toLocaleString('pt-BR')} ${plural(resto, 'restante', 'restantes')}</span></button>` : ''}`
+    : '<div class="empty" style="margin-top:18px"><h3>Nenhum imóvel</h3><p>Nada no estoque com esses filtros. Tente abrir o valor, o tipo ou a busca.</p></div>';
+}
+// cartões de imóvel aparecem na ficha e na aba Imóveis: redesenha onde estiverem
+function redesenhaCartoes() {
+  if (fichaAberta()) renderFicha(fichaAberta());
+  if (ui.tab === 'imoveis') renderImoveisLista();
 }
 
 // ── RENDER: CLIENTES ──
@@ -1275,8 +1359,8 @@ function renderClientes() {
 }
 
 // ── RENDER: MÉTRICAS ──
-// Só números que mudam o que fazer amanhã: se a carteira está em dia, o ritmo de envios, onde falta imóvel
-// (onde angariar), quem atender primeiro e o perfil de quem compra. Período e tipo filtram tudo de uma vez.
+// Só números que mudam o que fazer amanhã: o ritmo de envios, onde falta imóvel (onde angariar), onde a carteira
+// procura e o perfil de quem compra. Período e tipo filtram tudo de uma vez.
 const M_PERIODOS = [[7, '7 dias'], [30, '30 dias'], [90, '90 dias']];
 const M_GRUPOS = [['', 'Todos'], ['Casa', 'Casas'], ['Apartamento', 'Apartamentos'], ['Cobertura', 'Coberturas'], ['Terreno', 'Terrenos'], ['Comercial', 'Comerciais']];
 const M_FAIXAS = [['Até R$ 1 mi', 0, 1e6], ['R$ 1 a 2 mi', 1e6, 2e6], ['R$ 2 a 3 mi', 2e6, 3e6], ['R$ 3 a 5 mi', 3e6, 5e6], ['R$ 5 a 10 mi', 5e6, 1e7], ['Acima de R$ 10 mi', 1e7, Infinity]];
@@ -1288,36 +1372,40 @@ function barras(linhas, vazio) {
   return `<div class="hb">${linhas.map(([r, v, det, at]) => `<${at ? 'button ' + at : 'div'} class="hb-l"><span class="hb-r">${esc(r)}</span><span class="hb-t"><i style="width:${v ? Math.max(3, v / max * 100) : 0}%"></i></span><span class="hb-v">${v}${det ? ` <small>${det}</small>` : ''}</span></${at ? 'button' : 'div'}>`).join('')}</div>`;
 }
 function renderMetricas() {
-  const P = ui.m.p, G = ui.m.g;
+  const P = ui.m.p, G = ui.m.g, E = ui.m.e;
   $('#m-fil').innerHTML = `<div class="chips sm">${M_PERIODOS.map(([k, l]) => `<button class="chip${P === k ? ' on' : ''}" data-act="m-p" data-v="${k}">${l}</button>`).join('')}</div>`
     + `<div class="chips sm">${M_GRUPOS.map(([k, l]) => `<button class="chip${G === k ? ' on' : ''}" data-act="m-g" data-v="${k}">${l}</button>`).join('')}</div>`;
   const doGrupo = c => !G || !c.tipos.length || c.tipos.some(t => GRUPO[t] === G);
   const base = clientes.filter(doGrupo), A = base.filter(c => c.status === 'ativo');
-  const envs = base.flatMap(c => c.envios.map(e => ({ c, d: daysSince(e.data) }))).filter(x => x.d !== null && x.d >= 0);
-  const noP = envs.filter(x => x.d < P), antes = envs.filter(x => x.d >= P && x.d < 2 * P);
-  const emDia = A.filter(c => { const d = diasSemEnvio(c); return d !== null && d < ALIMENTAR_DIAS; }).length;
-  const pct = A.length ? Math.round(emDia / A.length * 100) : 0;
-  const atendidos = new Set(noP.map(x => x.c.id)).size;
-  const novosEm = (de, ate) => base.filter(c => { const d = daysSince(c.criadoEm); return d !== null && d >= de && d < ate; }).length;
-  const novos = novosEm(0, P);
-  const delta = (a, b) => { const x = a - b; return `<span class="dl${x > 0 ? ' up' : x < 0 ? ' down' : ''}">${x > 0 ? '+' + x : x < 0 ? '−' + -x : 'Igual'} vs ${P} dias anteriores</span>`; };
-  const tile = (k, cor, v, s) => `<div class="kpi${cor ? ' ' + cor : ''}"><span class="k">${k}</span><span class="v">${v}</span>${s}</div>`;
-  const tiles = tile('Carteira em dia', pct >= 80 ? 'ok' : 'warn', `${pct}<small>%</small>`, `<span class="meter"><i style="width:${pct}%"></i></span><span class="s">${emDia} de ${A.length} ativos receberam imóvel nos últimos ${ALIMENTAR_DIAS} dias</span>`)
-    + tile('Imóveis enviados', 'or', noP.length, `${delta(noP.length, antes.length)}<span class="s">nos últimos ${P} dias</span>`)
-    + tile('Clientes atendidos', '', atendidos, `<span class="s">de ${A.length} ativos receberam imóvel nos últimos ${P} dias</span>`)
-    + tile('Novos clientes', '', novos, `${delta(novos, novosEm(P, 2 * P))}<span class="s">cadastrados nos últimos ${P} dias</span>`);
 
-  // envios por dia (90 dias: por semana); toque ou passe o mouse na coluna para ler o valor
-  const passo = P > 30 ? 7 : 1, nb = Math.ceil(P / passo), cont = Array(nb).fill(0);
-  noP.forEach(x => { cont[nb - 1 - Math.floor(x.d / passo)]++; });
-  const dataDe = n => { const t = new Date(); t.setDate(t.getDate() - n); return pad(t.getDate()) + '/' + pad(t.getMonth() + 1); };
-  const rot = i => passo === 1 ? dataDe(nb - 1 - i) : 'Semana de ' + dataDe((nb - 1 - i) * passo + passo - 1);
-  const mx = Math.max(...cont), im = cont.lastIndexOf(mx);
+  // imóveis enviados: por dia (o período escolhido), por semana (no mínimo 12) ou por mês (12 meses)
+  const datas = base.flatMap(c => c.envios.map(e => e.data)).filter(Boolean);
+  const hoje = new Date(), dataDe = n => { const t = new Date(); t.setDate(t.getDate() - n); return pad(t.getDate()) + '/' + pad(t.getMonth() + 1); };
+  let nb, idx, rot, faixa, agora;
+  if (E === 'mes') {
+    nb = 12; agora = 'Este mês'; faixa = 'nos últimos 12 meses';
+    const m0 = hoje.getFullYear() * 12 + hoje.getMonth();
+    idx = d => nb - 1 - (m0 - (+d.slice(0, 4) * 12 + +d.slice(5, 7) - 1));
+    rot = i => { const t = new Date(hoje.getFullYear(), hoje.getMonth() - (nb - 1 - i), 1); return t.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }).replace('. de ', '/').replace('.', ''); };
+  } else if (E === 'semana') {
+    nb = Math.max(12, Math.ceil(P / 7)); agora = 'Esta semana'; faixa = `nas últimas ${nb} semanas`;
+    idx = d => nb - 1 - Math.floor(daysSince(d) / 7);
+    rot = i => 'Semana de ' + dataDe((nb - 1 - i) * 7 + 6);
+  } else {
+    nb = P; agora = 'Hoje'; faixa = `nos últimos ${P} dias`;
+    idx = d => nb - 1 - daysSince(d);
+    rot = i => dataDe(nb - 1 - i);
+  }
+  const cont = Array(nb).fill(0);
+  datas.forEach(d => { const i = idx(d); if (i >= 0 && i < nb) cont[i]++; });
+  const total = cont.reduce((s, n) => s + n, 0), mx = Math.max(...cont), im = cont.lastIndexOf(mx);
   const colunas = cont.map((n, i) => `<button class="col" data-act="m-col" data-r="${esc(rot(i))}" data-n="${n}" aria-label="${esc(rot(i))}: ${n}">${n && i === im ? `<b>${n}</b>` : ''}<i style="height:${n ? Math.max(3, n / Math.max(1, mx) * 82) : 0}%"></i></button>`).join('');
   const tabela = cont.map((n, i) => [rot(i), n]).reverse().map(([r, n]) => `<tr><td>${esc(r)}</td><td>${n}</td></tr>`).join('');
-  const grafico = `<div class="m-card m-full"><div class="m-h"><h3>Imóveis enviados ${passo === 1 ? 'por dia' : 'por semana'}</h3><span class="m-read" id="m-read">${noP.length ? 'Toque numa coluna para ver o dia' : 'Nenhum envio no período'}</span></div>
-    <div class="cols">${colunas}</div><div class="cx"><span>${esc(rot(0))}</span><span>${passo === 1 ? 'Hoje' : 'Esta semana'}</span></div>
-    <details class="m-tab"><summary>Ver em tabela</summary><table><tr><th>${passo === 1 ? 'Dia' : 'Semana'}</th><th>Imóveis</th></tr>${tabela}</table></details></div>`;
+  const grafico = `<div class="m-card m-full"><div class="m-h"><h3>Imóveis enviados</h3>
+      <div class="chips sm">${[['dia', 'Por dia'], ['semana', 'Por semana'], ['mes', 'Por mês']].map(([k, l]) => `<button class="chip${E === k ? ' on' : ''}" data-act="m-e" data-v="${k}">${l}</button>`).join('')}</div></div>
+    <p class="m-sub"><b class="m-tot">${total}</b> ${plural(total, 'imóvel enviado', 'imóveis enviados')} ${faixa} · <span class="m-read" id="m-read">${total ? 'toque numa coluna para ver o valor' : 'nenhum envio ainda'}</span></p>
+    <div class="cols">${colunas}</div><div class="cx"><span>${esc(rot(0))}</span><span>${agora}</span></div>
+    <details class="m-tab"><summary>Ver em tabela</summary><table><tr><th>${{ dia: 'Dia', semana: 'Semana', mes: 'Mês' }[E]}</th><th>Imóveis</th></tr>${tabela}</table></details></div>`;
 
   // onde falta imóvel: bairros em que clientes ativos têm até 3 opções no estoque das imobiliárias
   let falta;
@@ -1332,10 +1420,11 @@ function renderMetricas() {
       .map(r => [bLabel(r.b), r.p, `de ${r.n} ${plural(r.n, 'cliente', 'clientes')}`, `data-act="bairro" data-b="${esc(r.b)}"`]),
       `Todos os clientes ativos têm mais de ${POUCA_OPCAO} imóveis compatíveis no estoque.`);
   }
-  // quem atender primeiro: os que estão há mais tempo sem receber imóvel (quem nunca recebeu vem antes)
-  const fila = A.filter(precisaAlimentar).sort((a, b) => { const da = diasSemEnvio(a), db = diasSemEnvio(b); return (db === null ? 1e6 : db) - (da === null ? 1e6 : da); });
-  const primeiro = fila.length ? `<div class="m-fila">${fila.slice(0, 5).map(c => { const [cor, frase] = contatoTxt(c); return `<button class="m-cli" data-act="ficha" data-id="${c.id}"><span class="nm np">${esc(nomeProprio(c.nome))}</span><span class="ctt ${cor}"><span class="dot"></span>${frase}</span></button>`; }).join('')}</div>${fila.length > 5 ? `<button class="link" data-act="alimentar" style="margin-top:12px">Ver os ${fila.length} que precisam de imóvel</button>` : ''}`
-    : `<p class="m-vazio">Todos os ativos receberam imóvel nos últimos ${ALIMENTAR_DIAS} dias.</p>`;
+  // bairros mais procurados pelos ativos (o que era a aba Bairros); tocar abre os clientes
+  const dem = new Map();
+  A.forEach(c => { const vistos = new Set(); c.bairros.forEach(b => { const k = bkey(b); if (vistos.has(k)) return; vistos.add(k); if (!dem.has(k)) dem.set(k, { b: canonBairro(b), n: 0 }); dem.get(k).n++; }); });
+  const procurados = [...dem.values()].sort((a, b) => b.n - a.n || a.b.localeCompare(b.b, 'pt-BR')).slice(0, 10)
+    .map(r => [bLabel(r.b), r.n, plural(r.n, 'cliente', 'clientes'), `data-act="bairro" data-b="${esc(r.b)}"`]);
   // perfil: faixa do teto de compra e tipos procurados
   const teto = c => c.valorMax || c.valorMin;
   const faixas = M_FAIXAS.map(([r, de, ate]) => [r, A.filter(c => teto(c) && teto(c) > de && teto(c) <= ate).length]);
@@ -1343,10 +1432,10 @@ function renderMetricas() {
   if (semValor) faixas.push(['Sem valor informado', semValor]);
   const tipos = M_GRUPOS.slice(1).map(([g, r]) => [r, A.filter(c => c.tipos.some(t => GRUPO[t] === g)).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]);
 
-  $('#m-body').innerHTML = `<div class="kpis">${tiles}</div><div class="m-grid">${grafico}
+  $('#m-body').innerHTML = `<div class="m-grid">${grafico}
     <div class="m-card"><div class="m-h"><h3>Onde falta imóvel</h3></div><p class="m-sub">Bairros com clientes ativos que têm até ${POUCA_OPCAO} imóveis compatíveis na J8 e na A. Gonçalves. É onde vale angariar.</p>${falta}</div>
-    <div class="m-card"><div class="m-h"><h3>Quem atender primeiro</h3></div><p class="m-sub">Há mais tempo sem receber imóvel.</p>${primeiro}</div>
-    <div class="m-card"><div class="m-h"><h3>Faixa de valor dos ativos</h3></div><p class="m-sub">Pelo teto de compra de cada cliente.</p>${barras(faixas.filter(x => x[1] || x[0] !== 'Sem valor informado'), 'Nenhum cliente ativo.')}</div>
+    <div class="m-card"><div class="m-h"><h3>Bairros mais procurados</h3></div><p class="m-sub">Quantos clientes ativos aceitam cada bairro.</p>${barras(procurados, 'Nenhum cliente ativo.')}</div>
+    <div class="m-card"><div class="m-h"><h3>Faixa de valor dos ativos</h3></div><p class="m-sub">Pelo teto de compra de cada cliente.</p>${barras(faixas, 'Nenhum cliente ativo.')}</div>
     <div class="m-card"><div class="m-h"><h3>O que procuram</h3></div><p class="m-sub">Clientes ativos por tipo de imóvel (um cliente pode buscar mais de um).</p>${barras(tipos, 'Nenhum cliente ativo.')}</div></div>`;
 }
 function leColuna(c) {
@@ -1357,7 +1446,7 @@ function leColuna(c) {
 document.addEventListener('mouseover', e => { const c = e.target.closest('.col'); if (c) leColuna(c); });
 
 function renderAll() {
-  renderBairros(); renderClientes();
+  renderClientes();
   if (ui.tab === 'metricas') renderMetricas();
   if (ui.sheet && ui.sheet.kind === 'ficha') { if (byId(ui.sheet.id)) renderFicha(ui.sheet.id); else closeSheet(); }
   updateSync();
@@ -1366,8 +1455,9 @@ function renderAll() {
 // ── NAVEGAÇÃO ──
 function go(tab) {
   ui.tab = tab;
-  ['bairros', 'clientes', 'metricas'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== tab));
+  ['clientes', 'imoveis', 'metricas'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== tab));
   if (tab === 'metricas') renderMetricas();
+  if (tab === 'imoveis') renderImoveis();
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   window.scrollTo(0, 0);
 }
@@ -1629,7 +1719,12 @@ document.addEventListener('click', e => {
     case 'env-del': { const c = byId(id); if (c) { saveClient(Object.assign({}, c, { envios: c.envios.filter(x => x.id !== el.dataset.e) })); } break; }
     // bairro tocado na aba Bairros: abre os clientes ativos que procuram nele
     case 'bairro': ui.c.q = el.dataset.b; ui.c.f = 'ativos'; $('#c-q').value = el.dataset.b; go('clientes'); renderClientes(); break;
-    case 'b-tipo': ui.b.tipo = v; renderBairros(); break;
+    case 'i-fonte': case 'i-tipo': case 'i-ordem': ui.i[a.slice(2)] = v; ui.i.n = I_PASSO; renderImoveis(); break;
+    case 'i-quartos': ui.i.quartos = +v; ui.i.n = I_PASSO; renderImoveis(); break;
+    case 'i-mais': ui.i.n += I_PASSO; renderImoveisLista(); break;
+    case 'tema': $('#menu-tema').classList.toggle('hidden'); break;
+    case 'tema-set': aplicaTema(v); lsSet('carteira_tema', v); menu.classList.add('hidden'); $('#menu-tema').classList.add('hidden'); break;
+    case 'm-e': ui.m.e = v; renderMetricas(); break;
     case 'c-f': ui.c.f = v; renderClientes(); break;
     case 'm-p': ui.m.p = +v; renderMetricas(); break;
     case 'm-g': ui.m.g = v; renderMetricas(); break;
@@ -1644,11 +1739,11 @@ document.addEventListener('click', e => {
     case 'j8-mais': ui.j8Mais[id] = (ui.j8Mais[id] || 5) + 5; renderFicha(id); break;
     case 'fonte': ui.fonte = v; lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
     case 'j8-desc': copiarDescritivo(el, el.dataset.c); break;
-    case 'j8-capa': ui.capaDe = ui.capaDe === el.dataset.c ? null : el.dataset.c; if (fichaAberta()) renderFicha(fichaAberta()); break;
+    case 'j8-capa': ui.capaDe = ui.capaDe === el.dataset.c ? null : el.dataset.c; redesenhaCartoes(); break;
     case 'capa-pick': {
       capas[el.dataset.c] = el.dataset.u; lsSet('carteira_capas', capas);
       pdfsProntos.delete(el.dataset.c); ui.capaDe = null;
-      if (fichaAberta()) renderFicha(fichaAberta());
+      redesenhaCartoes();
       toast('Foto da capa trocada. O próximo PDF já abre com ela.');
       break;
     }
@@ -1657,12 +1752,26 @@ document.addEventListener('click', e => {
 
 // ── CAMPOS DE BUSCA ──
 function bindBuscas() {
-  $('#b-q').addEventListener('input', e => { ui.b.q = e.target.value; renderBairros(); });
+  $('#i-q').addEventListener('input', e => { ui.i.q = e.target.value; ui.i.n = I_PASSO; renderImoveisLista(); });
+  // valor da aba Imóveis (os campos ficam em "Mais filtros", que é redesenhado; por isso o ouvinte fica no documento)
+  document.addEventListener('input', e => {
+    if (e.target.id !== 'i-vmin' && e.target.id !== 'i-vmax') return;
+    maskMoney(e.target); ui.i[e.target.id.slice(2)] = parseMoney(e.target.value); ui.i.n = I_PASSO; renderImoveisLista();
+  });
+  document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('imais')) ui.i.mais = e.target.open; }, true);
   $('#c-q').addEventListener('input', e => { ui.c.q = e.target.value; renderClientes(); });
 }
 
+// tema do menu "Alterar tema": Claro (padrão) ou Original (o escuro da primeira versão); fica salvo neste aparelho
+function aplicaTema(t) {
+  if (t === 'original') document.documentElement.dataset.tema = 'original'; else delete document.documentElement.dataset.tema;
+  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === 'original' ? '#050b1a' : '#ffffff';
+  document.querySelectorAll('#menu-tema button').forEach(b => b.classList.toggle('on', b.dataset.v === (t === 'original' ? 'original' : 'claro')));
+}
+aplicaTema(lsGet('carteira_tema', 'claro'));
+
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31d';
+const VERSAO = '2026-10-31e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
