@@ -1254,7 +1254,7 @@ function escolheCapa(i) {
 }
 function j8Section(c) {
   const fonte = fonteAtual();
-  const chips = `<div class="chips sm fontes">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => `<button class="chip${fonte === k ? ' on' : ''}" data-act="fonte" data-v="${k}" data-id="${c.id}">${l}</button>`).join('')}</div>`;
+  const chips = `<div class="chips sm fontes">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => `<button class="chip${fonte === k ? ' on' : ''}" data-act="fonte" data-v="${k}" data-id="${c.id}">${l}${carregados ? `<span class="n">${j8Match(c, k).total}</span>` : ''}</button>`).join('')}</div>`;
   if (!carregados) return `<span class="lbl">Imóveis das imobiliárias</span>${chips}<p class="muted" style="font-size:14px">Carregando os estoques…</p>`;
   const falhou = (fonte === 'todas' ? ESTOQUES : [EST[fonte]]).filter(e => estoqueErr[e.id]).map(e => e.nome);
   const { todos, total } = j8Match(c, fonte);
@@ -1356,10 +1356,10 @@ function renderClientes() {
   if (!rows.length) { $('#c-list').innerHTML = `<div class="empty"><h3>Ninguém encontrado</h3><p>${q ? 'Nenhum cliente com “' + esc(ui.c.q) + '” neste filtro.' : 'Nenhum cliente neste filtro.'}</p></div>`; return; }
   $('#c-list').innerHTML = rows.map(c => {
     const nest = c.status === 'ativo' && carregados ? ESTOQUES.map(e => [e.id, e.nome, j8Match(c, e.id).total]).filter(x => x[2]) : [];
-    // "9 imóveis compatíveis · 8 na J8 · 1 na A. Gonçalves" e "Recebeu imóvel há 6 dias"
+    // só o total ("9 imóveis compatíveis"); quanto há em cada imobiliária aparece dentro da ficha. E "Recebeu imóvel há 6 dias"
     const tot = nest.reduce((s, x) => s + x[2], 0);
     const [cor, frase] = contatoTxt(c);
-    const side = (tot ? `<span class="est"><b>${tot} ${plural(tot, 'imóvel compatível', 'imóveis compatíveis')}</b><span>${nest.map(([k, n, q]) => `${q} na ${n}`).join(' · ')}</span></span>` : '') + (c.status === 'ativo' ? `<span class="ctt ${cor}"><span class="dot"></span>${frase}</span>` : '');
+    const side = (tot ? `<span class="est"><b>${tot} ${plural(tot, 'imóvel compatível', 'imóveis compatíveis')}</b></span>` : '') + (c.status === 'ativo' ? `<span class="ctt ${cor}"><span class="dot"></span>${frase}</span>` : '');
     // tipo, bairros e valor com cor própria, para não virar uma frase só
     const meta = [['mt', tiposResumo(c.tipos).join(', ')], ['mb', c.bairros.join(', ')], ['mv', faixaValor(c)]].filter(x => x[1]).map(([k, v]) => `<span class="${k}">${esc(v)}</span>`).join('<i class="ms"></i>');
     return `<button class="crow${fichaAberta() === c.id ? ' sel' : ''}" data-act="ficha" data-id="${c.id}">${avatar(c)}<div class="cm"><div class="nm np">${esc(nomeProprio(c.nome))}${c.status === 'arquivado' ? '<span class="pill arquivado">Arquivado</span>' : ''}</div><div class="meta">${meta}</div></div><div class="cs">${side}</div></button>`;
@@ -1784,7 +1784,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31g';
+const VERSAO = '2026-10-31h';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
