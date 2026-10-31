@@ -873,7 +873,7 @@ let carregados = false;
 
 // ── O MESMO IMÓVEL EM MAIS DE UMA IMOBILIÁRIA ──
 // Mesmo endereço (rua e número) ou mesmo condomínio no mesmo bairro, mesma família de tipo, metragem parecida e preço
-// parecido. Num prédio com várias unidades iguais quem separa é o preço. Preferência: J8, depois A. Gonçalves, depois SIS3
+// parecido. Num prédio com várias unidades iguais quem separa é o preço. Fica o anúncio que informa o complemento; empate: J8, A. Gonçalves, SIS3
 // (a ordem de ESTOQUES): em "Todas" fica só o da preferida; nas abas de cada imobiliária todos aparecem, com o aviso.
 const IMOVEL = new Map(); // "src:código" -> imóvel
 const ABREV_RUA = { prof: 'professor', profa: 'professora', dr: 'doutor', des: 'desembargador', gal: 'general', gen: 'general', cel: 'coronel', pres: 'presidente',
@@ -926,10 +926,12 @@ function marcaRepetidos() {
     i.rep = principal.k;
     principal.irmaos.push(i.k);
   }
-  // todos do mesmo grupo se conhecem (para o aviso "também na…" e para saber se já foi enviado por outra imobiliária)
-  for (const p of IMOVEL.values()) if (!p.rep && p.irmaos.length) {
-    const familia = [p.k, ...p.irmaos];
-    familia.forEach(k => { const x = IMOVEL.get(k); x.irmaos = familia.filter(o => o !== k); });
+  // todos do mesmo grupo se conhecem (para o aviso "também na…" e para saber se já foi enviado por outra imobiliária).
+  // O que fica em "Todas" é o anúncio que informa o complemento (o número da unidade); empate: J8, A. Gonçalves, SIS3
+  const peso = x => (x.cp ? 0 : x.bl ? 1 : 2) * 10 + ordem[x.src];
+  for (const p of [...IMOVEL.values()]) if (!p.rep && p.irmaos.length) {
+    const familia = [p.k, ...p.irmaos], principal = familia.map(k => IMOVEL.get(k)).sort((a, b) => peso(a) - peso(b))[0];
+    familia.forEach(k => { const x = IMOVEL.get(k); x.irmaos = familia.filter(o => o !== k); x.rep = x === principal ? '' : principal.k; });
   }
 }
 async function loadEstoques() {
@@ -1854,7 +1856,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31j';
+const VERSAO = '2026-10-31k';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
