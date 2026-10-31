@@ -30,6 +30,23 @@ function tipoCarteira(o) {
   return '';
 }
 
+// características "Sim" do anúncio → os mesmos rótulos da J8 (vão para a capa do book)
+const GON_ITENS = {
+  'suite master': 'Suíte master', 'closet': 'Closet', 'escritorio': 'Escritório', 'home theater': 'Home theater', 'lareira': 'Lareira', 'lavabo': 'Lavabo',
+  'piso aquecido': 'Piso aquecido', 'ar central': 'Ar central', 'aquecimento central': 'Aquecimento central', 'aquecimento solar': 'Aquecimento solar',
+  'automacao': 'Automação', 'piscina': 'Piscina', 'piscina aquecida': 'Piscina aquecida', 'churrasqueira': 'Churrasqueira', 'espaco gourmet': 'Espaço gourmet',
+  'sauna': 'Sauna', 'adega': 'Adega', 'hidromassagem': 'Hidromassagem', 'jardim': 'Jardim', 'quintal': 'Quintal', 'terraco': 'Terraço', 'sacada': 'Sacada',
+  'deck': 'Deck', 'mezanino': 'Mezanino', 'biblioteca': 'Biblioteca', 'living hall': 'Living hall', 'estar intimo': 'Estar íntimo', 'face norte': 'Face norte',
+  'marcenaria premium': 'Marcenaria premium', 'edicula': 'Edícula'
+};
+const GON_COND = {
+  'portaria24 hrs': 'Portaria 24h', 'vigilancia24h': 'Vigilância 24h', 'seguranca patrimonial': 'Segurança patrimonial', 'salao festas': 'Salão de festas',
+  'sala fitness': 'Academia', 'academia': 'Academia', 'playground': 'Playground', 'brinquedoteca': 'Brinquedoteca', 'salao jogos': 'Salão de jogos',
+  'quadra tenis': 'Quadra de tênis', 'quadra esportes': 'Quadra poliesportiva', 'bosque': 'Bosque', 'spa': 'Spa', 'cinema': 'Cinema', 'piscina': 'Piscina',
+  'piscina aquecida': 'Piscina aquecida', 'jardim': 'Jardim', 'espaco gourmet': 'Espaço gourmet', 'pet care': 'Pet place', 'pet place': 'Pet place'
+};
+const marcados = (obj, mapa) => [...new Set(Object.entries(obj || {}).filter(([k, v]) => sim(v)).map(([k]) => mapa[norm(k)]).filter(Boolean))];
+
 async function pega(url, tentativas = 3) {
   for (let t = 1; t <= tentativas; t++) {
     try { const r = await fetch(url, HEAD); if (r.ok) return await r.text(); } catch (e) {}
@@ -111,6 +128,9 @@ async function trabalhador() {
       const det = Object.assign({}, i, {
         cond: num(o.ValorCondominio), iptu: num(o.ValorIptu), bh: num(o.BanheiroSocialQtd),
         ap, atot, ac, apa: num(o.AptosAndar), mob: sim(car.Mobiliado),
+        // "Casa Com Elevador" só vale como elevador privativo em casa (em apartamento é o elevador do prédio)
+        itens: marcados(car, GON_ITENS).concat(/^(Casa|Sobrado)/.test(t) && sim(car['Casa Com Elevador']) ? ['Elevador privativo'] : []),
+        condItens: marcados(o.InfraEstrutura, GON_COND),
         descricao: String(o.DescricaoWeb || ''), fotos
       });
       await writeFile(new URL(c + '.json', DIR), JSON.stringify(det));

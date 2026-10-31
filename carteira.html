@@ -228,6 +228,19 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .j8c .go svg,.j8c .bk svg{width:15px;height:15px}
 .j8c .src{display:inline-block;white-space:nowrap;margin-left:8px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;vertical-align:2px;background:var(--orbg);color:var(--or2)}
 .j8box .fontes{margin:2px 0 14px}
+.j8act .pdf{grid-column:1 / -1}
+.j8c .capa{text-align:left;cursor:pointer;transition:background .15s}
+.j8c .capa:hover{background:var(--tqbg)}
+.j8c .capa b{display:flex;align-items:center;gap:8px;color:var(--tq2)}
+.j8c .capa i{width:32px;height:24px;border-radius:4px;background:var(--bg2) center/cover no-repeat;flex-shrink:0}
+.capas{border-top:1px solid var(--line);padding:12px}
+.capas-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;font-size:13.5px}
+.capas-h b{font-weight:600}
+.capas-h button{color:var(--tq2);font-weight:600}
+.capas-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:360px;overflow-y:auto;padding:2px}
+.capas-g button{aspect-ratio:4/3;border-radius:6px;overflow:hidden;padding:0;background:var(--bg2);outline:3px solid transparent;outline-offset:1px}
+.capas-g button.on{outline-color:var(--or)}
+.capas-g img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* folhas (modais) */
 .ov{position:fixed;inset:0;z-index:50;background:rgba(40,42,46,.3);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px}
@@ -743,6 +756,7 @@ const ui = {
   b: { q: '', tipo: '' },
   c: { q: '', f: 'ativos' },
   m: { p: 30, g: '' }, // métricas: período em dias e família de imóvel ('' = todas)
+  capaDe: null,      // imóvel ("j8:12345") com a grade de fotos aberta para escolher a capa do book
   j8Mais: {},        // id do cliente -> quantos imóveis estão abertos na ficha (5, 10, 15...)
   fonte: lsGet('carteira_fonte', 'todas'), // imobiliária escolhida na ficha: todas, j8 ou gon
   sheet: null        // {kind:'ficha'|'form', id}
@@ -886,11 +900,14 @@ function salvarArquivos(files) {
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }, i * 350));
 }
-// o book abre pela foto de destaque do anúncio (a do cartão); a A. Gonçalves costuma marcar o destaque no meio da lista
+// o book abre pela foto da capa: a que o Matheus escolheu neste aparelho ("Foto da capa · Trocar") ou, sem escolha,
+// a de destaque do anúncio (a A. Gonçalves costuma marcar o destaque no meio da lista)
 const nomeFoto = u => String(u || '').split('/').pop().replace(/_p(\.\w+)$/, '$1');
+const capas = lsGet('carteira_capas', {}); // "j8:12345" -> endereço da foto escolhida
+const fotoCapa = d => nomeFoto(capas[d.k] || d.f);
 function fotosDoBook(d) {
-  const fotos = (d.fotos || []).slice();
-  const k = d.f ? fotos.findIndex(u => nomeFoto(u) === nomeFoto(d.f)) : -1;
+  const fotos = (d.fotos || []).slice(), alvo = fotoCapa(d);
+  const k = alvo ? fotos.findIndex(u => nomeFoto(u) === alvo) : -1;
   if (k > 0) fotos.unshift(fotos.splice(k, 1)[0]);
   return fotos;
 }
@@ -936,62 +953,100 @@ function iconePDF(tipo, cor) {
   } else g.fill(new Path2D(WA_PATH));
   return iconesPDF[k] = cv.toDataURL('image/png');
 }
-// corta a foto para preencher exatamente a caixa (sem faixas brancas), como na capa
-async function recorte({ du, w, h }, bw, bh) {
-  const el = new Image(); el.src = du; await el.decode();
-  const cv = document.createElement('canvas'); cv.width = 1300; cv.height = Math.round(1300 * bh / bw);
-  const k = Math.max(cv.width / w, cv.height / h);
-  cv.getContext('2d').drawImage(el, (cv.width - w * k) / 2, (cv.height - h * k) / 2, w * k, h * k);
-  return cv.toDataURL('image/jpeg', .88);
-}
 function rodapePDF(doc, PW, PH) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5); doc.setTextColor(56, 56, 56); doc.text('M A T H E U S   N I C K E L', 34, PH - 31);
   doc.setFontSize(9); doc.setTextColor(120, 120, 120); doc.text(CORRETOR.insta, PW - 34, PH - 31, { align: 'right' });
   doc.addImage(iconePDF('insta', '#787878'), 'PNG', PW - 34 - doc.getTextWidth(CORRETOR.insta) - 14, PH - 39.5, 9.5, 9.5);
 }
-// o que entra na capa: casa = área construída + terreno; apartamento e cobertura = área privativa
-function specsPDF(d) {
+// ficha técnica da capa, como os sites de alto padrão apresentam: casa = área construída + terreno; apartamento e cobertura = privativa
+function fichaPDF(d) {
   const grupo = GRUPO[d.tc] || '', ehCasa = grupo === 'Casa', ehApto = grupo === 'Apartamento' || grupo === 'Cobertura', l = [];
-  if (ehCasa) { const constr = d.ac || d.ap || d.atot || d.a; if (constr) l.push(`${m2(constr)} de área construída`); if (d.at && d.at > constr) l.push(`Terreno de ${m2(d.at)}`); }
-  else if (ehApto) { if (d.ap || d.a) l.push(`${m2(d.ap || d.a)} privativos`); }
-  else if (d.a || d.at) l.push(m2(d.a || d.at));
+  if (ehCasa) { const constr = d.ac || d.ap || d.atot || d.a; if (constr) l.push(['Área construída', m2(constr)]); if (d.at && d.at > constr) l.push(['Terreno', m2(d.at)]); }
+  else if (ehApto) { if (d.ap || d.a) l.push(['Área privativa', m2(d.ap || d.a)]); if (d.atot && d.atot > (d.ap || d.a) * 1.05) l.push(['Área total', m2(d.atot)]); }
+  else if (grupo === 'Terreno') { if (d.at || d.a) l.push(['Área do terreno', m2(d.at || d.a)]); }
+  else if (d.a) l.push(['Área', m2(d.a)]);
   if (ehCasa || ehApto) {
-    if (d.s) l.push(d.q > d.s ? `${d.q} quartos, sendo ${d.s} ${d.s === 1 ? 'suíte' : 'suítes'}` : `${d.s} ${d.s === 1 ? 'suíte' : 'suítes'}`);
-    else if (d.q) l.push(`${d.q} ${d.q === 1 ? 'quarto' : 'quartos'}`);
-    if (d.v) l.push(`${d.v} ${d.v === 1 ? 'vaga' : 'vagas'} de garagem`);
+    if (d.q) l.push(['Quartos', d.q]);
+    if (d.s) l.push(['Suítes', d.s]);
+    if (d.bh) l.push(['Banheiros', d.bh]);
+    if (d.v) l.push(['Vagas', d.v]);
   }
-  if (d.mob) l.push('Totalmente mobiliado');
-  return l;
+  if (d.ano > 1900) l.push(['Ano de construção', d.ano]);
+  if (ehApto && d.apa > 0) l.push(['Por andar', d.apa === 1 ? '1 apartamento' : d.apa + ' apartamentos']);
+  const mob = d.mob ? 'Mobiliado' : { s: 'Mobiliado', m: 'Semi-mobiliado' }[d.mo];
+  if (mob) l.push(['Mobília', mob]);
+  // cabem 8: o que é menos decisivo sai primeiro
+  for (const sai of ['Área total', 'Por andar', 'Ano de construção']) if (l.length > 8) { const i = l.findIndex(x => x[0] === sai); if (i >= 0) l.splice(i, 1); }
+  return l.slice(0, 8);
 }
-// capa: foto à esquerda; à direita, para quem é a seleção, o imóvel, uma frase de curadoria e o cartão do corretor
-const CAPA = { fx: 34, fy: 36, fw: 520, fh: 660 - 36 - 69 };
-function capaPDF(doc, d, fotoCortada, cl) {
-  const PW = 920, { fx, fy, fw, fh } = CAPA;
-  doc.setFillColor(255, 255, 255); doc.rect(0, 0, PW, 660, 'F');
-  doc.addImage(fotoCortada, 'JPEG', fx, fy, fw, fh, undefined, 'FAST');
-  const x = fx + fw + 40, w = PW - 34 - x, tipo = d.rot || 'Imóvel';
-  const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
-  let y = fy + 40;
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(224, 102, 44);
-  doc.text(cl ? 'SELEÇÃO PARA ' + firstName(cl.nome).toLocaleUpperCase('pt-BR') : 'SELEÇÃO EXCLUSIVA', x, y, { charSpace: 1.6 });
-  y += 34;
-  doc.setFontSize(24); doc.setTextColor(44, 46, 51);
-  const tl = doc.splitTextToSize(emp || tipo, w); doc.text(tl, x, y, { lineHeightFactor: 1.15 }); y += (tl.length - 1) * 27.6 + 22;
-  doc.setFontSize(10.5); doc.setTextColor(135, 135, 135); doc.text(emp ? `${tipo} · ${d.b}` : d.b, x, y);
-  y += 24; doc.setDrawColor(224, 102, 44); doc.setLineWidth(1); doc.line(x, y, x + 36, y); y += 26;
-  doc.setFontSize(11); doc.setTextColor(56, 56, 56);
-  specsPDF(d).forEach(s => { doc.text(s, x, y); y += 18; });
-  y += 14; doc.setFontSize(10.5); doc.setTextColor(110, 110, 110);
-  doc.text(doc.splitTextToSize('Selecionei este imóvel a partir do que você procura. Nas próximas páginas, as fotos de cada ambiente, para você conhecer com calma.', w), x, y, { lineHeightFactor: 1.55 });
-  // cartão do corretor, alinhado com o pé da foto
-  const yb = fy + fh;
-  doc.setDrawColor(225, 225, 225); doc.setLineWidth(.6); doc.line(x, yb - 104, x + w, yb - 104);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(44, 46, 51); doc.text(CORRETOR.nome, x, yb - 78, { charSpace: 2 });
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(120, 120, 120); doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, yb - 62);
+// diferenciais do imóvel e do condomínio, do mais marcante para o mais comum
+const DIF_IMOVEL = ['Piscina aquecida', 'Piscina', 'Elevador privativo', 'Suíte master', 'Closet', 'Home theater', 'Adega', 'Lareira', 'Espaço gourmet', 'Churrasqueira',
+  'Sauna', 'Hidromassagem', 'Piso aquecido', 'Ar central', 'Aquecimento central', 'Automação', 'Marcenaria premium', 'Escritório', 'Living hall', 'Terraço', 'Deck',
+  'Jardim', 'Biblioteca', 'Mezanino', 'Estar íntimo', 'Face norte', 'Aquecimento solar', 'Quintal', 'Sacada', 'Edícula'];
+const DIF_COND = ['Portaria 24h', 'Vigilância 24h', 'Segurança patrimonial', 'Spa', 'Piscina aquecida', 'Piscina', 'Academia', 'Quadra de tênis', 'Quadra poliesportiva',
+  'Cinema', 'Salão de festas', 'Espaço gourmet', 'Bosque', 'Jardim', 'Brinquedoteca', 'Salão de jogos', 'Playground', 'Pet place'];
+function diferenciais(lista, ordem, n) {
+  const tem = new Set(lista || []);
+  if (tem.has('Piscina aquecida')) tem.delete('Piscina');
+  return ordem.filter(x => tem.has(x)).slice(0, n);
+}
+const CURADORIA = 'Selecionei este imóvel a partir do que você procura. Nas próximas páginas, as fotos de cada ambiente, para você conhecer com calma.';
+// capa (920×660): à esquerda a foto da capa inteira, sem corte, a frase de curadoria e o cartão do corretor;
+// à direita, para quem é a seleção, o imóvel, a ficha técnica e os diferenciais
+const CAPA = { x: 34, y: 36, w: 540, hMax: 430, pe: 591, rx: 614, rw: 272 };
+function capaPDF(doc, d, foto, cl) {
+  const { x, y: fy, w, hMax, pe, rx, rw } = CAPA, tipo = d.rot || 'Imóvel';
+  doc.setFillColor(255, 255, 255); doc.rect(0, 0, 920, 660, 'F');
+  const k = Math.min(w / foto.w, hMax / foto.h), pw = foto.w * k, ph = foto.h * k;
+  doc.addImage(foto.du, 'JPEG', x + (w - pw) / 2, fy, pw, ph, undefined, 'FAST');
+  // a frase de curadoria, em letra de leitura, logo abaixo da foto
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(14); doc.setTextColor(80, 80, 80);
+  doc.text(doc.splitTextToSize(CURADORIA, w - 40), x, fy + ph + 38, { lineHeightFactor: 1.5 });
+  // cartão do corretor no pé da página: nome e CRECI à esquerda, Instagram e WhatsApp à direita
+  doc.setDrawColor(228, 228, 228); doc.setLineWidth(.6); doc.line(x, pe - 44, x + w, pe - 44);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(44, 46, 51); doc.text(CORRETOR.nome, x, pe - 18, { charSpace: 2 });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(120, 120, 120); doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, pe - 2);
   doc.setFontSize(10); doc.setTextColor(56, 56, 56);
-  doc.addImage(iconePDF('insta', '#383838'), 'PNG', x, yb - 37.5, 11, 11); doc.text(CORRETOR.insta, x + 18, yb - 28.5);
-  doc.addImage(iconePDF('wa', '#383838'), 'PNG', x, yb - 11, 11, 11); doc.text(CORRETOR.whats, x + 18, yb - 2);
+  [[CORRETOR.insta, 'insta', pe - 18], [CORRETOR.whats, 'wa', pe - 2]].forEach(([t, ic, yy]) => {
+    doc.text(t, x + w, yy, { align: 'right' });
+    doc.addImage(iconePDF(ic, '#383838'), 'PNG', x + w - doc.getTextWidth(t) - 17, yy - 9, 11, 11);
+  });
+  // coluna da direita
+  const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
+  // título: o empreendimento; sem ele, no padrão do Matheus, "Casa no Jardim Social"
+  const titulo = emp || `${tipo} ${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`;
+  let y = fy + 8;
+  doc.setFontSize(8); doc.setTextColor(224, 102, 44);
+  doc.text(cl ? 'SELEÇÃO PARA ' + firstName(cl.nome).toLocaleUpperCase('pt-BR') : 'SELEÇÃO EXCLUSIVA', rx, y, { charSpace: 1.6 });
+  y += 34; doc.setFontSize(24); doc.setTextColor(44, 46, 51);
+  const tl = doc.splitTextToSize(titulo, rw).slice(0, 2); doc.text(tl, rx, y, { lineHeightFactor: 1.15 }); y += (tl.length - 1) * 27.6 + 22;
+  doc.setFontSize(10.5); doc.setTextColor(135, 135, 135); doc.text(emp ? `${tipo} · ${d.b}` : (d.ci || 'Curitiba'), rx, y);
+  y += 22; doc.setDrawColor(224, 102, 44); doc.setLineWidth(1); doc.line(rx, y, rx + 36, y); y += 30;
+  // ficha técnica em duas colunas: rótulo pequeno em maiúsculas e o número grande
+  const cel = fichaPDF(d), cw = (rw - 20) / 2, lin = Math.ceil(cel.length / 2);
+  doc.setDrawColor(236, 236, 236); doc.setLineWidth(.6);
+  for (let r = 0; r < lin; r++) doc.line(rx, y + r * 52 + 31, rx + rw, y + r * 52 + 31);
+  cel.forEach(([rot, val], i) => {
+    const cx = rx + (i % 2) * (cw + 20), cy = y + Math.floor(i / 2) * 52;
+    doc.setFontSize(7); doc.setTextColor(150, 150, 150); doc.text(rot.toLocaleUpperCase('pt-BR'), cx, cy, { charSpace: 1 });
+    doc.setFontSize(16); doc.setTextColor(44, 46, 51); doc.text(String(val), cx, cy + 20);
+  });
+  y += lin * 52 + 18;
+  // diferenciais do imóvel: até 8, em duas colunas, com um ponto laranja
+  const dif = diferenciais(d.itens, DIF_IMOVEL, 8);
+  if (dif.length && y < pe - 70) {
+    doc.setFontSize(7.5); doc.setTextColor(224, 102, 44); doc.text('DIFERENCIAIS', rx, y, { charSpace: 1.2 }); y += 20;
+    doc.setFontSize(10.5); doc.setTextColor(56, 56, 56); doc.setFillColor(224, 102, 44);
+    dif.forEach((t, i) => { const cx = rx + (i % 2) * (cw + 20), cy = y + Math.floor(i / 2) * 21; doc.circle(cx + 1.5, cy - 3.4, 1.6, 'F'); doc.text(t, cx + 9, cy); });
+    y += Math.ceil(dif.length / 2) * 21 + 18;
+  }
+  // o que o condomínio oferece, em uma ou duas linhas
+  const cond = diferenciais(d.condItens, DIF_COND, 6);
+  if (cond.length && y < pe - 40) {
+    doc.setFontSize(7.5); doc.setTextColor(224, 102, 44); doc.text('NO CONDOMÍNIO', rx, y, { charSpace: 1.2 }); y += 18;
+    doc.setFontSize(10); doc.setTextColor(90, 90, 90); doc.text(doc.splitTextToSize(cond.join(' · '), rw).slice(0, 2), rx, y, { lineHeightFactor: 1.5 });
+  }
 }
 async function baixarPDF(btn, c, cli) {
   if (btn.dataset.busy) return;
@@ -1020,7 +1075,7 @@ async function baixarPDF(btn, c, cli) {
     if (!imgs.length) throw new Error('nenhuma foto');
     // 1ª página: capa com a foto de destaque menor e o cartão de apresentação; depois todas as fotos, uma por página
     const doc = new JsPDF({ unit: 'pt', format: [920, 660], orientation: 'landscape', compress: true });
-    capaPDF(doc, d, await recorte(imgs[0], CAPA.fw, CAPA.fh), byId(cli));
+    capaPDF(doc, d, imgs[0], byId(cli));
     imgs.forEach(({ du, w, h }) => {
       const deitada = w >= h, PW = deitada ? 920 : 660, PH = deitada ? 660 : 920;
       doc.addPage([PW, PH], deitada ? 'landscape' : 'portrait');
@@ -1107,17 +1162,30 @@ function j8Card(i, c) {
   const unid = i.cp ? `<b>${esc(i.cp)}</b>${i.bl ? `<small>Bloco: ${esc(i.bl)}</small>` : ''}` : i.bl ? `<b>Bloco: ${esc(i.bl)}</b>` : '';
   return `<div class="j8c">
     <div class="j8top">
-      <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
+      <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
       <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}<span class="src ${i.src}">${EST[i.src].nome}</span></div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>${(() => { const e = c.envios.filter(x => x.ref === refDe(i)).sort((a, b) => a.data < b.data ? 1 : -1)[0]; return e ? `<div class="env8">✓ Enviado para ${esc(firstName(c.nome))} em ${fmtShort(e.data)}</div>` : ''; })()}${selos.length ? `<div class="selos">${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
         <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div></div>
     </div>
     <div class="j8act">
       <div class="cpl end${i.en ? '' : ' vazio'}"><span>Endereço</span>${i.en ? `<b>${esc(i.en)}</b>` : 'Não informado'}</div>
       <div class="cpl${unid ? '' : ' vazio'}"><span>Complemento ${deQue}</span>${unid || 'Não informado'}</div>
-      <button class="bk${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${esc(c.id)}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
+      <button class="cpl capa" data-act="j8-capa" data-c="${esc(i.k)}"><span>Foto da capa</span><b><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i>Trocar</b></button>
+      <button class="bk pdf${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${esc(c.id)}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
       <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo para cliente</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
-    </div></div>`;
+    </div>${ui.capaDe === i.k ? escolheCapa(i) : ''}</div>`;
+}
+// grade com todas as fotos do anúncio para escolher a da capa do book
+const miniCapa = u => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) + '&w=240&h=180&fit=cover&q=70';
+function escolheCapa(i) {
+  const d = j8Det.get(i.k);
+  if (!d || d instanceof Promise) {
+    j8Detalhe(i.k).then(() => { if (ui.capaDe === i.k && fichaAberta()) renderFicha(fichaAberta()); }, () => {});
+    return '<div class="capas"><p class="muted" style="font-size:13.5px">Carregando as fotos…</p></div>';
+  }
+  const atual = fotoCapa(d);
+  return `<div class="capas"><div class="capas-h"><b>Escolha a foto da capa do book</b><button data-act="j8-capa" data-c="${esc(i.k)}">Fechar</button></div>
+    <div class="capas-g">${(d.fotos || []).map(u => `<button class="${nomeFoto(u) === atual ? 'on' : ''}" data-act="capa-pick" data-c="${esc(i.k)}" data-u="${esc(u)}" aria-label="Usar esta foto na capa"><img loading="lazy" src="${esc(miniCapa(u))}" alt=""></button>`).join('')}</div></div>`;
 }
 function j8Section(c) {
   const fonte = fonteAtual();
@@ -1576,6 +1644,14 @@ document.addEventListener('click', e => {
     case 'j8-mais': ui.j8Mais[id] = (ui.j8Mais[id] || 5) + 5; renderFicha(id); break;
     case 'fonte': ui.fonte = v; lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
     case 'j8-desc': copiarDescritivo(el, el.dataset.c); break;
+    case 'j8-capa': ui.capaDe = ui.capaDe === el.dataset.c ? null : el.dataset.c; if (fichaAberta()) renderFicha(fichaAberta()); break;
+    case 'capa-pick': {
+      capas[el.dataset.c] = el.dataset.u; lsSet('carteira_capas', capas);
+      pdfsProntos.delete(el.dataset.c); ui.capaDe = null;
+      if (fichaAberta()) renderFicha(fichaAberta());
+      toast('Foto da capa trocada. O próximo PDF já abre com ela.');
+      break;
+    }
   }
 });
 
@@ -1586,7 +1662,7 @@ function bindBuscas() {
 }
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31c';
+const VERSAO = '2026-10-31d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
