@@ -480,9 +480,9 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
   </header>
 
   <main>
-    <!-- IMÓVEIS: o estoque da J8 e da A. Gonçalves junto, para buscar sem cliente -->
+    <!-- IMÓVEIS: o estoque da J8, da A. Gonçalves e da SIS3 junto, para buscar sem cliente -->
     <section id="v-imoveis" class="hidden">
-      <div class="phd"><div class="ttl"><span class="kick">J8 e A. Gonçalves</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
+      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves e SIS3</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
       <div class="bar-tools">
         <div class="ta"><input id="i-q" type="search" placeholder="Bairro, rua, empreendimento ou código…" autocomplete="off" aria-label="Buscar imóvel"></div>
       </div>
@@ -862,7 +862,8 @@ const waLink = (c, msg) => `https://wa.me/${TESTE ? '' : waNumber(c.whats)}` + (
 // Cada imóvel ganha: src (de qual imobiliária), tc (tipo da Carteira), rot (nome do tipo) e k (chave única "src:código").
 const ESTOQUES = [
   { id: 'j8', nome: 'J8', arq: 'dados/j8.json', det: 'dados/j8/', tipo: t => J8_TIPO[t] || '', rotulo: t => J8_ROTULO[t] || t },
-  { id: 'gon', nome: 'A. Gonçalves', arq: 'dados/goncalves.json', det: 'dados/goncalves/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
+  { id: 'gon', nome: 'A. Gonçalves', arq: 'dados/goncalves.json', det: 'dados/goncalves/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  { id: 'sis3', nome: 'SIS3', arq: 'dados/sis3.json', det: 'dados/sis3/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
 const EST = Object.fromEntries(ESTOQUES.map(e => [e.id, e]));
 const estoque = {}, estoqueErr = {};
@@ -879,7 +880,9 @@ async function loadEstoques() {
   if (ui.tab === 'imoveis') renderImoveis();
   if (ui.sheet && ui.sheet.kind === 'ficha') renderFicha(ui.sheet.id);
 }
-// de qual imobiliária mostrar na ficha: 'todas', 'j8' ou 'gon' (fica salvo neste aparelho)
+// "na J8, na A. Gonçalves e na SIS3" (os textos acompanham a lista de imobiliárias)
+const naTodas = () => { const n = ESTOQUES.map(e => 'na ' + e.nome); return n.slice(0, -1).join(', ') + ' e ' + n[n.length - 1]; };
+// de qual imobiliária mostrar na ficha: 'todas', 'j8', 'gon' ou 'sis3' (fica salvo neste aparelho)
 const fonteAtual = () => ui.fonte === 'todas' || EST[ui.fonte] ? ui.fonte : 'todas';
 // envios antigos da J8 guardam só o código; os da Gonçalves guardam "gon:código"
 const refDe = i => i.src === 'j8' ? i.c : i.k;
@@ -890,7 +893,9 @@ const refDe = i => i.src === 'j8' ? i.c : i.k;
 function j8Score(c, i) {
   const tipo = i.tc, grupo = GRUPO[tipo]; if (!tipo) return -1;
   if (c.tipos.length && !c.tipos.includes(tipo)) return -1;
-  if (!wantsBairro(c, i.b)) return -1;
+  // anúncio sem bairro não serve para ninguém; e o "Centro" de outra cidade (Guaratuba, Matinhos…) não é o de Curitiba
+  if (!String(i.b || '').trim() || !wantsBairro(c, i.b)) return -1;
+  if (norm(i.b) === 'centro' && i.ci && norm(i.ci) !== 'curitiba') return -1;
   if (c.valorMax && i.p && i.p > c.valorMax * 1.1) return -1;
   if (c.valorMin && i.p && i.p < c.valorMin) return -1;               // abaixo da faixa que ele pediu
   const temQuartos = grupo !== 'Terreno' && grupo !== 'Comercial';
@@ -1051,7 +1056,8 @@ async function fotoDaCapa({ du, w, h }) {
   const bw = CAPA.w, bh = CAPA.pe - 60 - CAPA.y, r = w / h, rb = bw / bh;
   if (r <= rb) return { du, pw: bh * r, ph: bh }; // em pé ou quase quadrada: inteira, na altura toda
   const rc = Math.max(rb, r * .7);
-  const el = new Image(); el.src = du; await el.decode();
+  // espera pelo onload (o decode() fica parado se a página não estiver na frente)
+  const el = new Image(); await new Promise((ok, err) => { el.onload = ok; el.onerror = err; el.src = du; });
   const cv = document.createElement('canvas'); cv.height = Math.min(h, 1400); cv.width = Math.round(cv.height * rc);
   const sw = h * rc;
   cv.getContext('2d').drawImage(el, (w - sw) / 2, 0, sw, h, 0, 0, cv.width, cv.height);
@@ -1148,7 +1154,7 @@ async function baixarPDF(btn, c, cli) {
     const tipo = d.rot || 'Imóvel';
     const pdf = new File([doc.output('blob')], `${tipo} ${d.b} - Matheus Nickel.pdf`, { type: 'application/pdf' });
     const quem = registrarContatoJ8(cli, d);
-    const reg = quem ? ` Contato com ${firstName(quem.nome)} registrado hoje.` : '';
+    const reg = quem ? ` Contato com ${nomeProprio(firstName(quem.nome))} registrado hoje.` : '';
     if (telaDeToque && navigator.canShare && navigator.canShare({ files: [pdf] })) {
       pdfsProntos.set(c, pdf);
       btn.classList.add('ready'); btn.innerHTML = `${ICON_DOC}Salvar PDF`;
@@ -1255,7 +1261,7 @@ function j8Section(c) {
   // mostra os 5 melhores; cada "Ver mais 5" abre os próximos da lista (que já vem do melhor para o pior)
   const mostrar = Math.min(total, ui.j8Mais[c.id] || 5);
   const top = todos.slice(0, mostrar);
-  const onde = fonte === 'todas' ? 'Na J8 e na A. Gonçalves' : 'Na ' + EST[fonte].nome;
+  const onde = fonte === 'todas' ? 'N' + naTodas().slice(1) : 'Na ' + EST[fonte].nome;
   const titulo = total > mostrar ? `${onde} · os ${mostrar} melhores de ${total} para ${esc(firstName(c.nome))}` : total ? `${onde} · ${total} ${plural(total, 'imóvel', 'imóveis')} para ${esc(firstName(c.nome))}` : onde;
   top.forEach(i => j8Detalhe(i.k).catch(() => {})); // adianta as fotos e os dados dos imóveis que estão na tela
   if (top.length) carregaJsPDF().catch(() => {});
@@ -1268,7 +1274,7 @@ function j8Section(c) {
 }
 
 // ── RENDER: IMÓVEIS ──
-// O estoque da J8 e da A. Gonçalves junto, como num site: busca, filtros e os mesmos cartões da ficha (PDF, descritivo,
+// O estoque da J8, da A. Gonçalves e da SIS3 junto, como num site: busca, filtros e os mesmos cartões da ficha (PDF, descritivo,
 // foto da capa), sem cliente. Mostra 20 por vez.
 const I_PASSO = 20;
 const I_ORDENS = [['maior', 'Maior valor'], ['menor', 'Menor valor'], ['recentes', 'Atualizados por último']];
@@ -1440,7 +1446,7 @@ function renderMetricas() {
   const tipos = M_GRUPOS.slice(1).map(([g, r]) => [r, A.filter(c => c.tipos.some(t => GRUPO[t] === g)).length]).filter(x => x[1]).sort((a, b) => b[1] - a[1]);
 
   $('#m-body').innerHTML = `<div class="m-grid">${grafico}
-    <div class="m-card"><div class="m-h"><h3>Onde falta imóvel</h3></div><p class="m-sub">Bairros com clientes ativos que têm até ${POUCA_OPCAO} imóveis compatíveis na J8 e na A. Gonçalves. É onde vale angariar.</p>${falta}</div>
+    <div class="m-card"><div class="m-h"><h3>Onde falta imóvel</h3></div><p class="m-sub">Bairros com clientes ativos que têm até ${POUCA_OPCAO} imóveis compatíveis ${naTodas()}. É onde vale angariar.</p>${falta}</div>
     <div class="m-card"><div class="m-h"><h3>Bairros mais procurados</h3></div><p class="m-sub">Quantos clientes ativos aceitam cada bairro.</p>${barras(procurados, 'Nenhum cliente ativo.')}</div>
     <div class="m-card"><div class="m-h"><h3>Faixa de valor dos ativos</h3></div><p class="m-sub">Pelo teto de compra de cada cliente.</p>${barras(faixas, 'Nenhum cliente ativo.')}</div>
     <div class="m-card"><div class="m-h"><h3>O que procuram</h3></div><p class="m-sub">Clientes ativos por tipo de imóvel (um cliente pode buscar mais de um).</p>${barras(tipos, 'Nenhum cliente ativo.')}</div></div>`;
@@ -1778,7 +1784,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31f';
+const VERSAO = '2026-10-31g';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
