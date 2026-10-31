@@ -481,9 +481,9 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
   </header>
 
   <main>
-    <!-- IMÓVEIS: o estoque da J8, da A. Gonçalves e da SIS3 junto, para buscar sem cliente -->
+    <!-- IMÓVEIS: o estoque da J8, da A. Gonçalves, da SIS3 e da Zireh junto, para buscar sem cliente -->
     <section id="v-imoveis" class="hidden">
-      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves e SIS3</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
+      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves, SIS3 e Zireh</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
       <div class="bar-tools">
         <div class="ta"><input id="i-q" type="search" placeholder="Bairro, rua, empreendimento ou código…" autocomplete="off" aria-label="Buscar imóvel"></div>
       </div>
@@ -864,7 +864,9 @@ const waLink = (c, msg) => `https://wa.me/${TESTE ? '' : waNumber(c.whats)}` + (
 const ESTOQUES = [
   { id: 'j8', nome: 'J8', arq: 'dados/j8.json', det: 'dados/j8/', tipo: t => J8_TIPO[t] || '', rotulo: t => J8_ROTULO[t] || t },
   { id: 'gon', nome: 'A. Gonçalves', arq: 'dados/goncalves.json', det: 'dados/goncalves/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
-  { id: 'sis3', nome: 'SIS3', arq: 'dados/sis3.json', det: 'dados/sis3/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
+  { id: 'sis3', nome: 'SIS3', arq: 'dados/sis3.json', det: 'dados/sis3/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  // Zireh: só os imóveis prontos (lançamentos ficam de fora); o site não mostra o número da rua nem o complemento
+  { id: 'zireh', nome: 'Zireh', arq: 'dados/zireh.json', det: 'dados/zireh/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
 const EST = Object.fromEntries(ESTOQUES.map(e => [e.id, e]));
 const estoque = {}, estoqueErr = {};
@@ -873,7 +875,7 @@ let carregados = false;
 
 // ── O MESMO IMÓVEL EM MAIS DE UMA IMOBILIÁRIA ──
 // Mesmo endereço (rua e número) ou mesmo condomínio no mesmo bairro, mesma família de tipo, metragem parecida e preço
-// parecido. Num prédio com várias unidades iguais quem separa é o preço. Fica o anúncio que informa o complemento; empate: J8, A. Gonçalves, SIS3
+// parecido. Num prédio com várias unidades iguais quem separa é o preço. Fica o anúncio que informa o complemento; empate: J8, A. Gonçalves, SIS3, Zireh
 // (a ordem de ESTOQUES): em "Todas" fica só o da preferida; nas abas de cada imobiliária todos aparecem, com o aviso.
 const IMOVEL = new Map(); // "src:código" -> imóvel
 const ABREV_RUA = { prof: 'professor', profa: 'professora', dr: 'doutor', des: 'desembargador', gal: 'general', gen: 'general', cel: 'coronel', pres: 'presidente',
@@ -881,21 +883,31 @@ const ABREV_RUA = { prof: 'professor', profa: 'professora', dr: 'doutor', des: '
 // grafias diferentes do mesmo nome: letra dobrada ("Perretto" × "Perreto") e algarismo romano ("Burgel II" × "Burgel 2")
 const ROMANOS = { i: '1', ii: '2', iii: '3', iv: '4', v: '5', vi: '6', vii: '7', viii: '8', ix: '9', x: '10' };
 const palavras = s => norm(s).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean).map(p => ROMANOS[p] || p.replace(/([a-z])\1+/g, '$1'));
-function chaveEndereco(en) {
-  const m = norm(en).match(/^(.*?),\s*(\d+)/); if (!m) return '';
-  const rua = palavras(m[1]).map(p => ABREV_RUA[p] || p)
+// rua (sem "Rua"/"Avenida", abreviações por extenso) e número: "Rua Prof. X, 120" e "Professor X" (a Zireh não traz número) → "professor x"
+function partesEndereco(en) {
+  const s = norm(en), m = s.match(/^(.*?),\s*(\d+)/);
+  const rua = palavras(m ? m[1] : s.split(/\s+-\s+|,/)[0]).map(p => ABREV_RUA[p] || p)
     .filter((p, k) => !(k === 0 && /^(rua|r|avenida|av|alameda|al|travessa|tv|rodovia|rod|estrada|praca|largo)$/.test(p)) && !/^(de|da|do|dos|das|e)$/.test(p));
-  return rua.join(' ') + '#' + m[2];
+  return { rua: rua.join(' '), num: m ? m[2] : '' };
 }
+function chaveEndereco(en) { const p = partesEndereco(en); return p.rua && p.num ? p.rua + '#' + p.num : ''; }
 // número da unidade no complemento ("603", "ap 11", "CASA 27", "62 - Bloco 3" → 603, 11, 27, 62); unidades diferentes nunca são o mesmo imóvel
 const numUnidade = i => (String(i.cp || '').match(/\d+/) || [''])[0].replace(/^0+(?=\d)/, '');
 const outraUnidade = (x, y) => { const a = numUnidade(x), b = numUnidade(y); return !!(a && b && a !== b); };
-// quanto menor, mais parecido; -1 = não é o mesmo imóvel
-function diferenca(x, y) {
+// quanto menor, mais parecido; -1 = não é o mesmo imóvel. "soRua": só a rua bate (um dos anúncios não tem número) — aí
+// a regra é mais rígida: preço e metragem quase iguais, ou tudo idêntico; sem preço não dá para ter certeza
+function diferenca(x, y, soRua) {
   if (outraUnidade(x, y)) return -1;
+  if (x.numRua && y.numRua && x.numRua !== y.numRua) return -1; // números diferentes na mesma rua: outro prédio
   const da = x.a && y.a ? Math.abs(x.a - y.a) / Math.max(x.a, y.a) : 1;
   const dp = x.p && y.p ? Math.abs(x.p - y.p) / Math.max(x.p, y.p) : null;
   const iguais = x.q === y.q && x.s === y.s && x.v === y.v;
+  if (soRua) {
+    if (dp === null) return -1;
+    if (da <= .02 && dp <= .02 && x.q === y.q) return 1 + da + dp;
+    if (da <= .01 && iguais && dp <= .05) return 1.2 + dp;
+    return -1;
+  }
   if (da <= .03 && dp !== null && dp <= .05) return da + dp;                // metragem e preço batem
   if (da <= .01 && dp === null && x.q && x.q === y.q) return .5 + da;         // um deles sem preço: metragem e quartos idênticos
   if (da <= .01 && iguais && dp !== null && dp <= .15) return .3 + dp;      // tudo idêntico, preço desatualizado numa delas
@@ -907,7 +919,9 @@ function marcaRepetidos() {
   ESTOQUES.forEach(e => (estoque[e.id] ? estoque[e.id].imoveis : []).forEach(i => {
     IMOVEL.set(i.k, i); i.rep = ''; i.irmaos = []; i.chaves = [];
     const g = GRUPO[i.tc]; if (!g) return;
-    i.chaves = [chaveEndereco(i.en), i.e && i.b ? 'cond:' + palavras(i.e).join(' ') + '|' + bkey(i.b) : ''].filter(Boolean).map(ch => g + '|' + ch);
+    const end = partesEndereco(i.en); i.numRua = end.num;
+    i.chaves = [chaveEndereco(i.en), i.e && i.b ? 'cond:' + palavras(i.e).join(' ') + '|' + bkey(i.b) : '', end.rua && i.b ? 'rua:' + end.rua + '|' + bkey(i.b) : '']
+      .filter(Boolean).map(ch => g + '|' + ch);
     i.chaves.forEach(k => { if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(i); });
   }));
   const ordem = Object.fromEntries(ESTOQUES.map((e, n) => [e.id, n]));
@@ -918,7 +932,7 @@ function marcaRepetidos() {
       for (const o of grupos.get(k)) {
         if (ordem[o.src] >= ordem[i.src]) continue;
         if (o.rep && outraUnidade(i, IMOVEL.get(o.rep))) continue; // o par já é de outra unidade do mesmo prédio
-        const d = diferenca(i, o); if (d >= 0 && d < menor) { menor = d; melhor = o; }
+        const d = diferenca(i, o, k.includes('|rua:')); if (d >= 0 && d < menor) { menor = d; melhor = o; }
       }
     }
     if (!melhor) continue;
@@ -927,7 +941,7 @@ function marcaRepetidos() {
     principal.irmaos.push(i.k);
   }
   // todos do mesmo grupo se conhecem (para o aviso "também na…" e para saber se já foi enviado por outra imobiliária).
-  // O que fica em "Todas" é o anúncio que informa o complemento (o número da unidade); empate: J8, A. Gonçalves, SIS3
+  // O que fica em "Todas" é o anúncio que informa o complemento (o número da unidade); empate: J8, A. Gonçalves, SIS3, Zireh
   const peso = x => (x.cp ? 0 : x.bl ? 1 : 2) * 10 + ordem[x.src];
   for (const p of [...IMOVEL.values()]) if (!p.rep && p.irmaos.length) {
     const familia = [p.k, ...p.irmaos], principal = familia.map(k => IMOVEL.get(k)).sort((a, b) => peso(a) - peso(b))[0];
@@ -1347,7 +1361,7 @@ function j8Section(c) {
 }
 
 // ── RENDER: IMÓVEIS ──
-// O estoque da J8, da A. Gonçalves e da SIS3 junto, como num site: busca, filtros e os mesmos cartões da ficha (PDF, descritivo,
+// O estoque da J8, da A. Gonçalves, da SIS3 e da Zireh junto, como num site: busca, filtros e os mesmos cartões da ficha (PDF, descritivo,
 // foto da capa), sem cliente. Mostra 20 por vez.
 const I_PASSO = 20;
 const I_ORDENS = [['maior', 'Maior valor'], ['menor', 'Menor valor'], ['recentes', 'Atualizados por último']];
@@ -1856,7 +1870,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31k';
+const VERSAO = '2026-10-31l';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
