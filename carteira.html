@@ -481,9 +481,9 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
   </header>
 
   <main>
-    <!-- IMÓVEIS: o estoque da J8, da A. Gonçalves, da SIS3 e da Zireh junto, para buscar sem cliente -->
+    <!-- IMÓVEIS: o estoque de todas as imobiliárias junto, para buscar sem cliente -->
     <section id="v-imoveis" class="hidden">
-      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves, SIS3 e Zireh</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
+      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves, SIS3, Zireh e Arya</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
       <div class="bar-tools">
         <div class="ta"><input id="i-q" type="search" placeholder="Bairro, rua, empreendimento ou código…" autocomplete="off" aria-label="Buscar imóvel"></div>
       </div>
@@ -866,7 +866,9 @@ const ESTOQUES = [
   { id: 'gon', nome: 'A. Gonçalves', arq: 'dados/goncalves.json', det: 'dados/goncalves/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   { id: 'sis3', nome: 'SIS3', arq: 'dados/sis3.json', det: 'dados/sis3/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   // Zireh: só os imóveis prontos (lançamentos ficam de fora); o site não mostra o número da rua nem o complemento
-  { id: 'zireh', nome: 'Zireh', arq: 'dados/zireh.json', det: 'dados/zireh/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
+  { id: 'zireh', nome: 'Zireh', arq: 'dados/zireh.json', det: 'dados/zireh/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  // Arya1: também só prontos; mostra a rua sem número e sem complemento
+  { id: 'arya', nome: 'Arya', arq: 'dados/arya.json', det: 'dados/arya/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
 const EST = Object.fromEntries(ESTOQUES.map(e => [e.id, e]));
 const estoque = {}, estoqueErr = {};
@@ -875,7 +877,7 @@ let carregados = false;
 
 // ── O MESMO IMÓVEL EM MAIS DE UMA IMOBILIÁRIA ──
 // Mesmo endereço (rua e número) ou mesmo condomínio no mesmo bairro, mesma família de tipo, metragem parecida e preço
-// parecido. Num prédio com várias unidades iguais quem separa é o preço. Fica o anúncio que informa o complemento; empate: J8, A. Gonçalves, SIS3, Zireh
+// parecido. Num prédio com várias unidades iguais quem separa é o preço. Fica o anúncio que informa o complemento; empate: a ordem de ESTOQUES (J8, A. Gonçalves, SIS3, Zireh, Arya)
 // (a ordem de ESTOQUES): em "Todas" fica só o da preferida; nas abas de cada imobiliária todos aparecem, com o aviso.
 const IMOVEL = new Map(); // "src:código" -> imóvel
 const ABREV_RUA = { prof: 'professor', profa: 'professora', dr: 'doutor', des: 'desembargador', gal: 'general', gen: 'general', cel: 'coronel', pres: 'presidente',
@@ -941,7 +943,7 @@ function marcaRepetidos() {
     principal.irmaos.push(i.k);
   }
   // todos do mesmo grupo se conhecem (para o aviso "também na…" e para saber se já foi enviado por outra imobiliária).
-  // O que fica em "Todas" é o anúncio que informa o complemento (o número da unidade); empate: J8, A. Gonçalves, SIS3, Zireh
+  // O que fica em "Todas" é o anúncio que informa o complemento (o número da unidade); empate: a ordem de ESTOQUES (J8, A. Gonçalves, SIS3, Zireh, Arya)
   const peso = x => (x.cp ? 0 : x.bl ? 1 : 2) * 10 + ordem[x.src];
   for (const p of [...IMOVEL.values()]) if (!p.rep && p.irmaos.length) {
     const familia = [p.k, ...p.irmaos], principal = familia.map(k => IMOVEL.get(k)).sort((a, b) => peso(a) - peso(b))[0];
@@ -1361,7 +1363,7 @@ function j8Section(c) {
 }
 
 // ── RENDER: IMÓVEIS ──
-// O estoque da J8, da A. Gonçalves, da SIS3 e da Zireh junto, como num site: busca, filtros e os mesmos cartões da ficha (PDF, descritivo,
+// O estoque de todas as imobiliárias junto, como num site: busca, filtros e os mesmos cartões da ficha (PDF, descritivo,
 // foto da capa), sem cliente. Mostra 20 por vez.
 const I_PASSO = 20;
 const I_ORDENS = [['maior', 'Maior valor'], ['menor', 'Menor valor'], ['recentes', 'Atualizados por último']];
@@ -1870,7 +1872,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31l';
+const VERSAO = '2026-10-31m';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
