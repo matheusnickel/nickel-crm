@@ -493,12 +493,93 @@ input[type=date]{min-height:48px}
 .r-fzs.v .r-fz{flex-direction:row;align-items:baseline;gap:10px;padding:10px 14px}
 .r-fzs.v .r-fz b{font-size:16px}.r-fzs.v .r-fz small{margin-left:auto}
 
+/* ── ATRIBUTOS (modelo FM, desde 01/11/2026) ── */
+/* nota pintada como no FM, na paleta da Carteira: cinza não treinou, âmbar treinou, verde-água com apoio, verde forte sozinho */
+.n1{color:#a9acb0}.n2{color:#b9852a}.n3{color:#3f8c84}.n4{color:#1d7a52}
+.kpis.k4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.sit{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 9px;border-radius:99px;margin-top:3px}
+.sit.s0{background:transparent;border:1px dashed var(--line2);color:var(--faint)}.sit.s1{background:#eceef0;color:#878787}
+.sit.s2{background:var(--warnbg);color:var(--warn)}.sit.s3{background:var(--tqbg);color:var(--tq2)}.sit.s4{background:#dcf1e6;color:#1d7a52}
+.pf-s{margin-top:6px}
+.capbox .ded{font-size:14px;font-weight:600;color:var(--text)}
+.fg{display:grid;grid-template-columns:220px minmax(0,1fr);gap:18px;align-items:start}
+.fn{background:var(--bg3);border:1px solid var(--line);border-radius:12px;padding:14px}
+.fn .lbl{margin-bottom:6px}
+.fn-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 8px;border-radius:8px;font-size:14px}
+.fn-r.on{background:var(--tqbg);font-weight:600}
+.fn-r .st5{font-size:15px}
+.fn-r b{font-weight:600}
+.fm-r .up{color:#d99a0b;font-size:12px}.fm-r .dn{color:var(--red);font-size:11px}
+.fm-leg .up{color:#d99a0b}
+.fm-h .g b{font-size:20px;font-weight:300}
+.est{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.est div{display:flex;flex-direction:column;gap:2px}.est b{font-size:28px;font-weight:300;line-height:1.1}.est span{font-size:12px;color:var(--muted)}
+/* barra de evolução: cinza = de onde partiu, verde-água = o que cresceu (vermelho se caiu) */
+.evb{position:relative;display:block;height:10px;border-radius:99px;background:#eef0f1;overflow:hidden}
+.evb i{position:absolute;top:0;bottom:0}
+.evb .e0{left:0;background:#cfd3d7}.evb .e1{background:var(--tq)}.evb .e2{background:#e3a2a4}
+.evb.big{height:18px;flex:1}
+.evo-g{display:flex;align-items:center;gap:16px}
+.ev-l{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);white-space:nowrap}
+.ev-l .st5{font-size:17px}
+.hb-r .evb{height:9px}
+.legend.l2{grid-template-columns:2fr 1fr}
+.legend .rg{display:block;font-size:13px;margin-top:3px}.legend .rg b{font-weight:700;margin-right:4px}
+/* quadro do time */
+.mxt td.mxn{font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;border-left:1px solid var(--line)}
+.mxt td.mxn.tr{position:relative}
+.mxt td.mxn.tr::after{content:'';position:absolute;right:5px;top:6px;width:5px;height:5px;border-radius:50%;background:#e0b25a}
+.trd{position:relative;padding-right:8px}.trd::after{content:'';position:absolute;right:0;top:2px;width:5px;height:5px;border-radius:50%;background:#e0b25a}
+.mxt .dd .st5{font-size:13px}
+/* folha de notas: uma barra de 1 a 20 por atributo */
+.sl{padding:10px 0;border-top:1px solid var(--line)}
+.sl-t{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+.sl-t > b{font-size:15px;font-weight:600}
+.sl-f{font-size:12px;color:var(--muted);flex:1}
+.sl-v{font-size:13px;white-space:nowrap}.sl-v > b{font-size:22px;font-weight:600;margin-right:2px}
+.sl input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;padding:0;border:none;background:transparent;box-shadow:none;--p:0%}
+.sl input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:99px;background:linear-gradient(90deg,currentColor var(--p),#e8eaec var(--p))}
+.sl input[type=range]::-moz-range-track{height:8px;border-radius:99px;background:linear-gradient(90deg,currentColor var(--p),#e8eaec var(--p))}
+.sl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-8px;border-radius:50%;background:#fff;border:2px solid currentColor;box-shadow:0 2px 6px rgba(40,42,46,.18)}
+.sl input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid currentColor}
+.sl input[type=range]:focus{box-shadow:none}
+.sl input[type=range].n1{color:#b9bcc0}.sl input[type=range].n2{color:#d9a441}.sl input[type=range].n3{color:var(--tq)}.sl input[type=range].n4{color:#2f9a6a}
+/* relatório: evolução do time e ficha individual */
+.r-k2{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#878787}
+.r-bar{position:relative;display:block;height:12px;border-radius:99px;background:#eef0f1;overflow:hidden;flex:1}
+.r-bar i{position:absolute;top:0;bottom:0}.r-bar .b0{left:0;background:#d7dadd}.r-bar .b1{background:#7cc1ba}.r-bar .b2{background:#e3a2a4}
+.r-up{color:#1d7a52;font-weight:700}.r-dn{color:#b4474b;font-weight:700}.r-eq{color:#a0a3a8}
+.r-evo{display:flex;flex-direction:column;gap:12px;margin-top:26px}
+.r-er{display:grid;grid-template-columns:230px 64px minmax(0,1fr) 64px 90px;align-items:center;gap:14px;font-size:15px}
+.r-er .r-bar{height:16px}
+.r-en b{display:block;font-size:16px;font-weight:600}.r-en small{font-size:12.5px;color:#878787}
+.r-ev{text-align:center;font-weight:600;white-space:nowrap}.r-ed{font-size:14px;white-space:nowrap}
+.r-fh{display:flex;justify-content:space-between;align-items:flex-end;gap:30px}
+.r-fh h2{font-size:38px;font-weight:300;line-height:1.1;margin-top:6px}
+.r-sit{display:block;font-size:14px;color:#55585e;margin-top:6px}
+.r-cap{width:400px;display:flex;flex-direction:column;gap:6px}
+.r-capb{display:flex;align-items:center;gap:12px;font-size:16px;font-weight:600;white-space:nowrap}.r-capb .r-bar{height:16px}
+.r-capd{font-size:13px;color:#878787}
+.r-fc{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:34px;margin-top:22px}
+.r-cols{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.r-g{margin-bottom:12px}
+.r-gt{font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#b8521f;margin-bottom:4px}
+.r-at{display:grid;grid-template-columns:130px minmax(0,1fr) 26px 30px;align-items:center;gap:8px;font-size:13px;padding:3px 0}
+.r-at .r-bar{height:8px}
+.r-n{font-weight:700;text-align:right;color:#55585e}.r-n.n3{color:#3f8c84}.r-n.n4{color:#1d7a52}
+.r-d{font-size:12px}
+.r-side{border-left:1px solid #e3e7ef;padding-left:24px}
+.r-side .r-sub{margin:14px 0 6px}.r-side .r-sub:first-child{margin-top:0}
+.r-kv{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:3px 0}.r-kv b{font-weight:600}
+.r-kpi b small{font-size:20px;color:#a0a3a8}
+
 @media (max-width:1180px){
   .tabs a{padding:8px 10px;letter-spacing:.08em}
   .sync .t{display:none}
 }
 @media (max-width:1060px){
   .fm.f4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fg{grid-template-columns:minmax(0,1fr)}
   .sqr{grid-template-columns:minmax(190px,2fr) 150px 100px 90px 110px}
   .sqr .xl{display:none}
 }
@@ -530,6 +611,10 @@ input[type=date]{min-height:48px}
   .capbox .st5{font-size:19px}
   .pf-act > *{flex:1}
   .fm,.fm.f4{grid-template-columns:minmax(0,1fr);gap:18px}
+  .fg{grid-template-columns:minmax(0,1fr)}
+  .kpis.k4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .est{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .legend.l2{grid-template-columns:1fr}
   .leit{grid-template-columns:1fr 1fr}.leit .w{grid-column:1 / -1}
   .kpis.k5{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis.k5 div:last-child{grid-column:1 / -1}
   .board{grid-template-columns:minmax(0,1fr);overflow:visible}
@@ -597,54 +682,66 @@ const LS_CACHE = 'elenco_cache_' + COL, LS_PEND = 'elenco_pending_' + COL;
 const LS_AUTH = 'elenco_auth', LS_PER = 'elenco_periodo2';
 const SENHA = 'flor2301';
 
-// O processo de angariação da VIP, do link ao Reels: 9 etapas em 4 fases.
-// Cada etapa tem 4 degraus e a nota de 0 a 20 sai do degrau (Não sabe 0 · Treinou 8 · Fez acompanhado 14 · Faz sozinho 20).
-// Só entra o que dá para treinar; Dedicação fica à parte (o quanto do tempo a pessoa deixa para angariar).
-const FASES = [
-  { k: 'enc', nome: 'Encontrar', sub: 'Achar o imóvel e o proprietário', etapas: [
-    { k: 'pes', nome: 'Pesquisa nos anúncios', curto: 'Pesquisa', desc: 'Antes de qualquer coisa, procura o mesmo imóvel nos anúncios das outras imobiliárias e junta tudo o que eles entregam: andar, número da casa ou do apartamento, vagas e fotos. Vê também se o imóvel está anunciado em várias imobiliárias.' },
-    { k: 'ibk', nome: 'Eemovel Brokers', curto: 'Eemovel', desc: 'Com o número da casa ou do apartamento em mãos, encontra no Eemovel Brokers quem é o proprietário e o telefone dele.' },
-    { k: 'cad', nome: 'Investigação cadastral', curto: 'Cadastral', desc: 'Quando os anúncios não entregam a unidade: usa o mapa cadastral para entender o prédio ou o condomínio (sublotes, andares, apartamentos por andar, se o endereço bate) e a declaração unificada para chegar ao imóvel certo.' }
+// Atributos do angariador, como os do Football Manager: nota de 1 a 20 dada pelo Matheus em cada avaliação.
+// Os técnicos seguem os materiais dele: Prospecção (Guia da Declaração Unificada), Angariação (Método Nickel e Playbook)
+// e Lançamento (o que a proposta promete: imóvel no Jetimob, fotos e Reels que circulam). Mental: a rotina.
+// A régua é a mesma para todos e liga a nota ao treino e ao campo.
+const GRUPOS_N = [
+  { k: 'pro', nome: 'Prospecção', sub: 'Achar o imóvel e o proprietário', mat: 'Guia da Declaração Unificada', attrs: [
+    { k: 'anu', nome: 'Pesquisa de anúncios', curto: 'Anúncios', desc: 'Procura o mesmo imóvel nos anúncios das outras imobiliárias e junta o que eles entregam: andar, número da casa ou do apartamento, vagas, fotos, e se está anunciado em várias.' },
+    { k: 'eem', nome: 'Eemovel Brokers', curto: 'Eemovel', desc: 'Com a unidade em mãos, encontra no Eemovel Brokers quem é o proprietário e o telefone dele.' },
+    { k: 'map', nome: 'Mapa cadastral', curto: 'Mapa', desc: 'Localiza o imóvel no Mapa Cadastral: lote, indicação fiscal, sublotes, andares e apartamentos por andar.' },
+    { k: 'dun', nome: 'Declaração Unificada', curto: 'Declaração', desc: 'Emite a Declaração Unificada da unidade e lê o que importa: qual é o imóvel, a matrícula e a área construída.' }
   ] },
-  { k: 'con', nome: 'Conquistar', sub: 'Trazer o proprietário para a VIP', etapas: [
-    { k: 'abo', nome: 'Abordagem', curto: 'Abordagem', desc: 'Faz o primeiro contato com o proprietário pelo Método Nickel: abordagem, qualificação e convite para a visita de angariação.' },
-    { k: 'vis', nome: 'Visita de angariação', curto: 'Visita', desc: 'Conduz a visita de angariação: sabe o que olhar e perguntar no imóvel e como apresentar a VIP e o trabalho ao proprietário.' }
+  { k: 'ang', nome: 'Angariação', sub: 'Do primeiro WhatsApp à autorização', mat: 'Método Nickel e Playbook', attrs: [
+    { k: 'abo', nome: 'Abordagem', curto: 'Abordagem', desc: 'Primeiro contato pelo Método Nickel: três balões curtos que confirmam se é o proprietário, sem apresentação comercial.' },
+    { k: 'qua', nome: 'Qualificação', curto: 'Qualificação', desc: 'Depois do "sim": diz quem é, mostra que tem cliente e faz a pergunta que decide o caminho.' },
+    { k: 'cvt', nome: 'Convite', curto: 'Convite', desc: 'Leva a conversa para dentro do imóvel e marca a visita de angariação.' },
+    { k: 'vis', nome: 'Visita', curto: 'Visita', desc: 'Na visita, deixa o proprietário falar, conhece o imóvel e o motivo da venda e mostra autoridade.' },
+    { k: 'obj', nome: 'Objeções', curto: 'Objeções', desc: 'Responde sem se defender: "não conheço a VIP", "como conseguiu meu contato?" e o proprietário que já tem outra imobiliária.' },
+    { k: 'doc', nome: 'Documentação', curto: 'Documentos', desc: 'Pede a documentação com firmeza e prazo e sabe ler: matrícula, IPTU, condomínio e o que pode travar a venda.' },
+    { k: 'aut', nome: 'Autorização', curto: 'Autorização', desc: 'Formaliza a autorização de venda prometendo só o que controla.' }
   ] },
-  { k: 'for', nome: 'Formalizar', sub: 'Do sim à autorização assinada', etapas: [
-    { k: 'doc', nome: 'Documentação', curto: 'Documentos', desc: 'Pede a documentação certa ao proprietário (matrícula, IPTU, condomínio) e sabe ler: identifica ônus, divergências e o que pode travar a venda.' },
-    { k: 'jet', nome: 'Cadastro e autorização', curto: 'Jetimob', desc: 'Anexa a documentação no Jetimob, preenche o cadastro do imóvel e a autorização de venda, e passa para o Renan enviar para assinatura.' }
-  ] },
-  { k: 'lan', nome: 'Lançar', sub: 'Colocar o imóvel na rua', etapas: [
+  { k: 'lan', nome: 'Lançamento', sub: 'Fazer o imóvel circular', mat: 'Proposta: filmar, gancho, postar', attrs: [
+    { k: 'jet', nome: 'Jetimob e autorização', curto: 'Jetimob', desc: 'Anexa a documentação no Jetimob, preenche o cadastro e a autorização de venda e passa para o Renan enviar para assinatura.' },
     { k: 'fot', nome: 'Fotos e material', curto: 'Fotos', desc: 'Com a autorização assinada, marca as fotos e organiza o material do imóvel.' },
-    { k: 'anu', nome: 'Anúncio e Reels', curto: 'Anúncio', desc: 'Coloca o imóvel no site da VIP e grava o vídeo orgânico para o Reels do Instagram.' }
+    { k: 'ree', nome: 'Reels', curto: 'Reels', desc: 'Filma o imóvel, acerta o gancho dos primeiros segundos e posta para circular no orgânico.' }
+  ] },
+  { k: 'men', nome: 'Mental', sub: 'A rotina de quem angaria', attrs: [
+    { k: 'rit', nome: 'Ritmo', curto: 'Ritmo', desc: 'Prospecta e aborda toda semana, sem depender de cobrança.' },
+    { k: 'reg', nome: 'Registro', curto: 'Registro', desc: 'Lança no CRM cada visita, angariação e retorno, no mesmo dia.' }
   ] }
 ];
-const ETAPAS = FASES.flatMap(f => f.etapas.map(e => Object.assign({ f: f.k }, e)));
-const DEGRAUS = [
-  { n: 0, nome: 'Não sabe', curto: 'Não sabe', o: 'Ainda não aprendeu esta etapa.', subir: 'Fazer o treinamento desta etapa.' },
-  { n: 8, nome: 'Treinou', curto: 'Treinou', o: 'Fez o treinamento: sabe como é feito.', subir: 'Fazer num caso real com o Matheus acompanhando.' },
-  { n: 14, nome: 'Fez acompanhado', curto: 'Acompanhado', o: 'Já fez num caso real, com o Matheus do lado.', subir: 'Fazer sozinho num caso real e mostrar o resultado.' },
-  { n: 20, nome: 'Faz sozinho', curto: 'Sozinho', o: 'Faz num caso real, do começo ao fim, sem ajuda.', subir: 'Pronto. Já pode ensinar os outros.' }
+const ATRS = GRUPOS_N.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a)));
+const TEC = ATRS.filter(a => a.g !== 'men'); // os técnicos fazem a capacidade
+const atr = k => ATRS.find(a => a.k === k);
+const REGUA_N = [
+  { de: 1, ate: 5, nome: 'Não treinou', o: 'Ainda não aprendeu.' },
+  { de: 6, ate: 10, nome: 'Treinou', o: 'Fez o treinamento: sabe a teoria.' },
+  { de: 11, ate: 15, nome: 'Faz com apoio', o: 'Já fez em caso real, com o Matheus do lado.' },
+  { de: 16, ate: 20, nome: 'Faz sozinho', o: 'Faz em caso real sem ajuda e consegue ensinar.' }
 ];
-const minus1 = s => s.charAt(0).toLowerCase() + s.slice(1);
-const degrauDe = v => typeof v !== 'number' ? null : v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3;
-const DED = { k: 'det', nome: 'Dedicação', desc: 'Quanto do tempo de trabalho a pessoa deixa disponível para a angariação de imóveis prontos. Quem divide a semana com vendas, locação ou outro trabalho tem pouco espaço para angariar; quem faz da angariação o seu foco entrega mais.',
+const faixaN = v => REGUA_N[v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3];
+// situação no time, como o "tempo de jogo" do FM, pela média dos técnicos
+const SITUACOES = [[16, 'Angaria sozinho', 's4'], [11, 'Angaria com apoio', 's3'], [6, 'Em treinamento', 's2'], [0, 'Em formação', 's1']];
+const DED = { k: 'det', nome: 'Dedicação', desc: 'Quanto do tempo de trabalho a pessoa deixa para a angariação de imóveis prontos. Pergunte a ela.',
   op: [[5, 'Menos de 25%', 'Angariação é um extra'], [10, '25% a 50%', 'Divide com outras atividades'], [15, '50% a 75%', 'Angariação é a prioridade'], [20, 'Mais de 75%', 'Foco total na angariação']] };
 const dedDe = v => typeof v !== 'number' ? null : DED.op[v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3];
+const minus1 = s => s.charAt(0).toLowerCase() + s.slice(1);
 // a carteira em construção: cada angariação anda por estas fases (conta como angariação a partir da autorização assinada)
 const FASES_ANG = [['doc', 'Documentação'], ['jet', 'No Jetimob'], ['ass', 'Autorização assinada'], ['fot', 'Fotos e material'], ['site', 'No site'], ['reels', 'No Reels']];
 const iFase = f => Math.max(0, FASES_ANG.findIndex(x => x[0] === f));
 const assinada = p => iFase(p.fase) >= 2;
-// a mentoria: 3 meses, um foco por mês
-const MENT_FASES = [['Estruturação', 'Processo, ferramentas e método no lugar'], ['Formação', 'Treinar cada etapa e acompanhar em campo'], ['Resultado', 'Time angariando sozinho e carteira crescendo']];
+// a mentoria, como foi vendida: 90 dias em três fases
+const MENT_FASES = [['Base', 'Equipe, funções, CRM, metas e primeiras abordagens'], ['Carteira', 'Reuniões, avaliações, autorizações e ritmo de execução'], ['Consolidação', 'Processos ajustados, indicadores e liderança preparada']];
 const MENT_PADRAO = {
   inicio: '2026-10-05',
-  entregas: ['Método Nickel de Angariação: o playbook com cada mensagem, da abordagem à autorização',
-    'Manual de apoio em PDF para os corretores',
+  entregas: ['Método Nickel de Angariação e Playbook: cada mensagem, da abordagem à autorização',
+    'Guia prático da Declaração Unificada: do endereço à matrícula',
     'Eemovel Brokers contratado e em uso pelo time',
     'Processo da angariação definido: documentação e autorização no Jetimob, o Renan envia para assinatura, depois fotos e anúncio',
     'Visitas de angariação acompanhadas em campo'],
-  proximos: ['Avaliar todo o time nas 9 etapas do processo', 'Registrar cada visita de angariação e cada angariação no Elenco', 'Treinar as etapas em que ninguém faz sozinho ainda'],
+  proximos: ['Avaliar todo o time nos atributos de angariação', 'Registrar cada visita de angariação e cada angariação no Elenco', 'Treinar os atributos mais baixos do time'],
   meta: ''
 };
 
@@ -678,7 +775,9 @@ const ATTRS = GRUPOS.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a))
 // atributos que saíram da tela (Presença, em 2026-10-29): a nota antiga fica guardada, mas não aparece nem conta
 const ATTRS_ANTIGOS = ['pre'];
 // todas as chaves de nota que podem estar guardadas (modelo antigo + etapas)
-const CHAVES = [...new Set(ATTRS.map(a => a.k).concat(ATTRS_ANTIGOS, ETAPAS.map(e => e.k), ['det']))];
+// das etapas de 01/11 (m: 2), guardadas só como histórico
+const ETAPAS_ANTIGAS = ['pes', 'ibk', 'cad', 'abo', 'vis', 'doc', 'jet', 'fot', 'anu'];
+const CHAVES = [...new Set(ATTRS.map(a => a.k).concat(ATTRS_ANTIGOS, ETAPAS_ANTIGAS, ATRS.map(a => a.k), ['det']))];
 const PROD = { visita: 'Visita de angariação', angariacao: 'Angariação' };
 const TIPOS_IMOVEL = ['Casa', 'Apartamento', 'Cobertura', 'Terreno', 'Comercial'];
 const PERIODOS = [['1', '1º mês'], ['2', '2º mês'], ['3', '3º mês'], ['tudo', 'Tudo']];
@@ -735,9 +834,10 @@ function media(notas, keys) {
 const mediaGrupo = (n, g) => media(n, GRUPOS.find(x => x.k === g).attrs.map(a => a.k));
 const fmtG = v => v === null ? '–' : String(Math.round(v)); // sempre número inteiro, sem vírgula
 const meioPasso = v => Math.round(v * 2) / 2;
-// modelo novo: estrelas = média das 9 etapas ÷ 4, de meia em meia (etapa ainda sem degrau conta como Não sabe).
-// Tudo "Treinou" = 2 estrelas, tudo "Fez acompanhado" = 3½, tudo "Faz sozinho" = 5.
-const capEtapas = e => meioPasso(ETAPAS.reduce((s, x) => s + (e[x.k] ?? 0), 0) / ETAPAS.length / 4);
+// capacidade (estrelas) = média dos atributos técnicos ÷ 4, de meia em meia: média 20 = 5 estrelas, média 10 = 2½
+const mediaTec = n => media(n, TEC.map(a => a.k));
+const capN = n => { const m = mediaTec(n); return m === null ? 0 : Math.max(0.5, meioPasso(m / 4)); };
+const situacaoDe = n => { const m = mediaTec(n); return m === null ? null : SITUACOES.find(([min]) => m >= min); };
 // modelo antigo: estrelas pela média das notas na régua (calibrada nas estrelas que o Matheus deu em 29/10)
 const REGUA = [[19, 5], [18, 4.5], [17, 4], [15.5, 3.5], [14, 3], [12, 2.5], [9, 2], [7.5, 1.5], [6, 1]];
 const estrelasDaMedia = m => m === null ? 0 : (REGUA.find(([min]) => m >= min) || [0, 0.5])[1];
@@ -812,7 +912,7 @@ function cleanCorretor(o) {
     evoluir: String(o.evoluir || ''),
     avaliacoes: arr(o.avaliacoes).filter(a => a && a.data)
       // m: 2 = avaliação no modelo das etapas (desde 01/11/2026); sem m = modelo antigo
-      .map(a => Object.assign({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || ''), ca: +a.ca > 0 ? Math.min(5, meioPasso(+a.ca)) : 0 }, +a.m === 2 ? { m: 2 } : {}))
+      .map(a => Object.assign({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || ''), ca: +a.ca > 0 ? Math.min(5, meioPasso(+a.ca)) : 0 }, +a.m === 2 || +a.m === 3 ? { m: +a.m } : {}))
       .sort((a, b) => a.data < b.data ? -1 : a.data > b.data ? 1 : 0),
     // angariação: nome do imóvel, fase na carteira (as antigas, sem fase, eram angariações realizadas = assinadas) e se teve proposta
     producao: arr(o.producao).filter(p => p && p.data && PROD[p.tipo])
@@ -835,8 +935,9 @@ function cleanMentoria(o) {
     entregas: txt(o.entregas, MENT_PADRAO.entregas),
     proximos: txt(o.proximos, MENT_PADRAO.proximos),
     meta: typeof o.meta === 'string' ? o.meta : MENT_PADRAO.meta,
-    treinos: arr(o.treinos).filter(t => t && t.data && t.tema)
-      .map(t => ({ id: String(t.id || newId('t')), data: String(t.data), tema: String(t.tema), etapas: arr(t.etapas).filter(k => ETAPAS.some(e => e.k === k)), quem: arr(t.quem).map(String), obs: String(t.obs || '') }))
+    // treino: o que foi treinado (atributos) e quem estava; o título é opcional
+    treinos: arr(o.treinos).filter(t => t && t.data && (arr(t.temas).length || t.tema))
+      .map(t => ({ id: String(t.id || newId('t')), data: String(t.data), temas: arr(t.temas).filter(k => ATRS.some(a => a.k === k)), tema: String(t.tema || ''), quem: arr(t.quem).map(String), obs: String(t.obs || '') }))
       .sort((a, b) => b.data.localeCompare(a.data)),
     atualizadoEm: String(o.atualizadoEm || '')
   };
@@ -847,31 +948,21 @@ const persistCache = () => { lsSet(LS_CACHE, corretores); lsSet(LS_CACHE + '_m',
 const ultima = c => c.avaliacoes[c.avaliacoes.length - 1] || null;
 const notasAtuais = c => (ultima(c) || {}).notas || {};
 const treinosDe = (c, ate) => mentoria.treinos.filter(t => t.quem.includes(c.id) && (!ate || t.data <= ate));
-// degrau de hoje em cada etapa: vem da última avaliação no modelo novo. Antes dela, o ponto de partida sai da avaliação
-// antiga (Angariação → Abordagem e Visita; Documentação → Documentação), para nada do que já foi avaliado sumir.
-// Quem participou de um treinamento da etapa já está, no mínimo, em "Treinou".
-function etapasDe(c, ate) {
-  const avs = ate ? c.avaliacoes.filter(a => a.data <= ate) : c.avaliacoes;
-  const nova = avs.filter(a => a.m === 2).pop();
-  const e = {}, origem = {};
-  if (nova) ETAPAS.forEach(x => { if (typeof nova.notas[x.k] === 'number') { e[x.k] = nova.notas[x.k]; origem[x.k] = 'aval'; } });
-  else if (avs.length) {
-    const n = avs[avs.length - 1].notas;
-    const de = (k, ant) => { if (typeof n[ant] === 'number') { e[k] = DEGRAUS[degrauDe(n[ant])].n; origem[k] = 'antiga'; } };
-    de('abo', 'ang'); de('vis', 'ang'); de('doc', 'doc');
-  }
-  treinosDe(c, ate).forEach(t => t.etapas.forEach(k => { if ((e[k] ?? -1) < 8) { e[k] = 8; origem[k] = 'treino'; } }));
-  return { e, origem, nova: !!nova };
+// avaliações no modelo dos atributos (m: 3, desde 01/11/2026); as anteriores ficam guardadas só como histórico
+const avsN = c => c.avaliacoes.filter(a => a.m === 3);
+// notas de hoje (ou de uma data): a última avaliação até ali; quem participou de um treino do atributo está, no mínimo, em 6 ("Treinou")
+function notasDe(c, ate) {
+  const av = avsN(c).filter(a => !ate || a.data <= ate).pop() || null;
+  const n = {}, origem = {};
+  if (av) ATRS.forEach(x => { if (typeof av.notas[x.k] === 'number') { n[x.k] = av.notas[x.k]; origem[x.k] = 'aval'; } });
+  treinosDe(c, ate).forEach(t => t.temas.forEach(k => { if ((n[k] ?? 0) < 6) { n[k] = 6; origem[k] = 'treino'; } }));
+  return { n, origem, av };
 }
-const sozinho = e => ETAPAS.filter(x => e[x.k] === 20).length;
+// o ponto de partida é a primeira avaliação; a evolução é de lá até hoje
+const partidaDe = c => { const a = avsN(c)[0]; return a ? notasDe(c, a.data) : null; };
 const dedicacaoDe = c => { for (let i = c.avaliacoes.length - 1; i >= 0; i--) { const v = c.avaliacoes[i].notas.det; if (typeof v === 'number') return v; } return null; };
-// capacidade atual: no modelo novo sai das etapas; quem só tem avaliação antiga mantém as estrelas antigas até ser avaliado de novo
-function capDe(c) {
-  const E = etapasDe(c);
-  if (E.nova || !c.avaliacoes.length) return capEtapas(E.e);
-  return capAtual(notasAtuais(c));
-}
-const capDaAvaliacao = a => a.m === 2 ? capEtapas(a.notas) : capAtual(a.notas);
+const capDe = c => capN(notasDe(c).n);
+const capDaAvaliacao = a => capN(a.notas);
 
 // Cada corretor grava em fila própria, sempre com a versão local mais recente.
 // O que não chegou ao Firebase fica pendente neste aparelho e é reenviado depois.
@@ -992,7 +1083,8 @@ function updateSync() {
 // ── ESTADO DA TELA ──
 const ui = { ficha: null, tela: 'elenco', aba: 'geral', info: new Set(), per: lsGet(LS_PER, 'tudo'), sheet: null, prodAll: false, fromElenco: false };
 // telas do topo (cada uma com o seu #endereço, para dar para mandar o link direto)
-const TELAS = [['elenco', 'Elenco'], ['processo', 'Quem sabe o quê'], ['carteira', 'Carteira'], ['treinos', 'Treinamentos'], ['relatorio', 'Relatório']];
+const TELAS = [['elenco', 'Plantel'], ['treino', 'Treino'], ['carteira', 'Carteira'], ['relatorio', 'Relatório']];
+const TELAS_ANTIGAS = { processo: 'treino', treinos: 'treino' }; // links antigos continuam abrindo
 if (!PERIODOS.some(p => p[0] === ui.per)) ui.per = 'tudo';
 let form = null;
 let admin = lsGet(LS_AUTH, false) === true;
@@ -1017,177 +1109,157 @@ const ordenados = () => corretores.slice().sort((a, b) => capDe(b) - capDe(a) ||
 const avatar = c => `<span class="av">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(initials(c.nome))}</span>`;
 const perChips = () => `<div class="chips sm">${PERIODOS.map(([k, l]) => `<button class="chip${ui.per === k ? ' on' : ''}" data-act="per" data-v="${k}">${l}</button>`).join('')}</div>`;
 
-// ── ELENCO (lista do plantel, como a tela de elenco do FM) ──
+// ── PLANTEL (lista, como a tela de plantel do FM) ──
+// evolução em estrelas: da primeira avaliação até hoje
+function evolucaoDe(c) {
+  const p = partidaDe(c); if (!p) return null;
+  const hj = notasDe(c).n;
+  return { de: capN(p.n), ate: capN(hj), p: p.n, hj, data: p.av ? p.av.data : '' };
+}
+const sitPill = n => { const s = situacaoDe(n); return s ? `<span class="sit ${s[2]}">${s[1]}</span>` : '<span class="sit s0">A avaliar</span>'; };
+const evoTxt = E => !E ? '<span class="muted">–</span>' : E.ate === E.de ? '<span class="dl eq">=</span>' : deltaEst(E.ate - E.de);
 function renderElenco() {
   const lista = ordenados();
   const tot = lista.reduce((s, c) => { const p = prod(c, ui.per); s.v += p.v; s.a += p.a; return s; }, { v: 0, a: 0 });
-  const head = cabecalho('Elenco de angariação');
-
+  const head = cabecalho('Plantel');
   if (!lista.length) {
-    $('#main').innerHTML = head + `<div class="empty" style="margin-top:22px"><h3>Nenhum corretor no elenco ainda</h3>
+    $('#main').innerHTML = head + `<div class="empty" style="margin-top:22px"><h3>Nenhum corretor no plantel ainda</h3>
       <p class="pub">Assim que os corretores forem cadastrados, eles aparecem aqui.</p>
-      <p class="adm">Cadastre cada corretor que faz angariação com você. As notas você coloca depois, na conversa com cada um.</p>
+      <p class="adm">Cadastre cada corretor que faz angariação com você. As notas você coloca depois.</p>
       <button class="btn-or adm" data-act="novo">+ Adicionar corretor</button></div>`;
     return;
   }
-
   const linhas = lista.map(c => {
-    const av = c.avaliacoes, P = prod(c, ui.per), ida = idade(c.nascimento);
-    const E = etapasDe(c), soz = sozinho(E.e);
-    const mt = !av.length ? 'sem avaliação ainda' : E.nova ? 'avaliado em ' + fmtShort(ultima(c).data) : 'avaliar nas etapas';
+    const P = prod(c, ui.per), ida = idade(c.nascimento), N = notasDe(c), E = evolucaoDe(c), d = dedDe(dedicacaoDe(c));
     return `<button class="sqr" data-act="abrir" data-id="${esc(c.id)}">
-      <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt${E.nova || !av.length ? '' : ' wa'}">${esc(mt)}</span></span></span>
+      <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt">${sitPill(N.n)}</span></span></span>
       <span class="num xl cell"><span class="lbm">Idade</span>${ida ?? '–'}</span>
-      <span class="cell w4"><span class="lbm">Capacidade atual</span>${st5(capDe(c))}</span>
-      <span class="num cell"><span class="lbm">Faz sozinho</span><span class="${soz ? 'n4' : 'n0'}">${soz}<small class="de9">/9</small></span></span>
+      <span class="cell w4"><span class="lbm">Capacidade</span>${st5(capN(N.n))}</span>
+      <span class="cell"><span class="lbm">Evolução</span>${evoTxt(E)}</span>
       <span class="num v cell"><span class="lbm">Visitas</span>${P.v}</span>
       <span class="num a cell"><span class="lbm">Angariações</span>${P.a}</span>
     </button>`;
   }).join('');
-
   $('#main').innerHTML = head + `
-    <div class="tools"><span class="lbl">Produção</span>${perChips()}<p class="hintp">${ui.per === 'tudo' ? 'Tudo o que cada um registrou desde o início do acompanhamento.' : `O ${perLabel()} de cada um, contado a partir do dia em que começou com você.`}</p></div>
-    <div class="kpis">
-      <div><b>${lista.length}</b><span>${plural(lista.length, 'corretor', 'corretores')} no elenco</span></div>
-      <div><b style="color:var(--vis)">${tot.v}</b><span>Visitas de angariação · ${perLabel()}</span></div>
-      <div><b style="color:var(--or2)">${tot.a}</b><span>Angariações assinadas · ${perLabel()}</span></div>
+    <div class="kpis k4">
+      <div><b>${lista.length}</b><span>${plural(lista.length, 'corretor', 'corretores')} no plantel</span></div>
+      <div><b>${mentoria.treinos.length}</b><span>${plural(mentoria.treinos.length, 'treino dado', 'treinos dados')}</span></div>
+      <div><b>${tot.v}</b><span>Visitas de angariação · ${perLabel()}</span></div>
+      <div><b>${tot.a}</b><span>Angariações assinadas · ${perLabel()}</span></div>
     </div>
-    <div class="group-t"><span class="lbl">Plantel</span></div>
-    <div class="sq">
-      <div class="sqr hd"><span>Corretor</span><span class="xl">Idade</span><span>Capacidade atual</span><span>Faz sozinho</span><span>Visitas</span><span>Angariações</span></div>
+    <div class="tools"><span class="lbl">Produção</span>${perChips()}</div>
+    <div class="sq" style="margin-top:14px">
+      <div class="sqr hd"><span>Corretor</span><span class="xl">Idade</span><span>Capacidade</span><span>Evolução</span><span>Visitas</span><span>Angariações</span></div>
       ${linhas}
     </div>
-    ${legenda()}`;
+    <div class="legend l2">
+      <div><h4>Atributos de 1 a 20</h4>${REGUA_N.map(r => `<span class="rg"><b class="${nivel(r.ate)}">${r.de} a ${r.ate}</b> ${r.nome}: ${minus1(r.o)}</span>`).join('')}</div>
+      <div><h4>Capacidade e evolução</h4>As estrelas saem da média dos atributos de Prospecção, Angariação e Lançamento. A evolução compara a primeira avaliação com hoje.</div>
+    </div>`;
 }
-function legenda() {
-  return `<div class="legend">
-    <div><h4>As 9 etapas</h4>O processo de angariação da VIP, do link do imóvel ao Reels. Em cada etapa a pessoa está num degrau, e a nota de 0 a 20 sai dele.
-      <div class="sw">${DEGRAUS.map(d => `<span><i class="${nivel(d.n)}" style="background:currentColor"></i>${d.n}: ${d.nome.toLowerCase()}</span>`).join('')}</div></div>
-    <div><h4>Capacidade atual</h4>As estrelas saem da média das 9 etapas: tudo "Treinou" dá 2 estrelas, tudo "Fez acompanhado" dá 3½ e tudo "Faz sozinho" dá 5. Sobem conforme a pessoa treina e faz sozinha.</div>
-    <div><h4>Visitas e angariações</h4>Visitas de angariação e angariações com autorização assinada no período escolhido: 1º, 2º ou 3º mês de acompanhamento de cada um, ou tudo.</div>
-  </div>`;
-}
-// topo de cada tela: título e as abas
+// topo de cada tela: título e, no celular, as abas (no computador elas ficam no topo)
 function cabecalho(t, sub) {
   const ult = corretores.reduce((m, c) => c.atualizadoEm > m ? c.atualizadoEm : m, mentoria.atualizadoEm || '');
   return `<div class="phd"><h1>${t}</h1><span class="sub">${sub || 'VIP Imóveis' + (ult ? ' · atualizado em ' + fmtDate(ult) : '')}</span></div>
     <nav class="telas" aria-label="Telas">${TELAS.map(([k, l]) => `<a href="#${k}" class="${ui.tela === k ? 'on' : ''}">${l}</a>`).join('')}</nav>`;
 }
-const pill = v => { const d = degrauDe(v); return d === null ? '<span class="dg dg-x">A avaliar</span>' : `<span class="dg dg${d}">${DEGRAUS[d].curto}</span>`; };
 
-// ── PERFIL DO CORRETOR (tela de jogador do FM) ──
+// ── FICHA DO CORRETOR (tela de jogador do FM) ──
 function renderFicha(c) {
-  const av = c.avaliacoes, ida = idade(c.nascimento), E = etapasDe(c), ded = dedDe(dedicacaoDe(c));
-  const facts = [
-    ida !== null ? ['Idade', ida + ' anos'] : null,
-    c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null,
-    ['Dedicação', ded ? ded[1] + ' do tempo' : 'a avaliar']
-  ].filter(Boolean);
-  const abas = [['geral', 'Etapas'], ['dev', 'Evolução'], ['prod', 'Produção']];
-
+  const ida = idade(c.nascimento), N = notasDe(c), d = dedDe(dedicacaoDe(c));
+  const facts = [ida !== null ? ['Idade', ida + ' anos'] : null, c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null, ['Início com você', fmtDate(inicioDe(c))]].filter(Boolean);
+  const abas = [['geral', 'Visão geral'], ['dev', 'Evolução'], ['prod', 'Produção']];
   $('#main').innerHTML = `
-    <button class="back" data-act="voltar">← Elenco</button>
+    <button class="back" data-act="voltar">← Plantel</button>
     <div class="pf">
       <div class="pf-h">
         <div class="pf-ph">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(initials(c.nome))}</div>
         <div class="pf-id">
           <h1>${esc(c.nome)}</h1>
+          <div class="pf-s">${sitPill(N.n)}</div>
           <div class="pf-f">${facts.map(([a, b]) => `<div><span>${a}</span><b>${esc(b)}</b></div>`).join('')}</div>
         </div>
         <div class="capbox">
-          <div><span>Capacidade atual</span>${st5(capDe(c))}</div>
-          <div><span>Faz sozinho</span><b class="soz"><span class="${sozinho(E.e) ? 'n4' : 'n0'}">${sozinho(E.e)}</span> de 9 etapas</b></div>
+          <div><span>Capacidade atual</span>${st5(capN(N.n))}</div>
+          <div><span>Dedicação</span><b class="ded">${d ? d[1] + ' do tempo' : 'a avaliar'}</b></div>
         </div>
         <div class="pf-act adm">
-          <button class="btn-or sm" data-act="aval" data-id="${esc(c.id)}">${E.nova ? 'Atualizar etapas' : 'Avaliar as etapas'}</button>
-          <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="visita">+ Visita de angariação</button>
+          <button class="btn-or sm" data-act="aval" data-id="${esc(c.id)}">${N.av ? 'Atualizar notas' : 'Primeira avaliação'}</button>
+          <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="visita">+ Visita</button>
           <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="angariacao">+ Angariação</button>
-          <button class="btn-ghost sm" data-act="perfil" data-id="${esc(c.id)}">Dados pessoais</button>
+          <button class="btn-ghost sm" data-act="perfil" data-id="${esc(c.id)}">Dados</button>
         </div>
       </div>
       <div class="pf-tabs">${abas.map(([k, l]) => `<button class="${ui.aba === k ? 'on' : ''}" data-act="aba" data-v="${k}">${l}</button>`).join('')}</div>
-      <div class="pf-b">${ui.aba === 'dev' ? abaDev(c) : ui.aba === 'prod' ? abaProd(c) : abaGeral(c, E)}</div>
+      <div class="pf-b">${ui.aba === 'dev' ? abaDev(c) : ui.aba === 'prod' ? abaProd(c) : abaGeral(c, N)}</div>
     </div>`;
 }
-// o primeiro ponto do processo em que a pessoa ainda não faz sozinha: é ali que ela evolui agora
-function proximoPasso(E) {
-  let alvo = null;
-  for (const x of ETAPAS) {
-    const d = degrauDe(E.e[x.k]);
-    if (d === 3) continue;
-    if (!alvo || (d ?? -1) < (alvo.d ?? -1)) alvo = { x, d };
-  }
-  return alvo;
-}
-function abaGeral(c, E) {
-  const ant = c.avaliacoes.filter(a => a.m === 2).slice(-2, -1)[0] || null; // avaliação anterior no modelo novo (para as setas)
-  const pp = proximoPasso(E);
-  const treinoDe = k => treinosDe(c).filter(t => t.etapas.includes(k))[0];
-  const col = f => `<div class="fm-c"><div class="fm-h"><span><span class="t">${f.nome}</span><small>${f.sub}</small></span></div>
-    ${f.etapas.map(x => {
-      const v = E.e[x.k], d = degrauDe(v), p = ant ? ant.notas[x.k] : undefined;
-      const dl = typeof v === 'number' && typeof p === 'number' && v !== p ? delta(v - p) : '';
-      const aberto = ui.info.has(x.k), t = treinoDe(x.k);
-      const origem = E.origem[x.k] === 'antiga' ? 'Ponto de partida tirado da avaliação antiga.' : E.origem[x.k] === 'treino' && t ? `Treinou em ${fmtDate(t.data)}: ${t.tema}.` : '';
-      return `<button class="fm-r${aberto ? ' open' : ''}${d === 3 ? ' hi' : ''}" data-act="info" data-v="${x.k}" aria-expanded="${aberto}">
-        <span class="ln"><span class="an">${x.nome}<i class="ic">i</i></span>${dl}${pill(v)}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></span>
-        ${aberto ? `<span class="fm-x">${esc(x.desc)}${d !== null ? `<span class="fx"><b class="${nivel(v)}">${DEGRAUS[d].nome}</b> ${esc(DEGRAUS[d].o)}${origem ? ' ' + esc(origem) : ''}<br><b>Para subir:</b> ${esc(DEGRAUS[d].subir)}</span>` : '<span class="fx">Ainda não avaliado nesta etapa.</span>'}</span>` : ''}
+// os atributos mais baixos de Prospecção e Angariação: é o que treinar agora
+const focoDe = n => TEC.filter(x => x.g !== 'lan').map(x => ({ x, v: n[x.k] ?? 0 })).sort((a, b) => a.v - b.v || 0).slice(0, 3);
+function abaGeral(c, N) {
+  const avs = avsN(c), ant = avs.length > 1 ? avs[avs.length - 2] : null; // a anterior, para as setas
+  const n = N.n;
+  const col = g => {
+    const m = media(n, g.attrs.map(a => a.k));
+    return `<div class="fm-c"><div class="fm-h"><span><span class="t">${g.nome}</span><small>${g.sub}</small></span>${m !== null && g.k !== 'men' ? `<span class="g"><b class="${nivel(Math.round(m))}">${Math.round(m)}</b><span>média</span></span>` : ''}</div>
+    ${g.attrs.map(a => {
+      const v = n[a.k], p = ant ? ant.notas[a.k] : undefined, aberto = ui.info.has(a.k);
+      const sobe = typeof v === 'number' && typeof p === 'number' && v > p, desce = typeof v === 'number' && typeof p === 'number' && v < p;
+      const tr = N.origem[a.k] === 'treino' ? treinosDe(c).find(t => t.temas.includes(a.k)) : null;
+      return `<button class="fm-r${aberto ? ' open' : ''}" data-act="info" data-v="${a.k}" aria-expanded="${aberto}">
+        <span class="ln"><span class="an">${a.nome}</span>${sobe ? `<span class="up" title="Subiu desde ${fmtShort(ant.data)}">▲</span>` : desce ? '<span class="dn">▼</span>' : ''}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></span>
+        ${aberto ? `<span class="fm-x">${esc(a.desc)}${typeof v === 'number' ? `<span class="fx"><b class="${nivel(v)}">${faixaN(v).nome}</b> ${esc(faixaN(v).o)}${tr ? ` Treinou em ${fmtShort(tr.data)}.` : ''}</span>` : '<span class="fx">Ainda sem nota.</span>'}</span>` : ''}
       </button>`;
     }).join('')}</div>`;
-  const tr = treinosDe(c);
+  };
+  const funcoes = GRUPOS_N.filter(g => g.k !== 'men').map(g => ({ g, s: capN(Object.fromEntries(g.attrs.map(a => [a.k, n[a.k]]).filter(([, v]) => typeof v === 'number'))) , m: media(n, g.attrs.map(a => a.k)) }));
+  const melhor = funcoes.reduce((b, f) => (f.m ?? -1) > (b.m ?? -1) ? f : b, funcoes[0]);
+  const tr = treinosDe(c), P = contar(c.producao);
+  const foco = N.av ? focoDe(n) : [];
   return `
-    ${!E.nova && c.avaliacoes.length ? `<div class="aviso adm">Ainda no ponto de partida: Abordagem, Visita e Documentação vieram da avaliação antiga de ${fmtShort(ultima(c).data)}. Toque em "Avaliar as etapas" para fechar a foto de partida nas 9 etapas.</div>` : ''}
-    ${!c.avaliacoes.length && !tr.length ? `<div class="empty-s" style="margin-bottom:14px"><span class="pub">Avaliação em breve.</span><span class="adm">Ainda sem avaliação. Sente com ${esc(firstName(c.nome))} e toque em "Avaliar as etapas".</span></div>` : ''}
-    ${pp ? `<div class="prox"><span class="lbl">Próximo passo</span><b>${pp.x.nome}</b><span>${pp.d === null ? 'Avaliar esta etapa.' : esc(DEGRAUS[pp.d].subir)}</span></div>` : `<div class="prox ok"><span class="lbl">Próximo passo</span><b>Faz sozinho todas as etapas</b><span>Pronto para ensinar os outros.</span></div>`}
-    <div class="fm f4">${FASES.map(col).join('')}</div>
-    <div class="fm-leg"><span>Toque numa etapa para ver o que ela é e como subir.</span>${DEGRAUS.map(d => `<span><b class="${nivel(d.n)}">${d.n}</b> ${d.nome.toLowerCase()}</span>`).join('')}${ant ? `<span><b class="dl up">▲</b><b class="dl dn">▼</b> desde ${fmtShort(ant.data)}</span>` : ''}</div>
+    ${!N.av ? `<div class="aviso"><span class="pub">Avaliação em breve.</span><span class="adm">Ainda sem nota nos atributos. Toque em "Primeira avaliação": arrasta cada barra até a nota e salva.</span></div>` : ''}
+    <div class="fg">
+      <section class="fn"><h3 class="lbl">Funções</h3>${funcoes.map(f => `<div class="fn-r${N.av && f === melhor ? ' on' : ''}"><span>${f.g.nome}</span>${f.m === null ? '<span class="muted">–</span>' : st5(f.s)}</div>`).join('')}
+        ${foco.length ? `<h3 class="lbl" style="margin-top:16px">Treinar agora</h3>${foco.map(({ x, v }) => `<div class="fn-r"><span>${x.nome}</span><b class="${nivel(v)}">${v || '–'}</b></div>`).join('')}` : ''}</section>
+      <div class="fm f4">${GRUPOS_N.map(col).join('')}</div>
+    </div>
+    <div class="fm-leg"><span>Toque num atributo para ver o que ele é.</span>${REGUA_N.map(r => `<span><b class="${nivel(r.ate)}">${r.de}–${r.ate}</b> ${r.nome.toLowerCase()}</span>`).join('')}${ant ? `<span><b class="up">▲</b> subiu desde ${fmtShort(ant.data)}</span>` : ''}</div>
     <div class="grid2" style="margin-top:16px">
-      <section class="box"><div class="box-h"><h3>Dedicação</h3></div>${ded2(c)}</section>
-      <section class="box"><div class="box-h"><h3>Treinamentos</h3><span class="muted r" style="font-size:13px">${tr.length} ${plural(tr.length, 'treinamento', 'treinamentos')}</span></div>
-        ${tr.length ? `<div class="ls">${tr.map(t => `<div class="li"><span class="d">${fmtShort(t.data)}</span><span class="w">${esc(t.tema)}<small>${t.etapas.map(k => ETAPAS.find(e => e.k === k).nome).join(' · ') || 'Geral'}</small></span></div>`).join('')}</div>`
-          : `<div class="empty-s">Nenhum treinamento registrado ainda.</div>`}</section>
+      <section class="box"><div class="box-h"><h3>Estatísticas</h3><span class="muted r" style="font-size:13px">desde ${fmtShort(inicioDe(c))}</span></div>
+        <div class="est"><div><b>${P.v}</b><span>visitas de angariação</span></div><div><b>${P.a}</b><span>angariações assinadas</span></div><div><b>${P.valor ? fmtValor(P.valor) : '–'}</b><span>valor angariado</span></div><div><b>${tr.length}</b><span>${plural(tr.length, 'treino', 'treinos')}</span></div></div></section>
+      <section class="box"><div class="box-h"><h3>Treinos</h3></div>
+        ${tr.length ? `<div class="ls">${tr.slice(0, 6).map(t => `<div class="li"><span class="d">${fmtShort(t.data)}</span><span class="w">${esc(tituloTreino(t))}</span></div>`).join('')}</div>` : '<div class="empty-s">Nenhum treino registrado ainda.</div>'}</section>
     </div>`;
 }
-function ded2(c) {
-  const v = dedicacaoDe(c), d = dedDe(v);
-  return `<p class="hintp">${esc(DED.desc)}</p>
-    <div class="dedb">${DED.op.map(o => `<span class="${d && d[0] === o[0] ? 'on' : ''}"><b>${o[1]}</b>${o[2]}</span>`).join('')}</div>
-    ${d ? '' : '<p class="hintp">Ainda não respondida.</p>'}`;
+const tituloTreino = t => t.tema || t.temas.map(k => atr(k).nome).join(', ') || 'Treino';
+// evolução: a capacidade numa barra (de onde partiu até hoje) e cada atributo com o ponto de partida marcado
+function barraEvo(de, ate, max, cls) {
+  const a = Math.min(de, ate) / max * 100, b = Math.max(de, ate) / max * 100;
+  return `<span class="evb ${cls || ''}"><i class="e0" style="width:${a}%"></i><i class="${ate >= de ? 'e1' : 'e2'}" style="left:${a}%;width:${b - a}%"></i></span>`;
 }
 function abaDev(c) {
-  const av = c.avaliacoes, tr = treinosDe(c);
-  if (!av.length && !tr.length) return `<div class="empty-s">A evolução aparece depois da primeira avaliação. <span class="adm">A cada conversa, toque em "Atualizar etapas" e suba só o que evoluiu.</span></div>`;
-  const e1 = av.length ? capDaAvaliacao(av[av.length - 1]) : 0, e0 = av.length ? capDaAvaliacao(av[0]) : 0;
-  return `<div class="grid2">
-      <section class="box">
-        <div class="box-h"><h3>Evolução da capacidade atual</h3>${av.length > 1 ? `<span class="r">${deltaEst(e1 - e0)} <span class="muted" style="font-size:13px">desde ${fmtShort(av[0].data)}</span></span>` : ''}</div>
-        ${av.length ? graficoLinhas(av, [{ cor: '#f7c531', val: a => capDaAvaliacao(a), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true) : '<div class="empty-s">Sem avaliação ainda.</div>'}
-      </section>
-      <section class="box">
-        <div class="box-h"><h3>Etapas</h3><span class="muted r" style="font-size:13px">ponto de partida × hoje</span></div>
-        ${graficoEtapas(c)}
-        <div class="keyl"><span><i class="tick"></i>Ponto de partida</span><span class="a"><i></i>Hoje</span></div>
-      </section>
-    </div>
+  const avs = avsN(c);
+  if (!avs.length) return `<div class="empty-s">A evolução aparece depois da primeira avaliação. <span class="adm">Depois, a cada conversa, toque em "Atualizar notas" e mexa só no que mudou.</span></div>`;
+  const E = evolucaoDe(c);
+  return `
+    <section class="box evo">
+      <div class="box-h"><h3>Capacidade</h3><span class="r">${evoTxt(E)} <span class="muted" style="font-size:13px">desde ${fmtShort(E.data)}</span></span></div>
+      <div class="evo-g"><span class="ev-l">${st5(E.de)}<small>${fmtShort(E.data)}</small></span>${barraEvo(E.de, E.ate, 5, 'big')}<span class="ev-l">${st5(E.ate)}<small>hoje</small></span></div>
+    </section>
     <section class="box" style="margin-top:16px">
-      <div class="box-h"><h3>Histórico de avaliações</h3><span class="muted r" style="font-size:13px">${av.length} ${plural(av.length, 'avaliação', 'avaliações')}</span></div>
-      ${av.length ? `<div class="ls">${av.slice().reverse().map(a => {
-        const i = av.indexOf(a), ea = capDaAvaliacao(a), ep = i > 0 ? capDaAvaliacao(av[i - 1]) : null;
-        const det = a.m === 2 ? [3, 2, 1].map(d => { const n = ETAPAS.filter(x => degrauDe(a.notas[x.k]) === d).length; return n ? `${DEGRAUS[d].curto} ${n}` : ''; }).filter(Boolean).join(' · ') || 'Nenhuma etapa feita ainda'
-          : 'Modelo antigo · ' + GRUPOS.map(g => `${g.nome} ${fmtG(mediaGrupo(a.notas, g.k))}`).join(' · ');
-        return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(ea)} ${ep !== null && ea !== ep ? deltaEst(ea - ep) : ''}</span><small>${det}</small></span>${a.m === 2 ? `<button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button>` : ''}</div>`;
-      }).join('')}</div>` : '<div class="empty-s">Nenhuma avaliação ainda.</div>'}
+      <div class="box-h"><h3>Atributos</h3><span class="muted r" style="font-size:13px">ponto de partida × hoje</span></div>
+      <div class="hb">${GRUPOS_N.map(g => `<div class="hb-g">${g.nome}</div>` + g.attrs.map(a => {
+        const v0 = E.p[a.k], v1 = E.hj[a.k];
+        return `<div class="hb-r"><span>${a.nome}</span>${typeof v1 === 'number' ? barraEvo(v0 ?? v1, v1, 20) : '<span class="evb"></span>'}
+          <span class="hb-v"><span class="${nivel(v1)}">${typeof v1 === 'number' ? v1 : '–'}</span> ${typeof v0 === 'number' && typeof v1 === 'number' && v0 !== v1 ? delta(v1 - v0) : ''}</span></div>`;
+      }).join('')).join('')}</div>
+      <div class="keyl"><span><i style="background:#cfd3d7"></i>Ponto de partida</span><span><i style="background:var(--tq)"></i>O que cresceu</span></div>
+    </section>
+    <section class="box" style="margin-top:16px">
+      <div class="box-h"><h3>Avaliações</h3><span class="muted r" style="font-size:13px">${avs.length} ${plural(avs.length, 'avaliação', 'avaliações')}</span></div>
+      ${avs.length > 1 ? graficoLinhas(avs, [{ cor: '#d99a0b', val: a => capDaAvaliacao(a), nome: 'Capacidade' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true) : ''}
+      <div class="ls">${avs.slice().reverse().map(a => `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(capDaAvaliacao(a))}</span><small>${GRUPOS_N.filter(g => g.k !== 'men').map(g => { const m = media(a.notas, g.attrs.map(x => x.k)); return `${g.nome} ${m === null ? '–' : Math.round(m)}`; }).join(' · ')}</small></span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`).join('')}</div>
     </section>`;
-}
-// cada etapa: barra de hoje (laranja) e um traço branco onde estava no ponto de partida
-function graficoEtapas(c) {
-  const av = c.avaliacoes;
-  const ini = av.length ? etapasDe(c, av[0].data).e : {}, hj = etapasDe(c).e;
-  return `<div class="hb">${FASES.map(f => `<div class="hb-g">${f.nome}</div>` + f.etapas.map(x => {
-    const v0 = ini[x.k], v1 = hj[x.k], dois = typeof v0 === 'number';
-    return `<div class="hb-r"><span>${x.nome}</span><span class="hb-t">${typeof v1 === 'number' ? `<i class="a1" style="width:${Math.max(v1 * 5, 1.5)}%"></i>` : ''}${dois ? `<i class="a0" style="left:calc(${v0 * 5}% - 1.5px)" title="Ponto de partida: ${v0}"></i>` : ''}</span>
-      <span class="hb-v"><span class="${nivel(v1)}">${typeof v1 === 'number' ? v1 : '–'}</span> ${dois && typeof v1 === 'number' && v0 !== v1 ? delta(v1 - v0) : ''}</span></div>`;
-  }).join('')).join('')}</div>`;
 }
 function abaProd(c) {
   const ma = mesAtual(c), nm = Math.max(3, ma);
@@ -1289,28 +1361,36 @@ function graficoProd(linhas) {
     <div class="keyl"><span><i></i>Visitas de angariação</span><span class="a"><i></i>Angariações realizadas</span></div>`;
 }
 
-// ── QUEM SABE O QUÊ (pessoas × etapas) ──
-function renderProcesso() {
-  const lista = ordenados(), Es = lista.map(c => ({ c, E: etapasDe(c) }));
-  const head = cabecalho('Quem sabe o quê', 'As 9 etapas da angariação, pessoa por pessoa');
-  if (!lista.length) { $('#main').innerHTML = head + '<div class="empty-s" style="margin-top:22px">Cadastre os corretores no Elenco para ver a tabela.</div>'; return; }
-  const cel = v => { const d = degrauDe(v); return d === null ? '<td class="mx dx">–</td>' : `<td class="mx d${d}" title="${DEGRAUS[d].nome}">${DEGRAUS[d].curto}</td>`; };
-  const conta = (k, d) => Es.filter(x => degrauDe(x.E.e[k]) !== null && degrauDe(x.E.e[k]) >= d).length;
-  const semNinguem = ETAPAS.filter(x => !conta(x.k, 3)), comAlguem = ETAPAS.filter(x => conta(x.k, 3));
-  $('#main').innerHTML = head + `
-    <div class="leit">
-      <div><b class="n4">${comAlguem.length}</b><span>de 9 etapas já têm alguém que faz sozinho</span></div>
-      <div><b class="n3">${ETAPAS.filter(x => conta(x.k, 1)).length}</b><span>de 9 etapas já foram treinadas com alguém</span></div>
-      <div class="w"><span class="lbl">Ninguém faz sozinho ainda</span>${semNinguem.length ? semNinguem.map(x => `<span class="chip sm-c">${x.nome}</span>`).join('') : '<span class="muted">Todas as etapas têm alguém que faz sozinho.</span>'}</div>
+// ── TREINO: os treinos dados e o quadro do time (todos os atributos de todo mundo) ──
+function renderTreino() {
+  const T = mentoria.treinos, lista = ordenados();
+  const cob = new Set(T.flatMap(t => t.temas)), pessoas = new Set(T.flatMap(t => t.quem));
+  const cel = (c, N, a) => { const v = N.n[a.k]; return `<td class="mxn ${nivel(v)}${N.origem[a.k] === 'treino' ? ' tr' : ''}" title="${esc(c.nome)} · ${a.nome}">${typeof v === 'number' ? v : '–'}</td>`; };
+  const Ns = lista.map(c => ({ c, N: notasDe(c) }));
+  const mediaAt = a => { const v = Ns.map(x => x.N.n[a.k]).filter(x => typeof x === 'number'); return v.length ? Math.round(v.reduce((s, x) => s + x, 0) / v.length) : null; };
+  $('#main').innerHTML = cabecalho('Treino', 'Os treinos dados e onde o time está em cada atributo') + `
+    <div class="kpis">
+      <div><b>${T.length}</b><span>${plural(T.length, 'treino dado', 'treinos dados')}</span></div>
+      <div><b>${pessoas.size}</b><span>${plural(pessoas.size, 'pessoa treinada', 'pessoas treinadas')}</span></div>
+      <div><b>${cob.size}<small class="de9">/${ATRS.length}</small></b><span>atributos já treinados</span></div>
     </div>
-    <div class="tw mxw"><table class="mxt">
-      <thead><tr><th rowspan="2" class="nm">Corretor</th>${FASES.map(f => `<th colspan="${f.etapas.length}" class="fh">${f.nome}</th>`).join('')}<th rowspan="2" class="dd">Dedicação</th></tr>
-        <tr>${ETAPAS.map(x => `<th class="eh">${x.curto}</th>`).join('')}</tr></thead>
-      <tbody>${Es.map(({ c, E }) => { const d = dedDe(dedicacaoDe(c)); return `<tr><th class="nm"><button data-act="abrir" data-id="${esc(c.id)}">${avatar(c)}<span>${esc(c.nome)}</span></button></th>${ETAPAS.map(x => cel(E.e[x.k])).join('')}<td class="dd">${d ? d[1] : '–'}</td></tr>`; }).join('')}</tbody>
-      <tfoot><tr><th class="nm">Fazem sozinho</th>${ETAPAS.map(x => `<td>${conta(x.k, 3)}</td>`).join('')}<td></td></tr>
-        <tr><th class="nm">Já treinaram</th>${ETAPAS.map(x => `<td>${conta(x.k, 1)}</td>`).join('')}<td></td></tr></tfoot>
+    <div class="tools adm"><button class="btn-or sm" data-act="treino">+ Registrar treino</button><span class="hintp">Escolha o que foi treinado e toque em quem estava. Quem participou fica no mínimo com 6 naquele atributo.</span></div>
+    <div class="group-t"><span class="lbl">Quadro do time</span></div>
+    ${lista.length ? `<div class="tw mxw"><table class="mxt">
+      <thead><tr><th rowspan="2" class="nm">Corretor</th>${GRUPOS_N.map(g => `<th colspan="${g.attrs.length}" class="fh">${g.nome}</th>`).join('')}<th rowspan="2" class="dd">Capacidade</th></tr>
+        <tr>${ATRS.map(a => `<th class="eh" title="${a.nome}">${a.curto}</th>`).join('')}</tr></thead>
+      <tbody>${Ns.map(({ c, N }) => `<tr><th class="nm"><button data-act="abrir" data-id="${esc(c.id)}">${avatar(c)}<span>${esc(c.nome)}</span></button></th>${ATRS.map(a => cel(c, N, a)).join('')}<td class="dd">${N.av || Object.keys(N.n).length ? st5(capN(N.n)) : '<span class="muted">a avaliar</span>'}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><th class="nm">Média do time</th>${ATRS.map(a => { const m = mediaAt(a); return `<td class="mxn ${nivel(m ?? undefined)}">${m ?? '–'}</td>`; }).join('')}<td></td></tr></tfoot>
     </table></div>
-    <div class="fm-leg" style="margin-top:14px">${DEGRAUS.map((d, i) => `<span><i class="qd d${i}"></i>${d.nome}: ${d.o.toLowerCase()}</span>`).join('')}</div>`;
+    <div class="fm-leg">${REGUA_N.map(r => `<span><b class="${nivel(r.ate)}">${r.de}–${r.ate}</b> ${r.nome.toLowerCase()}</span>`).join('')}<span><b class="trd">6</b> com ponto: veio do treino, ainda sem avaliação</span></div>` : '<div class="empty-s">Cadastre os corretores no Plantel para ver o quadro.</div>'}
+    <div class="group-t"><span class="lbl">Treinos dados</span></div>
+    ${T.length ? `<div class="ls">${T.map(t => `<div class="li tr">
+        <span class="d">${fmtShort(t.data)}<br>${t.data.slice(0, 4)}</span>
+        <span class="w"><b>${esc(tituloTreino(t))}</b>
+          ${t.temas.length && t.tema ? `<span class="chips-in">${t.temas.map(k => `<span class="tg">${atr(k).nome}</span>`).join('')}</span>` : ''}
+          <small>${t.quem.map(id => byId(id)).filter(Boolean).map(c => esc(firstName(c.nome))).join(', ') || 'Sem participantes'}${t.obs ? ' · ' + esc(t.obs) : ''}</small></span>
+        <button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>`
+      : `<div class="empty"><h3>Nenhum treino registrado ainda</h3><p>Cada treino leva poucos segundos: o que foi treinado, quem estava, salvar.</p><button class="btn-or adm" data-act="treino">+ Registrar treino</button></div>`}`;
 }
 
 // ── CARTEIRA EM CONSTRUÇÃO (cada angariação andando pelas fases) ──
@@ -1340,95 +1420,88 @@ function renderCarteira() {
       : `<div class="empty" style="margin-top:22px"><h3>Nenhuma angariação registrada ainda</h3><p>Cada imóvel angariado entra aqui e anda pelas fases: documentação, Jetimob, autorização assinada, fotos, site e Reels.</p><button class="btn-or adm" data-act="prod" data-v="angariacao">+ Angariação</button></div>`}`;
 }
 
-// ── TREINAMENTOS ──
-function renderTreinos() {
-  const T = mentoria.treinos, cob = new Set(T.flatMap(t => t.etapas));
-  $('#main').innerHTML = cabecalho('Treinamentos', 'Tudo o que foi ensinado, para quem e de qual etapa') + `
-    <div class="kpis">
-      <div><b>${T.length}</b><span>${plural(T.length, 'treinamento dado', 'treinamentos dados')}</span></div>
-      <div><b>${cob.size}<small class="de9">/9</small></b><span>etapas já treinadas</span></div>
-      <div><b>${new Set(T.flatMap(t => t.quem)).size}</b><span>pessoas treinadas</span></div>
-    </div>
-    <div class="tools adm"><button class="btn-or sm" data-act="treino">+ Treinamento</button><p class="hintp">Quem participou sobe sozinho para "Treinou" nas etapas do treinamento.</p></div>
-    ${T.length ? `<div class="ls" style="margin-top:16px">${T.map(t => `<div class="li tr">
-        <span class="d">${fmtShort(t.data)}<br>${t.data.slice(0, 4)}</span>
-        <span class="w"><b>${esc(t.tema)}</b>
-          <span class="chips-in">${t.etapas.map(k => `<span class="tg">${ETAPAS.find(e => e.k === k).nome}</span>`).join('') || '<span class="tg">Geral</span>'}</span>
-          <small>${t.quem.map(id => byId(id)).filter(Boolean).map(c => esc(firstName(c.nome))).join(', ') || 'Sem participantes'}${t.obs ? ' · ' + esc(t.obs) : ''}</small></span>
-        <button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>`
-      : `<div class="empty" style="margin-top:22px"><h3>Nenhum treinamento registrado ainda</h3><p>Registre cada treinamento e cada acompanhamento em campo: data, tema, etapas e quem participou.</p><button class="btn-or adm" data-act="treino">+ Treinamento</button></div>`}`;
-}
-
 // ── RELATÓRIO PARA A DIRETORIA ──
 function mesMentoria() { let k = 1; const h = hoje(); while (maisMeses(mentoria.inicio, k) <= h && k < 60) k++; return k; }
 const diasMentoria = () => Math.max(1, Math.round((new Date(hoje()) - new Date(mentoria.inicio)) / 864e5) + 1);
 const estTxt = v => `<span class="rs">★</span>${fmtEst(v)}`;
 function paginasRelatorio() {
-  const k = mesMentoria(), fz = Math.min(k, 3) - 1, R = resumoCarteira(), lista = ordenados(), Es = lista.map(c => ({ c, E: etapasDe(c) }));
-  const conta = (key, d) => Es.filter(x => degrauDe(x.E.e[key]) !== null && degrauDe(x.E.e[key]) >= d).length;
-  const T = mentoria.treinos, fimMent = maisMeses(mentoria.inicio, 3);
-  const rod = n => `<div class="r-rod"><span>Mentoria de angariação · VIP Imóveis</span><span>Matheus Nickel · ${fmtDate(hoje())}</span><span>${n}</span></div>`;
-  const fasesM = MENT_FASES.map(([t, d], i) => `<div class="r-fz${i === fz ? ' on' : i < fz ? ' ok' : ''}"><span>${i + 1}º mês</span><b>${t}</b><small>${d}</small></div>`).join('');
-  const cel = v => { const d = degrauDe(v); return d === null ? '<td class="mx dx">–</td>' : `<td class="mx d${d}">${DEGRAUS[d].curto}</td>`; };
-  const sem = ETAPAS.filter(x => !conta(x.k, 3));
+  const k = mesMentoria(), fz = Math.min(k, 3) - 1, R = resumoCarteira(), lista = ordenados(), T = mentoria.treinos;
+  const fimMent = maisMeses(mentoria.inicio, 3), total = Math.round((new Date(fimMent) - new Date(mentoria.inicio)) / 864e5);
+  const Es = lista.map(c => ({ c, N: notasDe(c), E: evolucaoDe(c) }));
+  const avaliados = Es.filter(x => x.E), naoAval = Es.filter(x => !x.E);
+  const subiram = avaliados.filter(x => x.E.ate > x.E.de).length;
+  let pg = 0;
+  const rod = () => `<div class="r-rod"><span>Mentoria de angariação · VIP Imóveis</span><span>Matheus Nickel · ${fmtDate(hoje())}</span><span>${++pg}</span></div>`;
+  const fasesM = MENT_FASES.map(([t, d], i) => `<div class="r-fz${i === fz ? ' on' : i < fz ? ' ok' : ''}"><span>Dias ${i * 30 + 1} a ${(i + 1) * 30}</span><b>${t}</b><small>${d}</small></div>`).join('');
+  const est = v => `<span class="rs">★</span>${fmtEst(v)}`;
+  const barra = (de, ate, max) => { const a = Math.min(de, ate) / max * 100, b = Math.max(de, ate) / max * 100; return `<span class="r-bar"><i class="b0" style="width:${a}%"></i><i class="${ate >= de ? 'b1' : 'b2'}" style="left:${a}%;width:${b - a}%"></i></span>`; };
+  const dEst = (de, ate) => ate === de ? '<span class="r-eq">=</span>' : `<span class="${ate > de ? 'r-up' : 'r-dn'}">${ate > de ? '▲' : '▼'} ${fmtEst(Math.abs(ate - de))}★</span>`;
+  // uma página por corretor avaliado: a ficha com a evolução de cada atributo
+  const ficha = ({ c, N, E }) => {
+    const P = contar(c.producao), tr = treinosDe(c), d = dedDe(dedicacaoDe(c)), s = situacaoDe(N.n);
+    const grupo = g => `<div class="r-g"><div class="r-gt">${g.nome}</div>${g.attrs.map(a => { const v0 = E.p[a.k], v1 = E.hj[a.k];
+      return `<div class="r-at"><span>${a.nome}</span>${typeof v1 === 'number' ? barra(v0 ?? v1, v1, 20) : '<span class="r-bar"></span>'}<b class="r-n${typeof v1 === 'number' ? faixaN(v1) === REGUA_N[3] ? ' n4' : faixaN(v1) === REGUA_N[2] ? ' n3' : '' : ''}">${v1 ?? '–'}</b><span class="r-d">${typeof v0 === 'number' && typeof v1 === 'number' && v1 !== v0 ? `<span class="${v1 > v0 ? 'r-up' : 'r-dn'}">${v1 > v0 ? '+' : '−'}${Math.abs(v1 - v0)}</span>` : ''}</span></div>`; }).join('')}</div>`;
+    return `<section class="rp">
+      <div class="r-fh"><div><span class="r-k">Evolução individual</span><h2>${esc(c.nome)}</h2><span class="r-sit">${s ? s[1] : 'A avaliar'}${d ? ' · dedicação: ' + d[1].toLowerCase() + ' do tempo' : ''}</span></div>
+        <div class="r-cap"><span class="r-k2">Capacidade</span><div class="r-capb">${est(E.de)}${barra(E.de, E.ate, 5)}${est(E.ate)}</div><span class="r-capd">${dEst(E.de, E.ate)} desde ${fmtShort(E.data)}</span></div></div>
+      <div class="r-fc">
+        <div class="r-cols"><div>${grupo(GRUPOS_N[0])}${grupo(GRUPOS_N[2])}${grupo(GRUPOS_N[3])}</div><div>${grupo(GRUPOS_N[1])}</div></div>
+        <aside class="r-side">
+          <div class="r-sub">Funções</div>${GRUPOS_N.filter(g => g.k !== 'men').map(g => { const m = media(N.n, g.attrs.map(a => a.k)); return `<div class="r-kv"><span>${g.nome}</span><b>${m === null ? '–' : est(capN(Object.fromEntries(g.attrs.map(a => [a.k, N.n[a.k]]).filter(([, v]) => typeof v === 'number'))))}</b></div>`; }).join('')}
+          <div class="r-sub">Em campo</div><div class="r-kv"><span>Visitas de angariação</span><b>${P.v}</b></div><div class="r-kv"><span>Angariações assinadas</span><b>${P.a}</b></div><div class="r-kv"><span>Treinos</span><b>${tr.length}</b></div>
+          <div class="r-sub">Treinar agora</div>${focoDe(N.n).map(({ x, v }) => `<div class="r-kv"><span>${x.nome}</span><b>${v || '–'}</b></div>`).join('')}
+        </aside>
+      </div>
+      ${rod()}</section>`;
+  };
   return `
   <section class="rp r-capa">
     <div class="r-top"><span class="r-brand"><i></i>MENTORIA DE ANGARIAÇÃO</span><span>VIP IMÓVEIS</span></div>
     <div class="r-hero">
-      <span class="r-k">Relatório · ${k}º mês · dia ${diasMentoria()} de ${Math.round((new Date(fimMent) - new Date(mentoria.inicio)) / 864e5)}</span>
-      <h1>Estruturação do setor de angariação</h1>
-      <p>Início em ${fmtDate(mentoria.inicio)}. Três meses para deixar o time angariando sozinho, com processo, ferramentas e acompanhamento de cada corretor.</p>
+      <span class="r-k">Relatório de evolução · ${k}º mês · dia ${diasMentoria()} de ${total}</span>
+      <h1>Menos dependência de parcerias. Mais carteira própria.</h1>
+      <p>Como o time de angariação evoluiu desde ${fmtDate(mentoria.inicio)}: atributos de cada corretor, treinos dados e o que já chegou ao campo.</p>
     </div>
     <div class="r-fzs">${fasesM}</div>
     <div class="r-kpi">
       <div><b>${lista.length}</b><span>corretores no time</span></div>
-      <div><b>${T.length}</b><span>treinamentos dados</span></div>
+      <div><b>${T.length}</b><span>treinos dados</span></div>
+      <div><b>${subiram}<small>/${avaliados.length}</small></b><span>evoluíram desde a 1ª avaliação</span></div>
       <div><b>${R.vis}</b><span>visitas de angariação</span></div>
       <div><b>${R.ass.length}</b><span>autorizações assinadas</span></div>
-      <div><b>${R.valor ? fmtValor(R.valor) : '–'}</b><span>valor angariado</span></div>
     </div>
-    ${rod(1)}
+    ${rod()}
   </section>
   <section class="rp">
-    <div class="r-h"><span class="r-k">O que já foi feito</span><h2>Processo, ferramentas e método no lugar</h2></div>
+    <div class="r-h"><span class="r-k">Evolução do time</span><h2>${avaliados.length ? `${subiram} de ${avaliados.length} corretores subiram de nível` : 'Primeira avaliação do time em andamento'}</h2></div>
+    <div class="r-evo">${avaliados.slice().sort((a, b) => (b.E.ate - b.E.de) - (a.E.ate - a.E.de) || b.E.ate - a.E.ate).map(({ c, N, E }) => `<div class="r-er">
+      <span class="r-en"><b>${esc(c.nome)}</b><small>${(situacaoDe(N.n) || [, 'A avaliar'])[1]}</small></span>
+      <span class="r-ev">${est(E.de)}</span>${barra(E.de, E.ate, 5)}<span class="r-ev">${est(E.ate)}</span><span class="r-ed">${dEst(E.de, E.ate)}</span></div>`).join('')}
+      ${naoAval.length ? `<p class="r-nota">Ainda sem avaliação: ${naoAval.map(x => esc(x.c.nome)).join(', ')}.</p>` : ''}</div>
+    <div class="r-leg"><span><i class="qd" style="background:#d7dadd"></i>Ponto de partida</span><span><i class="qd" style="background:#7cc1ba"></i>O que cresceu</span><span>Capacidade de 0 a 5 estrelas, pela média dos atributos de Prospecção, Angariação e Lançamento.</span></div>
+    ${rod()}
+  </section>
+  <section class="rp">
+    <div class="r-h"><span class="r-k">Treinamentos</span><h2>${T.length ? `${T.length} ${plural(T.length, 'treino dado', 'treinos dados')} para ${new Set(T.flatMap(t => t.quem)).size} pessoas` : 'Treinos a registrar'}</h2></div>
     <div class="r-2">
-      <div><ul class="r-ok">${mentoria.entregas.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
-        ${T.length ? `<div class="r-sub">Treinamentos</div><ul class="r-tr">${T.slice(0, 6).map(t => `<li><b>${fmtShort(t.data)}</b>${esc(t.tema)} <small>${t.quem.length} ${plural(t.quem.length, 'pessoa', 'pessoas')}</small></li>`).join('')}${T.length > 6 ? `<li><small>e mais ${T.length - 6}</small></li>` : ''}</ul>` : ''}</div>
-      <div><div class="r-sub">O processo de angariação da VIP</div>
-        <div class="r-proc">${FASES.map((f, i) => `<div class="r-pf"><b><span>${i + 1}</span>${f.nome}</b>${f.etapas.map(x => `<span>${x.nome}</span>`).join('')}</div>`).join('')}</div>
-        <p class="r-nota">Depois de angariar: o corretor anexa a documentação, o cadastro e a autorização de venda preenchida no Jetimob, o Renan envia para assinatura e, assinada, o imóvel vai para fotos, site e Reels.</p></div>
+      <div><div class="r-sub">O que já foi entregue</div><ul class="r-ok">${mentoria.entregas.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>
+      <div><div class="r-sub">Treinos</div>${T.length ? `<ul class="r-tr">${T.slice(0, 12).map(t => `<li><b>${fmtShort(t.data)}</b>${esc(tituloTreino(t))} <small>${t.quem.length} ${plural(t.quem.length, 'pessoa', 'pessoas')}</small></li>`).join('')}${T.length > 12 ? `<li><small>e mais ${T.length - 12}</small></li>` : ''}</ul>` : '<p class="r-nota">Nenhum treino registrado ainda.</p>'}</div>
     </div>
-    ${rod(2)}
+    ${rod()}
   </section>
+  ${avaliados.map(ficha).join('')}
   <section class="rp">
-    <div class="r-h"><span class="r-k">Quem sabe fazer o quê</span><h2>${ETAPAS.length - sem.length} de 9 etapas já têm alguém que faz sozinho</h2></div>
-    <table class="mxt r-mx"><thead><tr><th rowspan="2" class="nm"></th>${FASES.map(f => `<th colspan="${f.etapas.length}" class="fh">${f.nome}</th>`).join('')}<th rowspan="2" class="dd">Capacidade</th></tr>
-      <tr>${ETAPAS.map(x => `<th class="eh">${x.curto}</th>`).join('')}</tr></thead>
-      <tbody>${Es.map(({ c, E }) => `<tr><th class="nm">${esc(c.nome)}</th>${ETAPAS.map(x => cel(E.e[x.k])).join('')}<td class="dd">${estTxt(capDe(c))}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><th class="nm">Fazem sozinho</th>${ETAPAS.map(x => `<td>${conta(x.k, 3)}</td>`).join('')}<td></td></tr></tfoot></table>
-    <div class="r-leg">${DEGRAUS.map((d, i) => `<span><i class="qd d${i}"></i>${d.nome}</span>`).join('')}${sem.length ? `<span class="r-foco">Foco agora: ${sem.map(x => x.nome).join(', ')}</span>` : ''}</div>
-    ${rod(3)}
-  </section>
-  <section class="rp">
-    <div class="r-h"><span class="r-k">O time e a carteira</span><h2>Cada corretor e o próximo passo dele</h2></div>
-    <table class="r-tab"><thead><tr><th>Corretor</th><th>Capacidade</th><th>Faz sozinho</th><th>Dedicação</th><th>Visitas</th><th>Angariações</th><th>Próximo passo</th></tr></thead>
-      <tbody>${Es.map(({ c, E }) => { const P = contar(c.producao), d = dedDe(dedicacaoDe(c)), pp = proximoPasso(E); return `<tr><td><b>${esc(c.nome)}</b></td><td>${estTxt(capDe(c))}</td><td>${sozinho(E.e)} de 9</td><td>${d ? d[1] : '–'}</td><td>${P.v}</td><td>${P.a}</td><td>${pp ? `${pp.x.nome}: ${pp.d === null ? 'avaliar' : minus1(DEGRAUS[pp.d].subir.replace(/\.$/, ''))}` : 'Ensinar os outros'}</td></tr>`; }).join('')}</tbody></table>
-    <div class="r-sub">Carteira em construção</div>
-    <div class="r-funil">${FASES_ANG.map(([k2, l], i) => `<div><b>${R.A.filter(x => iFase(x.p.fase) === i).length}</b><span>${l}</span></div>`).join('')}</div>
-    ${rod(4)}
-  </section>
-  <section class="rp">
-    <div class="r-h"><span class="r-k">Aonde vamos chegar</span><h2>${k >= 3 ? 'Fechamento da mentoria' : `Próximo foco: ${MENT_FASES[Math.min(fz + 1, 2)][0].toLowerCase()}`}</h2></div>
+    <div class="r-h"><span class="r-k">Aonde vamos chegar</span><h2>${k >= 3 ? 'Consolidação: a operação rodando sem depender de mim' : `Próxima fase: ${MENT_FASES[Math.min(fz + 1, 2)][0].toLowerCase()}`}</h2></div>
     <div class="r-2">
       <div><div class="r-sub">Próximos passos</div><ol class="r-pp">${mentoria.proximos.map(t => `<li>${esc(t)}</li>`).join('')}</ol></div>
-      <div><div class="r-sub">Meta até ${fmtDate(fimMent)}</div><p class="r-meta">${esc(mentoria.meta || 'Time fazendo sozinho as 9 etapas do processo, com cada angariação registrada da visita ao Reels.')}</p>
+      <div><div class="r-sub">Meta até ${fmtDate(fimMent)}</div><p class="r-meta">${esc(mentoria.meta || 'Time angariando sozinho, carteira própria em formação e uma pessoa da VIP pronta para conduzir a rotina.')}</p>
         <div class="r-fzs v">${fasesM}</div></div>
     </div>
-    ${rod(5)}
+    ${rod()}
   </section>`;
 }
 function renderRelatorio() {
-  $('#main').innerHTML = cabecalho('Relatório', 'Para a diretoria: em que fase estamos, o que foi feito e aonde vamos chegar') + `
+  $('#main').innerHTML = cabecalho('Relatório', 'Para o CEO da VIP: a evolução de cada um, os treinos e a fase da mentoria') + `
     <div class="tools"><button class="btn-or sm" data-act="pdf">Baixar PDF</button><button class="btn-ghost sm adm" data-act="mentoria">Editar entregas, próximos passos e meta</button></div>
     <div class="rel-prev" id="rel-prev"><div class="rel-in">${paginasRelatorio()}</div></div>`;
   escalaRelatorio();
@@ -1472,14 +1545,14 @@ function render() {
   $('.fab').classList.toggle('hidden', !!c || ui.tela !== 'elenco'); // no perfil o botão + cobriria as notas
   $('#tabs').innerHTML = TELAS.map(([k, l]) => `<a href="#${k}" class="${(c ? 'elenco' : ui.tela) === k ? 'on' : ''}">${l}</a>`).join('');
   if (c) return renderFicha(c);
-  ({ processo: renderProcesso, carteira: renderCarteira, treinos: renderTreinos, relatorio: renderRelatorio }[ui.tela] || renderElenco)();
+  ({ treino: renderTreino, carteira: renderCarteira, relatorio: renderRelatorio }[ui.tela] || renderElenco)();
 }
 function route() {
   const m = location.hash.match(/^#c\/(.+)$/);
   const novo = m ? decodeURIComponent(m[1]) : null;
   if (novo !== ui.ficha) { ui.aba = 'geral'; ui.info = new Set(); }
   ui.ficha = novo;
-  if (!novo) { const t = location.hash.slice(1); ui.tela = TELAS.some(x => x[0] === t) ? t : 'elenco'; }
+  if (!novo) { const t = TELAS_ANTIGAS[location.hash.slice(1)] || location.hash.slice(1); ui.tela = TELAS.some(x => x[0] === t) ? t : 'elenco'; }
   ui.prodAll = false;
   render();
   window.scrollTo(0, 0);
@@ -1585,64 +1658,50 @@ function savePerfil() {
   else toast('Dados salvos.');
 }
 
-// avaliação: o degrau de cada uma das 9 etapas e a dedicação
+// avaliação: cada atributo numa barra de 1 a 20 (já vem com a nota de hoje; mexe só no que mudou) e a dedicação
 function sheetAval(id, avId) {
   const c = byId(id); if (!c) return;
-  const atual = avId ? c.avaliacoes.find(a => a.id === avId && a.m === 2) : null;
+  const atual = avId ? avsN(c).find(a => a.id === avId) : null;
   if (avId && !atual) return;
-  const E = etapasDe(c), ded = dedicacaoDe(c);
-  // avaliação nova começa do que já existe hoje (ponto de partida da avaliação antiga e treinamentos inclusos)
-  const base = atual ? atual.notas : Object.assign({}, E.e, typeof ded === 'number' ? { det: ded } : {});
-  form = { tipo: 'aval', id, avId: avId || null, notas: {}, ref: E.nova && !atual ? ultimaNova(c).notas : {} };
-  ETAPAS.forEach(x => { const d = degrauDe(base[x.k]); if (d !== null) form.notas[x.k] = DEGRAUS[d].n; });
-  if (dedDe(base.det)) form.notas.det = dedDe(base.det)[0];
-  const linhas = f => `<div class="ag"><div class="ag-t">${f.nome}<small>${f.sub}</small></div>${f.etapas.map(x => `
-    <div class="ar"><div class="an"><b>${x.nome}</b><small>${esc(x.desc)}</small></div>
-      <div class="dgs" role="group" aria-label="${x.nome}">${DEGRAUS.map((d, i) => `<button data-act="dg" data-k="${x.k}" data-v="${d.n}" class="g${i}">${d.curto}</button>`).join('')}</div>
-      <div class="rub" id="rb-${x.k}"></div></div>`).join('')}</div>`;
-  openSheet(shHead(atual ? 'Editar avaliação' : E.nova ? 'Atualizar etapas' : 'Avaliar as etapas', esc(c.nome)) + `<div class="sh-b">
-    <p class="hintp">${E.nova && !atual ? 'Já vem com os degraus da última vez. Suba só o que evoluiu e salve.' : 'Marque em que degrau a pessoa está em cada etapa. A nota de 0 a 20 e as estrelas saem daí.'}</p>
-    <div class="escala">${DEGRAUS.map((d, i) => `<div><b class="${nivel(d.n)}">${d.nome} · ${d.n}</b>${d.o}</div>`).join('')}</div>
+  const N = notasDe(c), base = atual ? atual.notas : N.n;
+  form = { tipo: 'aval', id, avId: avId || null, notas: {}, ref: atual || !N.av ? {} : N.av.notas };
+  ATRS.forEach(a => { form.notas[a.k] = typeof base[a.k] === 'number' ? base[a.k] : 1; });
+  const dv = dedDe(atual ? atual.notas.det : dedicacaoDe(c)); if (dv) form.notas.det = dv[0];
+  const linha = a => `<div class="sl"><div class="sl-t"><b>${a.nome}</b><span class="sl-f" id="rb-${a.k}"></span><span class="sl-v" id="v-${a.k}"></span></div>
+    <input type="range" min="1" max="20" step="1" id="r-${a.k}" data-k="${a.k}" value="${form.notas[a.k]}" aria-label="${a.nome}"></div>`;
+  openSheet(shHead(atual ? 'Editar avaliação' : N.av ? 'Atualizar notas' : 'Primeira avaliação', esc(c.nome)) + `<div class="sh-b">
+    <p class="hintp">${N.av && !atual ? 'Já vem com as notas de hoje. Arraste só o que mudou.' : 'Arraste cada barra até a nota.'}</p>
+    <div class="escala">${REGUA_N.map(r => `<div><b class="${nivel(r.ate)}">${r.de} a ${r.ate} · ${r.nome}</b>${r.o}</div>`).join('')}</div>
     <div class="row2"><div class="fl"><label class="lbl" for="a-data">Data da avaliação</label><input id="a-data" type="date" value="${atual ? atual.data : hoje()}"></div></div>
-    ${FASES.map(linhas).join('')}
-    <div class="ag"><div class="ag-t">Dedicação<small>Quanto do tempo a pessoa deixa para angariar (pergunte a ela)</small></div>
-      <div class="ar"><div class="dgs d4" role="group" aria-label="Dedicação">${DED.op.map(o => `<button data-act="ded" data-v="${o[0]}">${o[1]}</button>`).join('')}</div><div class="rub" id="rb-det"></div></div></div>
-    <div class="liveo"><span class="lc">Capacidade atual</span><span id="lv-soz" class="muted"></span><span id="lv-st"></span></div>
-    <div class="err" id="a-err"></div>
+    ${GRUPOS_N.map(g => `<div class="ag"><div class="ag-t">${g.nome}<small>${g.sub}</small></div>${g.attrs.map(linha).join('')}</div>`).join('')}
+    <div class="ag"><div class="ag-t">Dedicação<small>${DED.desc}</small></div>
+      <div class="dgs d4" role="group" aria-label="Dedicação">${DED.op.map(o => `<button data-act="ded" data-v="${o[0]}">${o[1]}</button>`).join('')}</div></div>
+    <div class="liveo"><span class="lc">Capacidade</span><span id="lv-st"></span></div>
     <div id="a-del"></div>
   </div>
   <div class="sh-f">${atual ? '<button class="danger l" data-act="aval-del-ask">Apagar avaliação</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-aval">Salvar</button></div>`, 'aval');
-  ETAPAS.forEach(x => pintaDegrau(x.k)); pintaDegrau('det');
+  document.querySelectorAll('#sheet input[type=range]').forEach(r => r.addEventListener('input', e => { form.notas[e.target.dataset.k] = +e.target.value; pintaNota(e.target.dataset.k); }));
+  ATRS.forEach(a => pintaNota(a.k)); pintaDed();
 }
-const ultimaNova = c => c.avaliacoes.filter(a => a.m === 2).pop() || null;
-function pintaDegrau(k) {
-  const v = form.notas[k];
-  document.querySelectorAll(`#sheet [data-k="${k}"]`).forEach(b => b.classList.toggle('on', +b.dataset.v === v));
-  if (k === 'det') {
-    document.querySelectorAll('#sheet [data-act="ded"]').forEach(b => b.classList.toggle('on', +b.dataset.v === v));
-    const d = dedDe(v); $('#rb-det').innerHTML = d ? `<b>${d[1]}</b>${d[2]}` : '<span class="muted">Ainda sem resposta.</span>';
-  } else {
-    const d = degrauDe(v), p = form.ref[k];
-    $('#rb-' + k).innerHTML = (d !== null ? `<b class="${nivel(v)}">${DEGRAUS[d].nome}</b>${DEGRAUS[d].o} <span class="muted">Para subir: ${minus1(DEGRAUS[d].subir)}</span>` : '<span class="muted">Toque no degrau em que a pessoa está.</span>') +
-      (typeof p === 'number' && typeof v === 'number' && v !== p ? `<span class="pr">antes: ${DEGRAUS[degrauDe(p)].nome.toLowerCase()} ${delta(v - p)}</span>` : '');
-  }
-  const n = ETAPAS.filter(x => typeof form.notas[x.k] === 'number').length;
-  $('#lv-st').innerHTML = n ? st5(capEtapas(form.notas)) : '';
-  $('#lv-soz').textContent = n < 9 ? `faltam ${9 - n} ${plural(9 - n, 'etapa', 'etapas')}` : `faz sozinho ${sozinho(form.notas)} de 9`;
+function pintaNota(k) {
+  const v = form.notas[k], p = form.ref[k], r = $('#r-' + k);
+  r.style.setProperty('--p', ((v - 1) / 19 * 100) + '%'); r.className = nivel(v);
+  $('#v-' + k).innerHTML = `<b class="${nivel(v)}">${v}</b>${typeof p === 'number' && p !== v ? ' ' + delta(v - p) : ''}`;
+  $('#rb-' + k).textContent = faixaN(v).nome;
+  $('#lv-st').innerHTML = st5(capN(form.notas));
 }
+function pintaDed() { document.querySelectorAll('#sheet [data-act="ded"]').forEach(b => b.classList.toggle('on', +b.dataset.v === form.notas.det)); }
 function saveAval() {
   const c = byId(form.id); if (!c) return closeSheet();
-  const falta = ETAPAS.filter(x => typeof form.notas[x.k] !== 'number');
-  if (falta.length) { $('#a-err').textContent = 'Falta marcar: ' + falta.map(x => x.nome).join(', ') + '.'; $('#a-err').scrollIntoView({ block: 'nearest' }); return; }
   const data = $('#a-data').value || hoje(), editando = !!form.avId;
-  const notas = cleanNotas(form.notas), ca = capEtapas(notas), u = ultimaNova(c);
+  const notas = cleanNotas(form.notas), ca = capN(notas), u = avsN(c).pop();
   const mudou = !u || JSON.stringify(cleanNotas(u.notas)) !== JSON.stringify(notas);
   const avs = editando
     ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, ca }) : a)
-    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca, m: 2 }]) : c.avaliacoes;
+    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca, m: 3 }]) : c.avaliacoes;
   saveCorretor(Object.assign({}, c, { capacidade: ca, avaliacoes: avs }));
   closeSheet();
-  toast(editando ? 'Avaliação atualizada.' : mudou ? 'Avaliação salva.' : 'Nada mudou desde a última avaliação.');
+  toast(editando ? 'Avaliação atualizada.' : mudou ? 'Notas salvas.' : 'Nada mudou desde a última avaliação.');
 }
 
 // produção: visita de angariação / angariação (imóvel, valor, fase na carteira). Da Carteira, escolhe de quem é.
@@ -1690,34 +1749,35 @@ function saveProd() {
   toast(`${vis ? 'Visita' : 'Angariação'} registrada para ${firstName(c.nome)}.`, { label: 'Desfazer', fn: () => { const x = byId(c.id); if (x) saveCorretor(Object.assign({}, x, { producao: x.producao.filter(y => y.id !== p.id) })); } });
 }
 
-// treinamento: data, tema, etapas que cobre e quem participou
+// treino: o que foi treinado (toque nos atributos), quem estava (toque nos nomes) e salvar
 function sheetTreino(tid) {
   const t = tid ? mentoria.treinos.find(x => x.id === tid) : null;
   if (tid && !t) return;
-  form = { tipo: 'treino', tid: t ? t.id : null, etapas: t ? t.etapas.slice() : [], quem: t ? t.quem.slice() : [] };
-  openSheet(shHead(t ? 'Editar treinamento' : 'Novo treinamento', t ? esc(t.tema) : 'Registrar treinamento') + `<div class="sh-b">
-    <div class="fl"><label class="lbl" for="t-tema">Tema</label><input id="t-tema" value="${esc(t ? t.tema : '')}" placeholder="Ex.: Mapa cadastral e declaração unificada" autocomplete="off"></div>
-    <div class="row2"><div class="fl"><label class="lbl" for="t-data">Data</label><input id="t-data" type="date" value="${t ? t.data : hoje()}"></div></div>
-    <div><span class="lbl">Etapas que o treinamento cobre<span class="hint">quem participou sobe para "Treinou" nelas</span></span><div id="t-et"></div></div>
-    <div><span class="lbl">Quem participou</span><div class="chips sm" id="t-quem"></div></div>
-    <div class="fl"><label class="lbl" for="t-obs">Observação</label><input id="t-obs" value="${esc(t ? t.obs : '')}" placeholder="Opcional: em campo, na sala, por vídeo…" autocomplete="off"></div>
+  form = { tipo: 'treino', tid: t ? t.id : null, temas: t ? t.temas.slice() : [], quem: t ? t.quem.slice() : [] };
+  openSheet(shHead(t ? 'Editar treino' : 'Registrar treino', t ? esc(tituloTreino(t)) : 'O que foi treinado hoje?') + `<div class="sh-b">
+    <div><span class="lbl">O que foi treinado</span><div id="t-temas"></div></div>
+    <div><span class="lbl">Quem estava</span><div class="chips sm" id="t-quem"></div></div>
+    <div class="row2">
+      <div class="fl"><label class="lbl" for="t-data">Data</label><input id="t-data" type="date" value="${t ? t.data : hoje()}"></div>
+      <div class="fl"><label class="lbl" for="t-tema">Título<span class="hint">opcional</span></label><input id="t-tema" value="${esc(t ? t.tema : '')}" placeholder="Ex.: Visita no Ecoville" autocomplete="off"></div>
+    </div>
     <div class="err" id="t-err"></div><div id="t-del"></div>
   </div>
   <div class="sh-f">${t ? '<button class="danger l" data-act="treino-del-ask">Apagar</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-treino">Salvar</button></div>`, 'treino');
   renderTreinoChips();
-  if (!t) setTimeout(() => { if ($('#t-tema')) $('#t-tema').focus(); }, 50);
 }
 function renderTreinoChips() {
-  $('#t-et').innerHTML = FASES.map(f => `<div class="chips sm et-f"><span class="et-l">${f.nome}</span>${f.etapas.map(x => `<button class="chip${form.etapas.includes(x.k) ? ' on' : ''}" data-act="t-et" data-v="${x.k}">${x.nome}</button>`).join('')}</div>`).join('');
+  $('#t-temas').innerHTML = GRUPOS_N.map(g => `<div class="chips sm et-f"><span class="et-l">${g.nome}</span>${g.attrs.map(a => `<button class="chip${form.temas.includes(a.k) ? ' on' : ''}" data-act="t-et" data-v="${a.k}">${a.nome}</button>`).join('')}</div>`).join('');
   const todos = corretores.length && corretores.every(c => form.quem.includes(c.id));
   $('#t-quem').innerHTML = `<button class="chip${todos ? ' on' : ''}" data-act="t-todos">Todos</button>` + ordenados().map(c => `<button class="chip${form.quem.includes(c.id) ? ' on' : ''}" data-act="t-quem" data-v="${esc(c.id)}">${esc(firstName(c.nome))}</button>`).join('');
 }
 function saveTreino() {
   const tema = $('#t-tema').value.trim();
-  if (!tema) { $('#t-err').textContent = 'Coloque o tema.'; $('#t-tema').focus(); return; }
-  const t = { id: form.tid || newId('t'), data: $('#t-data').value || hoje(), tema, etapas: form.etapas, quem: form.quem, obs: $('#t-obs').value.trim() };
+  if (!form.temas.length && !tema) { $('#t-err').textContent = 'Toque no que foi treinado.'; return; }
+  if (!form.quem.length) { $('#t-err').textContent = 'Toque em quem estava.'; return; }
+  const t = { id: form.tid || newId('t'), data: $('#t-data').value || hoje(), temas: form.temas, tema, quem: form.quem, obs: '' };
   saveMentoria({ treinos: form.tid ? mentoria.treinos.map(x => x.id === form.tid ? t : x) : mentoria.treinos.concat([t]) });
-  const ed = !!form.tid; closeSheet(); toast(ed ? 'Treinamento atualizado.' : 'Treinamento registrado.');
+  const ed = !!form.tid; closeSheet(); toast(ed ? 'Treino atualizado.' : `Treino registrado para ${t.quem.length} ${plural(t.quem.length, 'pessoa', 'pessoas')}.`);
 }
 
 // mentoria: início, o que foi entregue, próximos passos e meta (vão para o relatório)
@@ -1803,14 +1863,13 @@ document.addEventListener('click', e => {
       toast(`${firstName(c.nome)} saiu do elenco.`, { label: 'Desfazer', fn: () => saveCorretor(copia) });
       break;
     }
-    case 'dg': form.notas[el.dataset.k] = +v; pintaDegrau(el.dataset.k); $('#a-err').textContent = ''; break;
-    case 'ded': form.notas.det = form.notas.det === +v ? undefined : +v; if (form.notas.det === undefined) delete form.notas.det; pintaDegrau('det'); break;
+    case 'ded': form.notas.det = form.notas.det === +v ? undefined : +v; if (form.notas.det === undefined) delete form.notas.det; pintaDed(); break;
     case 'save-aval': saveAval(); break;
     case 'ang-ed': sheetProd(id, 'angariacao', v); break;
     case 'p-quem': form.id = v; $('#p-err').textContent = ''; renderSeg(); break;
     case 'p-fase': form.fase = v; renderSeg(); break;
     case 'treino': sheetTreino(v); break;
-    case 't-et': form.etapas = form.etapas.includes(v) ? form.etapas.filter(x => x !== v) : form.etapas.concat(v); renderTreinoChips(); break;
+    case 't-et': form.temas = form.temas.includes(v) ? form.temas.filter(x => x !== v) : form.temas.concat(v); $('#t-err').textContent = ''; renderTreinoChips(); break;
     case 't-quem': form.quem = form.quem.includes(v) ? form.quem.filter(x => x !== v) : form.quem.concat(v); renderTreinoChips(); break;
     case 't-todos': form.quem = corretores.every(c => form.quem.includes(c.id)) ? [] : corretores.map(c => c.id); renderTreinoChips(); break;
     case 'save-treino': saveTreino(); break;
@@ -1857,7 +1916,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-01c';
+const VERSAO = '2026-11-01d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
