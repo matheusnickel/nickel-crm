@@ -603,7 +603,7 @@ const SENHA = 'flor2301';
 const FASES = [
   { k: 'enc', nome: 'Encontrar', sub: 'Achar o imóvel e o proprietário', etapas: [
     { k: 'pes', nome: 'Pesquisa nos anúncios', curto: 'Pesquisa', desc: 'Antes de qualquer coisa, procura o mesmo imóvel nos anúncios das outras imobiliárias e junta tudo o que eles entregam: andar, número da casa ou do apartamento, vagas e fotos. Vê também se o imóvel está anunciado em várias imobiliárias.' },
-    { k: 'ibk', nome: 'Imóvel Brokers', curto: 'Brokers', desc: 'Com o número da casa ou do apartamento em mãos, encontra no Imóvel Brokers quem é o proprietário e o telefone dele.' },
+    { k: 'ibk', nome: 'Eemovel Brokers', curto: 'Eemovel', desc: 'Com o número da casa ou do apartamento em mãos, encontra no Eemovel Brokers quem é o proprietário e o telefone dele.' },
     { k: 'cad', nome: 'Investigação cadastral', curto: 'Cadastral', desc: 'Quando os anúncios não entregam a unidade: usa o mapa cadastral para entender o prédio ou o condomínio (sublotes, andares, apartamentos por andar, se o endereço bate) e a declaração unificada para chegar ao imóvel certo.' }
   ] },
   { k: 'con', nome: 'Conquistar', sub: 'Trazer o proprietário para a VIP', etapas: [
@@ -641,7 +641,7 @@ const MENT_PADRAO = {
   inicio: '2026-10-05',
   entregas: ['Método Nickel de Angariação: o playbook com cada mensagem, da abordagem à autorização',
     'Manual de apoio em PDF para os corretores',
-    'Imóvel Brokers contratado e em uso pelo time',
+    'Eemovel Brokers contratado e em uso pelo time',
     'Processo da angariação definido: documentação e autorização no Jetimob, o Renan envia para assinatura, depois fotos e anúncio',
     'Visitas de angariação acompanhadas em campo'],
   proximos: ['Avaliar todo o time nas 9 etapas do processo', 'Registrar cada visita de angariação e cada angariação no Elenco', 'Treinar as etapas em que ninguém faz sozinho ainda'],
@@ -1857,7 +1857,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-01b';
+const VERSAO = '2026-11-01c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
