@@ -328,8 +328,158 @@ input[type=date]{min-height:48px}
 .fab{position:fixed;right:18px;bottom:calc(22px + var(--sab));width:58px;height:58px;border-radius:19px;background:linear-gradient(135deg,var(--or),var(--or2));color:#fff;box-shadow:0 16px 30px -8px rgba(255,90,31,.75);display:none;z-index:21;align-items:center;justify-content:center}
 .fab svg{width:26px;height:26px}
 
+/* ── MODELO DAS ETAPAS ── */
+.telas{display:flex;gap:4px;margin-top:14px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
+.telas::-webkit-scrollbar{display:none}
+.telas a{padding:10px 14px;font-weight:600;font-size:14.5px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;margin-bottom:-1px}
+.telas a:hover{color:#fff}
+.telas a.on{color:#fff;border-bottom-color:var(--or)}
+.phd + .telas{margin-top:0}
+.phd:has(+ .telas){border-bottom:none}
+.who .mt.wa{color:var(--warn)}
+.de9{font-size:.62em;font-weight:600;color:var(--muted);margin-left:1px}
+.sqr{grid-template-columns:minmax(220px,2.4fr) 60px 160px 110px 100px 120px}
+.dg{display:inline-block;font:700 10.5px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:6px;white-space:nowrap}
+.dg0{background:rgba(119,131,158,.14);color:var(--n1)}.dg1{background:rgba(233,237,245,.1);color:var(--n2)}
+.dg2{background:rgba(255,198,92,.14);color:var(--n3)}.dg3{background:rgba(61,220,151,.15);color:var(--n4)}
+.dg-x{background:transparent;border:1px dashed var(--line2);color:var(--faint)}
+.fm.f4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.fm-h small{font:500 12px 'Geist',sans-serif;color:var(--muted)}
+.prox{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;background:linear-gradient(90deg,var(--orbg),transparent);border:1px solid var(--orline);border-radius:12px;padding:12px 14px;margin-bottom:16px}
+.prox .lbl{margin:0;color:var(--or2)}.prox b{font-size:16px}.prox span:last-child{color:var(--text2);font-size:14px}
+.prox.ok{background:linear-gradient(90deg,var(--fmhi),transparent);border-color:rgba(61,220,151,.4)}.prox.ok .lbl{color:var(--ok)}
+.aviso{background:rgba(255,198,92,.08);border:1px solid rgba(255,198,92,.35);color:var(--text2);border-radius:12px;padding:11px 14px;font-size:14px;margin-bottom:14px}
+.dedb{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.dedb span{border:1px solid var(--line);border-radius:10px;padding:8px 9px;font-size:12.5px;color:var(--muted);line-height:1.35}
+.dedb b{display:block;font-size:13.5px;color:var(--text2)}
+.dedb .on{border-color:var(--orline);background:var(--orbg);color:var(--text2)}.dedb .on b{color:#fff}
+.capbox .soz{font-size:14px;font-weight:700}.capbox .soz span{font-size:20px;font-weight:900}
+.fa{display:inline-block;font:700 10.5px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;margin-right:6px;background:rgba(255,255,255,.07);color:var(--text2)}
+.fa.f2,.fa.f3{background:var(--orbg);color:var(--or2)}.fa.f4,.fa.f5{background:rgba(61,220,151,.13);color:var(--ok)}
+.li small .fa{margin-top:5px}
+/* quem sabe o quê */
+.leit{display:grid;grid-template-columns:160px 160px minmax(0,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:18px}
+.leit > div{background:#08112a;padding:12px 16px;display:flex;flex-direction:column;gap:2px}
+.leit b{font-size:28px;font-weight:900;line-height:1.05}.leit > div > span{font-size:12.5px;color:var(--muted)}
+.leit .w{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}.leit .w .lbl{width:100%;margin:0 0 2px}
+.chip.sm-c{padding:4px 10px;font-size:13px;cursor:default}
+.mxw{margin-top:16px;border:1px solid var(--line);border-radius:14px;background:var(--fm0)}
+.mxt{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+.mxt th,.mxt td{padding:7px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05)}
+.mxt thead th{font:600 10.5px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:#08112a}
+.mxt thead .fh{color:var(--or2);border-left:1px solid var(--line)}
+.mxt .eh{white-space:nowrap}
+.mxt .nm{text-align:left;position:sticky;left:0;background:#0a132b;z-index:1;min-width:150px}
+.mxt .nm button{display:flex;align-items:center;gap:9px;font-weight:700;font-size:14px;text-align:left}
+.mxt .nm .av{width:30px;height:30px;border-radius:8px;font-size:11px}
+.mx{font:700 11px 'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.mx.d0,.qd.d0{background:rgba(119,131,158,.12);color:var(--n1)}.mx.d1,.qd.d1{background:rgba(233,237,245,.08);color:var(--n2)}
+.mx.d2,.qd.d2{background:rgba(255,198,92,.15);color:var(--n3)}.mx.d3,.qd.d3{background:rgba(61,220,151,.17);color:var(--n4)}
+.mx.dx{color:var(--faint)}
+.mxt td.mx{border-left:2px solid var(--fm0)}
+.mxt .dd{font-size:12.5px;color:var(--text2);white-space:nowrap;border-left:1px solid var(--line)}
+.mxt tfoot th,.mxt tfoot td{font-weight:800;font-variant-numeric:tabular-nums;color:var(--text2);background:#08112a}
+.mxt tfoot th{font:600 11px 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.qd{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+/* carteira */
+.kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.board{display:grid;grid-template-columns:repeat(6,minmax(180px,1fr));gap:10px;margin-top:16px;overflow-x:auto;padding-bottom:6px}
+.board .col{display:flex;flex-direction:column;gap:8px;min-width:0}
+.col-h{display:flex;align-items:center;justify-content:space-between;padding:4px 2px 6px;border-bottom:1px solid var(--line)}
+.col-h b{font-variant-numeric:tabular-nums;color:var(--muted)}
+.col-v{color:var(--faint);text-align:center;padding:10px}
+.ang{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--fm1);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.ang:hover{border-color:var(--orline)}.ang.ro{cursor:default}.ang.ro:hover{border-color:var(--line)}
+.ang b{font-size:14.5px;line-height:1.3}.ang small{font-size:12.5px;color:var(--muted)}
+.who2{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text2);margin-top:4px}
+.who2 .av{width:22px;height:22px;border-radius:6px;font-size:9px}
+.pp{margin-left:auto;font:700 10px 'Geist Mono',monospace;text-transform:uppercase;color:var(--ok);background:rgba(61,220,151,.12);padding:2px 6px;border-radius:5px}
+/* treinamentos */
+.li.tr .w b{font-size:15px}
+.chips-in{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tg{font-size:12px;padding:3px 8px;border-radius:7px;background:rgba(255,255,255,.06);color:var(--text2)}
+.et-f{align-items:center;margin-bottom:8px}.et-l{font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--or2);width:96px}
+/* folha de avaliação: degraus */
+.ag-t small{display:block;font:500 12.5px 'Geist',sans-serif;letter-spacing:0;text-transform:none;color:var(--muted);margin-top:2px}
+.ar .an{display:block}
+.dgs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.dgs button{padding:10px 4px;border-radius:10px;border:1px solid var(--line2);font-weight:700;font-size:13px;color:var(--text2)}
+.dgs button:hover{border-color:var(--orline)}
+.dgs .g0.on{background:rgba(119,131,158,.25);border-color:var(--n1);color:#fff}.dgs .g1.on{background:rgba(233,237,245,.16);border-color:var(--n2);color:#fff}
+.dgs .g2.on{background:rgba(255,198,92,.2);border-color:var(--n3);color:var(--n3)}.dgs .g3.on{background:rgba(61,220,151,.2);border-color:var(--n4);color:var(--n4)}
+.dgs.d4 button.on{background:var(--orbg);border-color:var(--orline);color:#fff}
+.liveo #lv-st{margin-left:auto}.liveo #lv-st .st5{font-size:22px}.liveo #lv-soz{font-size:13px}
+.tgl{display:flex;align-items:center;gap:10px;margin-top:12px;font-weight:600;font-size:14.5px;cursor:pointer}
+.tgl input{width:20px;height:20px;accent-color:var(--or)}
+
+/* ── RELATÓRIO (páginas A4 deitadas, claras, para a diretoria) ── */
+.rel-prev{margin-top:18px;overflow:hidden}
+.rel-in{transform-origin:0 0;width:1123px;display:flex;flex-direction:column;gap:24px}
+.rel-host{position:fixed;left:-20000px;top:0;width:1123px}
+.rp{position:relative;width:1123px;height:794px;overflow:hidden;background:#fff;color:#0a1530;padding:52px 64px 0;font:15px/1.45 'Geist',system-ui,sans-serif;box-shadow:0 20px 50px rgba(0,0,0,.45);display:flex;flex-direction:column}
+.rel-host .rp{box-shadow:none}
+.r-top{display:flex;justify-content:space-between;font:700 13px 'Geist Mono',monospace;letter-spacing:.16em;color:#5b6785}
+.r-brand{display:flex;align-items:center;gap:10px;color:#0a1530}.r-brand i{width:9px;height:9px;background:#ff5a1f;transform:rotate(45deg);border-radius:2px}
+.r-k{font:700 13px 'Geist Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#e2470f}
+.r-hero{margin-top:70px;max-width:820px}
+.r-hero h1{font-size:58px;font-weight:900;letter-spacing:-.045em;line-height:1.02;margin-top:12px}
+.r-hero p{font-size:19px;color:#4a5675;margin-top:16px;line-height:1.5}
+.r-fzs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:40px}
+.r-fz{border:1.5px solid #e3e7ef;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:2px;color:#8a93a6}
+.r-fz span{font:700 11.5px 'Geist Mono',monospace;letter-spacing:.1em;text-transform:uppercase}
+.r-fz b{font-size:20px;font-weight:800;color:#8a93a6}.r-fz small{font-size:13.5px}
+.r-fz.ok{border-color:#bfe8d4;background:#f2fbf7;color:#2b7a57}.r-fz.ok b{color:#13774d}
+.r-fz.on{border-color:#ff5a1f;background:#fff4ee;color:#9a3a12}.r-fz.on b{color:#0a1530}
+.r-kpi{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:34px;border-top:1.5px solid #0a1530}
+.r-kpi div{padding:16px 16px 0 0;display:flex;flex-direction:column;gap:2px}
+.r-kpi b{font-size:40px;font-weight:900;letter-spacing:-.04em;line-height:1}.r-kpi span{font-size:14px;color:#5b6785}
+.r-rod{position:absolute;left:64px;right:64px;bottom:24px;display:flex;justify-content:space-between;font:600 11.5px 'Geist Mono',monospace;letter-spacing:.06em;color:#8a93a6;border-top:1px solid #e3e7ef;padding-top:12px}
+.r-h h2{font-size:36px;font-weight:900;letter-spacing:-.035em;line-height:1.1;margin-top:8px;max-width:900px}
+.r-2{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:28px}
+.r-sub{font:700 12px 'Geist Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#5b6785;margin:0 0 12px}
+.r-2 > div > .r-sub:not(:first-child),.r-tab + .r-sub{margin-top:22px}
+.r-ok{list-style:none;display:flex;flex-direction:column;gap:11px}
+.r-ok li{display:flex;gap:12px;font-size:16px;line-height:1.4}
+.r-ok li::before{content:'✓';flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#d9f5e8;color:#13774d;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.r-tr{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.r-tr b{font-family:'Geist Mono',monospace;color:#e2470f;margin-right:10px}.r-tr small{color:#8a93a6}
+.r-proc{display:flex;flex-direction:column;gap:10px}
+.r-pf{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.r-pf b{width:150px;display:flex;align-items:center;gap:8px;font-size:15px}
+.r-pf b span{width:24px;height:24px;border-radius:7px;background:#ff5a1f;color:#fff;font:800 12px 'Geist Mono',monospace;display:flex;align-items:center;justify-content:center}
+.r-pf > span{font-size:13.5px;background:#f2f4f8;border-radius:8px;padding:5px 10px}
+.r-nota{margin-top:18px;font-size:14px;color:#4a5675;line-height:1.5;border-left:3px solid #ff5a1f;padding-left:12px}
+.r-mx{margin-top:24px;font-size:12.5px}
+.r-mx th,.r-mx td{border-bottom:1px solid #eef0f4;padding:7px 6px}
+.r-mx thead th{background:#fff;color:#5b6785}.r-mx thead .fh{color:#e2470f;border-left:1px solid #e3e7ef}
+.r-mx .nm{background:#fff;color:#0a1530;font:700 13.5px 'Geist',sans-serif;letter-spacing:0;text-transform:none;position:static;min-width:170px}
+.r-mx td.mx{border-left:2px solid #fff}
+.r-mx .mx.d0,.rp .qd.d0{background:#eef0f4;color:#8a93a6}.r-mx .mx.d1,.rp .qd.d1{background:#e6ebf6;color:#3b4a6b}
+.r-mx .mx.d2,.rp .qd.d2{background:#fdf0d2;color:#946400}.r-mx .mx.d3,.rp .qd.d3{background:#d4f3e4;color:#11704a}
+.r-mx .mx.dx{color:#c3c9d4}
+.r-mx .dd{color:#0a1530;border-left:1px solid #e3e7ef;font-weight:700}
+.r-mx tfoot th,.r-mx tfoot td{background:#f7f8fb;color:#0a1530;font-weight:800}
+.r-mx tfoot th{color:#5b6785;font:700 11px 'Geist Mono',monospace}
+.rs{color:#e8a80c;margin-right:3px}
+.r-leg{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:14px;font-size:13px;color:#4a5675;align-items:center}
+.r-foco{margin-left:auto;font-weight:700;color:#9a3a12;background:#fff4ee;border-radius:8px;padding:5px 10px}
+.r-tab{width:100%;border-collapse:collapse;margin-top:22px;font-size:13.5px}
+.r-tab th{font:700 11px 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:#5b6785;text-align:left;padding:8px 8px;border-bottom:1.5px solid #0a1530}
+.r-tab td{padding:8px 8px;border-bottom:1px solid #eef0f4;font-variant-numeric:tabular-nums}
+.r-tab td:last-child{color:#4a5675;font-size:13px}
+.r-funil{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.r-funil div{background:#f7f8fb;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column}
+.r-funil b{font-size:28px;font-weight:900;line-height:1.05}.r-funil span{font-size:12.5px;color:#5b6785}
+.r-pp{padding-left:22px;display:flex;flex-direction:column;gap:12px;font-size:16.5px;line-height:1.4}
+.r-pp li::marker{color:#e2470f;font-weight:800}
+.r-meta{font-size:21px;font-weight:700;line-height:1.4;letter-spacing:-.01em}
+.r-fzs.v{grid-template-columns:1fr;gap:8px;margin-top:24px}
+.r-fzs.v .r-fz{flex-direction:row;align-items:baseline;gap:10px;padding:10px 14px}
+.r-fzs.v .r-fz b{font-size:16px}.r-fzs.v .r-fz small{margin-left:auto}
+
 @media (max-width:1060px){
-  .sqr{grid-template-columns:minmax(190px,2fr) 150px 100px 120px}
+  .fm.f4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sqr{grid-template-columns:minmax(190px,2fr) 150px 100px 90px 110px}
   .sqr .xl{display:none}
 }
 @media (max-width:900px){
@@ -357,7 +507,12 @@ input[type=date]{min-height:48px}
   .capbox{padding:10px 12px;gap:8px}
   .capbox .st5{font-size:19px}
   .pf-act > *{flex:1}
-  .fm{grid-template-columns:minmax(0,1fr);gap:18px}
+  .fm,.fm.f4{grid-template-columns:minmax(0,1fr);gap:18px}
+  .leit{grid-template-columns:1fr 1fr}.leit .w{grid-column:1 / -1}
+  .kpis.k5{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis.k5 div:last-child{grid-column:1 / -1}
+  .board{grid-template-columns:minmax(0,1fr);overflow:visible}
+  .dedb{grid-template-columns:1fr 1fr}
+  .telas{margin-left:-16px;margin-right:-16px;padding:0 10px}
   .pn3,.grid2{grid-template-columns:minmax(0,1fr)}
   .pf-b{padding:12px}
   .ov{align-items:flex-end;padding:0}
@@ -368,6 +523,8 @@ input[type=date]{min-height:48px}
   .sync .t{display:none}
   .row2,.btn-reg{grid-template-columns:1fr}
   .escala{grid-template-columns:1fr 1fr}
+  .dgs button{font-size:12px;padding:10px 2px}
+  .et-l{width:100%}
   .ar .an small{display:none}
   .hb-r{grid-template-columns:110px minmax(0,1fr) 56px;gap:8px;font-size:13px}
   .pf-id{flex-basis:100%;order:3}
@@ -417,8 +574,59 @@ const LS_CACHE = 'elenco_cache_' + COL, LS_PEND = 'elenco_pending_' + COL;
 const LS_AUTH = 'elenco_auth', LS_PER = 'elenco_periodo2';
 const SENHA = 'flor2301';
 
-// Três áreas com três atributos cada, nota de 0 a 20 como no Football Manager.
-// Cada atributo tem o que significa cada faixa de nota (é o guia para avaliar).
+// O processo de angariação da VIP, do link ao Reels: 9 etapas em 4 fases.
+// Cada etapa tem 4 degraus e a nota de 0 a 20 sai do degrau (Não sabe 0 · Treinou 8 · Fez acompanhado 14 · Faz sozinho 20).
+// Só entra o que dá para treinar; Dedicação fica à parte (o quanto do tempo a pessoa deixa para angariar).
+const FASES = [
+  { k: 'enc', nome: 'Encontrar', sub: 'Achar o imóvel e o proprietário', etapas: [
+    { k: 'pes', nome: 'Pesquisa nos anúncios', curto: 'Pesquisa', desc: 'Antes de qualquer coisa, procura o mesmo imóvel nos anúncios das outras imobiliárias e junta tudo o que eles entregam: andar, número da casa ou do apartamento, vagas e fotos. Vê também se o imóvel está anunciado em várias imobiliárias.' },
+    { k: 'ibk', nome: 'Imóvel Brokers', curto: 'Brokers', desc: 'Com o número da casa ou do apartamento em mãos, encontra no Imóvel Brokers quem é o proprietário e o telefone dele.' },
+    { k: 'cad', nome: 'Investigação cadastral', curto: 'Cadastral', desc: 'Quando os anúncios não entregam a unidade: usa o mapa cadastral para entender o prédio ou o condomínio (sublotes, andares, apartamentos por andar, se o endereço bate) e a declaração unificada para chegar ao imóvel certo.' }
+  ] },
+  { k: 'con', nome: 'Conquistar', sub: 'Trazer o proprietário para a VIP', etapas: [
+    { k: 'abo', nome: 'Abordagem', curto: 'Abordagem', desc: 'Faz o primeiro contato com o proprietário pelo Método Nickel: abordagem, qualificação e convite para a visita de angariação.' },
+    { k: 'vis', nome: 'Visita de angariação', curto: 'Visita', desc: 'Conduz a visita de angariação: sabe o que olhar e perguntar no imóvel e como apresentar a VIP e o trabalho ao proprietário.' }
+  ] },
+  { k: 'for', nome: 'Formalizar', sub: 'Do sim à autorização assinada', etapas: [
+    { k: 'doc', nome: 'Documentação', curto: 'Documentos', desc: 'Pede a documentação certa ao proprietário (matrícula, IPTU, condomínio) e sabe ler: identifica ônus, divergências e o que pode travar a venda.' },
+    { k: 'jet', nome: 'Cadastro e autorização', curto: 'Jetimob', desc: 'Anexa a documentação no Jetimob, preenche o cadastro do imóvel e a autorização de venda, e passa para o Renan enviar para assinatura.' }
+  ] },
+  { k: 'lan', nome: 'Lançar', sub: 'Colocar o imóvel na rua', etapas: [
+    { k: 'fot', nome: 'Fotos e material', curto: 'Fotos', desc: 'Com a autorização assinada, marca as fotos e organiza o material do imóvel.' },
+    { k: 'anu', nome: 'Anúncio e Reels', curto: 'Anúncio', desc: 'Coloca o imóvel no site da VIP e grava o vídeo orgânico para o Reels do Instagram.' }
+  ] }
+];
+const ETAPAS = FASES.flatMap(f => f.etapas.map(e => Object.assign({ f: f.k }, e)));
+const DEGRAUS = [
+  { n: 0, nome: 'Não sabe', curto: 'Não sabe', o: 'Ainda não aprendeu esta etapa.', subir: 'Fazer o treinamento desta etapa.' },
+  { n: 8, nome: 'Treinou', curto: 'Treinou', o: 'Fez o treinamento: sabe como é feito.', subir: 'Fazer num caso real com o Matheus acompanhando.' },
+  { n: 14, nome: 'Fez acompanhado', curto: 'Acompanhado', o: 'Já fez num caso real, com o Matheus do lado.', subir: 'Fazer sozinho num caso real e mostrar o resultado.' },
+  { n: 20, nome: 'Faz sozinho', curto: 'Sozinho', o: 'Faz num caso real, do começo ao fim, sem ajuda.', subir: 'Pronto. Já pode ensinar os outros.' }
+];
+const minus1 = s => s.charAt(0).toLowerCase() + s.slice(1);
+const degrauDe = v => typeof v !== 'number' ? null : v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3;
+const DED = { k: 'det', nome: 'Dedicação', desc: 'Quanto do tempo de trabalho a pessoa deixa disponível para a angariação de imóveis prontos. Quem divide a semana com vendas, locação ou outro trabalho tem pouco espaço para angariar; quem faz da angariação o seu foco entrega mais.',
+  op: [[5, 'Menos de 25%', 'Angariação é um extra'], [10, '25% a 50%', 'Divide com outras atividades'], [15, '50% a 75%', 'Angariação é a prioridade'], [20, 'Mais de 75%', 'Foco total na angariação']] };
+const dedDe = v => typeof v !== 'number' ? null : DED.op[v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3];
+// a carteira em construção: cada angariação anda por estas fases (conta como angariação a partir da autorização assinada)
+const FASES_ANG = [['doc', 'Documentação'], ['jet', 'No Jetimob'], ['ass', 'Autorização assinada'], ['fot', 'Fotos e material'], ['site', 'No site'], ['reels', 'No Reels']];
+const iFase = f => Math.max(0, FASES_ANG.findIndex(x => x[0] === f));
+const assinada = p => iFase(p.fase) >= 2;
+// a mentoria: 3 meses, um foco por mês
+const MENT_FASES = [['Estruturação', 'Processo, ferramentas e método no lugar'], ['Formação', 'Treinar cada etapa e acompanhar em campo'], ['Resultado', 'Time angariando sozinho e carteira crescendo']];
+const MENT_PADRAO = {
+  inicio: '2026-10-05',
+  entregas: ['Método Nickel de Angariação: o playbook com cada mensagem, da abordagem à autorização',
+    'Manual de apoio em PDF para os corretores',
+    'Imóvel Brokers contratado e em uso pelo time',
+    'Processo da angariação definido: documentação e autorização no Jetimob, o Renan envia para assinatura, depois fotos e anúncio',
+    'Visitas de angariação acompanhadas em campo'],
+  proximos: ['Avaliar todo o time nas 9 etapas do processo', 'Registrar cada visita de angariação e cada angariação no Elenco', 'Treinar as etapas em que ninguém faz sozinho ainda'],
+  meta: ''
+};
+
+// modelo antigo (até 01/11/2026): três áreas com atributos de 0 a 20. As notas ficam guardadas e aparecem só no histórico;
+// Angariação e Documentação antigas viram o ponto de partida das etapas até a primeira avaliação no modelo novo.
 const GRUPOS = [
   { k: 'tec', nome: 'Técnico', sigla: 'TÉC', sub: 'Conhecimento técnico para angariar', attrs: [
     { k: 'ang', nome: 'Angariação', desc: 'Capacidade de angariar um imóvel do começo ao fim, colocando em prática tudo o que foi ensinado. A pergunta é simples: se um imóvel for entregue na mão dela, ela consegue angariar?',
@@ -446,10 +654,9 @@ const GRUPOS = [
 const ATTRS = GRUPOS.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a)));
 // atributos que saíram da tela (Presença, em 2026-10-29): a nota antiga fica guardada, mas não aparece nem conta
 const ATTRS_ANTIGOS = ['pre'];
-const FAIXAS = ['1–5', '6–10', '11–15', '16–20'];
-const ESCALA = [['n1', '1 a 5', 'Não sabe / não faz'], ['n2', '6 a 10', 'Faz com ajuda'], ['n3', '11 a 15', 'Faz sozinho, bem'], ['n4', '16 a 20', 'Referência, ensina os outros']];
-// Papéis, como o "Papel e tarefa" do FM: as estrelas saem da média dos atributos-chave
-const PROD = { visita: 'Visita de angariação', angariacao: 'Angariação realizada' };
+// todas as chaves de nota que podem estar guardadas (modelo antigo + etapas)
+const CHAVES = [...new Set(ATTRS.map(a => a.k).concat(ATTRS_ANTIGOS, ETAPAS.map(e => e.k), ['det']))];
+const PROD = { visita: 'Visita de angariação', angariacao: 'Angariação' };
 const TIPOS_IMOVEL = ['Casa', 'Apartamento', 'Cobertura', 'Terreno', 'Comercial'];
 const PERIODOS = [['1', '1º mês'], ['2', '2º mês'], ['3', '3º mês'], ['tudo', 'Tudo']];
 const BAIRROS_CWB = ['Abranches', 'Água Verde', 'Ahú', 'Alto da Glória', 'Alto da XV', 'Bacacheri', 'Batel', 'Bigorrilho', 'Boa Vista', 'Bom Retiro',
@@ -496,21 +703,19 @@ function maisMeses(iso, k) {
 }
 const diaAntes = iso => { const [y, m, d] = iso.split('-').map(Number); return isoDe(new Date(y, m - 1, d - 1)); };
 
-// ── NOTAS (0 a 20) E NOTA ATUAL (0 a 100) ──
+// ── NOTAS (0 a 20) ──
 const nivel = v => typeof v !== 'number' ? 'n0' : v <= 5 ? 'n1' : v <= 10 ? 'n2' : v <= 15 ? 'n3' : 'n4';
-const faixa = v => v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3;
-const nivelNome = v => v === null ? 'a avaliar' : ['fraco', 'razoável', 'bom', 'muito bom'][faixa(v)];
 function media(notas, keys) {
   const v = keys.map(k => (notas || {})[k]).filter(x => typeof x === 'number');
   return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
 }
 const mediaGrupo = (n, g) => media(n, GRUPOS.find(x => x.k === g).attrs.map(a => a.k));
-// nota atual 0 a 100 (média dos atributos × 5), como o nível do jogador no FM
-const notaDe = n => { const m = media(n, ATTRS.map(a => a.k)); return m === null ? null : Math.round(m * 5); };
 const fmtG = v => v === null ? '–' : String(Math.round(v)); // sempre número inteiro, sem vírgula
 const meioPasso = v => Math.round(v * 2) / 2;
-// sugestão de estrelas a partir da média de 0 a 20, ajustada às estrelas que o Matheus deu em 29/10
-// (Karoline 3 · Anne e Diego 2½ · Silvana, Jo e Tatiana 2): média mínima para cada nível
+// modelo novo: estrelas = média das 9 etapas ÷ 4, de meia em meia (etapa ainda sem degrau conta como Não sabe).
+// Tudo "Treinou" = 2 estrelas, tudo "Fez acompanhado" = 3½, tudo "Faz sozinho" = 5.
+const capEtapas = e => meioPasso(ETAPAS.reduce((s, x) => s + (e[x.k] ?? 0), 0) / ETAPAS.length / 4);
+// modelo antigo: estrelas pela média das notas na régua (calibrada nas estrelas que o Matheus deu em 29/10)
 const REGUA = [[19, 5], [18, 4.5], [17, 4], [15.5, 3.5], [14, 3], [12, 2.5], [9, 2], [7.5, 1.5], [6, 1]];
 const estrelasDaMedia = m => m === null ? 0 : (REGUA.find(([min]) => m >= min) || [0, 0.5])[1];
 const st5 = (v, cls) => `<span class="st5 ${cls || ''}" title="${fmtEst(v)} de 5"><i style="width:${v / 5 * 100}%"></i></span>`;
@@ -558,7 +763,7 @@ function docFields(c) { const o = Object.assign({}, c); delete o.id; return toFs
 
 function cleanNotas(n) {
   const o = {};
-  if (n && typeof n === 'object') for (const k of ATTRS.map(a => a.k).concat(ATTRS_ANTIGOS)) {
+  if (n && typeof n === 'object') for (const k of CHAVES) {
     const v = n[k];
     if (v !== null && v !== undefined && v !== '' && Number.isFinite(+v)) o[k] = Math.max(0, Math.min(20, Math.round(+v)));
   }
@@ -583,23 +788,67 @@ function cleanCorretor(o) {
     destaques: arr(o.destaques).map(String).filter(Boolean),
     evoluir: String(o.evoluir || ''),
     avaliacoes: arr(o.avaliacoes).filter(a => a && a.data)
-      .map(a => ({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || ''), ca: +a.ca > 0 ? Math.min(5, meioPasso(+a.ca)) : 0 }))
+      // m: 2 = avaliação no modelo das etapas (desde 01/11/2026); sem m = modelo antigo
+      .map(a => Object.assign({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || ''), ca: +a.ca > 0 ? Math.min(5, meioPasso(+a.ca)) : 0 }, +a.m === 2 ? { m: 2 } : {}))
       .sort((a, b) => a.data < b.data ? -1 : a.data > b.data ? 1 : 0),
+    // angariação: nome do imóvel, fase na carteira (as antigas, sem fase, eram angariações realizadas = assinadas) e se teve proposta
     producao: arr(o.producao).filter(p => p && p.data && PROD[p.tipo])
-      .map(p => ({ id: String(p.id || newId('p')), data: String(p.data), tipo: p.tipo, ti: String(p.ti || ''), valor: Number(p.valor) || 0, bairro: String(p.bairro || '') })),
+      .map(p => Object.assign({ id: String(p.id || newId('p')), data: String(p.data), tipo: p.tipo, ti: String(p.ti || ''), valor: Number(p.valor) || 0, bairro: String(p.bairro || '') },
+        p.tipo === 'angariacao' ? { nome: String(p.nome || ''), fase: FASES_ANG.some(f => f[0] === p.fase) ? p.fase : 'ass', prop: p.prop === true } : {})),
     criadoEm: String(o.criadoEm || ''),
     atualizadoEm: String(o.atualizadoEm || '')
   };
 }
 
-let corretores = [];
+// a mentoria (entregas, próximos passos, meta e treinamentos) fica num documento à parte, "_mentoria", na mesma coleção
+const MID = '_mentoria';
+function cleanMentoria(o) {
+  o = o || {};
+  const arr = x => Array.isArray(x) ? x : [];
+  const txt = (x, d) => Array.isArray(x) ? x.map(s => String(s).trim()).filter(Boolean) : d.slice();
+  return {
+    id: MID, tipo: 'mentoria',
+    inicio: /^\d{4}-\d{2}-\d{2}$/.test(o.inicio || '') ? o.inicio : MENT_PADRAO.inicio,
+    entregas: txt(o.entregas, MENT_PADRAO.entregas),
+    proximos: txt(o.proximos, MENT_PADRAO.proximos),
+    meta: typeof o.meta === 'string' ? o.meta : MENT_PADRAO.meta,
+    treinos: arr(o.treinos).filter(t => t && t.data && t.tema)
+      .map(t => ({ id: String(t.id || newId('t')), data: String(t.data), tema: String(t.tema), etapas: arr(t.etapas).filter(k => ETAPAS.some(e => e.k === k)), quem: arr(t.quem).map(String), obs: String(t.obs || '') }))
+      .sort((a, b) => b.data.localeCompare(a.data)),
+    atualizadoEm: String(o.atualizadoEm || '')
+  };
+}
+let corretores = [], mentoria = cleanMentoria(null);
 const byId = id => corretores.find(c => c.id === id);
-const persistCache = () => lsSet(LS_CACHE, corretores);
+const persistCache = () => { lsSet(LS_CACHE, corretores); lsSet(LS_CACHE + '_m', mentoria); };
 const ultima = c => c.avaliacoes[c.avaliacoes.length - 1] || null;
 const notasAtuais = c => (ultima(c) || {}).notas || {};
-// capacidade atual: sai da conta (média das notas na REGUA), igual para todos; estrelas dadas à mão ficam só guardadas
-const capDe = c => capAtual(notasAtuais(c));
-const capDaAvaliacao = a => capAtual(a.notas);
+const treinosDe = (c, ate) => mentoria.treinos.filter(t => t.quem.includes(c.id) && (!ate || t.data <= ate));
+// degrau de hoje em cada etapa: vem da última avaliação no modelo novo. Antes dela, o ponto de partida sai da avaliação
+// antiga (Angariação → Abordagem e Visita; Documentação → Documentação), para nada do que já foi avaliado sumir.
+// Quem participou de um treinamento da etapa já está, no mínimo, em "Treinou".
+function etapasDe(c, ate) {
+  const avs = ate ? c.avaliacoes.filter(a => a.data <= ate) : c.avaliacoes;
+  const nova = avs.filter(a => a.m === 2).pop();
+  const e = {}, origem = {};
+  if (nova) ETAPAS.forEach(x => { if (typeof nova.notas[x.k] === 'number') { e[x.k] = nova.notas[x.k]; origem[x.k] = 'aval'; } });
+  else if (avs.length) {
+    const n = avs[avs.length - 1].notas;
+    const de = (k, ant) => { if (typeof n[ant] === 'number') { e[k] = DEGRAUS[degrauDe(n[ant])].n; origem[k] = 'antiga'; } };
+    de('abo', 'ang'); de('vis', 'ang'); de('doc', 'doc');
+  }
+  treinosDe(c, ate).forEach(t => t.etapas.forEach(k => { if ((e[k] ?? -1) < 8) { e[k] = 8; origem[k] = 'treino'; } }));
+  return { e, origem, nova: !!nova };
+}
+const sozinho = e => ETAPAS.filter(x => e[x.k] === 20).length;
+const dedicacaoDe = c => { for (let i = c.avaliacoes.length - 1; i >= 0; i--) { const v = c.avaliacoes[i].notas.det; if (typeof v === 'number') return v; } return null; };
+// capacidade atual: no modelo novo sai das etapas; quem só tem avaliação antiga mantém as estrelas antigas até ser avaliado de novo
+function capDe(c) {
+  const E = etapasDe(c);
+  if (E.nova || !c.avaliacoes.length) return capEtapas(E.e);
+  return capAtual(notasAtuais(c));
+}
+const capDaAvaliacao = a => a.m === 2 ? capEtapas(a.notas) : capAtual(a.notas);
 
 // Cada corretor grava em fila própria, sempre com a versão local mais recente.
 // O que não chegou ao Firebase fica pendente neste aparelho e é reenviado depois.
@@ -647,6 +896,14 @@ function saveCorretor(c) {
   render();
   return c;
 }
+function saveMentoria(m) {
+  mentoria = cleanMentoria(Object.assign({}, mentoria, m, { atualizadoEm: nowLocal() }));
+  persistCache();
+  const p = lsGet(LS_PEND, {}); p[MID] = mentoria; lsSet(LS_PEND, p);
+  gravacoes++;
+  queueWrite(MID);
+  render();
+}
 function removeCorretor(id) {
   corretores = corretores.filter(c => c.id !== id);
   persistCache();
@@ -657,6 +914,7 @@ function removeCorretor(id) {
 function applyPending(list) {
   const p = lsGet(LS_PEND, {});
   for (const id in p) {
+    if (id === MID) { mentoria = cleanMentoria(p[id]); continue; }
     const i = list.findIndex(c => c.id === id);
     if (p[id].__del) { if (i >= 0) list.splice(i, 1); }
     else { const c = cleanCorretor(Object.assign({}, p[id], { id })); if (i >= 0) list[i] = c; else list.push(c); }
@@ -669,15 +927,21 @@ async function fetchAll() {
     const r = await fetch(`${FB_ROOT}/${COL}?key=${FB_KEY}&pageSize=300` + (tok ? '&pageToken=' + encodeURIComponent(tok) : ''));
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const j = await r.json();
-    (j.documents || []).forEach(d => { const o = fromFs({ mapValue: { fields: d.fields || {} } }); o.id = d.name.split('/').pop(); out.push(cleanCorretor(o)); });
+    (j.documents || []).forEach(d => {
+      const o = fromFs({ mapValue: { fields: d.fields || {} } }); o.id = d.name.split('/').pop();
+      if (o.id === MID) ment = cleanMentoria(o); else out.push(cleanCorretor(o));
+    });
     tok = j.nextPageToken || '';
   } while (tok);
   return out;
 }
+let ment = null; // a mentoria que veio do servidor na última busca
 async function refresh(silent) {
   try {
-    const g = gravacoes, srv = await fetchAll();
+    const g = gravacoes; ment = null;
+    const srv = await fetchAll();
     if (g !== gravacoes) return refresh(silent); // salvou algo enquanto carregava: busca de novo para não perder
+    mentoria = ment || cleanMentoria(null);
     corretores = applyPending(srv);
     persistCache(); loaded = true; failing = false;
   } catch (e) {
@@ -703,7 +967,9 @@ function updateSync() {
 }
 
 // ── ESTADO DA TELA ──
-const ui = { ficha: null, aba: 'geral', info: new Set(), per: lsGet(LS_PER, 'tudo'), sheet: null, prodAll: false, fromElenco: false };
+const ui = { ficha: null, tela: 'elenco', aba: 'geral', info: new Set(), per: lsGet(LS_PER, 'tudo'), sheet: null, prodAll: false, fromElenco: false };
+// telas do topo (cada uma com o seu #endereço, para dar para mandar o link direto)
+const TELAS = [['elenco', 'Elenco'], ['processo', 'Quem sabe o quê'], ['carteira', 'Carteira'], ['treinos', 'Treinamentos'], ['relatorio', 'Relatório']];
 if (!PERIODOS.some(p => p[0] === ui.per)) ui.per = 'tudo';
 let form = null;
 let admin = lsGet(LS_AUTH, false) === true;
@@ -714,7 +980,8 @@ const inicioDe = c => c.inicio || hoje();
 function janela(c, k) { const ini = inicioDe(c); return { de: maisMeses(ini, k - 1), ate: maisMeses(ini, k) }; } // [de, ate)
 function mesAtual(c) { let k = 1; const h = hoje(); while (maisMeses(inicioDe(c), k) <= h && k < 600) k++; return k; }
 function contar(l) {
-  const v = l.filter(x => x.tipo === 'visita').length, ang = l.filter(x => x.tipo === 'angariacao');
+  // angariação conta a partir da autorização assinada; antes disso ela está em andamento na carteira
+  const v = l.filter(x => x.tipo === 'visita').length, ang = l.filter(x => x.tipo === 'angariacao' && assinada(x));
   return { v, a: ang.length, valor: ang.reduce((s, x) => s + x.valor, 0) };
 }
 function prod(c, p) {
@@ -731,8 +998,7 @@ const perChips = () => `<div class="chips sm">${PERIODOS.map(([k, l]) => `<butto
 function renderElenco() {
   const lista = ordenados();
   const tot = lista.reduce((s, c) => { const p = prod(c, ui.per); s.v += p.v; s.a += p.a; return s; }, { v: 0, a: 0 });
-  const ult = lista.reduce((m, c) => c.atualizadoEm > m ? c.atualizadoEm : m, '');
-  const head = `<div class="phd"><h1>Elenco de angariação</h1><span class="sub">VIP Imóveis${ult ? ' · atualizado em ' + fmtDate(ult) : ''}</span></div>`;
+  const head = cabecalho('Elenco de angariação');
 
   if (!lista.length) {
     $('#main').innerHTML = head + `<div class="empty" style="margin-top:22px"><h3>Nenhum corretor no elenco ainda</h3>
@@ -744,13 +1010,15 @@ function renderElenco() {
 
   const linhas = lista.map(c => {
     const av = c.avaliacoes, P = prod(c, ui.per), ida = idade(c.nascimento);
-    const mt = av.length ? 'avaliado em ' + fmtShort(ultima(c).data) : 'sem avaliação ainda';
+    const E = etapasDe(c), soz = sozinho(E.e);
+    const mt = !av.length ? 'sem avaliação ainda' : E.nova ? 'avaliado em ' + fmtShort(ultima(c).data) : 'avaliar nas etapas';
     return `<button class="sqr" data-act="abrir" data-id="${esc(c.id)}">
-      <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt">${esc(mt)}</span></span></span>
+      <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt${E.nova || !av.length ? '' : ' wa'}">${esc(mt)}</span></span></span>
       <span class="num xl cell"><span class="lbm">Idade</span>${ida ?? '–'}</span>
       <span class="cell w4"><span class="lbm">Capacidade atual</span>${st5(capDe(c))}</span>
-      <span class="num v cell w3"><span class="lbm">Visitas</span>${P.v}</span>
-      <span class="num a cell w3"><span class="lbm">Angariações</span>${P.a}</span>
+      <span class="num cell"><span class="lbm">Faz sozinho</span><span class="${soz ? 'n4' : 'n0'}">${soz}<small class="de9">/9</small></span></span>
+      <span class="num v cell"><span class="lbm">Visitas</span>${P.v}</span>
+      <span class="num a cell"><span class="lbm">Angariações</span>${P.a}</span>
     </button>`;
   }).join('');
 
@@ -759,33 +1027,40 @@ function renderElenco() {
     <div class="kpis">
       <div><b>${lista.length}</b><span>${plural(lista.length, 'corretor', 'corretores')} no elenco</span></div>
       <div><b style="color:var(--vis)">${tot.v}</b><span>Visitas de angariação · ${perLabel()}</span></div>
-      <div><b style="color:var(--or2)">${tot.a}</b><span>Angariações realizadas · ${perLabel()}</span></div>
+      <div><b style="color:var(--or2)">${tot.a}</b><span>Angariações assinadas · ${perLabel()}</span></div>
     </div>
     <div class="group-t"><span class="lbl">Plantel</span></div>
     <div class="sq">
-      <div class="sqr hd"><span>Corretor</span><span class="xl">Idade</span><span>Capacidade atual</span><span>Visitas</span><span>Angariações</span></div>
+      <div class="sqr hd"><span>Corretor</span><span class="xl">Idade</span><span>Capacidade atual</span><span>Faz sozinho</span><span>Visitas</span><span>Angariações</span></div>
       ${linhas}
     </div>
     ${legenda()}`;
 }
 function legenda() {
   return `<div class="legend">
-    <div><h4>Atributos de 0 a 20</h4>Três áreas: Técnico, Mental e Postura. A cor mostra o nível.
-      <div class="sw">${ESCALA.map(([c, f, t]) => `<span><i style="background:var(--${c})"></i>${f}: ${t.toLowerCase()}</span>`).join('')}</div></div>
-    <div><h4>Capacidade atual</h4>As estrelas que o gestor dá em cada avaliação, a partir das notas dos atributos e do que vê no dia a dia. Conforme a pessoa evolui e conclui os treinamentos, as estrelas sobem.</div>
-    <div><h4>Visitas e angariações</h4>Visitas de angariação e angariações realizadas por cada um no período escolhido: 1º, 2º ou 3º mês de acompanhamento, ou tudo. No perfil de cada corretor, toque em um atributo para ver o que ele significa.</div>
+    <div><h4>As 9 etapas</h4>O processo de angariação da VIP, do link do imóvel ao Reels. Em cada etapa a pessoa está num degrau, e a nota de 0 a 20 sai dele.
+      <div class="sw">${DEGRAUS.map(d => `<span><i class="${nivel(d.n)}" style="background:currentColor"></i>${d.n}: ${d.nome.toLowerCase()}</span>`).join('')}</div></div>
+    <div><h4>Capacidade atual</h4>As estrelas saem da média das 9 etapas: tudo "Treinou" dá 2 estrelas, tudo "Fez acompanhado" dá 3½ e tudo "Faz sozinho" dá 5. Sobem conforme a pessoa treina e faz sozinha.</div>
+    <div><h4>Visitas e angariações</h4>Visitas de angariação e angariações com autorização assinada no período escolhido: 1º, 2º ou 3º mês de acompanhamento de cada um, ou tudo.</div>
   </div>`;
 }
+// topo de cada tela: título e as abas
+function cabecalho(t, sub) {
+  const ult = corretores.reduce((m, c) => c.atualizadoEm > m ? c.atualizadoEm : m, mentoria.atualizadoEm || '');
+  return `<div class="phd"><h1>${t}</h1><span class="sub">${sub || 'VIP Imóveis' + (ult ? ' · atualizado em ' + fmtDate(ult) : '')}</span></div>
+    <nav class="telas" aria-label="Telas">${TELAS.map(([k, l]) => `<a href="#${k}" class="${ui.tela === k ? 'on' : ''}">${l}</a>`).join('')}</nav>`;
+}
+const pill = v => { const d = degrauDe(v); return d === null ? '<span class="dg dg-x">A avaliar</span>' : `<span class="dg dg${d}">${DEGRAUS[d].curto}</span>`; };
 
 // ── PERFIL DO CORRETOR (tela de jogador do FM) ──
 function renderFicha(c) {
-  const av = c.avaliacoes, ant = av[av.length - 2] || null;
-  const n = notasAtuais(c), nt = notaDe(n), ida = idade(c.nascimento);
+  const av = c.avaliacoes, ida = idade(c.nascimento), E = etapasDe(c), ded = dedDe(dedicacaoDe(c));
   const facts = [
     ida !== null ? ['Idade', ida + ' anos'] : null,
-    c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null
+    c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null,
+    ['Dedicação', ded ? ded[1] + ' do tempo' : 'a avaliar']
   ].filter(Boolean);
-  const abas = [['geral', 'Visão geral'], ['dev', 'Desenvolvimento'], ['prod', 'Produção']];
+  const abas = [['geral', 'Etapas'], ['dev', 'Evolução'], ['prod', 'Produção']];
 
   $('#main').innerHTML = `
     <button class="back" data-act="voltar">← Elenco</button>
@@ -794,69 +1069,102 @@ function renderFicha(c) {
         <div class="pf-ph">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(initials(c.nome))}</div>
         <div class="pf-id">
           <h1>${esc(c.nome)}</h1>
-          ${facts.length ? `<div class="pf-f">${facts.map(([a, b]) => `<div><span>${a}</span><b>${esc(b)}</b></div>`).join('')}</div>` : ''}
+          <div class="pf-f">${facts.map(([a, b]) => `<div><span>${a}</span><b>${esc(b)}</b></div>`).join('')}</div>
         </div>
         <div class="capbox">
           <div><span>Capacidade atual</span>${st5(capDe(c))}</div>
+          <div><span>Faz sozinho</span><b class="soz"><span class="${sozinho(E.e) ? 'n4' : 'n0'}">${sozinho(E.e)}</span> de 9 etapas</b></div>
         </div>
         <div class="pf-act adm">
-          <button class="btn-or sm" data-act="aval" data-id="${esc(c.id)}">${av.length ? 'Atualizar notas' : 'Primeira avaliação'}</button>
+          <button class="btn-or sm" data-act="aval" data-id="${esc(c.id)}">${E.nova ? 'Atualizar etapas' : 'Avaliar as etapas'}</button>
           <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="visita">+ Visita de angariação</button>
-          <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="angariacao">+ Angariação realizada</button>
+          <button class="btn-ghost sm" data-act="prod" data-id="${esc(c.id)}" data-v="angariacao">+ Angariação</button>
           <button class="btn-ghost sm" data-act="perfil" data-id="${esc(c.id)}">Dados pessoais</button>
         </div>
       </div>
       <div class="pf-tabs">${abas.map(([k, l]) => `<button class="${ui.aba === k ? 'on' : ''}" data-act="aba" data-v="${k}">${l}</button>`).join('')}</div>
-      <div class="pf-b">${ui.aba === 'dev' ? abaDev(c) : ui.aba === 'prod' ? abaProd(c) : abaGeral(c, n, ant, nt)}</div>
+      <div class="pf-b">${ui.aba === 'dev' ? abaDev(c) : ui.aba === 'prod' ? abaProd(c) : abaGeral(c, E)}</div>
     </div>`;
 }
-function abaGeral(c, n, ant, nt) {
-  const col = g => {
-    return `<div class="fm-c"><div class="fm-h"><span class="t">${g.nome}</span></div>
-      ${g.attrs.map(a => {
-        const v = n[a.k], p = ant ? ant.notas[a.k] : undefined;
-        const d = typeof v === 'number' && typeof p === 'number' && v !== p ? delta(v - p) : '';
-        const aberto = ui.info.has(a.k);
-        // toque no atributo abre (e fecha) a explicação do que ele significa
-        return `<button class="fm-r${aberto ? ' open' : ''}" data-act="info" data-v="${a.k}" aria-expanded="${aberto}">
-          <span class="ln"><span class="an">${a.nome}<i class="ic">i</i></span>${d}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></span>
-          ${aberto ? `<span class="fm-x">${esc(a.desc)}${typeof v === 'number' ? `<span class="fx"><b class="${nivel(v)}">Nota ${v}</b> ${esc(a.niv[faixa(v)])}</span>` : ''}</span>` : ''}
-        </button>`;
-      }).join('')}</div>`;
-  };
-  const semNota = nt === null;
+// o primeiro ponto do processo em que a pessoa ainda não faz sozinha: é ali que ela evolui agora
+function proximoPasso(E) {
+  let alvo = null;
+  for (const x of ETAPAS) {
+    const d = degrauDe(E.e[x.k]);
+    if (d === 3) continue;
+    if (!alvo || (d ?? -1) < (alvo.d ?? -1)) alvo = { x, d };
+  }
+  return alvo;
+}
+function abaGeral(c, E) {
+  const ant = c.avaliacoes.filter(a => a.m === 2).slice(-2, -1)[0] || null; // avaliação anterior no modelo novo (para as setas)
+  const pp = proximoPasso(E);
+  const treinoDe = k => treinosDe(c).filter(t => t.etapas.includes(k))[0];
+  const col = f => `<div class="fm-c"><div class="fm-h"><span><span class="t">${f.nome}</span><small>${f.sub}</small></span></div>
+    ${f.etapas.map(x => {
+      const v = E.e[x.k], d = degrauDe(v), p = ant ? ant.notas[x.k] : undefined;
+      const dl = typeof v === 'number' && typeof p === 'number' && v !== p ? delta(v - p) : '';
+      const aberto = ui.info.has(x.k), t = treinoDe(x.k);
+      const origem = E.origem[x.k] === 'antiga' ? 'Ponto de partida tirado da avaliação antiga.' : E.origem[x.k] === 'treino' && t ? `Treinou em ${fmtDate(t.data)}: ${t.tema}.` : '';
+      return `<button class="fm-r${aberto ? ' open' : ''}${d === 3 ? ' hi' : ''}" data-act="info" data-v="${x.k}" aria-expanded="${aberto}">
+        <span class="ln"><span class="an">${x.nome}<i class="ic">i</i></span>${dl}${pill(v)}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></span>
+        ${aberto ? `<span class="fm-x">${esc(x.desc)}${d !== null ? `<span class="fx"><b class="${nivel(v)}">${DEGRAUS[d].nome}</b> ${esc(DEGRAUS[d].o)}${origem ? ' ' + esc(origem) : ''}<br><b>Para subir:</b> ${esc(DEGRAUS[d].subir)}</span>` : '<span class="fx">Ainda não avaliado nesta etapa.</span>'}</span>` : ''}
+      </button>`;
+    }).join('')}</div>`;
+  const tr = treinosDe(c);
   return `
-    ${semNota ? `<div class="empty-s" style="margin-bottom:14px"><span class="pub">Avaliação em breve.</span><span class="adm">Ainda sem notas. Sente com ${esc(firstName(c.nome))} e toque em "Primeira avaliação".</span></div>` : ''}
-    <div class="fm">${GRUPOS.map(col).join('')}</div>
-    <div class="fm-leg"><span>Toque em um atributo para ver o que ele significa.</span>${ESCALA.map(([cl, f, t]) => `<span><b class="${cl}">${f}</b> ${t.toLowerCase()}</span>`).join('')}${ant ? `<span><b class="dl up">▲</b><b class="dl dn">▼</b> desde ${fmtShort(ant.data)}</span>` : ''}</div>`;
+    ${!E.nova && c.avaliacoes.length ? `<div class="aviso adm">Ainda no ponto de partida: Abordagem, Visita e Documentação vieram da avaliação antiga de ${fmtShort(ultima(c).data)}. Toque em "Avaliar as etapas" para fechar a foto de partida nas 9 etapas.</div>` : ''}
+    ${!c.avaliacoes.length && !tr.length ? `<div class="empty-s" style="margin-bottom:14px"><span class="pub">Avaliação em breve.</span><span class="adm">Ainda sem avaliação. Sente com ${esc(firstName(c.nome))} e toque em "Avaliar as etapas".</span></div>` : ''}
+    ${pp ? `<div class="prox"><span class="lbl">Próximo passo</span><b>${pp.x.nome}</b><span>${pp.d === null ? 'Avaliar esta etapa.' : esc(DEGRAUS[pp.d].subir)}</span></div>` : `<div class="prox ok"><span class="lbl">Próximo passo</span><b>Faz sozinho todas as etapas</b><span>Pronto para ensinar os outros.</span></div>`}
+    <div class="fm f4">${FASES.map(col).join('')}</div>
+    <div class="fm-leg"><span>Toque numa etapa para ver o que ela é e como subir.</span>${DEGRAUS.map(d => `<span><b class="${nivel(d.n)}">${d.n}</b> ${d.nome.toLowerCase()}</span>`).join('')}${ant ? `<span><b class="dl up">▲</b><b class="dl dn">▼</b> desde ${fmtShort(ant.data)}</span>` : ''}</div>
+    <div class="grid2" style="margin-top:16px">
+      <section class="box"><div class="box-h"><h3>Dedicação</h3></div>${ded2(c)}</section>
+      <section class="box"><div class="box-h"><h3>Treinamentos</h3><span class="muted r" style="font-size:13px">${tr.length} ${plural(tr.length, 'treinamento', 'treinamentos')}</span></div>
+        ${tr.length ? `<div class="ls">${tr.map(t => `<div class="li"><span class="d">${fmtShort(t.data)}</span><span class="w">${esc(t.tema)}<small>${t.etapas.map(k => ETAPAS.find(e => e.k === k).nome).join(' · ') || 'Geral'}</small></span></div>`).join('')}</div>`
+          : `<div class="empty-s">Nenhum treinamento registrado ainda.</div>`}</section>
+    </div>`;
+}
+function ded2(c) {
+  const v = dedicacaoDe(c), d = dedDe(v);
+  return `<p class="hintp">${esc(DED.desc)}</p>
+    <div class="dedb">${DED.op.map(o => `<span class="${d && d[0] === o[0] ? 'on' : ''}"><b>${o[1]}</b>${o[2]}</span>`).join('')}</div>
+    ${d ? '' : '<p class="hintp">Ainda não respondida.</p>'}`;
 }
 function abaDev(c) {
-  const av = c.avaliacoes, u = ultima(c);
-  if (!u) return `<div class="empty-s">Os gráficos de evolução aparecem depois da primeira avaliação. <span class="adm">A cada conversa, toque em "Atualizar notas" e mude só o que evoluiu.</span></div>`;
-  const e0 = capDaAvaliacao(av[0]), e1 = capDaAvaliacao(u);
+  const av = c.avaliacoes, tr = treinosDe(c);
+  if (!av.length && !tr.length) return `<div class="empty-s">A evolução aparece depois da primeira avaliação. <span class="adm">A cada conversa, toque em "Atualizar etapas" e suba só o que evoluiu.</span></div>`;
+  const e1 = av.length ? capDaAvaliacao(av[av.length - 1]) : 0, e0 = av.length ? capDaAvaliacao(av[0]) : 0;
   return `<div class="grid2">
       <section class="box">
         <div class="box-h"><h3>Evolução da capacidade atual</h3>${av.length > 1 ? `<span class="r">${deltaEst(e1 - e0)} <span class="muted" style="font-size:13px">desde ${fmtShort(av[0].data)}</span></span>` : ''}</div>
-        ${graficoLinhas(av, [{ cor: '#f7c531', val: a => notaDe(a.notas) === null ? null : capAtual(a.notas), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true)}
+        ${av.length ? graficoLinhas(av, [{ cor: '#f7c531', val: a => capDaAvaliacao(a), nome: 'Capacidade atual' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true) : '<div class="empty-s">Sem avaliação ainda.</div>'}
       </section>
       <section class="box">
-        <div class="box-h"><h3>Evolução por área</h3><span class="muted r" style="font-size:13px">média de 0 a 20</span></div>
-        ${graficoLinhas(av, GRUPOS.map(g => ({ cor: getComputedStyle(document.documentElement).getPropertyValue('--g-' + g.k).trim(), val: a => mediaGrupo(a.notas, g.k), nome: g.nome })), 0, 20, fmtG, 'area')}
+        <div class="box-h"><h3>Etapas</h3><span class="muted r" style="font-size:13px">ponto de partida × hoje</span></div>
+        ${graficoEtapas(c)}
+        <div class="keyl"><span><i class="tick"></i>Ponto de partida</span><span class="a"><i></i>Hoje</span></div>
       </section>
     </div>
     <section class="box" style="margin-top:16px">
-      <div class="box-h"><h3>Atributos</h3><span class="muted r" style="font-size:13px">${av.length > 1 ? `primeira avaliação (${fmtShort(av[0].data)}) × hoje` : 'notas de hoje'}</span></div>
-      ${graficoAtributos(av)}
-      ${av.length > 1 ? '<div class="keyl"><span><i class="tick"></i>Primeira avaliação</span><span class="a"><i></i>Hoje</span></div>' : ''}
-    </section>
-    <section class="box" style="margin-top:16px">
       <div class="box-h"><h3>Histórico de avaliações</h3><span class="muted r" style="font-size:13px">${av.length} ${plural(av.length, 'avaliação', 'avaliações')}</span></div>
-      <div class="ls">${av.slice().reverse().map(a => {
+      ${av.length ? `<div class="ls">${av.slice().reverse().map(a => {
         const i = av.indexOf(a), ea = capDaAvaliacao(a), ep = i > 0 ? capDaAvaliacao(av[i - 1]) : null;
-        const gs = GRUPOS.map(g => `${g.nome} ${fmtG(mediaGrupo(a.notas, g.k))}`).join(' · ');
-        return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(ea)} ${ep !== null && ea !== ep ? deltaEst(ea - ep) : ''}</span><small>${gs}</small></span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`;
-      }).join('')}</div>
+        const det = a.m === 2 ? [3, 2, 1].map(d => { const n = ETAPAS.filter(x => degrauDe(a.notas[x.k]) === d).length; return n ? `${DEGRAUS[d].curto} ${n}` : ''; }).filter(Boolean).join(' · ') || 'Nenhuma etapa feita ainda'
+          : 'Modelo antigo · ' + GRUPOS.map(g => `${g.nome} ${fmtG(mediaGrupo(a.notas, g.k))}`).join(' · ');
+        return `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(ea)} ${ep !== null && ea !== ep ? deltaEst(ea - ep) : ''}</span><small>${det}</small></span>${a.m === 2 ? `<button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button>` : ''}</div>`;
+      }).join('')}</div>` : '<div class="empty-s">Nenhuma avaliação ainda.</div>'}
     </section>`;
+}
+// cada etapa: barra de hoje (laranja) e um traço branco onde estava no ponto de partida
+function graficoEtapas(c) {
+  const av = c.avaliacoes;
+  const ini = av.length ? etapasDe(c, av[0].data).e : {}, hj = etapasDe(c).e;
+  return `<div class="hb">${FASES.map(f => `<div class="hb-g">${f.nome}</div>` + f.etapas.map(x => {
+    const v0 = ini[x.k], v1 = hj[x.k], dois = typeof v0 === 'number';
+    return `<div class="hb-r"><span>${x.nome}</span><span class="hb-t">${typeof v1 === 'number' ? `<i class="a1" style="width:${Math.max(v1 * 5, 1.5)}%"></i>` : ''}${dois ? `<i class="a0" style="left:calc(${v0 * 5}% - 1.5px)" title="Ponto de partida: ${v0}"></i>` : ''}</span>
+      <span class="hb-v"><span class="${nivel(v1)}">${typeof v1 === 'number' ? v1 : '–'}</span> ${dois && typeof v1 === 'number' && v0 !== v1 ? delta(v1 - v0) : ''}</span></div>`;
+  }).join('')).join('')}</div>`;
 }
 function abaProd(c) {
   const ma = mesAtual(c), nm = Math.max(3, ma);
@@ -873,7 +1181,7 @@ function abaProd(c) {
   return `
     <div class="btn-reg adm" style="margin-bottom:16px">
       <button class="v" data-act="prod" data-id="${esc(c.id)}" data-v="visita"><b>+ Visita de angariação</b><small>Valor, tipo do imóvel e data</small></button>
-      <button class="a" data-act="prod" data-id="${esc(c.id)}" data-v="angariacao"><b>+ Angariação realizada</b><small>Valor, bairro e data</small></button>
+      <button class="a" data-act="prod" data-id="${esc(c.id)}" data-v="angariacao"><b>+ Angariação</b><small>Imóvel, valor e em que fase está</small></button>
     </div>
     <div class="grid2">
       <section class="box">
@@ -892,8 +1200,10 @@ function abaProd(c) {
     <section class="box" style="margin-top:16px">
       <div class="box-h"><h3>Registros</h3><span class="muted r" style="font-size:13px">${lista.length} ${plural(lista.length, 'registro', 'registros')}</span></div>
       ${lista.length ? `<div class="ls">${mostra.map(p => {
-        const det = (p.tipo === 'visita' ? [p.ti, fmtValor(p.valor)] : [fmtValor(p.valor), p.bairro, p.ti]).filter(Boolean).join(' · ');
-        return `<div class="li"><span class="d">${fmtShort(p.data)}</span><span class="w"><span class="tp ${p.tipo}">${p.tipo === 'visita' ? 'Visita' : 'Angariação'}</span>${esc(det || '')}</span><button class="rm adm" data-act="prod-del" data-id="${esc(c.id)}" data-v="${esc(p.id)}" aria-label="Apagar registro">×</button></div>`;
+        const det = (p.tipo === 'visita' ? [p.ti, fmtValor(p.valor)] : [p.nome, fmtValor(p.valor), p.bairro, p.ti]).filter(Boolean).join(' · ');
+        const fase = p.tipo === 'angariacao' ? `<small><span class="fa f${iFase(p.fase)}">${FASES_ANG[iFase(p.fase)][1]}</span>${p.prop ? ' · recebeu proposta' : ''}</small>` : '';
+        const ed = p.tipo === 'angariacao' ? `<button class="ed adm" data-act="ang-ed" data-id="${esc(c.id)}" data-v="${esc(p.id)}">Editar</button>` : '';
+        return `<div class="li"><span class="d">${fmtShort(p.data)}</span><span class="w"><span class="tp ${p.tipo}">${p.tipo === 'visita' ? 'Visita' : 'Angariação'}</span>${esc(det || '')}${fase}</span>${ed}<button class="rm adm" data-act="prod-del" data-id="${esc(c.id)}" data-v="${esc(p.id)}" aria-label="Apagar registro">×</button></div>`;
       }).join('')}
         ${lista.length > mostra.length ? `<button class="more" data-act="prod-all">Ver todos os ${lista.length}</button>` : ''}</div>`
         : `<div class="empty-s">Nenhuma visita ou angariação registrada ainda.<span class="adm"> Use os botões acima a cada visita e a cada angariação.</span></div>`}
@@ -939,15 +1249,6 @@ function rotulosFinais(series, av, x, y, fmt) {
   for (let k = 1; k < rs.length; k++) if (rs[k].yy - rs[k - 1].yy < 14) rs[k].yy = rs[k - 1].yy + 14;
   return rs.map(r => `<text x="${x(i) + 9}" y="${r.yy}" font-size="12" font-weight="700" fill="${r.s.cor}">${fmt(r.v)}</text>`).join('');
 }
-// cada atributo: barra de hoje (laranja) e um traço branco onde estava na primeira avaliação
-function graficoAtributos(av) {
-  const a0 = av[0].notas, a1 = ultima({ avaliacoes: av }).notas, dois = av.length > 1;
-  return `<div class="hb">${GRUPOS.map(g => `<div class="hb-g">${g.nome}</div>` + g.attrs.map(a => {
-    const v0 = a0[a.k], v1 = a1[a.k];
-    return `<div class="hb-r"><span>${a.nome}</span><span class="hb-t">${typeof v1 === 'number' ? `<i class="a1" style="width:${v1 * 5}%"></i>` : ''}${dois && typeof v0 === 'number' ? `<i class="a0" style="left:calc(${v0 * 5}% - 1.5px)" title="Primeira avaliação: ${v0}"></i>` : ''}</span>
-      <span class="hb-v"><span class="${nivel(v1)}">${typeof v1 === 'number' ? v1 : '–'}</span> ${dois && typeof v0 === 'number' && typeof v1 === 'number' && v0 !== v1 ? delta(v1 - v0) : ''}</span></div>`;
-  }).join('')).join('')}</div>`;
-}
 function graficoProd(linhas) {
   const dados = linhas.filter(l => !l.futuro);
   if (!dados.some(l => l.P.v || l.P.a)) return `<div class="empty-s">As barras aparecem conforme as visitas e angariações forem registradas.</div>`;
@@ -965,24 +1266,201 @@ function graficoProd(linhas) {
     <div class="keyl"><span><i></i>Visitas de angariação</span><span class="a"><i></i>Angariações realizadas</span></div>`;
 }
 
+// ── QUEM SABE O QUÊ (pessoas × etapas) ──
+function renderProcesso() {
+  const lista = ordenados(), Es = lista.map(c => ({ c, E: etapasDe(c) }));
+  const head = cabecalho('Quem sabe o quê', 'As 9 etapas da angariação, pessoa por pessoa');
+  if (!lista.length) { $('#main').innerHTML = head + '<div class="empty-s" style="margin-top:22px">Cadastre os corretores no Elenco para ver a tabela.</div>'; return; }
+  const cel = v => { const d = degrauDe(v); return d === null ? '<td class="mx dx">–</td>' : `<td class="mx d${d}" title="${DEGRAUS[d].nome}">${DEGRAUS[d].curto}</td>`; };
+  const conta = (k, d) => Es.filter(x => degrauDe(x.E.e[k]) !== null && degrauDe(x.E.e[k]) >= d).length;
+  const semNinguem = ETAPAS.filter(x => !conta(x.k, 3)), comAlguem = ETAPAS.filter(x => conta(x.k, 3));
+  $('#main').innerHTML = head + `
+    <div class="leit">
+      <div><b class="n4">${comAlguem.length}</b><span>de 9 etapas já têm alguém que faz sozinho</span></div>
+      <div><b class="n3">${ETAPAS.filter(x => conta(x.k, 1)).length}</b><span>de 9 etapas já foram treinadas com alguém</span></div>
+      <div class="w"><span class="lbl">Ninguém faz sozinho ainda</span>${semNinguem.length ? semNinguem.map(x => `<span class="chip sm-c">${x.nome}</span>`).join('') : '<span class="muted">Todas as etapas têm alguém que faz sozinho.</span>'}</div>
+    </div>
+    <div class="tw mxw"><table class="mxt">
+      <thead><tr><th rowspan="2" class="nm">Corretor</th>${FASES.map(f => `<th colspan="${f.etapas.length}" class="fh">${f.nome}</th>`).join('')}<th rowspan="2" class="dd">Dedicação</th></tr>
+        <tr>${ETAPAS.map(x => `<th class="eh">${x.curto}</th>`).join('')}</tr></thead>
+      <tbody>${Es.map(({ c, E }) => { const d = dedDe(dedicacaoDe(c)); return `<tr><th class="nm"><button data-act="abrir" data-id="${esc(c.id)}">${avatar(c)}<span>${esc(c.nome)}</span></button></th>${ETAPAS.map(x => cel(E.e[x.k])).join('')}<td class="dd">${d ? d[1] : '–'}</td></tr>`; }).join('')}</tbody>
+      <tfoot><tr><th class="nm">Fazem sozinho</th>${ETAPAS.map(x => `<td>${conta(x.k, 3)}</td>`).join('')}<td></td></tr>
+        <tr><th class="nm">Já treinaram</th>${ETAPAS.map(x => `<td>${conta(x.k, 1)}</td>`).join('')}<td></td></tr></tfoot>
+    </table></div>
+    <div class="fm-leg" style="margin-top:14px">${DEGRAUS.map((d, i) => `<span><i class="qd d${i}"></i>${d.nome}: ${d.o.toLowerCase()}</span>`).join('')}</div>`;
+}
+
+// ── CARTEIRA EM CONSTRUÇÃO (cada angariação andando pelas fases) ──
+const angariacoes = () => corretores.flatMap(c => c.producao.filter(p => p.tipo === 'angariacao').map(p => ({ p, c })))
+  .sort((a, b) => b.p.data.localeCompare(a.p.data));
+function resumoCarteira() {
+  const A = angariacoes(), ass = A.filter(x => assinada(x.p));
+  return { A, ass, and: A.filter(x => !assinada(x.p)), site: A.filter(x => iFase(x.p.fase) >= 4), prop: A.filter(x => x.p.prop),
+    valor: ass.reduce((s, x) => s + x.p.valor, 0), vis: corretores.reduce((s, c) => s + c.producao.filter(p => p.tipo === 'visita').length, 0) };
+}
+function renderCarteira() {
+  const R = resumoCarteira();
+  const card = ({ p, c }) => `<button class="ang${admin ? '' : ' ro'}" ${admin ? `data-act="ang-ed" data-id="${esc(c.id)}" data-v="${esc(p.id)}"` : 'tabindex="-1"'}>
+    <b>${esc(p.nome || [p.ti, p.bairro].filter(Boolean).join(' · ') || 'Imóvel')}</b>
+    <small>${[p.nome ? [p.ti, p.bairro].filter(Boolean).join(' · ') : '', p.valor ? fmtValor(p.valor) : ''].filter(Boolean).join(' · ')}</small>
+    <span class="who2">${avatar(c)}${esc(firstName(c.nome))} · ${fmtShort(p.data)}${p.prop ? '<span class="pp">proposta</span>' : ''}</span></button>`;
+  $('#main').innerHTML = cabecalho('Carteira em construção', 'Cada angariação, da documentação ao Reels') + `
+    <div class="kpis k5">
+      <div><b style="color:var(--vis)">${R.vis}</b><span>Visitas de angariação</span></div>
+      <div><b>${R.and.length}</b><span>Em andamento</span></div>
+      <div><b style="color:var(--or2)">${R.ass.length}</b><span>Autorizações assinadas</span></div>
+      <div><b style="color:var(--ok)">${R.site.length}</b><span>No site</span></div>
+      <div><b>${R.valor ? fmtValor(R.valor) : '–'}</b><span>Valor angariado</span></div>
+    </div>
+    <div class="tools adm"><button class="btn-or sm" data-act="prod" data-v="angariacao">+ Angariação</button><button class="btn-ghost sm" data-act="prod" data-v="visita">+ Visita de angariação</button></div>
+    ${R.A.length ? `<div class="board">${FASES_ANG.map(([k, l], i) => { const L = R.A.filter(x => iFase(x.p.fase) === i); return `<section class="col"><div class="col-h"><span class="fa f${i}">${l}</span><b>${L.length}</b></div>${L.map(card).join('') || '<div class="col-v">—</div>'}</section>`; }).join('')}</div>`
+      : `<div class="empty" style="margin-top:22px"><h3>Nenhuma angariação registrada ainda</h3><p>Cada imóvel angariado entra aqui e anda pelas fases: documentação, Jetimob, autorização assinada, fotos, site e Reels.</p><button class="btn-or adm" data-act="prod" data-v="angariacao">+ Angariação</button></div>`}`;
+}
+
+// ── TREINAMENTOS ──
+function renderTreinos() {
+  const T = mentoria.treinos, cob = new Set(T.flatMap(t => t.etapas));
+  $('#main').innerHTML = cabecalho('Treinamentos', 'Tudo o que foi ensinado, para quem e de qual etapa') + `
+    <div class="kpis">
+      <div><b>${T.length}</b><span>${plural(T.length, 'treinamento dado', 'treinamentos dados')}</span></div>
+      <div><b>${cob.size}<small class="de9">/9</small></b><span>etapas já treinadas</span></div>
+      <div><b>${new Set(T.flatMap(t => t.quem)).size}</b><span>pessoas treinadas</span></div>
+    </div>
+    <div class="tools adm"><button class="btn-or sm" data-act="treino">+ Treinamento</button><p class="hintp">Quem participou sobe sozinho para "Treinou" nas etapas do treinamento.</p></div>
+    ${T.length ? `<div class="ls" style="margin-top:16px">${T.map(t => `<div class="li tr">
+        <span class="d">${fmtShort(t.data)}<br>${t.data.slice(0, 4)}</span>
+        <span class="w"><b>${esc(t.tema)}</b>
+          <span class="chips-in">${t.etapas.map(k => `<span class="tg">${ETAPAS.find(e => e.k === k).nome}</span>`).join('') || '<span class="tg">Geral</span>'}</span>
+          <small>${t.quem.map(id => byId(id)).filter(Boolean).map(c => esc(firstName(c.nome))).join(', ') || 'Sem participantes'}${t.obs ? ' · ' + esc(t.obs) : ''}</small></span>
+        <button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>`
+      : `<div class="empty" style="margin-top:22px"><h3>Nenhum treinamento registrado ainda</h3><p>Registre cada treinamento e cada acompanhamento em campo: data, tema, etapas e quem participou.</p><button class="btn-or adm" data-act="treino">+ Treinamento</button></div>`}`;
+}
+
+// ── RELATÓRIO PARA A DIRETORIA ──
+function mesMentoria() { let k = 1; const h = hoje(); while (maisMeses(mentoria.inicio, k) <= h && k < 60) k++; return k; }
+const diasMentoria = () => Math.max(1, Math.round((new Date(hoje()) - new Date(mentoria.inicio)) / 864e5) + 1);
+const estTxt = v => `<span class="rs">★</span>${fmtEst(v)}`;
+function paginasRelatorio() {
+  const k = mesMentoria(), fz = Math.min(k, 3) - 1, R = resumoCarteira(), lista = ordenados(), Es = lista.map(c => ({ c, E: etapasDe(c) }));
+  const conta = (key, d) => Es.filter(x => degrauDe(x.E.e[key]) !== null && degrauDe(x.E.e[key]) >= d).length;
+  const T = mentoria.treinos, fimMent = maisMeses(mentoria.inicio, 3);
+  const rod = n => `<div class="r-rod"><span>Mentoria de angariação · VIP Imóveis</span><span>Matheus Nickel · ${fmtDate(hoje())}</span><span>${n}</span></div>`;
+  const fasesM = MENT_FASES.map(([t, d], i) => `<div class="r-fz${i === fz ? ' on' : i < fz ? ' ok' : ''}"><span>${i + 1}º mês</span><b>${t}</b><small>${d}</small></div>`).join('');
+  const cel = v => { const d = degrauDe(v); return d === null ? '<td class="mx dx">–</td>' : `<td class="mx d${d}">${DEGRAUS[d].curto}</td>`; };
+  const sem = ETAPAS.filter(x => !conta(x.k, 3));
+  return `
+  <section class="rp r-capa">
+    <div class="r-top"><span class="r-brand"><i></i>MENTORIA DE ANGARIAÇÃO</span><span>VIP IMÓVEIS</span></div>
+    <div class="r-hero">
+      <span class="r-k">Relatório · ${k}º mês · dia ${diasMentoria()} de ${Math.round((new Date(fimMent) - new Date(mentoria.inicio)) / 864e5)}</span>
+      <h1>Estruturação do setor de angariação</h1>
+      <p>Início em ${fmtDate(mentoria.inicio)}. Três meses para deixar o time angariando sozinho, com processo, ferramentas e acompanhamento de cada corretor.</p>
+    </div>
+    <div class="r-fzs">${fasesM}</div>
+    <div class="r-kpi">
+      <div><b>${lista.length}</b><span>corretores no time</span></div>
+      <div><b>${T.length}</b><span>treinamentos dados</span></div>
+      <div><b>${R.vis}</b><span>visitas de angariação</span></div>
+      <div><b>${R.ass.length}</b><span>autorizações assinadas</span></div>
+      <div><b>${R.valor ? fmtValor(R.valor) : '–'}</b><span>valor angariado</span></div>
+    </div>
+    ${rod(1)}
+  </section>
+  <section class="rp">
+    <div class="r-h"><span class="r-k">O que já foi feito</span><h2>Processo, ferramentas e método no lugar</h2></div>
+    <div class="r-2">
+      <div><ul class="r-ok">${mentoria.entregas.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+        ${T.length ? `<div class="r-sub">Treinamentos</div><ul class="r-tr">${T.slice(0, 6).map(t => `<li><b>${fmtShort(t.data)}</b>${esc(t.tema)} <small>${t.quem.length} ${plural(t.quem.length, 'pessoa', 'pessoas')}</small></li>`).join('')}${T.length > 6 ? `<li><small>e mais ${T.length - 6}</small></li>` : ''}</ul>` : ''}</div>
+      <div><div class="r-sub">O processo de angariação da VIP</div>
+        <div class="r-proc">${FASES.map((f, i) => `<div class="r-pf"><b><span>${i + 1}</span>${f.nome}</b>${f.etapas.map(x => `<span>${x.nome}</span>`).join('')}</div>`).join('')}</div>
+        <p class="r-nota">Depois de angariar: o corretor anexa a documentação, o cadastro e a autorização de venda preenchida no Jetimob, o Renan envia para assinatura e, assinada, o imóvel vai para fotos, site e Reels.</p></div>
+    </div>
+    ${rod(2)}
+  </section>
+  <section class="rp">
+    <div class="r-h"><span class="r-k">Quem sabe fazer o quê</span><h2>${ETAPAS.length - sem.length} de 9 etapas já têm alguém que faz sozinho</h2></div>
+    <table class="mxt r-mx"><thead><tr><th rowspan="2" class="nm"></th>${FASES.map(f => `<th colspan="${f.etapas.length}" class="fh">${f.nome}</th>`).join('')}<th rowspan="2" class="dd">Capacidade</th></tr>
+      <tr>${ETAPAS.map(x => `<th class="eh">${x.curto}</th>`).join('')}</tr></thead>
+      <tbody>${Es.map(({ c, E }) => `<tr><th class="nm">${esc(c.nome)}</th>${ETAPAS.map(x => cel(E.e[x.k])).join('')}<td class="dd">${estTxt(capDe(c))}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><th class="nm">Fazem sozinho</th>${ETAPAS.map(x => `<td>${conta(x.k, 3)}</td>`).join('')}<td></td></tr></tfoot></table>
+    <div class="r-leg">${DEGRAUS.map((d, i) => `<span><i class="qd d${i}"></i>${d.nome}</span>`).join('')}${sem.length ? `<span class="r-foco">Foco agora: ${sem.map(x => x.nome).join(', ')}</span>` : ''}</div>
+    ${rod(3)}
+  </section>
+  <section class="rp">
+    <div class="r-h"><span class="r-k">O time e a carteira</span><h2>Cada corretor e o próximo passo dele</h2></div>
+    <table class="r-tab"><thead><tr><th>Corretor</th><th>Capacidade</th><th>Faz sozinho</th><th>Dedicação</th><th>Visitas</th><th>Angariações</th><th>Próximo passo</th></tr></thead>
+      <tbody>${Es.map(({ c, E }) => { const P = contar(c.producao), d = dedDe(dedicacaoDe(c)), pp = proximoPasso(E); return `<tr><td><b>${esc(c.nome)}</b></td><td>${estTxt(capDe(c))}</td><td>${sozinho(E.e)} de 9</td><td>${d ? d[1] : '–'}</td><td>${P.v}</td><td>${P.a}</td><td>${pp ? `${pp.x.nome}: ${pp.d === null ? 'avaliar' : minus1(DEGRAUS[pp.d].subir.replace(/\.$/, ''))}` : 'Ensinar os outros'}</td></tr>`; }).join('')}</tbody></table>
+    <div class="r-sub">Carteira em construção</div>
+    <div class="r-funil">${FASES_ANG.map(([k2, l], i) => `<div><b>${R.A.filter(x => iFase(x.p.fase) === i).length}</b><span>${l}</span></div>`).join('')}</div>
+    ${rod(4)}
+  </section>
+  <section class="rp">
+    <div class="r-h"><span class="r-k">Aonde vamos chegar</span><h2>${k >= 3 ? 'Fechamento da mentoria' : `Próximo foco: ${MENT_FASES[Math.min(fz + 1, 2)][0].toLowerCase()}`}</h2></div>
+    <div class="r-2">
+      <div><div class="r-sub">Próximos passos</div><ol class="r-pp">${mentoria.proximos.map(t => `<li>${esc(t)}</li>`).join('')}</ol></div>
+      <div><div class="r-sub">Meta até ${fmtDate(fimMent)}</div><p class="r-meta">${esc(mentoria.meta || 'Time fazendo sozinho as 9 etapas do processo, com cada angariação registrada da visita ao Reels.')}</p>
+        <div class="r-fzs v">${fasesM}</div></div>
+    </div>
+    ${rod(5)}
+  </section>`;
+}
+function renderRelatorio() {
+  $('#main').innerHTML = cabecalho('Relatório', 'Para a diretoria: em que fase estamos, o que foi feito e aonde vamos chegar') + `
+    <div class="tools"><button class="btn-or sm" data-act="pdf">Baixar PDF</button><button class="btn-ghost sm adm" data-act="mentoria">Editar entregas, próximos passos e meta</button></div>
+    <div class="rel-prev" id="rel-prev"><div class="rel-in">${paginasRelatorio()}</div></div>`;
+  escalaRelatorio();
+}
+// as páginas têm o tamanho do PDF (A4 deitado); na tela elas encolhem para caber na largura
+function escalaRelatorio() {
+  const box = $('#rel-prev'); if (!box) return;
+  const k = Math.min(1, box.clientWidth / 1123), inn = box.firstElementChild;
+  inn.style.transform = `scale(${k})`;
+  box.style.height = inn.scrollHeight * k + 'px';
+}
+window.addEventListener('resize', escalaRelatorio);
+const carregados = {};
+function carrega(src) {
+  if (!carregados[src]) carregados[src] = new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => { delete carregados[src]; no(new Error('script')); }; document.head.appendChild(s); });
+  return carregados[src];
+}
+async function baixarPDF(btn) {
+  const txt = btn.textContent; btn.disabled = true; btn.textContent = 'Gerando o PDF…';
+  const host = document.createElement('div'); host.className = 'rel-host';
+  try {
+    await Promise.all([carrega('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'), carrega('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')]);
+    host.innerHTML = paginasRelatorio(); document.body.appendChild(host);
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'px', format: [1123, 794], hotfixes: ['px_scaling'], compress: true });
+    const pgs = host.querySelectorAll('.rp');
+    for (let i = 0; i < pgs.length; i++) {
+      const cv = await window.html2canvas(pgs[i], { scale: 2, backgroundColor: '#ffffff', logging: false });
+      if (i) pdf.addPage([1123, 794], 'landscape');
+      pdf.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 1123, 794);
+    }
+    pdf.save(`Relatorio-Mentoria-VIP-${hoje()}.pdf`);
+  } catch (e) { toast('Não consegui gerar o PDF. Confira a internet e tente de novo.'); }
+  host.remove(); btn.disabled = false; btn.textContent = txt;
+}
+
 // ── RENDER ──
 function render() {
   document.body.classList.toggle('adm', admin);
   const c = ui.ficha ? byId(ui.ficha) : null;
-  $('.fab').classList.toggle('hidden', !!c); // no perfil o botão + cobriria as notas
-  if (c) renderFicha(c); else renderElenco();
+  $('.fab').classList.toggle('hidden', !!c || ui.tela !== 'elenco'); // no perfil o botão + cobriria as notas
+  if (c) return renderFicha(c);
+  ({ processo: renderProcesso, carteira: renderCarteira, treinos: renderTreinos, relatorio: renderRelatorio }[ui.tela] || renderElenco)();
 }
 function route() {
   const m = location.hash.match(/^#c\/(.+)$/);
   const novo = m ? decodeURIComponent(m[1]) : null;
   if (novo !== ui.ficha) { ui.aba = 'geral'; ui.info = new Set(); }
   ui.ficha = novo;
+  if (!novo) { const t = location.hash.slice(1); ui.tela = TELAS.some(x => x[0] === t) ? t : 'elenco'; }
   ui.prodAll = false;
   render();
   window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', route);
-
 // ── FOLHAS ──
 function openSheet(html, state) {
   ui.sheet = state;
@@ -997,8 +1475,9 @@ function closeSheet() {
   document.body.style.overflow = '';
 }
 // tocar fora fecha a folha, menos na avaliação (um toque sem querer perderia tudo o que foi preenchido)
-$('#ov').addEventListener('mousedown', e => { if (e.target.id === 'ov' && ui.sheet !== 'aval') closeSheet(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && ui.sheet !== 'aval') closeSheet(); });
+const PRESA = ['aval', 'treino', 'mentoria'];
+$('#ov').addEventListener('mousedown', e => { if (e.target.id === 'ov' && !PRESA.includes(ui.sheet)) closeSheet(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.sheet && !PRESA.includes(ui.sheet)) closeSheet(); });
 const shHead = (kick, title) => `<div class="sh-h"><div><span class="kick">${kick}</span><h2>${title}</h2></div><button class="x" data-act="fechar" aria-label="Fechar">×</button></div>`;
 
 function sheetLogin() {
@@ -1082,114 +1561,156 @@ function savePerfil() {
   else toast('Dados salvos.');
 }
 
-// avaliação: notas de 0 a 20 (com o guia de cada faixa) e as estrelas da capacidade atual
+// avaliação: o degrau de cada uma das 9 etapas e a dedicação
 function sheetAval(id, avId) {
   const c = byId(id); if (!c) return;
-  const idx = avId ? c.avaliacoes.findIndex(a => a.id === avId) : -1;
-  if (avId && idx < 0) return;
-  const atual = idx >= 0 ? c.avaliacoes[idx] : null;
-  const ref = idx >= 0 ? c.avaliacoes[idx - 1] || null : ultima(c); // contra o que comparar
-  form = { tipo: 'aval', id, avId: avId || null, notas: Object.assign({}, atual ? atual.notas : ref ? ref.notas : {}), ref: ref ? ref.notas : {},
-    ca: atual ? atual.ca : c.capacidade };
-  const linhas = g => `<div class="ag"><div class="ag-t">${g.nome}</div>${g.attrs.map(a => `
-    <div class="ar"><div class="top2"><div class="an"><b>${a.nome}</b><small>${esc(a.desc)}</small></div>
-      <div class="stp"><button data-act="nota" data-k="${a.k}" data-v="-1" aria-label="Diminuir ${a.nome}">−</button><input id="n-${a.k}" inputmode="numeric" maxlength="2" aria-label="${a.nome}" value="${form.notas[a.k] ?? ''}" placeholder="–"><button data-act="nota" data-k="${a.k}" data-v="1" aria-label="Aumentar ${a.nome}">+</button></div></div>
-      <div class="rub" id="rb-${a.k}"></div></div>`).join('')}</div>`;
-  openSheet(shHead(atual ? 'Editar avaliação' : ref ? 'Atualizar notas' : 'Primeira avaliação', esc(c.nome)) + `<div class="sh-b">
-    <div>
-      <p class="hintp" style="margin-bottom:10px">${ref && !atual ? 'Já vem com as notas da última vez. Mude só o que evoluiu (+1 ou −1) e salve.' : 'Dê a nota de 0 a 20 em cada atributo. Embaixo de cada um aparece o que aquela nota significa, para você conferir se bate com o que viu.'}</p>
-      <div class="escala">${ESCALA.map(([cl, f, t]) => `<div><b class="${cl}">${f}</b>${t}</div>`).join('')}</div>
-    </div>
+  const atual = avId ? c.avaliacoes.find(a => a.id === avId && a.m === 2) : null;
+  if (avId && !atual) return;
+  const E = etapasDe(c), ded = dedicacaoDe(c);
+  // avaliação nova começa do que já existe hoje (ponto de partida da avaliação antiga e treinamentos inclusos)
+  const base = atual ? atual.notas : Object.assign({}, E.e, typeof ded === 'number' ? { det: ded } : {});
+  form = { tipo: 'aval', id, avId: avId || null, notas: {}, ref: E.nova && !atual ? ultimaNova(c).notas : {} };
+  ETAPAS.forEach(x => { const d = degrauDe(base[x.k]); if (d !== null) form.notas[x.k] = DEGRAUS[d].n; });
+  if (dedDe(base.det)) form.notas.det = dedDe(base.det)[0];
+  const linhas = f => `<div class="ag"><div class="ag-t">${f.nome}<small>${f.sub}</small></div>${f.etapas.map(x => `
+    <div class="ar"><div class="an"><b>${x.nome}</b><small>${esc(x.desc)}</small></div>
+      <div class="dgs" role="group" aria-label="${x.nome}">${DEGRAUS.map((d, i) => `<button data-act="dg" data-k="${x.k}" data-v="${d.n}" class="g${i}">${d.curto}</button>`).join('')}</div>
+      <div class="rub" id="rb-${x.k}"></div></div>`).join('')}</div>`;
+  openSheet(shHead(atual ? 'Editar avaliação' : E.nova ? 'Atualizar etapas' : 'Avaliar as etapas', esc(c.nome)) + `<div class="sh-b">
+    <p class="hintp">${E.nova && !atual ? 'Já vem com os degraus da última vez. Suba só o que evoluiu e salve.' : 'Marque em que degrau a pessoa está em cada etapa. A nota de 0 a 20 e as estrelas saem daí.'}</p>
+    <div class="escala">${DEGRAUS.map((d, i) => `<div><b class="${nivel(d.n)}">${d.nome} · ${d.n}</b>${d.o}</div>`).join('')}</div>
     <div class="row2"><div class="fl"><label class="lbl" for="a-data">Data da avaliação</label><input id="a-data" type="date" value="${atual ? atual.data : hoje()}"></div></div>
-    ${GRUPOS.map(linhas).join('')}
-    <div class="ag"><div class="ag-t">Capacidade atual</div>
-      <div class="ar"><span class="sug" id="lv-sug"></span>
-        <p class="hintp" style="margin-top:8px">As estrelas saem da média das notas: ${REGUA.slice().reverse().map(([m, e]) => `${fmtEst(m)} = ${fmtEst(e)}★`).join(' · ')}</p></div></div>
+    ${FASES.map(linhas).join('')}
+    <div class="ag"><div class="ag-t">Dedicação<small>Quanto do tempo a pessoa deixa para angariar (pergunte a ela)</small></div>
+      <div class="ar"><div class="dgs d4" role="group" aria-label="Dedicação">${DED.op.map(o => `<button data-act="ded" data-v="${o[0]}">${o[1]}</button>`).join('')}</div><div class="rub" id="rb-det"></div></div></div>
+    <div class="liveo"><span class="lc">Capacidade atual</span><span id="lv-soz" class="muted"></span><span id="lv-st"></span></div>
+    <div class="err" id="a-err"></div>
     <div id="a-del"></div>
   </div>
   <div class="sh-f">${atual ? '<button class="danger l" data-act="aval-del-ask">Apagar avaliação</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-aval">Salvar</button></div>`, 'aval');
-  ATTRS.forEach(a => {
-    $('#n-' + a.k).addEventListener('input', e => {
-      const d = e.target.value.replace(/\D/g, '').slice(0, 2);
-      if (d === '') delete form.notas[a.k]; else form.notas[a.k] = Math.min(20, +d);
-      e.target.value = d === '' ? '' : String(form.notas[a.k]);
-      pintaNota(a.k);
-    });
-    pintaNota(a.k);
-  });
+  ETAPAS.forEach(x => pintaDegrau(x.k)); pintaDegrau('det');
 }
-function pintaNota(k) {
-  const inp = $('#n-' + k); if (!inp) return;
-  const v = form.notas[k], a = ATTRS.find(x => x.k === k), p = form.ref[k];
-  inp.className = nivel(v);
-  $('#rb-' + k).innerHTML = (typeof v === 'number'
-    ? `<b class="${nivel(v)}">${FAIXAS[faixa(v)]}</b>${a.niv[faixa(v)]}`
-    : '<span class="muted">Sem nota. Toque em + para começar em 10.</span>') +
-    (typeof p === 'number' ? `<span class="pr">antes ${p}${typeof v === 'number' && v !== p ? ' ' + delta(v - p) : ''}</span>` : '');
-  // as estrelas da capacidade atual pela conta, atualizando a cada nota
-  const s = notaDe(form.notas) === null ? 0 : capAtual(form.notas);
-  $('#lv-sug').innerHTML = s ? `Pela conta:${st5(s)}` : 'Dê as notas para ver as estrelas.';
-}
-function passoNota(k, d) {
+const ultimaNova = c => c.avaliacoes.filter(a => a.m === 2).pop() || null;
+function pintaDegrau(k) {
   const v = form.notas[k];
-  form.notas[k] = typeof v !== 'number' ? 10 : Math.max(0, Math.min(20, v + d));
-  $('#n-' + k).value = form.notas[k];
-  pintaNota(k);
+  document.querySelectorAll(`#sheet [data-k="${k}"]`).forEach(b => b.classList.toggle('on', +b.dataset.v === v));
+  if (k === 'det') {
+    document.querySelectorAll('#sheet [data-act="ded"]').forEach(b => b.classList.toggle('on', +b.dataset.v === v));
+    const d = dedDe(v); $('#rb-det').innerHTML = d ? `<b>${d[1]}</b>${d[2]}` : '<span class="muted">Ainda sem resposta.</span>';
+  } else {
+    const d = degrauDe(v), p = form.ref[k];
+    $('#rb-' + k).innerHTML = (d !== null ? `<b class="${nivel(v)}">${DEGRAUS[d].nome}</b>${DEGRAUS[d].o} <span class="muted">Para subir: ${minus1(DEGRAUS[d].subir)}</span>` : '<span class="muted">Toque no degrau em que a pessoa está.</span>') +
+      (typeof p === 'number' && typeof v === 'number' && v !== p ? `<span class="pr">antes: ${DEGRAUS[degrauDe(p)].nome.toLowerCase()} ${delta(v - p)}</span>` : '');
+  }
+  const n = ETAPAS.filter(x => typeof form.notas[x.k] === 'number').length;
+  $('#lv-st').innerHTML = n ? st5(capEtapas(form.notas)) : '';
+  $('#lv-soz').textContent = n < 9 ? `faltam ${9 - n} ${plural(9 - n, 'etapa', 'etapas')}` : `faz sozinho ${sozinho(form.notas)} de 9`;
 }
 function saveAval() {
   const c = byId(form.id); if (!c) return closeSheet();
-  const data = $('#a-data').value || hoje();
-  const editando = !!form.avId;
-  // avaliação nova não leva adiante a nota de atributo que saiu da tela
-  const semAntigos = n => { const o = cleanNotas(n); ATTRS_ANTIGOS.forEach(k => delete o[k]); return o; };
-  const notas = editando ? cleanNotas(form.notas) : semAntigos(form.notas);
-  if (!ATTRS.some(a => a.k in notas)) { toast('Dê nota em pelo menos um atributo.'); return; }
-  const u = ultima(c);
-  // vira uma nova avaliação se alguma nota ou as estrelas mudaram
-  const mudou = JSON.stringify(semAntigos(notas)) !== JSON.stringify(semAntigos(form.ref));
-  const ca = capAtual(notas); // guardada só como registro; a tela sempre refaz a conta
+  const falta = ETAPAS.filter(x => typeof form.notas[x.k] !== 'number');
+  if (falta.length) { $('#a-err').textContent = 'Falta marcar: ' + falta.map(x => x.nome).join(', ') + '.'; $('#a-err').scrollIntoView({ block: 'nearest' }); return; }
+  const data = $('#a-data').value || hoje(), editando = !!form.avId;
+  const notas = cleanNotas(form.notas), ca = capEtapas(notas), u = ultimaNova(c);
+  const mudou = !u || JSON.stringify(cleanNotas(u.notas)) !== JSON.stringify(notas);
   const avs = editando
     ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, ca }) : a)
-    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca }]) : c.avaliacoes;
-  // a capacidade atual do corretor acompanha a avaliação mais recente
-  const recente = !editando || (u && u.id === form.avId);
-  saveCorretor(Object.assign({}, c, recente ? { capacidade: ca } : {}, { avaliacoes: avs }));
+    : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca, m: 2 }]) : c.avaliacoes;
+  saveCorretor(Object.assign({}, c, { capacidade: ca, avaliacoes: avs }));
   closeSheet();
   toast(editando ? 'Avaliação atualizada.' : mudou ? 'Avaliação salva.' : 'Nada mudou desde a última avaliação.');
-
 }
 
-// produção: visita de angariação (valor, tipo, data) / angariação realizada (valor, bairro, data)
-function sheetProd(id, tipo) {
-  const c = byId(id); if (!c) return;
-  form = { tipo: 'prod', id, ptipo: PROD[tipo] ? tipo : 'visita', ti: '' };
-  openSheet(shHead('Registrar produção', esc(c.nome)) + `<div class="sh-b">
-    <div class="seg" id="p-seg"></div>
-    <div class="fl"><label class="lbl" for="p-valor">Valor do imóvel</label><input id="p-valor" inputmode="numeric" placeholder="R$ 0" autocomplete="off"></div>
-    <div id="p-ti-box"><span class="lbl">Tipo do imóvel</span><div class="chips" id="p-ti"></div></div>
-    <div class="fl" id="p-bairro-box"><label class="lbl" for="p-bairro">Bairro</label><input id="p-bairro" list="bairros" placeholder="Ex.: Santa Felicidade" autocomplete="off"></div>
-    <div class="row2"><div class="fl"><label class="lbl" for="p-data" id="p-data-l">Data</label><input id="p-data" type="date" value="${hoje()}"></div></div>
+// produção: visita de angariação / angariação (imóvel, valor, fase na carteira). Da Carteira, escolhe de quem é.
+function sheetProd(id, tipo, pid) {
+  const c = id ? byId(id) : null;
+  const p = c && pid ? c.producao.find(x => x.id === pid) : null;
+  if (pid && !p) return;
+  form = { tipo: 'prod', id: c ? c.id : null, pid: p ? p.id : null, ptipo: p ? p.tipo : PROD[tipo] ? tipo : 'visita', ti: p ? p.ti : '', fase: p && p.fase ? p.fase : 'doc', prop: !!(p && p.prop), escolhe: !c };
+  openSheet(shHead(p ? 'Editar angariação' : 'Registrar', c ? esc(c.nome) : 'Visita ou angariação') + `<div class="sh-b">
+    ${form.escolhe ? `<div><span class="lbl">De quem é</span><div class="chips sm" id="p-quem"></div></div>` : ''}
+    ${p ? '' : '<div class="seg" id="p-seg"></div>'}
+    <div class="fl" id="p-nome-box"><label class="lbl" for="p-nome">Imóvel<span class="hint">para reconhecer na carteira</span></label><input id="p-nome" value="${esc(p ? p.nome : '')}" placeholder="Ex.: Apto 1201 Ed. Kaá" autocomplete="off"></div>
+    <div class="fl"><label class="lbl" for="p-valor">Valor do imóvel</label><input id="p-valor" inputmode="numeric" placeholder="R$ 0" autocomplete="off" value="${p && p.valor ? 'R$ ' + p.valor.toLocaleString('pt-BR') : ''}"></div>
+    <div><span class="lbl">Tipo do imóvel</span><div class="chips" id="p-ti"></div></div>
+    <div class="fl" id="p-bairro-box"><label class="lbl" for="p-bairro">Bairro</label><input id="p-bairro" list="bairros" placeholder="Ex.: Santa Felicidade" autocomplete="off" value="${esc(p ? p.bairro : '')}"></div>
+    <div id="p-fase-box"><span class="lbl">Em que fase está</span><div class="chips sm" id="p-fase"></div>
+      <label class="tgl"><input type="checkbox" id="p-prop" ${form.prop ? 'checked' : ''}> Já recebeu proposta</label></div>
+    <div class="row2"><div class="fl"><label class="lbl" for="p-data" id="p-data-l">Data</label><input id="p-data" type="date" value="${p ? p.data : hoje()}"></div></div>
+    <div class="err" id="p-err"></div>
   </div>
-  <div class="sh-f"><button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-prod">Registrar</button></div>`, 'prod');
+  <div class="sh-f"><button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-prod">${p ? 'Salvar' : 'Registrar'}</button></div>`, 'prod');
   $('#p-valor').addEventListener('input', e => maskMoney(e.target));
   renderSeg();
-  setTimeout(() => $('#p-valor').focus(), 50);
 }
 function renderSeg() {
   const vis = form.ptipo === 'visita';
-  $('#p-seg').innerHTML = Object.entries(PROD).map(([k, l]) => `<button class="${form.ptipo === k ? 'on' : ''}" data-act="ptipo" data-v="${k}">${l}</button>`).join('');
+  if ($('#p-seg')) $('#p-seg').innerHTML = Object.entries(PROD).map(([k, l]) => `<button class="${form.ptipo === k ? 'on' : ''}" data-act="ptipo" data-v="${k}">${l}</button>`).join('');
+  if ($('#p-quem')) $('#p-quem').innerHTML = ordenados().map(c => `<button class="chip${form.id === c.id ? ' on' : ''}" data-act="p-quem" data-v="${esc(c.id)}">${esc(firstName(c.nome))}</button>`).join('');
   $('#p-ti').innerHTML = TIPOS_IMOVEL.map(t => `<button class="chip${form.ti === t ? ' on' : ''}" data-act="p-ti" data-v="${t}">${t}</button>`).join('');
-  $('#p-ti-box').classList.toggle('hidden', !vis);
-  $('#p-bairro-box').classList.toggle('hidden', vis);
+  $('#p-fase').innerHTML = FASES_ANG.map(([k, l]) => `<button class="chip${form.fase === k ? ' on' : ''}" data-act="p-fase" data-v="${k}">${l}</button>`).join('');
+  ['#p-nome-box', '#p-bairro-box', '#p-fase-box'].forEach(s => $(s).classList.toggle('hidden', vis));
   $('#p-data-l').textContent = vis ? 'Data da visita' : 'Data da angariação';
 }
 function saveProd() {
-  const c = byId(form.id); if (!c) return closeSheet();
+  const c = byId(form.id);
+  if (!c) { $('#p-err').textContent = 'Escolha de quem é.'; return; }
   const vis = form.ptipo === 'visita';
-  const p = { id: newId('p'), data: $('#p-data').value || hoje(), tipo: form.ptipo, valor: parseMoney($('#p-valor').value), ti: vis ? form.ti : '', bairro: vis ? '' : $('#p-bairro').value.trim() };
-  saveCorretor(Object.assign({}, c, { producao: c.producao.concat([p]) }));
+  const p = { id: form.pid || newId('p'), data: $('#p-data').value || hoje(), tipo: form.ptipo, valor: parseMoney($('#p-valor').value), ti: form.ti, bairro: vis ? '' : $('#p-bairro').value.trim() };
+  if (!vis) Object.assign(p, { nome: $('#p-nome').value.trim(), fase: form.fase, prop: $('#p-prop').checked });
+  const producao = form.pid ? c.producao.map(x => x.id === form.pid ? p : x) : c.producao.concat([p]);
+  saveCorretor(Object.assign({}, c, { producao }));
+  const editando = !!form.pid;
   closeSheet();
+  if (editando) return toast('Angariação atualizada.');
   toast(`${vis ? 'Visita' : 'Angariação'} registrada para ${firstName(c.nome)}.`, { label: 'Desfazer', fn: () => { const x = byId(c.id); if (x) saveCorretor(Object.assign({}, x, { producao: x.producao.filter(y => y.id !== p.id) })); } });
+}
+
+// treinamento: data, tema, etapas que cobre e quem participou
+function sheetTreino(tid) {
+  const t = tid ? mentoria.treinos.find(x => x.id === tid) : null;
+  if (tid && !t) return;
+  form = { tipo: 'treino', tid: t ? t.id : null, etapas: t ? t.etapas.slice() : [], quem: t ? t.quem.slice() : [] };
+  openSheet(shHead(t ? 'Editar treinamento' : 'Novo treinamento', t ? esc(t.tema) : 'Registrar treinamento') + `<div class="sh-b">
+    <div class="fl"><label class="lbl" for="t-tema">Tema</label><input id="t-tema" value="${esc(t ? t.tema : '')}" placeholder="Ex.: Mapa cadastral e declaração unificada" autocomplete="off"></div>
+    <div class="row2"><div class="fl"><label class="lbl" for="t-data">Data</label><input id="t-data" type="date" value="${t ? t.data : hoje()}"></div></div>
+    <div><span class="lbl">Etapas que o treinamento cobre<span class="hint">quem participou sobe para "Treinou" nelas</span></span><div id="t-et"></div></div>
+    <div><span class="lbl">Quem participou</span><div class="chips sm" id="t-quem"></div></div>
+    <div class="fl"><label class="lbl" for="t-obs">Observação</label><input id="t-obs" value="${esc(t ? t.obs : '')}" placeholder="Opcional: em campo, na sala, por vídeo…" autocomplete="off"></div>
+    <div class="err" id="t-err"></div><div id="t-del"></div>
+  </div>
+  <div class="sh-f">${t ? '<button class="danger l" data-act="treino-del-ask">Apagar</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-treino">Salvar</button></div>`, 'treino');
+  renderTreinoChips();
+  if (!t) setTimeout(() => { if ($('#t-tema')) $('#t-tema').focus(); }, 50);
+}
+function renderTreinoChips() {
+  $('#t-et').innerHTML = FASES.map(f => `<div class="chips sm et-f"><span class="et-l">${f.nome}</span>${f.etapas.map(x => `<button class="chip${form.etapas.includes(x.k) ? ' on' : ''}" data-act="t-et" data-v="${x.k}">${x.nome}</button>`).join('')}</div>`).join('');
+  const todos = corretores.length && corretores.every(c => form.quem.includes(c.id));
+  $('#t-quem').innerHTML = `<button class="chip${todos ? ' on' : ''}" data-act="t-todos">Todos</button>` + ordenados().map(c => `<button class="chip${form.quem.includes(c.id) ? ' on' : ''}" data-act="t-quem" data-v="${esc(c.id)}">${esc(firstName(c.nome))}</button>`).join('');
+}
+function saveTreino() {
+  const tema = $('#t-tema').value.trim();
+  if (!tema) { $('#t-err').textContent = 'Coloque o tema.'; $('#t-tema').focus(); return; }
+  const t = { id: form.tid || newId('t'), data: $('#t-data').value || hoje(), tema, etapas: form.etapas, quem: form.quem, obs: $('#t-obs').value.trim() };
+  saveMentoria({ treinos: form.tid ? mentoria.treinos.map(x => x.id === form.tid ? t : x) : mentoria.treinos.concat([t]) });
+  const ed = !!form.tid; closeSheet(); toast(ed ? 'Treinamento atualizado.' : 'Treinamento registrado.');
+}
+
+// mentoria: início, o que foi entregue, próximos passos e meta (vão para o relatório)
+function sheetMentoria() {
+  form = { tipo: 'mentoria' };
+  openSheet(shHead('Relatório', 'A mentoria') + `<div class="sh-b">
+    <div class="row2"><div class="fl"><label class="lbl" for="m-ini">Início da mentoria</label><input id="m-ini" type="date" value="${mentoria.inicio}"></div></div>
+    <div class="fl"><label class="lbl" for="m-ent">O que já foi feito<span class="hint">uma por linha</span></label><textarea id="m-ent" rows="6">${esc(mentoria.entregas.join('\n'))}</textarea></div>
+    <div class="fl"><label class="lbl" for="m-pp">Próximos passos<span class="hint">um por linha</span></label><textarea id="m-pp" rows="4">${esc(mentoria.proximos.join('\n'))}</textarea></div>
+    <div class="fl"><label class="lbl" for="m-meta">Meta até o fim da mentoria</label><textarea id="m-meta" rows="3" placeholder="Ex.: 6 corretores fazendo sozinhos as 9 etapas e 15 autorizações assinadas">${esc(mentoria.meta)}</textarea></div>
+  </div>
+  <div class="sh-f"><button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-mentoria">Salvar</button></div>`, 'mentoria');
+}
+function saveMentoria2() {
+  const linhas = s => $(s).value.split('\n').map(x => x.trim()).filter(Boolean);
+  saveMentoria({ inicio: $('#m-ini').value || mentoria.inicio, entregas: linhas('#m-ent'), proximos: linhas('#m-pp'), meta: $('#m-meta').value.trim() });
+  closeSheet(); toast('Relatório atualizado.');
 }
 
 // ── TOAST ──
@@ -1242,7 +1763,6 @@ document.addEventListener('click', e => {
     case 'prod': sheetProd(id, v); break;
     case 'fechar': closeSheet(); break;
     case 'foto-rm': form.foto = ''; renderFotoPrev(); break;
-    case 'ca': form.ca = +v; renderEstrelas('#f-ca', form.ca, 'ca'); break;
     case 'save-perfil': savePerfil(); break;
     case 'del-ask': {
       const c = byId(form.id);
@@ -1259,8 +1779,31 @@ document.addEventListener('click', e => {
       toast(`${firstName(c.nome)} saiu do elenco.`, { label: 'Desfazer', fn: () => saveCorretor(copia) });
       break;
     }
-    case 'nota': passoNota(el.dataset.k, +v); break;
+    case 'dg': form.notas[el.dataset.k] = +v; pintaDegrau(el.dataset.k); $('#a-err').textContent = ''; break;
+    case 'ded': form.notas.det = form.notas.det === +v ? undefined : +v; if (form.notas.det === undefined) delete form.notas.det; pintaDegrau('det'); break;
     case 'save-aval': saveAval(); break;
+    case 'ang-ed': sheetProd(id, 'angariacao', v); break;
+    case 'p-quem': form.id = v; $('#p-err').textContent = ''; renderSeg(); break;
+    case 'p-fase': form.fase = v; renderSeg(); break;
+    case 'treino': sheetTreino(v); break;
+    case 't-et': form.etapas = form.etapas.includes(v) ? form.etapas.filter(x => x !== v) : form.etapas.concat(v); renderTreinoChips(); break;
+    case 't-quem': form.quem = form.quem.includes(v) ? form.quem.filter(x => x !== v) : form.quem.concat(v); renderTreinoChips(); break;
+    case 't-todos': form.quem = corretores.every(c => form.quem.includes(c.id)) ? [] : corretores.map(c => c.id); renderTreinoChips(); break;
+    case 'save-treino': saveTreino(); break;
+    case 'treino-del-ask':
+      $('#t-del').innerHTML = `<div class="confirm"><span>Apagar este treinamento? Quem participou volta ao degrau da avaliação.</span><button class="btn-del" data-act="treino-del-yes">Apagar</button><button class="link" data-act="treino-del-no">Cancelar</button></div>`;
+      $('#t-del').scrollIntoView({ block: 'nearest' });
+      break;
+    case 'treino-del-no': $('#t-del').innerHTML = ''; break;
+    case 'treino-del-yes': {
+      const antes = mentoria.treinos.slice(), tid = form.tid;
+      closeSheet(); saveMentoria({ treinos: antes.filter(x => x.id !== tid) });
+      toast('Treinamento apagado.', { label: 'Desfazer', fn: () => saveMentoria({ treinos: antes }) });
+      break;
+    }
+    case 'mentoria': sheetMentoria(); break;
+    case 'save-mentoria': saveMentoria2(); break;
+    case 'pdf': baixarPDF(el); break;
     case 'aval-del-ask':
       $('#a-del').innerHTML = `<div class="confirm"><span>Apagar a avaliação de ${fmtDate(byId(form.id).avaliacoes.find(x => x.id === form.avId).data)}?</span><button class="btn-del" data-act="aval-del-yes">Apagar</button><button class="link" data-act="aval-del-no">Cancelar</button></div>`;
       $('#a-del').scrollIntoView({ block: 'nearest' });
@@ -1290,7 +1833,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-10-29g';
+const VERSAO = '2026-11-01a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
@@ -1309,7 +1852,8 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 // ── ENTRADA ──
 if (TESTE) $('#teste-bar').classList.remove('hidden');
 $('#bairros').innerHTML = [...new Set(BAIRROS_CWB)].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(b => `<option value="${esc(b)}">`).join('');
-corretores = applyPending(lsGet(LS_CACHE, []).map(cleanCorretor));
+mentoria = cleanMentoria(lsGet(LS_CACHE + '_m', null));
+corretores = applyPending(lsGet(LS_CACHE, []).filter(o => o && o.id !== MID).map(cleanCorretor));
 route();
 refresh(true);
 </script>
