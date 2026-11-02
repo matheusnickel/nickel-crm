@@ -1402,7 +1402,7 @@ function renderTreino() {
         <span class="d">${fmtShort(t.data)}<br>${t.data.slice(0, 4)}</span>
         <span class="w"><b>${esc(tituloTreino(t))}</b>
           ${t.temas.length && t.tema ? `<span class="chips-in">${t.temas.map(k => `<span class="tg">${atr(k).nome}</span>`).join('')}</span>` : ''}
-          <small>${t.quem.map(id => byId(id)).filter(Boolean).map(c => esc(firstName(c.nome)) + (resultadoTreino(t, c.id) ? ` (${esc(resultadoTreino(t, c.id))})` : '')).join(' · ') || 'Sem participantes'}${t.obs ? ' · ' + esc(t.obs) : ''}</small></span>
+          <small>${quemTreino(t) || 'Sem participantes'}${t.obs ? ' · ' + esc(t.obs) : ''}</small></span>
         <button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>`
       : `<div class="empty"><h3>Nenhum treino registrado ainda</h3><p>Cada treino leva poucos segundos: o que foi treinado, quem estava, salvar.</p><button class="btn-or adm" data-act="treino">+ Registrar treino</button></div>`}`;
 }
@@ -1887,6 +1887,12 @@ function saveTreino() {
   saveMentoria({ treinos: form.tid ? mentoria.treinos.map(x => x.id === form.tid ? t : x) : mentoria.treinos.concat([t]) });
   const ed = !!form.tid; closeSheet(); toast(ed ? 'Treino atualizado.' : `Treino registrado para ${t.quem.length} ${plural(t.quem.length, 'pessoa', 'pessoas')}.`);
 }
+// quem estava no treino: "Time todo (10)"; até 3 pessoas com o resultado de cada uma; mais que isso, só os nomes (o detalhe fica na ficha)
+function quemTreino(t) {
+  const ps = t.quem.map(byId).filter(Boolean);
+  if (ps.length && ps.length === corretores.length && ps.length > 3) return `Time todo (${ps.length})`;
+  return ps.map(c => esc(firstName(c.nome)) + (ps.length <= 3 && resultadoTreino(t, c.id) ? ` (${esc(resultadoTreino(t, c.id))})` : '')).join(' · ');
+}
 // o que mudou numa pessoa num treino: "Matrícula 6 → 11"
 const resultadoTreino = (t, pid) => Object.entries((t.res || {})[pid] || {}).map(([k, [a, d]]) => `${atr(k) ? atr(k).nome : k} ${a} → ${d}`).join(' · ');
 
@@ -2032,7 +2038,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02d';
+const VERSAO = '2026-11-02e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
