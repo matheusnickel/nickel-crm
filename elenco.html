@@ -983,6 +983,8 @@ function notasAte(c, ate, semT) {
   avs.forEach(a => {
     const t = a.t ? mentoria.treinos.find(x => x.id === a.t) : null, res = t && t.res ? t.res[c.id] : null;
     const ks = !a.t ? ATRS.map(x => x.k) : res ? Object.keys(res) : t ? t.temas : [];
+    // treino antes de qualquer avaliação: o que ainda não tem nota vem do retrato salvo com o treino
+    if (a.t) ATRS.forEach(x => { if (n[x.k] === undefined && typeof a.notas[x.k] === 'number') { n[x.k] = a.notas[x.k]; origem[x.k] = 'aval'; } });
     ks.forEach(k => { const v = res && Array.isArray(res[k]) ? res[k][1] : a.notas[k]; if (typeof v === 'number') { n[k] = v; origem[k] = 'aval'; } });
   });
   return { n, origem, av: avs[avs.length - 1] || null };
@@ -1153,7 +1155,8 @@ function evolucaoDe(c) {
   return { de: capN(p.n), ate: capN(hj), p: p.n, hj, data: p.av ? p.av.data : '' };
 }
 const sitPill = n => { const s = situacaoDe(n); return s ? `<span class="sit ${s[2]}">${s[1]}</span>` : '<span class="sit s0">A avaliar</span>'; };
-const evoTxt = E => !E ? '<span class="muted">–</span>' : E.ate === E.de ? '<span class="dl eq">=</span>' : deltaEst(E.ate - E.de);
+// evolução só como seta: subindo, parado (tracinho) ou descendo, pela média exata das notas desde a primeira avaliação
+const evoTxt = E => { if (!E) return '<span class="muted">–</span>'; const d = (mediaTec(E.hj) ?? 0) - (mediaTec(E.p) ?? 0); return d > 0.001 ? '<span class="dl up" title="Subindo">▲</span>' : d < -0.001 ? '<span class="dl dn" title="Descendo">▼</span>' : '<span class="dl eq" title="Parado">–</span>'; };
 function renderElenco() {
   const lista = ordenados();
   const tot = lista.reduce((s, c) => { const p = prod(c, ui.per); s.v += p.v; s.a += p.a; return s; }, { v: 0, a: 0 });
@@ -2104,7 +2107,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02p';
+const VERSAO = '2026-11-02r';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
