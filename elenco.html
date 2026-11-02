@@ -414,6 +414,7 @@ input[type=date]{min-height:48px}
 .li.tr .w b{font-size:15px;font-weight:600}
 .chips-in{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .tg{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--tqbg);color:var(--tq2)}
+.chips-in.vz{margin:0 0 12px}.chips-in.vz b{font-weight:700}
 .et-f{align-items:center;margin-bottom:8px}.et-l{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--or2);width:96px}
 /* folha de avaliação: degraus */
 .ag-t small{display:block;font-size:12.5px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);margin-top:2px}
@@ -814,6 +815,10 @@ const fmtDate = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + is
 const fmtShort = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : '';
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const fmtMes = iso => iso ? MESES[+iso.slice(5, 7) - 1] + '/' + iso.slice(0, 4) : '';
+// o treino aparece só com o mês (o Matheus não guarda o dia); a data fica guardada só para a ordem e os períodos
+const MESES_L = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const mesCurto = iso => iso ? MESES[+iso.slice(5, 7) - 1] : '';
+const mesLongo = iso => iso ? MESES_L[+iso.slice(5, 7) - 1] : '';
 const initials = n => { const p = String(n || '').trim().split(/\s+/).filter(Boolean); return ((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase(); };
 const firstName = n => String(n || '').trim().split(/\s+/)[0] || '';
 const plural = (n, s, p) => n === 1 ? s : p;
@@ -1235,10 +1240,9 @@ function abaGeral(c, N) {
     ${g.attrs.map(a => {
       const v = n[a.k], p = ant ? ant.notas[a.k] : undefined, aberto = ui.info.has(a.k);
       const sobe = typeof v === 'number' && typeof p === 'number' && v > p, desce = typeof v === 'number' && typeof p === 'number' && v < p;
-      const tr = N.origem[a.k] === 'treino' ? treinosDe(c).find(t => t.temas.includes(a.k)) : null;
       return `<button class="fm-r${aberto ? ' open' : ''}" data-act="info" data-v="${a.k}" aria-expanded="${aberto}">
         <span class="ln"><span class="an">${a.nome}</span>${sobe ? `<span class="up" title="Subiu desde ${fmtShort(ant.data)}">▲</span>` : desce ? '<span class="dn">▼</span>' : ''}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></span>
-        ${aberto ? `<span class="fm-x">${esc(a.desc)}${typeof v === 'number' ? `<span class="fx"><b class="${nivel(v)}">${faixaA(a.k, v).nome}</b> ${esc(faixaA(a.k, v).o)}${tr ? ` Treinou em ${fmtShort(tr.data)}.` : ''}</span>` : '<span class="fx">Ainda sem nota.</span>'}</span>` : ''}
+        ${aberto ? `<span class="fm-x">${esc(a.desc)}${typeof v === 'number' ? `<span class="fx"><b class="${nivel(v)}">${faixaA(a.k, v).nome}</b> ${esc(faixaA(a.k, v).o)}${vezes(c, a.k) ? ` Treinou ${vezesTxt(c, a.k)}.` : ''}</span>` : '<span class="fx">Ainda sem nota.</span>'}</span>` : ''}
       </button>`;
     }).join('')}</div>`;
   };
@@ -1258,10 +1262,17 @@ function abaGeral(c, N) {
       <section class="box"><div class="box-h"><h3>Estatísticas</h3><span class="muted r" style="font-size:13px">desde ${fmtShort(inicioDe(c))}</span></div>
         <div class="est"><div><b>${P.v}</b><span>visitas de angariação</span></div><div><b>${P.a}</b><span>angariações assinadas</span></div><div><b>${P.valor ? fmtValor(P.valor) : '–'}</b><span>valor angariado</span></div><div><b>${tr.length}</b><span>${plural(tr.length, 'treino', 'treinos')}</span></div></div></section>
       <section class="box"><div class="box-h"><h3>Treinos</h3></div>
-        ${tr.length ? `<div class="ls">${tr.slice(0, 6).map(t => `<div class="li"><span class="d">${fmtShort(t.data)}</span><span class="w">${esc(tituloComValor(t, c))}${resultadoTreino(t, c.id) ? `<small>${esc(resultadoTreino(t, c.id))}</small>` : ''}</span><button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>` : '<div class="empty-s">Nenhum treino registrado ainda.</div>'}</section>
+        ${tr.length ? `<span class="chips-in vz">${TREINAVEIS.filter(x => vezes(c, x.k)).sort((x, y) => vezes(c, y.k) - vezes(c, x.k)).map(x => `<span class="tg">${x.nome} <b>${vezes(c, x.k)}×</b></span>`).join('')}</span>` : ''}
+        ${tr.length ? `<div class="ls">${tr.slice(0, 6).map(t => `<div class="li"><span class="d">${mesCurto(t.data)}</span><span class="w">${esc(tituloComValor(t, c))}${resultadoTreino(t, c.id) ? `<small>${esc(resultadoTreino(t, c.id))}</small>` : ''}</span><button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>` : '<div class="empty-s">Nenhum treino registrado ainda.</div>'}</section>
     </div>`;
 }
 const tituloTreino = t => t.tema || t.temas.map(k => atr(k).nome).join(', ') || 'Treino';
+// quantas vezes a pessoa treinou um atributo, e em que meses: "3 vezes (outubro e novembro)"
+const vezes = (c, k) => treinosDe(c).filter(t => t.temas.includes(k)).length;
+function vezesTxt(c, k) {
+  const ts = treinosDe(c).filter(t => t.temas.includes(k)), ms = [...new Set(ts.map(t => t.data.slice(0, 7)))].sort().map(m => mesLongo(m + '-01'));
+  return `${ts.length} ${plural(ts.length, 'vez', 'vezes')} (${ms.length > 1 ? ms.slice(0, -1).join(', ') + ' e ' + ms[ms.length - 1] : ms[0]})`;
+}
 // treino de visita: o valor do imóvel vem da visita registrada na produção no mesmo dia
 const visitaDoTreino = (t, c) => t.temas.includes('vis') ? c.producao.find(p => p.tipo === 'visita' && p.data === t.data && p.valor) || null : null;
 function tituloComValor(t, c) {
@@ -1421,7 +1432,7 @@ function renderTreino() {
     <div class="fm-leg">${REGUA_N.map(r => `<span><b class="${nivel(r.ate)}">${r.de}–${r.ate}</b> ${r.nome.toLowerCase()}</span>`).join('')}<span><b class="trd">6</b> com ponto: veio do treino, ainda sem avaliação</span></div>` : '<div class="empty-s">Cadastre os corretores no Plantel para ver o quadro.</div>'}
     <div class="group-t"><span class="lbl">Treinos dados</span></div>
     ${T.length ? `<div class="ls">${T.map(t => `<div class="li tr">
-        <span class="d">${fmtShort(t.data)}<br>${t.data.slice(0, 4)}</span>
+        <span class="d">${mesCurto(t.data)}<br>${t.data.slice(0, 4)}</span>
         <span class="w"><b>${esc(t.quem.length === 1 && byId(t.quem[0]) ? tituloComValor(t, byId(t.quem[0])) : tituloTreino(t))}</b>
           ${t.temas.length && t.tema ? `<span class="chips-in">${t.temas.map(k => `<span class="tg">${atr(k).nome}</span>`).join('')}</span>` : ''}
           <small>${quemTreino(t) || 'Sem participantes'}${t.obs ? ' · ' + esc(t.obs) : ''}</small></span>
@@ -1505,7 +1516,7 @@ function paginasRelatorio(opt) {
   campo.sort((a, b) => b.n - a.n);
   const campoTxt = g => g.k === 'vis' ? `${plural(g.n, 'Visita de angariação acompanhada', 'Visitas de angariação acompanhadas')} em campo${g.valor ? ` · ${fmtValor(g.valor)} em imóveis` : ''}`
     : `${plural(g.n, 'Treino individual', 'Treinos individuais')} de ${g.k ? (/^(Reels|Mind|Eemovel|Declaração)/.test(atr(g.k).nome) ? atr(g.k).nome : minus1(atr(g.k).nome)) : 'outros temas'}`;
-  const listaTreinos = (emTime.length ? `<div class="r-sub">Com o time</div><ul class="r-tr">${emTime.slice(0, 8).map(t => `<li><b>${fmtShort(t.data)}</b>${esc(tituloTreino(t))}<small>${quemTreino(t, true)}</small></li>`).join('')}${emTime.length > 8 ? `<li><small>e mais ${emTime.length - 8}</small></li>` : ''}</ul>` : '')
+  const listaTreinos = (emTime.length ? `<div class="r-sub">Com o time</div><ul class="r-tr">${emTime.slice(0, 8).map(t => `<li><b>${mesCurto(t.data)}</b>${esc(tituloTreino(t))}<small>${quemTreino(t, true)}</small></li>`).join('')}${emTime.length > 8 ? `<li><small>e mais ${emTime.length - 8}</small></li>` : ''}</ul>` : '')
     + (campo.length ? `<div class="r-sub">Um a um</div><ul class="r-tr">${campo.map(g => `<li><b>${g.n}×</b>${campoTxt(g)}<small>${Object.entries(g.quem).sort((a, b) => b[1] - a[1]).map(([nm, n]) => esc(nm) + (n > 1 ? ' ' + n : '')).join(' · ')}</small></li>`).join('')}</ul>` : '');
   // a ficha de evolução de uma pessoa no período
   const ficha = ({ c, E, prodP, tr }) => {
@@ -1532,7 +1543,7 @@ function paginasRelatorio(opt) {
     if (!x.E) return `<section class="rp"><div class="r-h"><span class="r-k">Evolução individual · ${periodoTxt}</span><h2>${esc(so.nome)}</h2></div><p class="r-nota" style="margin-top:30px">Ainda sem avaliação neste período. Faça a primeira avaliação na ficha para o relatório aparecer.</p>${rod()}</section>`;
     return ficha(x) + `<section class="rp">
       <div class="r-h"><span class="r-k">${esc(so.nome)} · ${periodoTxt}</span><h2>Treinos ${P.nome}</h2></div>
-      ${x.tr.length ? `<table class="r-tab"><thead><tr><th>Data</th><th>Treino</th><th>Resultado</th></tr></thead><tbody>${x.tr.map(t => `<tr><td>${fmtDate(t.data)}</td><td><b>${esc(tituloComValor(t, so))}</b></td><td>${esc(resultadoTreino(t, so.id)) || t.temas.map(k => atr(k).nome).join(', ') || '–'}</td></tr>`).join('')}</tbody></table>` : '<p class="r-nota" style="margin-top:30px">Nenhum treino registrado neste período.</p>'}
+      ${x.tr.length ? `<table class="r-tab"><thead><tr><th>Mês</th><th>Treino</th><th>Resultado</th></tr></thead><tbody>${x.tr.map(t => `<tr><td>${mesLongo(t.data)}</td><td><b>${esc(tituloComValor(t, so))}</b></td><td>${esc(resultadoTreino(t, so.id)) || t.temas.map(k => atr(k).nome).join(', ') || '–'}</td></tr>`).join('')}</tbody></table>` : '<p class="r-nota" style="margin-top:30px">Nenhum treino registrado neste período.</p>'}
       ${rod()}</section>`;
   }
   return `
@@ -1844,21 +1855,37 @@ function saveProd() {
 function sheetTreino(tid, so) {
   const t = tid ? mentoria.treinos.find(x => x.id === tid) : null;
   if (tid && !t) return;
-  form = { tipo: 'treino', tid: t ? t.id : null, temas: t ? t.temas.slice() : [], quem: t ? t.quem.slice() : so ? [so] : [], notas: {} }; // da ficha, já vem com a pessoa (treino individual)
+  form = { tipo: 'treino', tid: t ? t.id : null, temas: t ? t.temas.slice() : [], quem: t ? t.quem.slice() : so ? [so] : [], notas: {}, // da ficha, já vem com a pessoa (treino individual)
+    mes: (t ? t.data : hoje()).slice(0, 7), data0: t ? t.data : '' };
   if (t) Object.entries(t.res || {}).forEach(([pid, r]) => { form.notas[pid] = Object.fromEntries(Object.entries(r).map(([k, [, depois]]) => [k, depois])); });
   openSheet(shHead(t ? 'Editar treino' : 'Registrar treino', t ? esc(tituloTreino(t)) : 'O que foi treinado?') + `<div class="sh-b">
     <div><span class="lbl">O que foi treinado</span><div id="t-temas"></div></div>
     <div><span class="lbl">Quem estava</span><div class="chips sm" id="t-quem"></div></div>
     <div class="row2">
-      <div class="fl"><label class="lbl" for="t-data">Data</label><input id="t-data" type="date" value="${t ? t.data : hoje()}"></div>
+      <div class="fl"><span class="lbl">Mês</span><div class="chips sm" id="t-mes"></div></div>
       <div class="fl"><label class="lbl" for="t-tema">Título<span class="hint">opcional</span></label><input id="t-tema" value="${esc(t ? t.tema : '')}" placeholder="Ex.: Visita no Ecoville" autocomplete="off"></div>
     </div>
     <div id="t-notas"></div>
     <div class="err" id="t-err"></div><div id="t-del"></div>
   </div>
   <div class="sh-f">${t ? '<button class="danger l" data-act="treino-del-ask">Apagar</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-treino">Salvar</button></div>`, 'treino');
-  $('#t-data').addEventListener('change', renderNotasTreino);
+  renderMesTreino();
   renderTreinoChips();
+}
+// os meses da mentoria até o atual (e o do treino, se for de antes)
+function renderMesTreino() {
+  const ms = [], fim = hoje().slice(0, 7);
+  for (let m = mentoria.inicio.slice(0, 7); m <= fim && ms.length < 24; m = maisMeses(m + '-01', 1).slice(0, 7)) ms.push(m);
+  if (!ms.includes(form.mes)) ms.unshift(form.mes);
+  $('#t-mes').innerHTML = ms.map(m => `<button class="chip${form.mes === m ? ' on' : ''}" data-act="t-mes" data-v="${m}">${mesLongo(m + '-01').replace(/^./, s => s.toUpperCase())}</button>`).join('');
+}
+// a data guardada: a que já tinha (se o mês não mudou), hoje (mês atual) ou o dia 15, ou o início de quem entrou depois disso no mês
+function dataTreino() {
+  if (form.data0 && form.data0.slice(0, 7) === form.mes) return form.data0;
+  if (form.mes === hoje().slice(0, 7)) return hoje();
+  let d = form.mes + '-15';
+  form.quem.map(byId).filter(Boolean).forEach(c => { const i = inicioDe(c); if (i.slice(0, 7) === form.mes && i > d) d = i; });
+  return d;
 }
 // a nota de antes do treino: a que a pessoa tinha naquela data (sem contar este treino)
 function notaAntes(c, k, data, tid) {
@@ -1873,7 +1900,7 @@ function renderTreinoChips() {
 }
 function renderNotasTreino() {
   const box = $('#t-notas'); if (!box) return;
-  const data = $('#t-data').value || hoje(), pessoas = form.quem.map(byId).filter(Boolean);
+  const data = dataTreino(), pessoas = form.quem.map(byId).filter(Boolean);
   if (!form.temas.length || !pessoas.length) { box.innerHTML = '<p class="hintp">Escolha o que foi treinado e quem estava. Aí aparece a nota de cada um para você ajustar.</p>'; return; }
   box.innerHTML = `<span class="lbl">Nota no treino<span class="hint">já vem com a nota de antes; arraste se a pessoa mostrou outro nível</span></span>` + pessoas.map(c => {
     const n = form.notas[c.id] = form.notas[c.id] || {};
@@ -1896,7 +1923,7 @@ function saveTreino() {
   const tema = $('#t-tema').value.trim();
   if (!form.temas.length && !tema) { $('#t-err').textContent = 'Toque no que foi treinado.'; return; }
   if (!form.quem.length) { $('#t-err').textContent = 'Toque em quem estava.'; return; }
-  const data = $('#t-data').value || hoje(), tid = form.tid || newId('t');
+  const data = dataTreino(), tid = form.tid || newId('t');
   // em cada pessoa: a avaliação deste treino (com todas as notas dela até ali e as do treino por cima)
   const res = {};
   form.quem.forEach(pid => {
@@ -2018,6 +2045,7 @@ document.addEventListener('click', e => {
     case 'treino-de': sheetTreino(null, id); break;
     case 'rel-per': ui.rel.per = v; render(); break;
     case 'rel-quem': ui.rel.quem = v; render(); break;
+    case 't-mes': form.mes = v; renderMesTreino(); renderNotasTreino(); break;
     case 't-et': form.temas = form.temas.includes(v) ? form.temas.filter(x => x !== v) : form.temas.concat(v); $('#t-err').textContent = ''; renderTreinoChips(); break;
     case 't-quem': form.quem = form.quem.includes(v) ? form.quem.filter(x => x !== v) : form.quem.concat(v); renderTreinoChips(); break;
     case 't-todos': form.quem = corretores.every(c => form.quem.includes(c.id)) ? [] : corretores.map(c => c.id); renderTreinoChips(); break;
@@ -2068,7 +2096,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02n';
+const VERSAO = '2026-11-02o';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
