@@ -355,7 +355,7 @@ input[type=date]{min-height:48px}
 .dg0{background:#f0f1f2;color:#9a9da2}.dg1{background:#eceef0;color:var(--text2)}
 .dg2{background:var(--warnbg);color:var(--warn)}.dg3{background:var(--tqbg);color:var(--tq2)}
 .dg-x{background:transparent;border:1px dashed var(--line2);color:var(--faint)}
-.fm.f4{grid-template-columns:repeat(5,minmax(0,1fr))}
+.fm.f4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .fm-h small{font-size:12px;font-weight:400;color:var(--muted)}
 .prox{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;background:linear-gradient(90deg,var(--orbg),var(--card));border:1px solid var(--orline);border-radius:12px;padding:12px 16px;margin-bottom:16px}
 .prox .lbl{margin:0;color:var(--or2)}.prox b{font-size:16px;font-weight:600}.prox span:last-child{color:var(--text2);font-size:14px}
@@ -692,8 +692,7 @@ const SENHA = 'flor2301';
 
 // Atributos do angariador, como os do Football Manager: nota de 1 a 20 dada pelo Matheus em cada avaliação.
 // Grupos como ele organizou em 02/11: Angariação (as formas de achar o imóvel e o proprietário, e a visita),
-// Documentação (ler a documentação e tirar a matrícula), Processo (o caminho interno do imóvel angariado),
-// Divulgação (trabalhar a venda do imóvel) e Mental (os scripts que se treinam e o ritmo).
+// Documentação (ler a documentação e tirar a matrícula), Divulgação (trabalhar a venda do imóvel) e Mental (os scripts que se treinam e o ritmo).
 // A régua é a mesma para todos e liga a nota ao treino e ao campo.
 const GRUPOS_N = [
   { k: 'ang', nome: 'Angariação', sub: 'Achar o imóvel, o proprietário e visitar', attrs: [
@@ -708,11 +707,6 @@ const GRUPOS_N = [
     { k: 'nec', nome: 'Documentos necessários', curto: 'Necessários', desc: 'Sabe quais documentos pedir ao proprietário para angariar: do imóvel e dele.' },
     { k: 'doc', nome: 'Leitura de documentação', curto: 'Leitura', desc: 'Lê a documentação do imóvel e do proprietário (matrícula, IPTU, condomínio) e identifica o que pode travar a venda: ônus, penhora, inventário, área divergente.' },
     { k: 'mat', nome: 'Matrícula', curto: 'Matrícula', desc: 'Sabe tirar a matrícula atualizada do imóvel: qual cartório, com quais dados e como pedir.' }
-  ] },
-  { k: 'pro', nome: 'Processo', sub: 'Do imóvel angariado até a rua', attrs: [
-    { k: 'jet', nome: 'Cadastro no Jetimob', curto: 'Jetimob', desc: 'Cadastra o imóvel no Jetimob e anexa a documentação e a autorização de venda preenchida.' },
-    { k: 'ass', nome: 'Assinatura', curto: 'Assinatura', desc: 'Sabe quem envia a autorização de venda para assinatura (o Renan) e acompanha até voltar assinada.' },
-    { k: 'fot', nome: 'Agendar fotos', curto: 'Fotos', desc: 'Conhece o processo para agendar as fotos e o material do imóvel depois de assinado.' }
   ] },
   { k: 'div', nome: 'Divulgação', sub: 'Trabalhar a venda do imóvel', attrs: [
     { k: 'ree', nome: 'Reels orgânico', curto: 'Reels', desc: 'Cria vídeos orgânicos para Instagram e TikTok: filma o imóvel, acerta o gancho dos primeiros segundos e posta.' },
@@ -790,7 +784,8 @@ const ATTRS = GRUPOS.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a))
 const ATTRS_ANTIGOS = ['pre'];
 // todas as chaves de nota que podem estar guardadas (modelo antigo + etapas)
 // das etapas de 01/11 (m: 2), guardadas só como histórico
-const ETAPAS_ANTIGAS = ['pes', 'ibk', 'cad', 'abo', 'vis', 'doc', 'jet', 'fot', 'anu'];
+// e as do Processo (Jetimob, Assinatura, Fotos), que saiu da tela em 02/11
+const ETAPAS_ANTIGAS = ['pes', 'ibk', 'cad', 'abo', 'vis', 'doc', 'jet', 'fot', 'anu', 'ass'];
 const CHAVES = [...new Set(ATTRS.map(a => a.k).concat(ATTRS_ANTIGOS, ETAPAS_ANTIGAS, ATRS.map(a => a.k), ['det']))];
 const PROD = { visita: 'Visita de angariação', angariacao: 'Angariação' };
 const TIPOS_IMOVEL = ['Casa', 'Apartamento', 'Cobertura', 'Terreno', 'Comercial'];
@@ -964,13 +959,23 @@ const notasAtuais = c => (ultima(c) || {}).notas || {};
 const treinosDe = (c, ate) => mentoria.treinos.filter(t => t.quem.includes(c.id) && (!ate || t.data <= ate));
 // avaliações no modelo dos atributos (m: 3, desde 01/11/2026); as anteriores ficam guardadas só como histórico
 const avsN = c => c.avaliacoes.filter(a => a.m === 3);
-// notas de hoje (ou de uma data): a última avaliação até ali; quem participou de um treino do atributo está, no mínimo, em 6 ("Treinou")
-function notasDe(c, ate) {
-  const av = avsN(c).filter(a => !ate || a.data <= ate).pop() || null;
+// notas até uma data, refazendo a história em ordem de data: a avaliação feita pelo Matheus vale inteira e o treino só muda
+// o que foi treinado nele. Assim não importa a ordem em que os treinos foram lançados (semT: sem um treino, para editá-lo)
+function notasAte(c, ate, semT) {
+  const avs = avsN(c).filter(a => (!ate || a.data <= ate) && (!semT || a.t !== semT));
   const n = {}, origem = {};
-  if (av) ATRS.forEach(x => { if (typeof av.notas[x.k] === 'number') { n[x.k] = av.notas[x.k]; origem[x.k] = 'aval'; } });
-  treinosDe(c, ate).forEach(t => t.temas.forEach(k => { if ((n[k] ?? 0) < 6) { n[k] = 6; origem[k] = 'treino'; } }));
-  return { n, origem, av };
+  avs.forEach(a => {
+    const t = a.t ? mentoria.treinos.find(x => x.id === a.t) : null, res = t && t.res ? t.res[c.id] : null;
+    const ks = !a.t ? ATRS.map(x => x.k) : res ? Object.keys(res) : t ? t.temas : [];
+    ks.forEach(k => { const v = res && Array.isArray(res[k]) ? res[k][1] : a.notas[k]; if (typeof v === 'number') { n[k] = v; origem[k] = 'aval'; } });
+  });
+  return { n, origem, av: avs[avs.length - 1] || null };
+}
+// notas de hoje (ou de uma data); quem participou de um treino do atributo está, no mínimo, em 6 ("Treinou")
+function notasDe(c, ate) {
+  const r = notasAte(c, ate);
+  treinosDe(c, ate).forEach(t => t.temas.forEach(k => { if ((r.n[k] ?? 0) < 6) { r.n[k] = 6; r.origem[k] = 'treino'; } }));
+  return r;
 }
 // o ponto de partida é a primeira avaliação; a evolução é de lá até hoje
 const partidaDe = c => { const a = avsN(c)[0]; return a ? notasDe(c, a.data) : null; };
@@ -1212,7 +1217,8 @@ function renderFicha(c) {
 // os atributos mais baixos: é o que treinar agora
 const focoDe = n => ATRS.map(x => ({ x, v: n[x.k] ?? 0 })).sort((a, b) => a.v - b.v || 0).slice(0, 3);
 function abaGeral(c, N) {
-  const avs = avsN(c), ant = avs.length > 1 ? avs[avs.length - 2] : null; // a anterior, para as setas
+  // as setas comparam com a última avaliação feita por você antes da mais recente (os treinos de depois dela contam como subida)
+  const avs = avsN(c), ant = avs.filter(a => !a.t && a !== avs[avs.length - 1]).pop() || null;
   const n = N.n;
   const col = g => {
     const m = media(n, g.attrs.map(a => a.k));
@@ -1502,7 +1508,7 @@ function paginasRelatorio(opt) {
         <span class="r-sit">Começou: <b>${E.sIni ? E.sIni[1] : '–'}</b> · Hoje: <b>${E.sFim ? E.sFim[1] : '–'}</b>${d ? ' · dedicação: ' + d[1].toLowerCase() + ' do tempo' : ''}</span></div>
         <div class="r-cap"><span class="r-k2">Capacidade</span><div class="r-capb">${est(E.de)}${barra(E.de, E.ate, 5)}${est(E.ate)}</div><span class="r-capd">${dEst(E.de, E.ate)} · de ${fmtShort(E.dataIni)} a ${fmtShort(E.dataFim)}</span></div></div>
       <div class="r-fc">
-        <div class="r-cols"><div>${grupo(GRUPOS_N[0])}${grupo(GRUPOS_N[1])}</div><div>${grupo(GRUPOS_N[2])}${grupo(GRUPOS_N[3])}${grupo(GRUPOS_N[4])}</div></div>
+        <div class="r-cols"><div>${grupo(GRUPOS_N[0])}</div><div>${grupo(GRUPOS_N[1])}${grupo(GRUPOS_N[2])}${grupo(GRUPOS_N[3])}</div></div>
         <aside class="r-side">
           <div class="r-sub">Funções</div>${GRUPOS_N.map(g => { const m = media(N.n, g.attrs.map(a => a.k)); return `<div class="r-kv"><span>${g.nome}</span><b>${m === null ? '–' : est(capN(Object.fromEntries(g.attrs.map(a => [a.k, N.n[a.k]]).filter(([, v]) => typeof v === 'number'))))}</b></div>`; }).join('')}
           <div class="r-sub">No período</div><div class="r-kv"><span>Treinos</span><b>${tr.length}</b></div><div class="r-kv"><span>Visitas de angariação</span><b>${prodP.v}</b></div><div class="r-kv"><span>Angariações assinadas</span><b>${prodP.a}</b></div>
@@ -1743,7 +1749,7 @@ function sheetAval(id, avId) {
   const atual = avId ? avsN(c).find(a => a.id === avId) : null;
   if (avId && !atual) return;
   const N = notasDe(c), base = atual ? atual.notas : N.n;
-  form = { tipo: 'aval', id, avId: avId || null, notas: {}, ref: atual || !N.av ? {} : N.av.notas };
+  form = { tipo: 'aval', id, avId: avId || null, notas: {}, ref: atual || !N.av ? {} : N.n };
   ATRS.forEach(a => { form.notas[a.k] = typeof base[a.k] === 'number' ? base[a.k] : 1; });
   const dv = dedDe(atual ? atual.notas.det : dedicacaoDe(c)); if (dv) form.notas.det = dv[0];
   const linha = a => `<div class="sl"><div class="sl-t"><b>${a.nome}</b><span class="sl-f" id="rb-${a.k}"></span><span class="sl-v" id="v-${a.k}"></span></div>
@@ -1773,8 +1779,8 @@ function pintaDed() { document.querySelectorAll('#sheet [data-act="ded"]').forEa
 function saveAval() {
   const c = byId(form.id); if (!c) return closeSheet();
   const data = $('#a-data').value || hoje(), editando = !!form.avId;
-  const notas = cleanNotas(form.notas), ca = capN(notas), u = avsN(c).pop();
-  const mudou = !u || JSON.stringify(cleanNotas(u.notas)) !== JSON.stringify(notas);
+  const notas = cleanNotas(form.notas), ca = capN(notas), u = avsN(c).pop(), hj = notasDe(c).n;
+  const mudou = !u || ATRS.some(a => notas[a.k] !== hj[a.k]) || notas.det !== dedicacaoDe(c);
   const avs = editando
     ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, ca }) : a)
     : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca, m: 3 }]) : c.avaliacoes;
@@ -1849,10 +1855,10 @@ function sheetTreino(tid, so) {
   $('#t-data').addEventListener('change', renderNotasTreino);
   renderTreinoChips();
 }
-// a nota de antes do treino: a da última avaliação até a véspera (sem contar este treino)
+// a nota de antes do treino: a que a pessoa tinha naquela data (sem contar este treino)
 function notaAntes(c, k, data, tid) {
-  const av = avsN(c).filter(a => a.data <= data && a.t !== tid).pop();
-  return av && typeof av.notas[k] === 'number' ? av.notas[k] : 1;
+  const v = notasAte(c, data, tid).n[k];
+  return typeof v === 'number' ? v : 1;
 }
 function renderTreinoChips() {
   $('#t-temas').innerHTML = GRUPOS_N.map(g => `<div class="chips sm et-f"><span class="et-l">${g.nome}</span>${g.attrs.map(a => `<button class="chip${form.temas.includes(a.k) ? ' on' : ''}" data-act="t-et" data-v="${a.k}">${a.nome}</button>`).join('')}</div>`).join('');
@@ -2058,7 +2064,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02h';
+const VERSAO = '2026-11-02j';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
