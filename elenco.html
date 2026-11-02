@@ -120,6 +120,7 @@ input[type=date]{min-height:48px}
 .n0{color:var(--faint)}.n1{color:var(--n1)}.n2{color:var(--n2)}.n3{color:var(--n3)}.n4{color:var(--n4)}
 .dl{font:700 11.5px 'Open Sans',sans-serif;white-space:nowrap}
 .dl.up{color:var(--ok)}.dl.dn{color:var(--red)}.dl.eq{color:var(--faint)}
+.dl.ev{font-size:17px;line-height:1}
 
 /* ── ELENCO (lista do plantel) ── */
 .tools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px}
@@ -350,7 +351,7 @@ input[type=date]{min-height:48px}
 .telas a.on{background:var(--tq);color:#fff}
 .who .mt.wa{color:var(--warn)}
 .de9{font-size:.62em;font-weight:600;color:var(--muted);margin-left:1px}
-.sqr{grid-template-columns:minmax(220px,2.4fr) 60px 160px 110px 100px 120px}
+.sqr{grid-template-columns:minmax(220px,2.4fr) 160px 110px 100px 120px}
 .dg{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:99px;white-space:nowrap}
 .dg0{background:#f0f1f2;color:#9a9da2}.dg1{background:#eceef0;color:var(--text2)}
 .dg2{background:var(--warnbg);color:var(--warn)}.dg3{background:var(--tqbg);color:var(--tq2)}
@@ -1156,7 +1157,7 @@ function evolucaoDe(c) {
 }
 const sitPill = n => { const s = situacaoDe(n); return s ? `<span class="sit ${s[2]}">${s[1]}</span>` : '<span class="sit s0">A avaliar</span>'; };
 // evolução só como seta: subindo, parado (tracinho) ou descendo, pela média exata das notas desde a primeira avaliação
-const evoTxt = E => { if (!E) return '<span class="muted">–</span>'; const d = (mediaTec(E.hj) ?? 0) - (mediaTec(E.p) ?? 0); return d > 0.001 ? '<span class="dl up" title="Subindo">▲</span>' : d < -0.001 ? '<span class="dl dn" title="Descendo">▼</span>' : '<span class="dl eq" title="Parado">–</span>'; };
+const evoTxt = E => { if (!E) return '<span class="muted">–</span>'; const d = (mediaTec(E.hj) ?? 0) - (mediaTec(E.p) ?? 0); return d > 0.001 ? '<span class="dl ev up" title="Subindo">▲</span>' : d < -0.001 ? '<span class="dl ev dn" title="Descendo">▼</span>' : '<span class="dl ev eq" title="Parado">–</span>'; };
 function renderElenco() {
   const lista = ordenados();
   const tot = lista.reduce((s, c) => { const p = prod(c, ui.per); s.v += p.v; s.a += p.a; return s; }, { v: 0, a: 0 });
@@ -1169,14 +1170,13 @@ function renderElenco() {
     return;
   }
   const linhas = lista.map(c => {
-    const P = prod(c, ui.per), ida = idade(c.nascimento), N = notasDe(c), E = evolucaoDe(c);
+    const P = prod(c, ui.per), N = notasDe(c), E = evolucaoDe(c);
     return `<button class="sqr" data-act="abrir" data-id="${esc(c.id)}">
       <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt">${sitPill(N.n)}</span></span></span>
-      <span class="num xl cell"><span class="lbm">Idade</span>${ida ?? '–'}</span>
       <span class="cell w4"><span class="lbm">Capacidade</span>${st5(capN(N.n))}</span>
       <span class="cell"><span class="lbm">Evolução</span>${evoTxt(E)}</span>
-      <span class="num v cell"><span class="lbm">Visitas</span>${P.v}</span>
-      <span class="num a cell"><span class="lbm">Angariações</span>${P.a}</span>
+      <span class="num v cell w3"><span class="lbm">Visitas</span>${P.v}</span>
+      <span class="num a cell w3"><span class="lbm">Angariações</span>${P.a}</span>
     </button>`;
   }).join('');
   $('#main').innerHTML = head + `
@@ -1188,7 +1188,7 @@ function renderElenco() {
     </div>
     <div class="tools"><span class="lbl">Produção</span>${perChips()}</div>
     <div class="sq" style="margin-top:14px">
-      <div class="sqr hd"><span>Corretor</span><span class="xl">Idade</span><span>Capacidade</span><span>Evolução</span><span>Visitas</span><span>Angariações</span></div>
+      <div class="sqr hd"><span>Corretor</span><span>Capacidade</span><span>Evolução</span><span>Visitas</span><span>Angariações</span></div>
       ${linhas}
     </div>
     <div class="legend l2">
@@ -2107,7 +2107,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02r';
+const VERSAO = '2026-11-02t';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
