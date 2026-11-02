@@ -355,7 +355,7 @@ input[type=date]{min-height:48px}
 .dg0{background:#f0f1f2;color:#9a9da2}.dg1{background:#eceef0;color:var(--text2)}
 .dg2{background:var(--warnbg);color:var(--warn)}.dg3{background:var(--tqbg);color:var(--tq2)}
 .dg-x{background:transparent;border:1px dashed var(--line2);color:var(--faint)}
-.fm.f4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.fm.f4{grid-template-columns:repeat(5,minmax(0,1fr))}
 .fm-h small{font-size:12px;font-weight:400;color:var(--muted)}
 .prox{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;background:linear-gradient(90deg,var(--orbg),var(--card));border:1px solid var(--orline);border-radius:12px;padding:12px 16px;margin-bottom:16px}
 .prox .lbl{margin:0;color:var(--or2)}.prox b{font-size:16px;font-weight:600}.prox span:last-child{color:var(--text2);font-size:14px}
@@ -688,36 +688,39 @@ const LS_AUTH = 'elenco_auth', LS_PER = 'elenco_periodo2';
 const SENHA = 'flor2301';
 
 // Atributos do angariador, como os do Football Manager: nota de 1 a 20 dada pelo Matheus em cada avaliação.
-// Os técnicos seguem os materiais dele: Prospecção (Guia da Declaração Unificada), Angariação (Método Nickel e Playbook)
-// e Lançamento (o que a proposta promete: imóvel no Jetimob, fotos e Reels que circulam). Mental: a rotina.
+// Grupos como ele organizou em 02/11: Angariação (as formas de achar o imóvel e o proprietário, e a visita),
+// Documentação (ler a documentação e tirar a matrícula), Processo (o caminho interno do imóvel angariado),
+// Divulgação (trabalhar a venda do imóvel) e Mental (os scripts que se treinam e o ritmo).
 // A régua é a mesma para todos e liga a nota ao treino e ao campo.
 const GRUPOS_N = [
-  { k: 'pro', nome: 'Prospecção', sub: 'Achar o imóvel e o proprietário', mat: 'Guia da Declaração Unificada', attrs: [
-    { k: 'anu', nome: 'Pesquisa de anúncios', curto: 'Anúncios', desc: 'Procura o mesmo imóvel nos anúncios das outras imobiliárias e junta o que eles entregam: andar, número da casa ou do apartamento, vagas, fotos, e se está anunciado em várias.' },
+  { k: 'ang', nome: 'Angariação', sub: 'Achar o imóvel, o proprietário e visitar', attrs: [
+    { k: 'anu', nome: 'Leitura de anúncios', curto: 'Anúncios', desc: 'Lê os anúncios das outras imobiliárias para descobrir o que entregam sem querer: andar, número da casa ou do apartamento, vagas, fotos, e se o imóvel está em várias.' },
     { k: 'eem', nome: 'Eemovel Brokers', curto: 'Eemovel', desc: 'Com a unidade em mãos, encontra no Eemovel Brokers quem é o proprietário e o telefone dele.' },
     { k: 'map', nome: 'Mapa cadastral', curto: 'Mapa', desc: 'Localiza o imóvel no Mapa Cadastral: lote, indicação fiscal, sublotes, andares e apartamentos por andar.' },
-    { k: 'dun', nome: 'Declaração Unificada', curto: 'Declaração', desc: 'Emite a Declaração Unificada da unidade e lê o que importa: qual é o imóvel, a matrícula e a área construída.' }
+    { k: 'dun', nome: 'Declaração Unificada', curto: 'Declaração', desc: 'Emite a Declaração Unificada da unidade e confirma qual é o imóvel, a matrícula e a área construída.' },
+    { k: 'vis', nome: 'Visita de angariação', curto: 'Visita', desc: 'Na visita, deixa o proprietário falar, conhece o imóvel e o motivo da venda e mostra autoridade.' }
   ] },
-  { k: 'ang', nome: 'Angariação', sub: 'Do primeiro WhatsApp aos documentos', mat: 'Método Nickel e Playbook', attrs: [
-    { k: 'abo', nome: 'Abordagem', curto: 'Abordagem', desc: 'Primeiro contato pelo Método Nickel: três balões curtos que confirmam se é o proprietário, sem apresentação comercial.' },
-    { k: 'qua', nome: 'Qualificação', curto: 'Qualificação', desc: 'Depois do "sim": diz quem é, mostra que tem cliente e faz a pergunta que decide o caminho.' },
-    { k: 'vis', nome: 'Visita', curto: 'Visita', desc: 'Marca a visita de angariação e, lá, deixa o proprietário falar, conhece o imóvel e o motivo da venda e mostra autoridade.' },
-    { k: 'obj', nome: 'Objeções', curto: 'Objeções', desc: 'Responde sem se defender: "não conheço a VIP", "como conseguiu meu contato?" e o proprietário que já tem outra imobiliária.' },
-    { k: 'doc', nome: 'Documentação', curto: 'Documentos', desc: 'Pede a documentação com firmeza e prazo e confere: IPTU, condomínio, documentos do proprietário e o que pode travar a venda.' },
-    { k: 'mat', nome: 'Matrícula', curto: 'Matrícula', desc: 'Pede a matrícula atualizada no cartório certo e sabe ler: quem é o proprietário, ônus, penhoras e se a construção está averbada.' }
+  { k: 'doc', nome: 'Documentação', sub: 'Ler os documentos e tirar a matrícula', attrs: [
+    { k: 'doc', nome: 'Leitura de documentação', curto: 'Leitura', desc: 'Lê a documentação do imóvel e do proprietário (matrícula, IPTU, condomínio) e identifica o que pode travar a venda: ônus, penhora, inventário, área divergente.' },
+    { k: 'mat', nome: 'Matrícula', curto: 'Matrícula', desc: 'Sabe tirar a matrícula atualizada do imóvel: qual cartório, com quais dados e como pedir.' }
   ] },
-  { k: 'lan', nome: 'Lançamento', sub: 'Fazer o imóvel circular', mat: 'Proposta: filmar, gancho, postar', attrs: [
-    { k: 'jet', nome: 'Jetimob', curto: 'Jetimob', desc: 'Anexa a documentação no Jetimob, preenche o cadastro do imóvel e passa para o Renan enviar para assinatura.' },
-    { k: 'fot', nome: 'Fotos e material', curto: 'Fotos', desc: 'Depois de assinado, marca as fotos e organiza o material do imóvel.' },
-    { k: 'ree', nome: 'Reels', curto: 'Reels', desc: 'Filma o imóvel, acerta o gancho dos primeiros segundos e posta para circular no orgânico.' }
+  { k: 'pro', nome: 'Processo', sub: 'Do imóvel angariado até a rua', attrs: [
+    { k: 'jet', nome: 'Cadastro no Jetimob', curto: 'Jetimob', desc: 'Cadastra o imóvel no Jetimob e anexa a documentação e a autorização de venda preenchida.' },
+    { k: 'ass', nome: 'Assinatura', curto: 'Assinatura', desc: 'Sabe quem envia a autorização de venda para assinatura (o Renan) e acompanha até voltar assinada.' },
+    { k: 'fot', nome: 'Agendar fotos', curto: 'Fotos', desc: 'Conhece o processo para agendar as fotos e o material do imóvel depois de assinado.' }
   ] },
-  { k: 'men', nome: 'Mental', sub: 'A rotina de quem angaria', attrs: [
-    { k: 'rit', nome: 'Ritmo', curto: 'Ritmo', desc: 'Prospecta e aborda toda semana, sem depender de cobrança.' },
-    { k: 'reg', nome: 'Registro', curto: 'Registro', desc: 'Lança no CRM cada visita, angariação e retorno, no mesmo dia.' }
+  { k: 'div', nome: 'Divulgação', sub: 'Trabalhar a venda do imóvel', attrs: [
+    { k: 'ree', nome: 'Reels orgânico', curto: 'Reels', desc: 'Cria vídeos orgânicos para Instagram e TikTok: filma o imóvel, acerta o gancho dos primeiros segundos e posta.' },
+    { k: 'anb', nome: 'Anúncio bom', curto: 'Anúncio', desc: 'Entende o que é um anúncio bom no portal e no site (fotos, título, descrição) e sabe montar um.' }
+  ] },
+  { k: 'men', nome: 'Mental', sub: 'Os scripts e o ritmo', attrs: [
+    { k: 'abo', nome: 'Abordagem', curto: 'Abordagem', desc: 'Aplica o script de abordagem do Método Nickel: confirma que é o proprietário, diz quem é e leva para a visita.' },
+    { k: 'obj', nome: 'Objeções', curto: 'Objeções', desc: 'Responde às objeções sem se defender: "não conheço a VIP", "como conseguiu meu contato?" e o proprietário que já tem outra imobiliária.' },
+    { k: 'rit', nome: 'Ritmo', curto: 'Ritmo', desc: 'Prospecta e aborda toda semana, sem depender de cobrança.' }
   ] }
 ];
 const ATRS = GRUPOS_N.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a)));
-const TEC = ATRS.filter(a => a.g !== 'men'); // os técnicos fazem a capacidade
+const TEC = ATRS; // todos os atributos fazem a capacidade
 const atr = k => ATRS.find(a => a.k === k);
 const REGUA_N = [
   { de: 1, ate: 5, nome: 'Não treinou', o: 'Ainda não aprendeu.' },
@@ -1158,7 +1161,7 @@ function renderElenco() {
     </div>
     <div class="legend l2">
       <div><h4>Atributos de 1 a 20</h4>${REGUA_N.map(r => `<span class="rg"><b class="${nivel(r.ate)}">${r.de} a ${r.ate}</b> ${r.nome}: ${minus1(r.o)}</span>`).join('')}</div>
-      <div><h4>Capacidade e evolução</h4>As estrelas saem da média dos atributos de Prospecção, Angariação e Lançamento. A evolução compara a primeira avaliação com hoje.</div>
+      <div><h4>Capacidade e evolução</h4>As estrelas saem da média de todos os atributos. A evolução compara a primeira avaliação com hoje.</div>
     </div>`;
 }
 // topo de cada tela: título e, no celular, as abas (no computador elas ficam no topo)
@@ -1199,14 +1202,14 @@ function renderFicha(c) {
       <div class="pf-b">${ui.aba === 'dev' ? abaDev(c) : ui.aba === 'prod' ? abaProd(c) : abaGeral(c, N)}</div>
     </div>`;
 }
-// os atributos mais baixos de Prospecção e Angariação: é o que treinar agora
-const focoDe = n => TEC.filter(x => x.g !== 'lan').map(x => ({ x, v: n[x.k] ?? 0 })).sort((a, b) => a.v - b.v || 0).slice(0, 3);
+// os atributos mais baixos: é o que treinar agora
+const focoDe = n => ATRS.map(x => ({ x, v: n[x.k] ?? 0 })).sort((a, b) => a.v - b.v || 0).slice(0, 3);
 function abaGeral(c, N) {
   const avs = avsN(c), ant = avs.length > 1 ? avs[avs.length - 2] : null; // a anterior, para as setas
   const n = N.n;
   const col = g => {
     const m = media(n, g.attrs.map(a => a.k));
-    return `<div class="fm-c"><div class="fm-h"><span><span class="t">${g.nome}</span><small>${g.sub}</small></span>${m !== null && g.k !== 'men' ? `<span class="g"><b class="${nivel(Math.round(m))}">${Math.round(m)}</b><span>média</span></span>` : ''}</div>
+    return `<div class="fm-c"><div class="fm-h"><span><span class="t">${g.nome}</span><small>${g.sub}</small></span>${m !== null ? `<span class="g"><b class="${nivel(Math.round(m))}">${Math.round(m)}</b><span>média</span></span>` : ''}</div>
     ${g.attrs.map(a => {
       const v = n[a.k], p = ant ? ant.notas[a.k] : undefined, aberto = ui.info.has(a.k);
       const sobe = typeof v === 'number' && typeof p === 'number' && v > p, desce = typeof v === 'number' && typeof p === 'number' && v < p;
@@ -1217,7 +1220,7 @@ function abaGeral(c, N) {
       </button>`;
     }).join('')}</div>`;
   };
-  const funcoes = GRUPOS_N.filter(g => g.k !== 'men').map(g => ({ g, s: capN(Object.fromEntries(g.attrs.map(a => [a.k, n[a.k]]).filter(([, v]) => typeof v === 'number'))) , m: media(n, g.attrs.map(a => a.k)) }));
+  const funcoes = GRUPOS_N.map(g => ({ g, s: capN(Object.fromEntries(g.attrs.map(a => [a.k, n[a.k]]).filter(([, v]) => typeof v === 'number'))) , m: media(n, g.attrs.map(a => a.k)) }));
   const melhor = funcoes.reduce((b, f) => (f.m ?? -1) > (b.m ?? -1) ? f : b, funcoes[0]);
   const tr = treinosDe(c), P = contar(c.producao);
   const foco = N.av ? focoDe(n) : [];
@@ -1263,7 +1266,7 @@ function abaDev(c) {
     <section class="box" style="margin-top:16px">
       <div class="box-h"><h3>Avaliações</h3><span class="muted r" style="font-size:13px">${avs.length} ${plural(avs.length, 'avaliação', 'avaliações')}</span></div>
       ${avs.length > 1 ? graficoLinhas(avs, [{ cor: '#d99a0b', val: a => capDaAvaliacao(a), nome: 'Capacidade' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true) : ''}
-      <div class="ls">${avs.slice().reverse().map(a => `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(capDaAvaliacao(a))}</span><small>${GRUPOS_N.filter(g => g.k !== 'men').map(g => { const m = media(a.notas, g.attrs.map(x => x.k)); return `${g.nome} ${m === null ? '–' : Math.round(m)}`; }).join(' · ')}</small></span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`).join('')}</div>
+      <div class="ls">${avs.slice().reverse().map(a => `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(capDaAvaliacao(a))}</span><small>${GRUPOS_N.map(g => { const m = media(a.notas, g.attrs.map(x => x.k)); return `${g.nome} ${m === null ? '–' : Math.round(m)}`; }).join(' · ')}</small></span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`).join('')}</div>
     </section>`;
 }
 function abaProd(c) {
@@ -1474,9 +1477,9 @@ function paginasRelatorio(opt) {
         <span class="r-sit">Começou: <b>${E.sIni ? E.sIni[1] : '–'}</b> · Hoje: <b>${E.sFim ? E.sFim[1] : '–'}</b>${d ? ' · dedicação: ' + d[1].toLowerCase() + ' do tempo' : ''}</span></div>
         <div class="r-cap"><span class="r-k2">Capacidade</span><div class="r-capb">${est(E.de)}${barra(E.de, E.ate, 5)}${est(E.ate)}</div><span class="r-capd">${dEst(E.de, E.ate)} · de ${fmtShort(E.dataIni)} a ${fmtShort(E.dataFim)}</span></div></div>
       <div class="r-fc">
-        <div class="r-cols"><div>${grupo(GRUPOS_N[0])}${grupo(GRUPOS_N[2])}${grupo(GRUPOS_N[3])}</div><div>${grupo(GRUPOS_N[1])}</div></div>
+        <div class="r-cols"><div>${grupo(GRUPOS_N[0])}${grupo(GRUPOS_N[1])}</div><div>${grupo(GRUPOS_N[2])}${grupo(GRUPOS_N[3])}${grupo(GRUPOS_N[4])}</div></div>
         <aside class="r-side">
-          <div class="r-sub">Funções</div>${GRUPOS_N.filter(g => g.k !== 'men').map(g => { const m = media(N.n, g.attrs.map(a => a.k)); return `<div class="r-kv"><span>${g.nome}</span><b>${m === null ? '–' : est(capN(Object.fromEntries(g.attrs.map(a => [a.k, N.n[a.k]]).filter(([, v]) => typeof v === 'number'))))}</b></div>`; }).join('')}
+          <div class="r-sub">Funções</div>${GRUPOS_N.map(g => { const m = media(N.n, g.attrs.map(a => a.k)); return `<div class="r-kv"><span>${g.nome}</span><b>${m === null ? '–' : est(capN(Object.fromEntries(g.attrs.map(a => [a.k, N.n[a.k]]).filter(([, v]) => typeof v === 'number'))))}</b></div>`; }).join('')}
           <div class="r-sub">No período</div><div class="r-kv"><span>Treinos</span><b>${tr.length}</b></div><div class="r-kv"><span>Visitas de angariação</span><b>${prodP.v}</b></div><div class="r-kv"><span>Angariações assinadas</span><b>${prodP.a}</b></div>
           <div class="r-sub">Treinar agora</div>${focoDe(N.n).map(({ x, v }) => `<div class="r-kv"><span>${x.nome}</span><b>${v || '–'}</b></div>`).join('')}
         </aside>
@@ -1528,7 +1531,7 @@ function paginasRelatorio(opt) {
         <td><span class="r-evc">${barra(E.de, E.ate, 5)}${dEst(E.de, E.ate)}</span></td>
         <td>${tr.length}</td></tr>`).join('')}</tbody></table>` : '<p class="r-nota" style="margin-top:30px">Nenhum corretor avaliado neste período ainda.</p>'}
     ${naoAval.length ? `<p class="r-nota">Ainda sem avaliação: ${naoAval.map(x => esc(x.c.nome)).join(', ')}.</p>` : ''}
-    <div class="r-leg"><span><i class="qd" style="background:#d7dadd"></i>Onde começou</span><span><i class="qd" style="background:#7cc1ba"></i>O que cresceu</span><span>Capacidade de 0 a 5 estrelas, pela média dos atributos de Prospecção, Angariação e Lançamento.</span></div>
+    <div class="r-leg"><span><i class="qd" style="background:#d7dadd"></i>Onde começou</span><span><i class="qd" style="background:#7cc1ba"></i>O que cresceu</span><span>Capacidade de 0 a 5 estrelas, pela média de todos os atributos.</span></div>
     ${rod()}
   </section>
   ${avaliados.map(ficha).join('')}
@@ -1970,7 +1973,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-01e';
+const VERSAO = '2026-11-02a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
