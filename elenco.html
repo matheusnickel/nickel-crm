@@ -692,7 +692,7 @@ const SENHA = 'flor2301';
 
 // Atributos do angariador, como os do Football Manager: nota de 1 a 20 dada pelo Matheus em cada avaliação.
 // Grupos como ele organizou em 02/11: Angariação (as formas de achar o imóvel e o proprietário, e a visita),
-// Documentação (ler a documentação e tirar a matrícula), Divulgação (trabalhar a venda do imóvel) e Mental (os scripts que se treinam e o ritmo).
+// Documentação (ler a documentação e tirar a matrícula), Divulgação (trabalhar a venda do imóvel) e Mental (os scripts que se treinam e a dedicação, que não se treina).
 // A régua é a mesma para todos e liga a nota ao treino e ao campo.
 const GRUPOS_N = [
   { k: 'ang', nome: 'Angariação', sub: 'Achar o imóvel, o proprietário e visitar', attrs: [
@@ -712,14 +712,16 @@ const GRUPOS_N = [
     { k: 'ree', nome: 'Reels orgânico', curto: 'Reels', desc: 'Cria vídeos orgânicos para Instagram e TikTok: filma o imóvel, acerta o gancho dos primeiros segundos e posta.' },
     { k: 'anb', nome: 'Anúncio bom', curto: 'Anúncio', desc: 'Entende o que é um anúncio bom no portal e no site (fotos, título, descrição) e sabe montar um.' }
   ] },
-  { k: 'men', nome: 'Mental', sub: 'Os scripts e o ritmo', attrs: [
+  { k: 'men', nome: 'Mental', sub: 'Os scripts e a dedicação', attrs: [
     { k: 'abo', nome: 'Abordagem', curto: 'Abordagem', desc: 'Aplica o script de abordagem do Método Nickel: confirma que é o proprietário, diz quem é e leva para a visita.' },
     { k: 'obj', nome: 'Objeções', curto: 'Objeções', desc: 'Responde às objeções sem se defender: "não conheço a VIP", "como conseguiu meu contato?" e o proprietário que já tem outra imobiliária.' },
-    { k: 'rit', nome: 'Ritmo', curto: 'Ritmo', desc: 'Prospecta e aborda toda semana, sem depender de cobrança.' }
+    // a chave continua 'rit' (era Ritmo até 02/11); fixo = não se treina, é a nota que o Matheus dá
+    { k: 'rit', nome: 'Dedicação', curto: 'Dedicação', fixo: true, desc: 'Quanto a pessoa está dedicada a angariar: se busca imóvel, liga para o proprietário e marca visita toda semana, sem depender de cobrança. Não se treina: é a nota que você dá.' }
   ] }
 ];
 const ATRS = GRUPOS_N.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a)));
-const TEC = ATRS; // todos os atributos fazem a capacidade
+const TEC = ATRS.filter(a => !a.fixo); // os atributos treináveis fazem a capacidade; a dedicação fica à parte
+const TREINAVEIS = TEC;
 const atr = k => ATRS.find(a => a.k === k);
 const REGUA_N = [
   { de: 1, ate: 5, nome: 'Não treinou', o: 'Ainda não aprendeu.' },
@@ -728,11 +730,17 @@ const REGUA_N = [
   { de: 16, ate: 20, nome: 'Faz sozinho e ensina', o: 'Faz sem ajuda e consegue ensinar os outros.' }
 ];
 const faixaN = v => REGUA_N[v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3];
+// a dedicação tem a sua própria régua (não é treino)
+const REGUA_DED = [
+  { de: 1, ate: 5, nome: 'Pouco dedicada', o: 'Angaria só quando aparece ou quando é cobrada.' },
+  { de: 6, ate: 10, nome: 'Dedicada às vezes', o: 'Angaria em algumas semanas; divide com outras atividades.' },
+  { de: 11, ate: 15, nome: 'Dedicada', o: 'Busca imóvel e aborda toda semana, sem cobrança.' },
+  { de: 16, ate: 20, nome: 'Foco total', o: 'A angariação é o centro do trabalho dela.' }
+];
+const faixaA = (k, v) => (atr(k) && atr(k).fixo ? REGUA_DED : REGUA_N)[v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3];
+const dedTxt = v => typeof v === 'number' ? `${v} · ${faixaA('rit', v).nome}` : 'a avaliar';
 // situação no time, como o "tempo de jogo" do FM, pela média dos atributos (acompanha a régua)
 const SITUACOES = [[16, 'Ensina o time', 's4'], [11, 'Angaria sozinho', 's3'], [6, 'Angaria com apoio', 's2'], [0, 'Em formação', 's1']];
-const DED = { k: 'det', nome: 'Dedicação', desc: 'Quanto do tempo de trabalho a pessoa deixa para a angariação de imóveis prontos. Pergunte a ela.',
-  op: [[5, 'Menos de 25%', 'Angariação é um extra'], [10, '25% a 50%', 'Divide com outras atividades'], [15, '50% a 75%', 'Angariação é a prioridade'], [20, 'Mais de 75%', 'Foco total na angariação']] };
-const dedDe = v => typeof v !== 'number' ? null : DED.op[v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3];
 const minus1 = s => s.charAt(0).toLowerCase() + s.slice(1);
 // a carteira em construção: cada angariação anda por estas fases (conta como angariação a partir da autorização assinada)
 const FASES_ANG = [['doc', 'Documentação'], ['jet', 'No Jetimob'], ['ass', 'Autorização assinada'], ['fot', 'Fotos e material'], ['site', 'No site'], ['reels', 'No Reels']];
@@ -979,7 +987,6 @@ function notasDe(c, ate) {
 }
 // o ponto de partida é a primeira avaliação; a evolução é de lá até hoje
 const partidaDe = c => { const a = avsN(c)[0]; return a ? notasDe(c, a.data) : null; };
-const dedicacaoDe = c => { for (let i = c.avaliacoes.length - 1; i >= 0; i--) { const v = c.avaliacoes[i].notas.det; if (typeof v === 'number') return v; } return null; };
 const capDe = c => capN(notasDe(c).n);
 const capDaAvaliacao = a => capN(a.notas);
 
@@ -1149,7 +1156,7 @@ function renderElenco() {
     return;
   }
   const linhas = lista.map(c => {
-    const P = prod(c, ui.per), ida = idade(c.nascimento), N = notasDe(c), E = evolucaoDe(c), d = dedDe(dedicacaoDe(c));
+    const P = prod(c, ui.per), ida = idade(c.nascimento), N = notasDe(c), E = evolucaoDe(c);
     return `<button class="sqr" data-act="abrir" data-id="${esc(c.id)}">
       <span class="who">${avatar(c)}<span style="min-width:0"><span class="nm">${esc(c.nome)}</span><span class="mt">${sitPill(N.n)}</span></span></span>
       <span class="num xl cell"><span class="lbm">Idade</span>${ida ?? '–'}</span>
@@ -1173,7 +1180,7 @@ function renderElenco() {
     </div>
     <div class="legend l2">
       <div><h4>Atributos de 1 a 20</h4>${REGUA_N.map(r => `<span class="rg"><b class="${nivel(r.ate)}">${r.de} a ${r.ate}</b> ${r.nome}: ${minus1(r.o)}</span>`).join('')}</div>
-      <div><h4>Capacidade e evolução</h4>As estrelas saem da média de todos os atributos. A evolução compara a primeira avaliação com hoje.</div>
+      <div><h4>Capacidade e evolução</h4>As estrelas saem da média dos atributos treináveis (a dedicação fica à parte). A evolução compara a primeira avaliação com hoje.</div>
     </div>`;
 }
 // topo de cada tela: título e, no celular, as abas (no computador elas ficam no topo)
@@ -1185,7 +1192,7 @@ function cabecalho(t, sub) {
 
 // ── FICHA DO CORRETOR (tela de jogador do FM) ──
 function renderFicha(c) {
-  const ida = idade(c.nascimento), N = notasDe(c), d = dedDe(dedicacaoDe(c));
+  const ida = idade(c.nascimento), N = notasDe(c);
   const facts = [ida !== null ? ['Idade', ida + ' anos'] : null, c.desde ? ['Na VIP desde', fmtMes(c.desde)] : null, ['Início com você', fmtDate(inicioDe(c))]].filter(Boolean);
   const abas = [['geral', 'Visão geral'], ['dev', 'Evolução'], ['prod', 'Produção']];
   $('#main').innerHTML = `
@@ -1200,7 +1207,7 @@ function renderFicha(c) {
         </div>
         <div class="capbox">
           <div><span>Capacidade atual</span>${st5(capN(N.n))}</div>
-          <div><span>Dedicação</span><b class="ded">${d ? d[1] + ' do tempo' : 'a avaliar'}</b></div>
+          <div><span>Dedicação</span><b class="ded">${N.av ? dedTxt(N.n.rit) : 'a avaliar'}</b></div>
         </div>
         <div class="pf-act adm">
           <button class="btn-or sm" data-act="aval" data-id="${esc(c.id)}">${N.av ? 'Atualizar notas' : 'Primeira avaliação'}</button>
@@ -1215,7 +1222,7 @@ function renderFicha(c) {
     </div>`;
 }
 // os atributos mais baixos: é o que treinar agora
-const focoDe = n => ATRS.map(x => ({ x, v: n[x.k] ?? 0 })).sort((a, b) => a.v - b.v || 0).slice(0, 3);
+const focoDe = n => TREINAVEIS.map(x => ({ x, v: n[x.k] ?? 0 })).sort((a, b) => a.v - b.v || 0).slice(0, 3);
 function abaGeral(c, N) {
   // as setas comparam com a última avaliação feita por você antes da mais recente (os treinos de depois dela contam como subida)
   const avs = avsN(c), ant = avs.filter(a => !a.t && a !== avs[avs.length - 1]).pop() || null;
@@ -1229,7 +1236,7 @@ function abaGeral(c, N) {
       const tr = N.origem[a.k] === 'treino' ? treinosDe(c).find(t => t.temas.includes(a.k)) : null;
       return `<button class="fm-r${aberto ? ' open' : ''}" data-act="info" data-v="${a.k}" aria-expanded="${aberto}">
         <span class="ln"><span class="an">${a.nome}</span>${sobe ? `<span class="up" title="Subiu desde ${fmtShort(ant.data)}">▲</span>` : desce ? '<span class="dn">▼</span>' : ''}<b class="nv ${nivel(v)}">${typeof v === 'number' ? v : '–'}</b></span>
-        ${aberto ? `<span class="fm-x">${esc(a.desc)}${typeof v === 'number' ? `<span class="fx"><b class="${nivel(v)}">${faixaN(v).nome}</b> ${esc(faixaN(v).o)}${tr ? ` Treinou em ${fmtShort(tr.data)}.` : ''}</span>` : '<span class="fx">Ainda sem nota.</span>'}</span>` : ''}
+        ${aberto ? `<span class="fm-x">${esc(a.desc)}${typeof v === 'number' ? `<span class="fx"><b class="${nivel(v)}">${faixaA(a.k, v).nome}</b> ${esc(faixaA(a.k, v).o)}${tr ? ` Treinou em ${fmtShort(tr.data)}.` : ''}</span>` : '<span class="fx">Ainda sem nota.</span>'}</span>` : ''}
       </button>`;
     }).join('')}</div>`;
   };
@@ -1500,12 +1507,12 @@ function paginasRelatorio(opt) {
     + (campo.length ? `<div class="r-sub">Um a um</div><ul class="r-tr">${campo.map(g => `<li><b>${g.n}×</b>${campoTxt(g)}<small>${Object.entries(g.quem).sort((a, b) => b[1] - a[1]).map(([nm, n]) => esc(nm) + (n > 1 ? ' ' + n : '')).join(' · ')}</small></li>`).join('')}</ul>` : '');
   // a ficha de evolução de uma pessoa no período
   const ficha = ({ c, E, prodP, tr }) => {
-    const N = { n: E.hj }, d = dedDe(dedicacaoDe(c));
+    const N = { n: E.hj };
     const grupo = g => `<div class="r-g"><div class="r-gt">${g.nome}</div>${g.attrs.map(a => { const v0 = E.p[a.k], v1 = E.hj[a.k], f = typeof v1 === 'number' ? REGUA_N.indexOf(faixaN(v1)) : -1;
       return `<div class="r-at"><span>${a.nome}</span>${typeof v1 === 'number' ? barra(v0 ?? v1, v1, 20) : '<span class="r-bar"></span>'}<b class="r-n${f >= 2 ? ' n' + (f + 1) : ''}">${v1 ?? '–'}</b><span class="r-d">${typeof v0 === 'number' && typeof v1 === 'number' && v1 !== v0 ? `<span class="${v1 > v0 ? 'r-up' : 'r-dn'}">${v1 > v0 ? '+' : '−'}${Math.abs(v1 - v0)}</span>` : ''}</span></div>`; }).join('')}</div>`;
     return `<section class="rp">
       <div class="r-fh"><div><span class="r-k">Evolução individual · ${periodoTxt}</span><h2>${esc(c.nome)}</h2>
-        <span class="r-sit">Começou: <b>${E.sIni ? E.sIni[1] : '–'}</b> · Hoje: <b>${E.sFim ? E.sFim[1] : '–'}</b>${d ? ' · dedicação: ' + d[1].toLowerCase() + ' do tempo' : ''}</span></div>
+        <span class="r-sit">Começou: <b>${E.sIni ? E.sIni[1] : '–'}</b> · Hoje: <b>${E.sFim ? E.sFim[1] : '–'}</b></span></div>
         <div class="r-cap"><span class="r-k2">Capacidade</span><div class="r-capb">${est(E.de)}${barra(E.de, E.ate, 5)}${est(E.ate)}</div><span class="r-capd">${dEst(E.de, E.ate)} · de ${fmtShort(E.dataIni)} a ${fmtShort(E.dataFim)}</span></div></div>
       <div class="r-fc">
         <div class="r-cols"><div>${grupo(GRUPOS_N[0])}</div><div>${grupo(GRUPOS_N[1])}${grupo(GRUPOS_N[2])}${grupo(GRUPOS_N[3])}</div></div>
@@ -1562,7 +1569,7 @@ function paginasRelatorio(opt) {
         <td><span class="r-evc">${barra(E.de, E.ate, 5)}${dEst(E.de, E.ate)}</span></td>
         <td>${tr.length}</td></tr>`).join('')}</tbody></table>` : '<p class="r-nota" style="margin-top:30px">Nenhum corretor avaliado neste período ainda.</p>'}
     ${naoAval.length ? `<p class="r-nota">Ainda sem avaliação: ${naoAval.map(x => esc(x.c.nome)).join(', ')}.</p>` : ''}
-    <div class="r-leg"><span><i class="qd" style="background:#d7dadd"></i>Onde começou</span><span><i class="qd" style="background:#7cc1ba"></i>O que cresceu</span><span>Capacidade de 0 a 5 estrelas, pela média de todos os atributos.</span></div>
+    <div class="r-leg"><span><i class="qd" style="background:#d7dadd"></i>Onde começou</span><span><i class="qd" style="background:#7cc1ba"></i>O que cresceu</span><span>Capacidade de 0 a 5 estrelas, pela média dos atributos treináveis.</span></div>
     ${rod()}
   </section>
   ${avaliados.map(ficha).join('')}
@@ -1751,7 +1758,6 @@ function sheetAval(id, avId) {
   const N = notasDe(c), base = atual ? atual.notas : N.n;
   form = { tipo: 'aval', id, avId: avId || null, notas: {}, ref: atual || !N.av ? {} : N.n };
   ATRS.forEach(a => { form.notas[a.k] = typeof base[a.k] === 'number' ? base[a.k] : 1; });
-  const dv = dedDe(atual ? atual.notas.det : dedicacaoDe(c)); if (dv) form.notas.det = dv[0];
   const linha = a => `<div class="sl"><div class="sl-t"><b>${a.nome}</b><span class="sl-f" id="rb-${a.k}"></span><span class="sl-v" id="v-${a.k}"></span></div>
     <input type="range" min="1" max="20" step="1" id="r-${a.k}" data-k="${a.k}" value="${form.notas[a.k]}" aria-label="${a.nome}"></div>`;
   openSheet(shHead(atual ? 'Editar avaliação' : N.av ? 'Atualizar notas' : 'Primeira avaliação', esc(c.nome)) + `<div class="sh-b">
@@ -1759,28 +1765,25 @@ function sheetAval(id, avId) {
     <div class="escala">${REGUA_N.map(r => `<div><b class="${nivel(r.ate)}">${r.de} a ${r.ate} · ${r.nome}</b>${r.o}</div>`).join('')}</div>
     <div class="row2"><div class="fl"><label class="lbl" for="a-data">Data da avaliação</label><input id="a-data" type="date" value="${atual ? atual.data : hoje()}"></div></div>
     ${GRUPOS_N.map(g => `<div class="ag"><div class="ag-t">${g.nome}<small>${g.sub}</small></div>${g.attrs.map(linha).join('')}</div>`).join('')}
-    <div class="ag"><div class="ag-t">Dedicação<small>${DED.desc}</small></div>
-      <div class="dgs d4" role="group" aria-label="Dedicação">${DED.op.map(o => `<button data-act="ded" data-v="${o[0]}">${o[1]}</button>`).join('')}</div></div>
     <div class="liveo"><span class="lc">Capacidade</span><span id="lv-st"></span></div>
     <div id="a-del"></div>
   </div>
   <div class="sh-f">${atual ? '<button class="danger l" data-act="aval-del-ask">Apagar avaliação</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-aval">Salvar</button></div>`, 'aval');
   document.querySelectorAll('#sheet input[type=range]').forEach(r => r.addEventListener('input', e => { form.notas[e.target.dataset.k] = +e.target.value; pintaNota(e.target.dataset.k); }));
-  ATRS.forEach(a => pintaNota(a.k)); pintaDed();
+  ATRS.forEach(a => pintaNota(a.k));
 }
 function pintaNota(k) {
   const v = form.notas[k], p = form.ref[k], r = $('#r-' + k);
   r.style.setProperty('--p', ((v - 1) / 19 * 100) + '%'); r.className = nivel(v);
   $('#v-' + k).innerHTML = `<b class="${nivel(v)}">${v}</b>${typeof p === 'number' && p !== v ? ' ' + delta(v - p) : ''}`;
-  $('#rb-' + k).textContent = faixaN(v).nome;
+  $('#rb-' + k).textContent = faixaA(k, v).nome;
   $('#lv-st').innerHTML = st5(capN(form.notas));
 }
-function pintaDed() { document.querySelectorAll('#sheet [data-act="ded"]').forEach(b => b.classList.toggle('on', +b.dataset.v === form.notas.det)); }
 function saveAval() {
   const c = byId(form.id); if (!c) return closeSheet();
   const data = $('#a-data').value || hoje(), editando = !!form.avId;
   const notas = cleanNotas(form.notas), ca = capN(notas), u = avsN(c).pop(), hj = notasDe(c).n;
-  const mudou = !u || ATRS.some(a => notas[a.k] !== hj[a.k]) || notas.det !== dedicacaoDe(c);
+  const mudou = !u || ATRS.some(a => notas[a.k] !== hj[a.k]);
   const avs = editando
     ? c.avaliacoes.map(a => a.id === form.avId ? Object.assign({}, a, { data, notas, ca }) : a)
     : mudou ? c.avaliacoes.concat([{ id: newId('a'), data, notas, obs: '', ca, m: 3 }]) : c.avaliacoes;
@@ -1861,7 +1864,7 @@ function notaAntes(c, k, data, tid) {
   return typeof v === 'number' ? v : 1;
 }
 function renderTreinoChips() {
-  $('#t-temas').innerHTML = GRUPOS_N.map(g => `<div class="chips sm et-f"><span class="et-l">${g.nome}</span>${g.attrs.map(a => `<button class="chip${form.temas.includes(a.k) ? ' on' : ''}" data-act="t-et" data-v="${a.k}">${a.nome}</button>`).join('')}</div>`).join('');
+  $('#t-temas').innerHTML = GRUPOS_N.map(g => `<div class="chips sm et-f"><span class="et-l">${g.nome}</span>${g.attrs.filter(a => !a.fixo).map(a => `<button class="chip${form.temas.includes(a.k) ? ' on' : ''}" data-act="t-et" data-v="${a.k}">${a.nome}</button>`).join('')}</div>`).join('');
   const todos = corretores.length && corretores.every(c => form.quem.includes(c.id));
   $('#t-quem').innerHTML = `<button class="chip${todos ? ' on' : ''}" data-act="t-todos">Todos</button>` + ordenados().map(c => `<button class="chip${form.quem.includes(c.id) ? ' on' : ''}" data-act="t-quem" data-v="${esc(c.id)}">${esc(firstName(c.nome))}</button>`).join('');
   renderNotasTreino();
@@ -2005,7 +2008,6 @@ document.addEventListener('click', e => {
       toast(`${firstName(c.nome)} saiu do elenco.`, { label: 'Desfazer', fn: () => saveCorretor(copia) });
       break;
     }
-    case 'ded': form.notas.det = form.notas.det === +v ? undefined : +v; if (form.notas.det === undefined) delete form.notas.det; pintaDed(); break;
     case 'save-aval': saveAval(); break;
     case 'ang-ed': sheetProd(id, 'angariacao', v); break;
     case 'p-quem': form.id = v; $('#p-err').textContent = ''; renderSeg(); break;
@@ -2064,7 +2066,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02j';
+const VERSAO = '2026-11-02k';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
