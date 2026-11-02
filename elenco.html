@@ -414,7 +414,10 @@ input[type=date]{min-height:48px}
 .li.tr .w b{font-size:15px;font-weight:600}
 .chips-in{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .tg{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--tqbg);color:var(--tq2)}
-.chips-in.vz{margin:0 0 12px}.chips-in.vz b{font-weight:700}
+.pilha{display:flex;flex-direction:column;gap:16px;min-width:0}
+.vz{display:flex;flex-direction:column;gap:9px}.vz-r{display:grid;grid-template-columns:minmax(0,1fr) 120px 30px;align-items:center;gap:12px;font-size:14px}
+.vz-b{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}.vz-b i{height:8px;border-radius:2px;background:var(--line2)}.vz-b i.on{background:var(--tq)}
+.vz-r b{text-align:right;font-variant-numeric:tabular-nums;color:var(--tq2);font-weight:600}
 .et-f{align-items:center;margin-bottom:8px}.et-l{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--or2);width:96px}
 /* folha de avaliação: degraus */
 .ag-t small{display:block;font-size:12.5px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--muted);margin-top:2px}
@@ -1259,16 +1262,21 @@ function abaGeral(c, N) {
     </div>
     <div class="fm-leg"><span>Toque num atributo para ver o que ele é.</span>${REGUA_N.map(r => `<span><b class="${nivel(r.ate)}">${r.de}–${r.ate}</b> ${r.nome.toLowerCase()}</span>`).join('')}${ant ? `<span><b class="up">▲</b> subiu desde ${fmtShort(ant.data)}</span>` : ''}</div>
     <div class="grid2" style="margin-top:16px">
+      <div class="pilha">
       <section class="box"><div class="box-h"><h3>Estatísticas</h3><span class="muted r" style="font-size:13px">desde ${fmtShort(inicioDe(c))}</span></div>
         <div class="est"><div><b>${P.v}</b><span>visitas de angariação</span></div><div><b>${P.a}</b><span>angariações assinadas</span></div><div><b>${P.valor ? fmtValor(P.valor) : '–'}</b><span>valor angariado</span></div><div><b>${tr.length}</b><span>${plural(tr.length, 'treino', 'treinos')}</span></div></div></section>
+      ${tr.length ? `<section class="box"><div class="box-h"><h3>Vezes que treinou</h3><span class="muted r" style="font-size:13px">cada barrinha é um treino</span></div>${barrasVezes(c)}</section>` : ''}
+      </div>
       <section class="box"><div class="box-h"><h3>Treinos</h3></div>
-        ${tr.length ? `<span class="chips-in vz">${TREINAVEIS.filter(x => vezes(c, x.k)).sort((x, y) => vezes(c, y.k) - vezes(c, x.k)).map(x => `<span class="tg">${x.nome} <b>${vezes(c, x.k)}×</b></span>`).join('')}</span>` : ''}
         ${tr.length ? `<div class="ls">${tr.slice(0, 6).map(t => `<div class="li"><span class="d">${mesCurto(t.data)}</span><span class="w">${esc(tituloComValor(t, c))}${resultadoTreino(t, c.id) ? `<small>${esc(resultadoTreino(t, c.id))}</small>` : ''}</span><button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>` : '<div class="empty-s">Nenhum treino registrado ainda.</div>'}</section>
     </div>`;
 }
 const tituloTreino = t => t.tema || t.temas.map(k => atr(k).nome).join(', ') || 'Treino';
 // quantas vezes a pessoa treinou um atributo, e em que meses: "3 vezes (outubro e novembro)"
 const vezes = (c, k) => treinosDe(c).filter(t => t.temas.includes(k)).length;
+// uma barrinha por atributo treinado: cada pedaço é um treino (de 1 a 5; passou de 5, a barra fica cheia e o número segue)
+const barrasVezes = c => `<div class="vz">${TREINAVEIS.map(x => ({ x, n: vezes(c, x.k) })).filter(o => o.n).sort((a, b) => b.n - a.n)
+  .map(({ x, n }) => `<div class="vz-r"><span>${x.nome}</span><span class="vz-b">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span><b>${n}×</b></div>`).join('')}</div>`;
 function vezesTxt(c, k) {
   const ts = treinosDe(c).filter(t => t.temas.includes(k)), ms = [...new Set(ts.map(t => t.data.slice(0, 7)))].sort().map(m => mesLongo(m + '-01'));
   return `${ts.length} ${plural(ts.length, 'vez', 'vezes')} (${ms.length > 1 ? ms.slice(0, -1).join(', ') + ' e ' + ms[ms.length - 1] : ms[0]})`;
@@ -2096,7 +2104,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02o';
+const VERSAO = '2026-11-02p';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
