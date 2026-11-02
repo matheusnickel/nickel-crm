@@ -459,7 +459,7 @@ input[type=date]{min-height:48px}
 .r-2{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:28px}
 .r-sub{font:700 12px 'Open Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#878787;margin:0 0 12px}
 .r-2 > div > .r-sub:not(:first-child),.r-tab + .r-sub{margin-top:22px}
-.r-ok{list-style:none;display:flex;flex-direction:column;gap:11px}
+.r-ok{list-style:none;display:flex;flex-direction:column;gap:8px}
 .r-ok li{display:flex;gap:12px;font-size:16px;line-height:1.4}
 .r-ok li::before{content:'✓';flex-shrink:0;width:22px;height:22px;border-radius:50%;background:#e4f3f1;color:#3f8c84;font-weight:300;font-size:13px;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .r-tr{list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px}
@@ -559,8 +559,8 @@ input[type=date]{min-height:48px}
 .r-time .rst{font-size:19px}.r-kv .rst{font-size:14px;letter-spacing:1px}.r-capb .rst{font-size:24px}
 .r-ch{display:flex;flex-direction:column;gap:4px}.r-ch small{font:600 11px 'Open Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#878787}
 .r-seta{font-size:22px;font-weight:700}.r-time td:last-child{width:110px;text-align:center}
-.r-leit{margin-top:20px;padding:14px 24px 16px;background:#fbf3ee;border-left:4px solid #e0662c}.r-leit p{font-size:16px;line-height:1.5;margin:0;color:#2c2e33}
-.r-fco{display:flex;flex-direction:column;gap:3px;margin-top:12px;padding-top:11px;border-top:1px solid #f0dccf}.r-fco span{font:700 12px 'Open Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#e0662c}.r-fco b{font-size:23px;font-weight:600;line-height:1.25;color:#2c2e33}
+.r-leit{margin-top:16px;padding:14px 24px 16px;background:#fbf3ee;border-left:4px solid #e0662c}.r-leit p{font-size:16px;line-height:1.5;margin:0;color:#2c2e33}
+.r-fco{display:flex;flex-direction:column;gap:3px;margin-top:12px;padding-top:11px;border-top:1px solid #f0dccf}.r-fco p{font-size:15px;line-height:1.4;color:#55585e;margin:0}.r-fco span{font:700 12px 'Open Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#e0662c}.r-fco b{font-size:23px;font-weight:600;line-height:1.25;color:#2c2e33}
 .r-acao{list-style:none;display:flex;flex-direction:column;gap:5px;margin:10px 0 0;padding:0}.r-acao li{display:flex;gap:10px;font-size:15px;line-height:1.4;color:#2c2e33}.r-acao li::before{content:'→';color:#e0662c;font-weight:700;flex-shrink:0}
 .r-evc{display:flex;align-items:center;gap:10px}.r-evc .r-bar{height:12px}
 .r-tr li small{display:block;margin-left:52px;color:#878787}
@@ -777,7 +777,8 @@ const MENT_PADRAO = {
     + '- Conversa individual com cada corretor, para entender se ele quer angariar e se vai reservar tempo para isso\n'
     + '- Treinos de emissão de matrícula\n'
     + '- Continuar os treinos, para que cada um angarie sozinho',
-  foco: 'Fomentar a carteira de imóveis, como previsto no escopo da mentoria'
+  // 1ª linha em destaque; as outras logo abaixo, menores
+  foco: 'Mês da carteira: volume, trazer angariações\nFomentar a carteira de imóveis, como previsto no escopo da mentoria'
 };
 
 // modelo antigo (até 01/11/2026): três áreas com atributos de 0 a 20. As notas ficam guardadas e aparecem só no histórico;
@@ -1540,7 +1541,7 @@ function paginasRelatorio(opt) {
   const textoL = linhasL.filter(s => !s.startsWith('-')), acoesL = linhasL.filter(s => s.startsWith('-')).map(s => s.replace(/^-\s*/, ''));
   const leituraBox = textoL.length || mentoria.foco || acoesL.length ? `<div class="r-leit">
       ${textoL.length ? `<div class="r-sub">Leitura ${P.nome}</div>${textoL.map(p => `<p>${esc(p)}</p>`).join('')}` : ''}
-      ${mentoria.foco ? `<div class="r-fco"><span>${P.k < 3 ? `Foco do ${P.k + 1}º mês` : 'Próximo foco'}</span><b>${esc(mentoria.foco)}</b></div>` : ''}
+      ${mentoria.foco ? `<div class="r-fco"><span>${P.k < 3 ? `Foco do ${P.k + 1}º mês` : 'Próximo foco'}</span>${mentoria.foco.split(/\n+/).map((l, i) => i ? `<p>${esc(l)}</p>` : `<b>${esc(l)}</b>`).join('')}</div>` : ''}
       ${acoesL.length ? `<ul class="r-acao">${acoesL.map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : ''}
     </div>` : '';
   const treinosFeitos =GRUPOS_N.map(g => { const xs = temasP.filter(a => a.g === g.k && a.k !== 'vis'); return xs.length ? `<li><span><b>${g.nome}:</b> ${xs.map(a => a.nome).join(', ')}</span></li>` : ''; }).join('')
@@ -1981,7 +1982,7 @@ function sheetMentoria() {
     <div class="row2"><div class="fl"><label class="lbl" for="m-ini">Início da mentoria</label><input id="m-ini" type="date" value="${mentoria.inicio}"></div></div>
     <div class="fl"><label class="lbl" for="m-ent">O que já foi feito<span class="hint">uma por linha</span></label><textarea id="m-ent" rows="6">${esc(mentoria.entregas.join('\n'))}</textarea></div>
     <div class="fl"><label class="lbl" for="m-leit">Leitura do mês<span class="hint">um parágrafo por linha; comece com "- " para virar ação</span></label><textarea id="m-leit" rows="5">${esc(mentoria.leitura)}</textarea></div>
-    <div class="fl"><label class="lbl" for="m-foco">Foco do próximo mês<span class="hint">aparece em destaque</span></label><input id="m-foco" value="${esc(mentoria.foco)}" autocomplete="off"></div>
+    <div class="fl"><label class="lbl" for="m-foco">Foco do próximo mês<span class="hint">a 1ª linha aparece em destaque</span></label><textarea id="m-foco" rows="2">${esc(mentoria.foco)}</textarea></div>
     <div class="fl"><label class="lbl" for="m-pp">Próximos passos<span class="hint">um por linha</span></label><textarea id="m-pp" rows="4">${esc(mentoria.proximos.join('\n'))}</textarea></div>
     <div class="fl"><label class="lbl" for="m-meta">Meta</label><textarea id="m-meta" rows="3" placeholder="Ex.: 6 corretores angariando sozinhos e 15 autorizações assinadas">${esc(mentoria.meta)}</textarea></div>
   </div>
@@ -1989,7 +1990,7 @@ function sheetMentoria() {
 }
 function saveMentoria2() {
   const linhas = s => $(s).value.split('\n').map(x => x.trim()).filter(Boolean);
-  saveMentoria({ inicio: $('#m-ini').value || mentoria.inicio, entregas: linhas('#m-ent'), proximos: linhas('#m-pp'), meta: $('#m-meta').value.trim(), leitura: linhas('#m-leit').join('\n'), foco: $('#m-foco').value.trim() });
+  saveMentoria({ inicio: $('#m-ini').value || mentoria.inicio, entregas: linhas('#m-ent'), proximos: linhas('#m-pp'), meta: $('#m-meta').value.trim(), leitura: linhas('#m-leit').join('\n'), foco: linhas('#m-foco').join('\n') });
   closeSheet(); toast('Relatório atualizado.');
 }
 
@@ -2118,7 +2119,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02x';
+const VERSAO = '2026-11-02z';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
