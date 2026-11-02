@@ -1131,7 +1131,9 @@ function prod(c, p) {
   return contar(c.producao.filter(x => x.data >= j.de && x.data < j.ate));
 }
 const perLabel = () => (PERIODOS.find(p => p[0] === ui.per) || PERIODOS[3])[1];
-const ordenados = () => corretores.slice().sort((a, b) => capDe(b) - capDe(a) || a.nome.localeCompare(b.nome, 'pt-BR'));
+// por capacidade; no empate de estrelas, pela média exata dos atributos (quem está mais perto de subir vem antes)
+const mediaDe = c => mediaTec(notasDe(c).n) ?? -1;
+const ordenados = () => corretores.slice().sort((a, b) => capDe(b) - capDe(a) || mediaDe(b) - mediaDe(a) || a.nome.localeCompare(b.nome, 'pt-BR'));
 const avatar = c => `<span class="av">${c.foto ? `<img src="${esc(c.foto)}" alt="">` : esc(initials(c.nome))}</span>`;
 const perChips = () => `<div class="chips sm">${PERIODOS.map(([k, l]) => `<button class="chip${ui.per === k ? ' on' : ''}" data-act="per" data-v="${k}">${l}</button>`).join('')}</div>`;
 
@@ -2066,7 +2068,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02m';
+const VERSAO = '2026-11-02n';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
