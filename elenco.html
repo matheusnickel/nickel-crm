@@ -491,7 +491,7 @@ input[type=date]{min-height:48px}
 .r-meta{font-size:21px;font-weight:700;line-height:1.4;letter-spacing:0}
 .r-fzs.v{grid-template-columns:1fr;gap:8px;margin-top:24px}
 .r-fzs.v .r-fz{flex-direction:row;align-items:baseline;gap:10px;padding:10px 14px}
-.r-fzs.v .r-fz b{font-size:16px}.r-fzs.v .r-fz small{margin-left:auto}
+.r-fzs.v .r-fz b{font-size:16px}.r-fzs.v .r-fz small{margin-left:auto;text-align:right}.r-fzs.v .r-fz span{white-space:nowrap}
 
 /* ── ATRIBUTOS (modelo FM, desde 01/11/2026) ── */
 /* nota pintada como no FM, na paleta da Carteira: cinza não treinou, âmbar treinou, verde-água com apoio, verde forte sozinho */
@@ -728,7 +728,7 @@ const TEC = ATRS; // todos os atributos fazem a capacidade
 const atr = k => ATRS.find(a => a.k === k);
 const REGUA_N = [
   { de: 1, ate: 5, nome: 'Não treinou', o: 'Ainda não aprendeu.' },
-  { de: 6, ate: 10, nome: 'Treinou e faz com apoio', o: 'Fez o treinamento e já faz, com o Matheus do lado.' },
+  { de: 6, ate: 10, nome: 'Treinou e faz com apoio', o: 'Fez o treinamento e já faz, com apoio.' },
   { de: 11, ate: 15, nome: 'Faz sozinho', o: 'Faz em caso real, sem ajuda.' },
   { de: 16, ate: 20, nome: 'Faz sozinho e ensina', o: 'Faz sem ajuda e consegue ensinar os outros.' }
 ];
@@ -744,7 +744,9 @@ const FASES_ANG = [['doc', 'Documentação'], ['jet', 'No Jetimob'], ['ass', 'Au
 const iFase = f => Math.max(0, FASES_ANG.findIndex(x => x[0] === f));
 const assinada = p => iFase(p.fase) >= 2;
 // a mentoria, como foi vendida: 90 dias em três fases
-const MENT_FASES = [['Base', 'Equipe, funções, CRM, metas e primeiras abordagens'], ['Carteira', 'Reuniões, avaliações, autorizações e ritmo de execução'], ['Consolidação', 'Processos ajustados, indicadores e liderança preparada']];
+const MENT_FASES = [['Base', 'Equipe e treinos'], ['Carteira', 'Aumentar a carteira de imóveis, ritmo de execução, anúncios no site e no portal e criação de Reels'], ['Consolidação', 'Processos ajustados e indicadores']];
+// o que vem depois de cada fase (título da última página do relatório)
+const MENT_PROXIMA = ['Aumentar a carteira e continuar o treinamento de todo o time', 'Consolidar processos e indicadores', 'Consolidação: processos ajustados e indicadores'];
 const MENT_PADRAO = {
   inicio: '2026-10-05',
   entregas: ['Método Nickel de Angariação e Playbook: cada mensagem, da abordagem à autorização',
@@ -1462,7 +1464,7 @@ function paginasRelatorio(opt) {
   const avaliados = Es.filter(x => x.E), naoAval = Es.filter(x => !x.E);
   const subiram = avaliados.filter(x => x.E.ate > x.E.de).length;
   const vis = Es.reduce((s, x) => s + x.prodP.v, 0), ass = Es.reduce((s, x) => s + x.prodP.a, 0);
-  const fz = Math.min(P.k, 3) - 1, fimMent = maisMeses(mentoria.inicio, 3);
+  const fz = Math.min(P.k, 3) - 1;
   let pg = 0;
   const rod = () => `<div class="r-rod"><span>Mentoria de angariação · VIP Imóveis</span><span>Matheus Nickel · CRECI-PR 53436 · ${fmtDate(hoje())}</span><span>${++pg}</span></div>`;
   const fasesM = MENT_FASES.map(([t, d], i) => `<div class="r-fz${i === fz ? ' on' : i < fz ? ' ok' : ''}"><span>Dias ${i * 30 + 1} a ${(i + 1) * 30}</span><b>${t}</b><small>${d}</small></div>`).join('');
@@ -1503,8 +1505,8 @@ function paginasRelatorio(opt) {
   <section class="rp r-capa">
     <div class="r-top"><span class="r-brand"><i></i>MENTORIA DE ANGARIAÇÃO</span><span>VIP IMÓVEIS</span></div>
     <div class="r-hero">
-      <span class="r-k">Relatório ${P.nome} · ${periodoTxt}</span>
-      <h1>Menos dependência de parcerias. Mais carteira própria.</h1>
+      <span class="r-k">${periodoTxt}</span>
+      <h1>Relatório ${P.nome}</h1>
       <p>O que foi feito ${P.nome}, quem foi treinado e como cada corretor começou e está hoje.</p>
     </div>
     <div class="r-fzs">${fasesM}</div>
@@ -1540,10 +1542,10 @@ function paginasRelatorio(opt) {
   </section>
   ${avaliados.map(ficha).join('')}
   <section class="rp">
-    <div class="r-h"><span class="r-k">Aonde vamos chegar</span><h2>${P.k >= 3 ? 'Consolidação: a operação rodando sem depender de mim' : `Próxima fase: ${MENT_FASES[Math.min(fz + 1, 2)][0].toLowerCase()}`}</h2></div>
+    <div class="r-h"><span class="r-k">Aonde vamos chegar</span><h2>${MENT_PROXIMA[fz]}</h2></div>
     <div class="r-2">
       <div><div class="r-sub">Próximos passos</div><ol class="r-pp">${mentoria.proximos.map(t => `<li>${esc(t)}</li>`).join('')}</ol></div>
-      <div><div class="r-sub">Meta até ${fmtDate(fimMent)}</div><p class="r-meta">${esc(mentoria.meta || 'Time angariando sozinho, carteira própria em formação e uma pessoa da VIP pronta para conduzir a rotina.')}</p>
+      <div><div class="r-sub">Meta</div><p class="r-meta">${esc(mentoria.meta || 'Time angariando sozinho e carteira própria em formação.')}</p>
         <div class="r-fzs v">${fasesM}</div></div>
     </div>
     ${rod()}
@@ -1895,7 +1897,7 @@ function sheetMentoria() {
     <div class="row2"><div class="fl"><label class="lbl" for="m-ini">Início da mentoria</label><input id="m-ini" type="date" value="${mentoria.inicio}"></div></div>
     <div class="fl"><label class="lbl" for="m-ent">O que já foi feito<span class="hint">uma por linha</span></label><textarea id="m-ent" rows="6">${esc(mentoria.entregas.join('\n'))}</textarea></div>
     <div class="fl"><label class="lbl" for="m-pp">Próximos passos<span class="hint">um por linha</span></label><textarea id="m-pp" rows="4">${esc(mentoria.proximos.join('\n'))}</textarea></div>
-    <div class="fl"><label class="lbl" for="m-meta">Meta até o fim da mentoria</label><textarea id="m-meta" rows="3" placeholder="Ex.: 6 corretores fazendo sozinhos as 9 etapas e 15 autorizações assinadas">${esc(mentoria.meta)}</textarea></div>
+    <div class="fl"><label class="lbl" for="m-meta">Meta</label><textarea id="m-meta" rows="3" placeholder="Ex.: 6 corretores angariando sozinhos e 15 autorizações assinadas">${esc(mentoria.meta)}</textarea></div>
   </div>
   <div class="sh-f"><button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-mentoria">Salvar</button></div>`, 'mentoria');
 }
@@ -2030,7 +2032,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02c';
+const VERSAO = '2026-11-02d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
