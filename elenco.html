@@ -710,7 +710,7 @@ const GRUPOS_N = [
   ] },
   { k: 'div', nome: 'Divulgação', sub: 'Trabalhar a venda do imóvel', attrs: [
     { k: 'ree', nome: 'Reels orgânico', curto: 'Reels', desc: 'Cria vídeos orgânicos para Instagram e TikTok: filma o imóvel, acerta o gancho dos primeiros segundos e posta.' },
-    { k: 'anb', nome: 'Anúncio bom', curto: 'Anúncio', desc: 'Entende o que é um anúncio bom no portal e no site (fotos, título, descrição) e sabe montar um.' }
+    { k: 'anb', nome: 'Edição de anúncio', curto: 'Anúncio', desc: 'Edita o anúncio do imóvel no portal e no site: escolhe as fotos, escreve o título e a descrição e sabe o que faz um anúncio bom.' }
   ] },
   { k: 'men', nome: 'Mental', sub: 'Os scripts e a dedicação', attrs: [
     { k: 'abo', nome: 'Abordagem', curto: 'Abordagem', desc: 'Aplica o script de abordagem do Método Nickel: confirma que é o proprietário, diz quem é e leva para a visita.' },
@@ -2066,7 +2066,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02k';
+const VERSAO = '2026-11-02l';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
