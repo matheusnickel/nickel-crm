@@ -1243,10 +1243,15 @@ function abaGeral(c, N) {
       <section class="box"><div class="box-h"><h3>Estatísticas</h3><span class="muted r" style="font-size:13px">desde ${fmtShort(inicioDe(c))}</span></div>
         <div class="est"><div><b>${P.v}</b><span>visitas de angariação</span></div><div><b>${P.a}</b><span>angariações assinadas</span></div><div><b>${P.valor ? fmtValor(P.valor) : '–'}</b><span>valor angariado</span></div><div><b>${tr.length}</b><span>${plural(tr.length, 'treino', 'treinos')}</span></div></div></section>
       <section class="box"><div class="box-h"><h3>Treinos</h3></div>
-        ${tr.length ? `<div class="ls">${tr.slice(0, 6).map(t => `<div class="li"><span class="d">${fmtShort(t.data)}</span><span class="w">${esc(tituloTreino(t))}${resultadoTreino(t, c.id) ? `<small>${esc(resultadoTreino(t, c.id))}</small>` : ''}</span></div>`).join('')}</div>` : '<div class="empty-s">Nenhum treino registrado ainda.</div>'}</section>
+        ${tr.length ? `<div class="ls">${tr.slice(0, 6).map(t => `<div class="li"><span class="d">${fmtShort(t.data)}</span><span class="w">${esc(tituloComValor(t, c))}${resultadoTreino(t, c.id) ? `<small>${esc(resultadoTreino(t, c.id))}</small>` : ''}</span><button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>` : '<div class="empty-s">Nenhum treino registrado ainda.</div>'}</section>
     </div>`;
 }
 const tituloTreino = t => t.tema || t.temas.map(k => atr(k).nome).join(', ') || 'Treino';
+// treino de visita: o valor do imóvel vem da visita registrada na produção no mesmo dia
+function tituloComValor(t, c) {
+  const v = t.temas.includes('vis') ? c.producao.find(p => p.tipo === 'visita' && p.data === t.data && p.valor) : null;
+  return tituloTreino(t) + (v ? ' · ' + fmtValor(v.valor) : '');
+}
 // evolução: a capacidade numa barra (de onde partiu até hoje) e cada atributo com o ponto de partida marcado
 function barraEvo(de, ate, max, cls) {
   const a = Math.min(de, ate) / max * 100, b = Math.max(de, ate) / max * 100;
@@ -1401,7 +1406,7 @@ function renderTreino() {
     <div class="group-t"><span class="lbl">Treinos dados</span></div>
     ${T.length ? `<div class="ls">${T.map(t => `<div class="li tr">
         <span class="d">${fmtShort(t.data)}<br>${t.data.slice(0, 4)}</span>
-        <span class="w"><b>${esc(tituloTreino(t))}</b>
+        <span class="w"><b>${esc(t.quem.length === 1 && byId(t.quem[0]) ? tituloComValor(t, byId(t.quem[0])) : tituloTreino(t))}</b>
           ${t.temas.length && t.tema ? `<span class="chips-in">${t.temas.map(k => `<span class="tg">${atr(k).nome}</span>`).join('')}</span>` : ''}
           <small>${quemTreino(t) || 'Sem participantes'}${t.obs ? ' · ' + esc(t.obs) : ''}</small></span>
         <button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>`
@@ -1499,7 +1504,7 @@ function paginasRelatorio(opt) {
     if (!x.E) return `<section class="rp"><div class="r-h"><span class="r-k">Evolução individual · ${periodoTxt}</span><h2>${esc(so.nome)}</h2></div><p class="r-nota" style="margin-top:30px">Ainda sem avaliação neste período. Faça a primeira avaliação na ficha para o relatório aparecer.</p>${rod()}</section>`;
     return ficha(x) + `<section class="rp">
       <div class="r-h"><span class="r-k">${esc(so.nome)} · ${periodoTxt}</span><h2>Treinos ${P.nome}</h2></div>
-      ${x.tr.length ? `<table class="r-tab"><thead><tr><th>Data</th><th>Treino</th><th>Resultado</th></tr></thead><tbody>${x.tr.map(t => `<tr><td>${fmtDate(t.data)}</td><td><b>${esc(tituloTreino(t))}</b></td><td>${esc(resultadoTreino(t, so.id)) || t.temas.map(k => atr(k).nome).join(', ') || '–'}</td></tr>`).join('')}</tbody></table>` : '<p class="r-nota" style="margin-top:30px">Nenhum treino registrado neste período.</p>'}
+      ${x.tr.length ? `<table class="r-tab"><thead><tr><th>Data</th><th>Treino</th><th>Resultado</th></tr></thead><tbody>${x.tr.map(t => `<tr><td>${fmtDate(t.data)}</td><td><b>${esc(tituloComValor(t, so))}</b></td><td>${esc(resultadoTreino(t, so.id)) || t.temas.map(k => atr(k).nome).join(', ') || '–'}</td></tr>`).join('')}</tbody></table>` : '<p class="r-nota" style="margin-top:30px">Nenhum treino registrado neste período.</p>'}
       ${rod()}</section>`;
   }
   return `
@@ -2039,7 +2044,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02f';
+const VERSAO = '2026-11-02g';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
