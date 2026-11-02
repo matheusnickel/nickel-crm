@@ -544,6 +544,9 @@ input[type=date]{min-height:48px}
 .sl input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid currentColor}
 .sl input[type=range]:focus{box-shadow:none}
 .sl input[type=range].n1{color:#b9bcc0}.sl input[type=range].n2{color:#d9a441}.sl input[type=range].n3{color:var(--tq)}.sl input[type=range].n4{color:#2f9a6a}
+.tn{border:1px solid var(--line);border-radius:12px;padding:10px 12px 4px;margin-top:10px;background:var(--bg3)}
+.tn-n{display:flex;align-items:center;gap:10px;margin-bottom:4px}.tn-n .av{width:30px;height:30px;font-size:11px}.tn-n b{font-weight:600}
+.tn .sl:first-of-type{border-top:none}
 /* relatórios: filtros e tabela 'como começou × hoje' */
 .relf{display:flex;flex-wrap:wrap;gap:14px 30px;margin-top:18px}.relf .lbl{margin-bottom:6px}
 .r-time td{vertical-align:middle;font-size:15px;padding:10px 8px}.r-time td small{display:block;font-size:12px;color:#878787;margin-top:2px}
@@ -724,13 +727,13 @@ const TEC = ATRS; // todos os atributos fazem a capacidade
 const atr = k => ATRS.find(a => a.k === k);
 const REGUA_N = [
   { de: 1, ate: 5, nome: 'Não treinou', o: 'Ainda não aprendeu.' },
-  { de: 6, ate: 10, nome: 'Treinou', o: 'Fez o treinamento: sabe a teoria.' },
-  { de: 11, ate: 15, nome: 'Faz com apoio', o: 'Já fez em caso real, com o Matheus do lado.' },
-  { de: 16, ate: 20, nome: 'Faz sozinho', o: 'Faz em caso real sem ajuda e consegue ensinar.' }
+  { de: 6, ate: 10, nome: 'Treinou e faz com apoio', o: 'Fez o treinamento e já faz, com o Matheus do lado.' },
+  { de: 11, ate: 15, nome: 'Faz sozinho', o: 'Faz em caso real, sem ajuda.' },
+  { de: 16, ate: 20, nome: 'Faz sozinho e ensina', o: 'Faz sem ajuda e consegue ensinar os outros.' }
 ];
 const faixaN = v => REGUA_N[v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3];
-// situação no time, como o "tempo de jogo" do FM, pela média dos técnicos
-const SITUACOES = [[16, 'Angaria sozinho', 's4'], [11, 'Angaria com apoio', 's3'], [6, 'Em treinamento', 's2'], [0, 'Em formação', 's1']];
+// situação no time, como o "tempo de jogo" do FM, pela média dos atributos (acompanha a régua)
+const SITUACOES = [[16, 'Ensina o time', 's4'], [11, 'Angaria sozinho', 's3'], [6, 'Angaria com apoio', 's2'], [0, 'Em formação', 's1']];
 const DED = { k: 'det', nome: 'Dedicação', desc: 'Quanto do tempo de trabalho a pessoa deixa para a angariação de imóveis prontos. Pergunte a ela.',
   op: [[5, 'Menos de 25%', 'Angariação é um extra'], [10, '25% a 50%', 'Divide com outras atividades'], [15, '50% a 75%', 'Angariação é a prioridade'], [20, 'Mais de 75%', 'Foco total na angariação']] };
 const dedDe = v => typeof v !== 'number' ? null : DED.op[v <= 5 ? 0 : v <= 10 ? 1 : v <= 15 ? 2 : 3];
@@ -919,7 +922,7 @@ function cleanCorretor(o) {
     evoluir: String(o.evoluir || ''),
     avaliacoes: arr(o.avaliacoes).filter(a => a && a.data)
       // m: 2 = avaliação no modelo das etapas (desde 01/11/2026); sem m = modelo antigo
-      .map(a => Object.assign({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || ''), ca: +a.ca > 0 ? Math.min(5, meioPasso(+a.ca)) : 0 }, +a.m === 2 || +a.m === 3 ? { m: +a.m } : {}))
+      .map(a => Object.assign({ id: String(a.id || newId('a')), data: String(a.data), notas: cleanNotas(a.notas), obs: String(a.obs || ''), ca: +a.ca > 0 ? Math.min(5, meioPasso(+a.ca)) : 0 }, +a.m === 2 || +a.m === 3 ? { m: +a.m } : {}, a.t ? { t: String(a.t) } : {}))
       .sort((a, b) => a.data < b.data ? -1 : a.data > b.data ? 1 : 0),
     // angariação: nome do imóvel, fase na carteira (as antigas, sem fase, eram angariações realizadas = assinadas) e se teve proposta
     producao: arr(o.producao).filter(p => p && p.data && PROD[p.tipo])
@@ -944,7 +947,7 @@ function cleanMentoria(o) {
     meta: typeof o.meta === 'string' ? o.meta : MENT_PADRAO.meta,
     // treino: o que foi treinado (atributos) e quem estava; o título é opcional
     treinos: arr(o.treinos).filter(t => t && t.data && (arr(t.temas).length || t.tema))
-      .map(t => ({ id: String(t.id || newId('t')), data: String(t.data), temas: arr(t.temas).filter(k => ATRS.some(a => a.k === k)), tema: String(t.tema || ''), quem: arr(t.quem).map(String), obs: String(t.obs || '') }))
+      .map(t => ({ id: String(t.id || newId('t')), data: String(t.data), temas: arr(t.temas).filter(k => ATRS.some(a => a.k === k)), tema: String(t.tema || ''), quem: arr(t.quem).map(String), obs: String(t.obs || ''), res: t.res && typeof t.res === 'object' ? t.res : {} }))
       .sort((a, b) => b.data.localeCompare(a.data)),
     atualizadoEm: String(o.atualizadoEm || '')
   };
@@ -1236,7 +1239,7 @@ function abaGeral(c, N) {
       <section class="box"><div class="box-h"><h3>Estatísticas</h3><span class="muted r" style="font-size:13px">desde ${fmtShort(inicioDe(c))}</span></div>
         <div class="est"><div><b>${P.v}</b><span>visitas de angariação</span></div><div><b>${P.a}</b><span>angariações assinadas</span></div><div><b>${P.valor ? fmtValor(P.valor) : '–'}</b><span>valor angariado</span></div><div><b>${tr.length}</b><span>${plural(tr.length, 'treino', 'treinos')}</span></div></div></section>
       <section class="box"><div class="box-h"><h3>Treinos</h3></div>
-        ${tr.length ? `<div class="ls">${tr.slice(0, 6).map(t => `<div class="li"><span class="d">${fmtShort(t.data)}</span><span class="w">${esc(tituloTreino(t))}</span></div>`).join('')}</div>` : '<div class="empty-s">Nenhum treino registrado ainda.</div>'}</section>
+        ${tr.length ? `<div class="ls">${tr.slice(0, 6).map(t => `<div class="li"><span class="d">${fmtShort(t.data)}</span><span class="w">${esc(tituloTreino(t))}${resultadoTreino(t, c.id) ? `<small>${esc(resultadoTreino(t, c.id))}</small>` : ''}</span></div>`).join('')}</div>` : '<div class="empty-s">Nenhum treino registrado ainda.</div>'}</section>
     </div>`;
 }
 const tituloTreino = t => t.tema || t.temas.map(k => atr(k).nome).join(', ') || 'Treino';
@@ -1266,7 +1269,7 @@ function abaDev(c) {
     <section class="box" style="margin-top:16px">
       <div class="box-h"><h3>Avaliações</h3><span class="muted r" style="font-size:13px">${avs.length} ${plural(avs.length, 'avaliação', 'avaliações')}</span></div>
       ${avs.length > 1 ? graficoLinhas(avs, [{ cor: '#d99a0b', val: a => capDaAvaliacao(a), nome: 'Capacidade' }], 0, 5, v => fmtEst(v) + ' ★', 'cap', true) : ''}
-      <div class="ls">${avs.slice().reverse().map(a => `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(capDaAvaliacao(a))}</span><small>${GRUPOS_N.map(g => { const m = media(a.notas, g.attrs.map(x => x.k)); return `${g.nome} ${m === null ? '–' : Math.round(m)}`; }).join(' · ')}</small></span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`).join('')}</div>
+      <div class="ls">${avs.slice().reverse().map(a => `<div class="li"><span class="d">${fmtShort(a.data)}<br>${a.data.slice(0, 4)}</span><span class="w"><span class="ob">${st5(capDaAvaliacao(a))}</span><small>${a.obs ? esc(a.obs) + ' · ' : ''}${GRUPOS_N.map(g => { const m = media(a.notas, g.attrs.map(x => x.k)); return `${g.nome} ${m === null ? '–' : Math.round(m)}`; }).join(' · ')}</small></span><button class="ed adm" data-act="aval" data-id="${esc(c.id)}" data-av="${esc(a.id)}">Editar</button></div>`).join('')}</div>
     </section>`;
 }
 function abaProd(c) {
@@ -1382,7 +1385,7 @@ function renderTreino() {
       <div><b>${pessoas.size}</b><span>${plural(pessoas.size, 'pessoa treinada', 'pessoas treinadas')}</span></div>
       <div><b>${cob.size}<small class="de9">/${ATRS.length}</small></b><span>atributos já treinados</span></div>
     </div>
-    <div class="tools adm"><button class="btn-or sm" data-act="treino">+ Registrar treino</button><span class="hintp">Escolha o que foi treinado e toque em quem estava. Quem participou fica no mínimo com 6 naquele atributo.</span></div>
+    <div class="tools adm"><button class="btn-or sm" data-act="treino">+ Registrar treino</button><span class="hintp">Escolha o que foi treinado e quem estava, e dê a nota que cada um mostrou no treino. A nota vai direto para a ficha.</span></div>
     <div class="group-t"><span class="lbl">Quadro do time</span></div>
     ${lista.length ? `<div class="tw mxw"><table class="mxt">
       <thead><tr><th rowspan="2" class="nm">Corretor</th>${GRUPOS_N.map(g => `<th colspan="${g.attrs.length}" class="fh">${g.nome}</th>`).join('')}<th rowspan="2" class="dd">Capacidade</th></tr>
@@ -1396,7 +1399,7 @@ function renderTreino() {
         <span class="d">${fmtShort(t.data)}<br>${t.data.slice(0, 4)}</span>
         <span class="w"><b>${esc(tituloTreino(t))}</b>
           ${t.temas.length && t.tema ? `<span class="chips-in">${t.temas.map(k => `<span class="tg">${atr(k).nome}</span>`).join('')}</span>` : ''}
-          <small>${t.quem.map(id => byId(id)).filter(Boolean).map(c => esc(firstName(c.nome))).join(', ') || 'Sem participantes'}${t.obs ? ' · ' + esc(t.obs) : ''}</small></span>
+          <small>${t.quem.map(id => byId(id)).filter(Boolean).map(c => esc(firstName(c.nome)) + (resultadoTreino(t, c.id) ? ` (${esc(resultadoTreino(t, c.id))})` : '')).join(' · ') || 'Sem participantes'}${t.obs ? ' · ' + esc(t.obs) : ''}</small></span>
         <button class="ed adm" data-act="treino" data-v="${esc(t.id)}">Editar</button></div>`).join('')}</div>`
       : `<div class="empty"><h3>Nenhum treino registrado ainda</h3><p>Cada treino leva poucos segundos: o que foi treinado, quem estava, salvar.</p><button class="btn-or adm" data-act="treino">+ Registrar treino</button></div>`}`;
 }
@@ -1492,7 +1495,7 @@ function paginasRelatorio(opt) {
     if (!x.E) return `<section class="rp"><div class="r-h"><span class="r-k">Evolução individual · ${periodoTxt}</span><h2>${esc(so.nome)}</h2></div><p class="r-nota" style="margin-top:30px">Ainda sem avaliação neste período. Faça a primeira avaliação na ficha para o relatório aparecer.</p>${rod()}</section>`;
     return ficha(x) + `<section class="rp">
       <div class="r-h"><span class="r-k">${esc(so.nome)} · ${periodoTxt}</span><h2>Treinos ${P.nome}</h2></div>
-      ${x.tr.length ? `<table class="r-tab"><thead><tr><th>Data</th><th>Treino</th><th>Atributos</th></tr></thead><tbody>${x.tr.map(t => `<tr><td>${fmtDate(t.data)}</td><td><b>${esc(tituloTreino(t))}</b></td><td>${t.temas.map(k => atr(k).nome).join(', ') || '–'}</td></tr>`).join('')}</tbody></table>` : '<p class="r-nota" style="margin-top:30px">Nenhum treino registrado neste período.</p>'}
+      ${x.tr.length ? `<table class="r-tab"><thead><tr><th>Data</th><th>Treino</th><th>Resultado</th></tr></thead><tbody>${x.tr.map(t => `<tr><td>${fmtDate(t.data)}</td><td><b>${esc(tituloTreino(t))}</b></td><td>${esc(resultadoTreino(t, so.id)) || t.temas.map(k => atr(k).nome).join(', ') || '–'}</td></tr>`).join('')}</tbody></table>` : '<p class="r-nota" style="margin-top:30px">Nenhum treino registrado neste período.</p>'}
       ${rod()}</section>`;
   }
   return `
@@ -1803,36 +1806,86 @@ function saveProd() {
   toast(`${vis ? 'Visita' : 'Angariação'} registrada para ${firstName(c.nome)}.`, { label: 'Desfazer', fn: () => { const x = byId(c.id); if (x) saveCorretor(Object.assign({}, x, { producao: x.producao.filter(y => y.id !== p.id) })); } });
 }
 
-// treino: o que foi treinado (toque nos atributos), quem estava (toque nos nomes) e salvar
+// treino: o que foi treinado, quem estava e, para cada pessoa, a nota que ela mostrou no treino (já vem com a nota de antes;
+// quem ainda estava abaixo de 6 começa em 6, porque treinou). Salvar grava o treino e as notas novas na ficha de cada um.
 function sheetTreino(tid, so) {
   const t = tid ? mentoria.treinos.find(x => x.id === tid) : null;
   if (tid && !t) return;
-  form = { tipo: 'treino', tid: t ? t.id : null, temas: t ? t.temas.slice() : [], quem: t ? t.quem.slice() : so ? [so] : [] }; // da ficha, já vem com a pessoa (treino individual)
-  openSheet(shHead(t ? 'Editar treino' : 'Registrar treino', t ? esc(tituloTreino(t)) : 'O que foi treinado hoje?') + `<div class="sh-b">
+  form = { tipo: 'treino', tid: t ? t.id : null, temas: t ? t.temas.slice() : [], quem: t ? t.quem.slice() : so ? [so] : [], notas: {} }; // da ficha, já vem com a pessoa (treino individual)
+  if (t) Object.entries(t.res || {}).forEach(([pid, r]) => { form.notas[pid] = Object.fromEntries(Object.entries(r).map(([k, [, depois]]) => [k, depois])); });
+  openSheet(shHead(t ? 'Editar treino' : 'Registrar treino', t ? esc(tituloTreino(t)) : 'O que foi treinado?') + `<div class="sh-b">
     <div><span class="lbl">O que foi treinado</span><div id="t-temas"></div></div>
     <div><span class="lbl">Quem estava</span><div class="chips sm" id="t-quem"></div></div>
     <div class="row2">
       <div class="fl"><label class="lbl" for="t-data">Data</label><input id="t-data" type="date" value="${t ? t.data : hoje()}"></div>
       <div class="fl"><label class="lbl" for="t-tema">Título<span class="hint">opcional</span></label><input id="t-tema" value="${esc(t ? t.tema : '')}" placeholder="Ex.: Visita no Ecoville" autocomplete="off"></div>
     </div>
+    <div id="t-notas"></div>
     <div class="err" id="t-err"></div><div id="t-del"></div>
   </div>
   <div class="sh-f">${t ? '<button class="danger l" data-act="treino-del-ask">Apagar</button>' : ''}<button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-treino">Salvar</button></div>`, 'treino');
+  $('#t-data').addEventListener('change', renderNotasTreino);
   renderTreinoChips();
+}
+// a nota de antes do treino: a da última avaliação até a véspera (sem contar este treino)
+function notaAntes(c, k, data, tid) {
+  const av = avsN(c).filter(a => a.data <= data && a.t !== tid).pop();
+  return av && typeof av.notas[k] === 'number' ? av.notas[k] : 1;
 }
 function renderTreinoChips() {
   $('#t-temas').innerHTML = GRUPOS_N.map(g => `<div class="chips sm et-f"><span class="et-l">${g.nome}</span>${g.attrs.map(a => `<button class="chip${form.temas.includes(a.k) ? ' on' : ''}" data-act="t-et" data-v="${a.k}">${a.nome}</button>`).join('')}</div>`).join('');
   const todos = corretores.length && corretores.every(c => form.quem.includes(c.id));
   $('#t-quem').innerHTML = `<button class="chip${todos ? ' on' : ''}" data-act="t-todos">Todos</button>` + ordenados().map(c => `<button class="chip${form.quem.includes(c.id) ? ' on' : ''}" data-act="t-quem" data-v="${esc(c.id)}">${esc(firstName(c.nome))}</button>`).join('');
+  renderNotasTreino();
+}
+function renderNotasTreino() {
+  const box = $('#t-notas'); if (!box) return;
+  const data = $('#t-data').value || hoje(), pessoas = form.quem.map(byId).filter(Boolean);
+  if (!form.temas.length || !pessoas.length) { box.innerHTML = '<p class="hintp">Escolha o que foi treinado e quem estava. Aí aparece a nota de cada um para você ajustar.</p>'; return; }
+  box.innerHTML = `<span class="lbl">Nota no treino<span class="hint">já vem com a nota de antes; arraste se a pessoa mostrou outro nível</span></span>` + pessoas.map(c => {
+    const n = form.notas[c.id] = form.notas[c.id] || {};
+    return `<div class="tn"><div class="tn-n">${avatar(c)}<b>${esc(c.nome)}</b></div>${form.temas.map(k => {
+      const antes = notaAntes(c, k, data, form.tid);
+      if (typeof n[k] !== 'number') n[k] = Math.max(antes, 6);
+      return `<div class="sl"><div class="sl-t"><b>${atr(k).nome}</b><span class="sl-f" id="tf-${c.id}-${k}"></span><span class="sl-v" id="tv-${c.id}-${k}"></span></div>
+        <input type="range" min="1" max="20" step="1" data-p="${esc(c.id)}" data-k="${k}" data-a="${antes}" value="${n[k]}" aria-label="${esc(firstName(c.nome))}: ${atr(k).nome}"></div>`;
+    }).join('')}</div>`;
+  }).join('');
+  box.querySelectorAll('input[type=range]').forEach(r => { pintaNotaTreino(r); r.addEventListener('input', () => { form.notas[r.dataset.p][r.dataset.k] = +r.value; pintaNotaTreino(r); }); });
+}
+function pintaNotaTreino(r) {
+  const v = +r.value, a = +r.dataset.a, id = r.dataset.p + '-' + r.dataset.k;
+  r.style.setProperty('--p', ((v - 1) / 19 * 100) + '%'); r.className = nivel(v);
+  $('#tv-' + id).innerHTML = `<span class="muted">${a} →</span> <b class="${nivel(v)}">${v}</b>`;
+  $('#tf-' + id).textContent = faixaN(v).nome;
 }
 function saveTreino() {
   const tema = $('#t-tema').value.trim();
   if (!form.temas.length && !tema) { $('#t-err').textContent = 'Toque no que foi treinado.'; return; }
   if (!form.quem.length) { $('#t-err').textContent = 'Toque em quem estava.'; return; }
-  const t = { id: form.tid || newId('t'), data: $('#t-data').value || hoje(), temas: form.temas, tema, quem: form.quem, obs: '' };
+  const data = $('#t-data').value || hoje(), tid = form.tid || newId('t');
+  // em cada pessoa: a avaliação deste treino (com todas as notas dela até ali e as do treino por cima)
+  const res = {};
+  form.quem.forEach(pid => {
+    const c = byId(pid); if (!c) return;
+    const outras = c.avaliacoes.filter(a => a.t !== tid);
+    const base = notasDe(Object.assign({}, c, { avaliacoes: outras }), data);
+    const notas = Object.assign({}, base.av ? base.av.notas : {});
+    res[pid] = {};
+    form.temas.forEach(k => { const antes = notaAntes(c, k, data, tid), depois = (form.notas[pid] || {})[k] ?? Math.max(antes, 6); notas[k] = depois; res[pid][k] = [antes, depois]; });
+    ATRS.forEach(a => { if (typeof notas[a.k] !== 'number') notas[a.k] = 1; });
+    const n = cleanNotas(notas);
+    saveCorretor(Object.assign({}, c, { avaliacoes: outras.concat([{ id: newId('a'), data, notas: n, obs: 'Treino: ' + (tema || form.temas.map(k => atr(k).nome).join(', ')), ca: capN(n), m: 3, t: tid }]) }));
+  });
+  // quem saiu do treino na edição perde a nota daquele treino
+  const t0 = form.tid ? mentoria.treinos.find(x => x.id === form.tid) : null;
+  if (t0) t0.quem.filter(pid => !form.quem.includes(pid)).forEach(pid => { const c = byId(pid); if (c) saveCorretor(Object.assign({}, c, { avaliacoes: c.avaliacoes.filter(a => a.t !== tid) })); });
+  const t = { id: tid, data, temas: form.temas, tema, quem: form.quem, obs: '', res };
   saveMentoria({ treinos: form.tid ? mentoria.treinos.map(x => x.id === form.tid ? t : x) : mentoria.treinos.concat([t]) });
   const ed = !!form.tid; closeSheet(); toast(ed ? 'Treino atualizado.' : `Treino registrado para ${t.quem.length} ${plural(t.quem.length, 'pessoa', 'pessoas')}.`);
 }
+// o que mudou numa pessoa num treino: "Matrícula 6 → 11"
+const resultadoTreino = (t, pid) => Object.entries((t.res || {})[pid] || {}).map(([k, [a, d]]) => `${atr(k) ? atr(k).nome : k} ${a} → ${d}`).join(' · ');
 
 // mentoria: início, o que foi entregue, próximos passos e meta (vão para o relatório)
 function sheetMentoria() {
@@ -1936,9 +1989,12 @@ document.addEventListener('click', e => {
       break;
     case 'treino-del-no': $('#t-del').innerHTML = ''; break;
     case 'treino-del-yes': {
-      const antes = mentoria.treinos.slice(), tid = form.tid;
-      closeSheet(); saveMentoria({ treinos: antes.filter(x => x.id !== tid) });
-      toast('Treinamento apagado.', { label: 'Desfazer', fn: () => saveMentoria({ treinos: antes }) });
+      const antes = mentoria.treinos.slice(), tid = form.tid, t0 = antes.find(x => x.id === tid);
+      const copias = (t0 ? t0.quem : []).map(byId).filter(Boolean).map(c => JSON.parse(JSON.stringify(c)));
+      closeSheet();
+      copias.forEach(c => saveCorretor(Object.assign({}, c, { avaliacoes: c.avaliacoes.filter(a => a.t !== tid) })));
+      saveMentoria({ treinos: antes.filter(x => x.id !== tid) });
+      toast('Treino apagado.', { label: 'Desfazer', fn: () => { copias.forEach(c => saveCorretor(c)); saveMentoria({ treinos: antes }); } });
       break;
     }
     case 'mentoria': sheetMentoria(); break;
@@ -1973,7 +2029,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02a';
+const VERSAO = '2026-11-02b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
