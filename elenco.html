@@ -704,7 +704,8 @@ const GRUPOS_N = [
     { k: 'dun', nome: 'Declaração Unificada', curto: 'Declaração', desc: 'Emite a Declaração Unificada da unidade e confirma qual é o imóvel, a matrícula e a área construída.' },
     { k: 'vis', nome: 'Visita de angariação', curto: 'Visita', desc: 'Na visita, deixa o proprietário falar, conhece o imóvel e o motivo da venda e mostra autoridade.' }
   ] },
-  { k: 'doc', nome: 'Documentação', sub: 'Ler os documentos e tirar a matrícula', attrs: [
+  { k: 'doc', nome: 'Documentação', sub: 'O que pedir, ler os documentos e tirar a matrícula', attrs: [
+    { k: 'nec', nome: 'Documentos necessários', curto: 'Necessários', desc: 'Sabe quais documentos pedir ao proprietário para angariar: do imóvel e dele.' },
     { k: 'doc', nome: 'Leitura de documentação', curto: 'Leitura', desc: 'Lê a documentação do imóvel e do proprietário (matrícula, IPTU, condomínio) e identifica o que pode travar a venda: ônus, penhora, inventário, área divergente.' },
     { k: 'mat', nome: 'Matrícula', curto: 'Matrícula', desc: 'Sabe tirar a matrícula atualizada do imóvel: qual cartório, com quais dados e como pedir.' }
   ] },
@@ -2038,7 +2039,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02e';
+const VERSAO = '2026-11-02f';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
