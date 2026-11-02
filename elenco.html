@@ -699,6 +699,7 @@ const GRUPOS_N = [
   { k: 'ang', nome: 'Angariação', sub: 'Achar o imóvel, o proprietário e visitar', attrs: [
     { k: 'anu', nome: 'Leitura de anúncios', curto: 'Anúncios', desc: 'Lê os anúncios das outras imobiliárias para descobrir o que entregam sem querer: andar, número da casa ou do apartamento, vagas, fotos, e se o imóvel está em várias.' },
     { k: 'eem', nome: 'Eemovel Brokers', curto: 'Eemovel', desc: 'Com a unidade em mãos, encontra no Eemovel Brokers quem é o proprietário e o telefone dele.' },
+    { k: 'min', nome: 'Mind', curto: 'Mind', desc: 'Sabe usar o Mind, o outro sistema da VIP, para encontrar o proprietário e os dados do imóvel.' },
     { k: 'map', nome: 'Mapa cadastral', curto: 'Mapa', desc: 'Localiza o imóvel no Mapa Cadastral: lote, indicação fiscal, sublotes, andares e apartamentos por andar.' },
     { k: 'dun', nome: 'Declaração Unificada', curto: 'Declaração', desc: 'Emite a Declaração Unificada da unidade e confirma qual é o imóvel, a matrícula e a área construída.' },
     { k: 'vis', nome: 'Visita de angariação', curto: 'Visita', desc: 'Na visita, deixa o proprietário falar, conhece o imóvel e o motivo da venda e mostra autoridade.' }
@@ -2029,7 +2030,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02b';
+const VERSAO = '2026-11-02c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
