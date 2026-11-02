@@ -745,7 +745,7 @@ const FASES_ANG = [['doc', 'Documentação'], ['jet', 'No Jetimob'], ['ass', 'Au
 const iFase = f => Math.max(0, FASES_ANG.findIndex(x => x[0] === f));
 const assinada = p => iFase(p.fase) >= 2;
 // a mentoria, como foi vendida: 90 dias em três fases
-const MENT_FASES = [['Base', 'Equipe e treinos'], ['Carteira', 'Aumentar a carteira de imóveis, ritmo de execução, anúncios no site e no portal e criação de Reels'], ['Consolidação', 'Processos ajustados e indicadores']];
+const MENT_FASES = [['Base', 'Equipe, treinos, processo da angariação e criação de Reels'], ['Carteira', 'Aumentar a carteira de imóveis, ritmo de execução, anúncios no site e no portal e criação de Reels'], ['Consolidação', 'Processos ajustados e indicadores']];
 // o que vem depois de cada fase (título da última página do relatório)
 const MENT_PROXIMA = ['Aumentar a carteira e continuar o treinamento de todo o time', 'Consolidar processos e indicadores', 'Consolidação: processos ajustados e indicadores'];
 const MENT_PADRAO = {
@@ -1248,8 +1248,9 @@ function abaGeral(c, N) {
 }
 const tituloTreino = t => t.tema || t.temas.map(k => atr(k).nome).join(', ') || 'Treino';
 // treino de visita: o valor do imóvel vem da visita registrada na produção no mesmo dia
+const visitaDoTreino = (t, c) => t.temas.includes('vis') ? c.producao.find(p => p.tipo === 'visita' && p.data === t.data && p.valor) || null : null;
 function tituloComValor(t, c) {
-  const v = t.temas.includes('vis') ? c.producao.find(p => p.tipo === 'visita' && p.data === t.data && p.valor) : null;
+  const v = visitaDoTreino(t, c);
   return tituloTreino(t) + (v ? ' · ' + fmtValor(v.valor) : '');
 }
 // evolução: a capacidade numa barra (de onde partiu até hoje) e cada atributo com o ponto de partida marcado
@@ -1478,7 +1479,19 @@ function paginasRelatorio(opt) {
   const barra = (de, ate, max) => { const a = Math.min(de, ate) / max * 100, b = Math.max(de, ate) / max * 100; return `<span class="r-bar"><i class="b0" style="width:${a}%"></i><i class="${ate >= de ? 'b1' : 'b2'}" style="left:${a}%;width:${b - a}%"></i></span>`; };
   const dEst = (de, ate) => ate === de ? '<span class="r-eq">=</span>' : `<span class="${ate > de ? 'r-up' : 'r-dn'}">${ate > de ? '▲' : '▼'} ${fmtEst(Math.abs(ate - de))}★</span>`;
   const periodoTxt = `${fmtDate(P.de)} a ${fmtDate(P.fim)}`;
-  const nomesDe = t => t.quem.map(id => byId(id)).filter(Boolean).map(c => esc(firstName(c.nome))).join(', ');
+  // treinos com o time aparecem um a um; os individuais (em campo) se juntam pelo que foi treinado, para a página não crescer
+  const emTime = T.filter(t => t.quem.length > 1), campo = [];
+  T.filter(t => t.quem.length === 1).forEach(t => {
+    const k = t.temas[0] || '', c = byId(t.quem[0]);
+    let g = campo.find(x => x.k === k); if (!g) campo.push(g = { k, n: 0, quem: {}, valor: 0 });
+    g.n++;
+    if (c) { const nm = firstName(c.nome); g.quem[nm] = (g.quem[nm] || 0) + 1; const v = visitaDoTreino(t, c); if (v) g.valor += v.valor; }
+  });
+  campo.sort((a, b) => b.n - a.n);
+  const campoTxt = g => g.k === 'vis' ? `${plural(g.n, 'Visita de angariação acompanhada', 'Visitas de angariação acompanhadas')} em campo${g.valor ? ` · ${fmtValor(g.valor)} em imóveis` : ''}`
+    : `${plural(g.n, 'Treino individual', 'Treinos individuais')} de ${g.k ? (/^(Reels|Mind|Eemovel|Declaração)/.test(atr(g.k).nome) ? atr(g.k).nome : minus1(atr(g.k).nome)) : 'outros temas'}`;
+  const listaTreinos = (emTime.length ? `<div class="r-sub">Com o time</div><ul class="r-tr">${emTime.slice(0, 8).map(t => `<li><b>${fmtShort(t.data)}</b>${esc(tituloTreino(t))}<small>${quemTreino(t, true)}</small></li>`).join('')}${emTime.length > 8 ? `<li><small>e mais ${emTime.length - 8}</small></li>` : ''}</ul>` : '')
+    + (campo.length ? `<div class="r-sub">Um a um</div><ul class="r-tr">${campo.map(g => `<li><b>${g.n}×</b>${campoTxt(g)}<small>${Object.entries(g.quem).sort((a, b) => b[1] - a[1]).map(([nm, n]) => esc(nm) + (n > 1 ? ' ' + n : '')).join(' · ')}</small></li>`).join('')}</ul>` : '');
   // a ficha de evolução de uma pessoa no período
   const ficha = ({ c, E, prodP, tr }) => {
     const N = { n: E.hj }, d = dedDe(dedicacaoDe(c));
@@ -1529,7 +1542,7 @@ function paginasRelatorio(opt) {
     <div class="r-h"><span class="r-k">O que foi feito · ${periodoTxt}</span><h2>${T.length ? `${T.length} ${plural(T.length, 'treino', 'treinos')} para ${new Set(T.flatMap(t => t.quem)).size} pessoas` : 'Estrutura montada para o time'}</h2></div>
     <div class="r-2">
       <div><div class="r-sub">Entregas</div><ul class="r-ok">${mentoria.entregas.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>
-      <div><div class="r-sub">Treinos</div>${T.length ? `<ul class="r-tr">${T.slice(0, 14).map(t => `<li><b>${fmtShort(t.data)}</b>${esc(tituloTreino(t))}<small>${nomesDe(t)}</small></li>`).join('')}${T.length > 14 ? `<li><small>e mais ${T.length - 14}</small></li>` : ''}</ul>` : '<p class="r-nota">Nenhum treino registrado neste período.</p>'}</div>
+      <div>${T.length ? listaTreinos : '<div class="r-sub">Treinos</div><p class="r-nota">Nenhum treino registrado neste período.</p>'}</div>
     </div>
     ${rod()}
   </section>
@@ -1894,10 +1907,11 @@ function saveTreino() {
   const ed = !!form.tid; closeSheet(); toast(ed ? 'Treino atualizado.' : `Treino registrado para ${t.quem.length} ${plural(t.quem.length, 'pessoa', 'pessoas')}.`);
 }
 // quem estava no treino: "Time todo (10)"; até 3 pessoas com o resultado de cada uma; mais que isso, só os nomes (o detalhe fica na ficha)
-function quemTreino(t) {
+// "time todo" = todos que já tinham começado a mentoria na data do treino (quem entrou depois não conta)
+function quemTreino(t, curto) {
   const ps = t.quem.map(byId).filter(Boolean);
-  if (ps.length && ps.length === corretores.length && ps.length > 3) return `Time todo (${ps.length})`;
-  return ps.map(c => esc(firstName(c.nome)) + (ps.length <= 3 && resultadoTreino(t, c.id) ? ` (${esc(resultadoTreino(t, c.id))})` : '')).join(' · ');
+  if (ps.length > 3 && corretores.filter(c => inicioDe(c) <= t.data).every(c => t.quem.includes(c.id))) return `Time todo (${ps.length})`;
+  return ps.map(c => esc(firstName(c.nome)) + (!curto && ps.length <= 3 && resultadoTreino(t, c.id) ? ` (${esc(resultadoTreino(t, c.id))})` : '')).join(' · ');
 }
 // o que mudou numa pessoa num treino: "Matrícula 6 → 11"
 const resultadoTreino = (t, pid) => Object.entries((t.res || {})[pid] || {}).map(([k, [a, d]]) => `${atr(k) ? atr(k).nome : k} ${a} → ${d}`).join(' · ');
@@ -2044,7 +2058,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02g';
+const VERSAO = '2026-11-02h';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
