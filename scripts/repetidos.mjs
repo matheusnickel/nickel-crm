@@ -8,11 +8,11 @@
 // mesmo prédio dividem as fotos do decorado (testado em 31/10: Vivenda Tabor sem nenhuma foto igual; Atmos 08 × 18 com 9 de 10).
 //
 // Quem fica: J8 (mostra o complemento), SIS3 (melhores fotos), depois pela qualidade das fotos medida em 31/10:
-// Arya (2560×1707), A. Gonçalves (1920×1280), Zireh (1280×853).
+// Arya (2560×1707), A. Gonçalves (1920×1280), Casa Prates (1920×1280, medida em 03/11), Zireh (1280×853).
 import { readFile, writeFile } from 'node:fs/promises';
 
-const ORDEM = ['j8', 'sis3', 'arya', 'gon', 'zireh'];
-const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya' };
+const ORDEM = ['j8', 'sis3', 'arya', 'gon', 'prates', 'zireh'];
+const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates' };
 const OUT = new URL('../dados/repetidos.json', import.meta.url);
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();

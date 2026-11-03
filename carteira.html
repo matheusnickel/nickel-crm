@@ -483,7 +483,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
   <main>
     <!-- IMÓVEIS: o estoque de todas as imobiliárias junto, para buscar sem cliente -->
     <section id="v-imoveis" class="hidden">
-      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves, SIS3, Zireh e Arya</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
+      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves, SIS3, Zireh, Arya e Casa Prates</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
       <div class="bar-tools">
         <div class="ta"><input id="i-q" type="search" placeholder="Bairro, rua, empreendimento ou código…" autocomplete="off" aria-label="Buscar imóvel"></div>
       </div>
@@ -868,7 +868,9 @@ const ESTOQUES = [
   // Zireh: só os imóveis prontos (lançamentos ficam de fora); o site não mostra o número da rua nem o complemento
   { id: 'zireh', nome: 'Zireh', arq: 'dados/zireh.json', det: 'dados/zireh/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   // Arya1: também só prontos; mostra a rua sem número e sem complemento
-  { id: 'arya', nome: 'Arya', arq: 'dados/arya.json', det: 'dados/arya/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
+  { id: 'arya', nome: 'Arya', arq: 'dados/arya.json', det: 'dados/arya/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  // Casa Prates: só prontos à venda; mostra a rua com o número, sem complemento
+  { id: 'prates', nome: 'Casa Prates', arq: 'dados/prates.json', det: 'dados/prates/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
 const EST = Object.fromEntries(ESTOQUES.map(e => [e.id, e]));
 const estoque = {}, estoqueErr = {};
@@ -879,7 +881,7 @@ let carregados = false;
 // A varredura (scripts/repetidos.mjs, roda depois de cada atualização) compara os anúncios e grava dados/repetidos.json:
 // só junta quando endereço, preço, metragem e características dão certeza; na dúvida, os dois ficam. Aqui o repetido some
 // de todo lugar (Todas, aba da imobiliária, contagens): fica um anúncio só, o da imobiliária preferida — J8 (complemento),
-// SIS3 (fotos), depois a de fotos melhores (Arya, A. Gonçalves, Zireh). O escondido continua conhecido, para o aviso
+// SIS3 (fotos), depois a de fotos melhores (Arya, A. Gonçalves, Casa Prates, Zireh). O escondido continua conhecido, para o aviso
 // "também anunciado na…" e para reconhecer um imóvel já enviado por outra imobiliária.
 const IMOVEL = new Map(); // "src:código" -> imóvel (inclusive os escondidos)
 async function aplicaRepetidos() {
@@ -1816,7 +1818,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-10-31n';
+const VERSAO = '2026-11-03a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
