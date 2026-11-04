@@ -483,7 +483,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
   <main>
     <!-- IMÓVEIS: o estoque de todas as imobiliárias junto, para buscar sem cliente -->
     <section id="v-imoveis" class="hidden">
-      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves, SIS3, Zireh, Arya e Casa Prates</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
+      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves, SIS3, Zireh, Arya, Casa Prates e Pilar</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
       <div class="bar-tools">
         <div class="ta"><input id="i-q" type="search" placeholder="Bairro, rua, empreendimento ou código…" autocomplete="off" aria-label="Buscar imóvel"></div>
       </div>
@@ -870,7 +870,9 @@ const ESTOQUES = [
   // Arya1: também só prontos; mostra a rua sem número e sem complemento
   { id: 'arya', nome: 'Arya', arq: 'dados/arya.json', det: 'dados/arya/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   // Casa Prates: só prontos à venda; mostra a rua com o número, sem complemento
-  { id: 'prates', nome: 'Casa Prates', arq: 'dados/prates.json', det: 'dados/prates/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
+  { id: 'prates', nome: 'Casa Prates', arq: 'dados/prates.json', det: 'dados/prates/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  // Pilar: marketplace, só Curitiba e só prontos; cada anúncio é de uma imobiliária parceira (em `ref`); esconde rua, número e complemento
+  { id: 'pilar', nome: 'Pilar', arq: 'dados/pilar.json', det: 'dados/pilar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t, parceiros: true }
 ];
 const EST = Object.fromEntries(ESTOQUES.map(e => [e.id, e]));
 const estoque = {}, estoqueErr = {};
@@ -881,7 +883,7 @@ let carregados = false;
 // A varredura (scripts/repetidos.mjs, roda depois de cada atualização) compara os anúncios e grava dados/repetidos.json:
 // só junta quando endereço, preço, metragem e características dão certeza; na dúvida, os dois ficam. Aqui o repetido some
 // de todo lugar (Todas, aba da imobiliária, contagens): fica um anúncio só, o da imobiliária preferida — J8 (complemento),
-// SIS3 (fotos), depois a de fotos melhores (Arya, A. Gonçalves, Casa Prates, Zireh). O escondido continua conhecido, para o aviso
+// SIS3 (fotos), depois a de fotos melhores (Arya, A. Gonçalves, Casa Prates, Zireh) e por último a Pilar (sem endereço, foto com marca). O escondido continua conhecido, para o aviso
 // "também anunciado na…" e para reconhecer um imóvel já enviado por outra imobiliária.
 const IMOVEL = new Map(); // "src:código" -> imóvel (inclusive os escondidos)
 async function aplicaRepetidos() {
@@ -1257,7 +1259,7 @@ function j8Card(i, c) {
   return `<div class="j8c">
     <div class="j8top">
       <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
-      <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}<span class="src ${i.src}">${EST[i.src].nome}</span></div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>${(() => {
+      <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}<span class="src ${i.src}">${EST[i.src].nome}</span></div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>${EST[i.src].parceiros && i.ref ? `<div class="sp">Imobiliária: ${esc(i.ref)}</div>` : ''}${(() => {
         // enviado por esta imobiliária ou por outra que anuncia o mesmo imóvel
         const refs = new Map([[refDe(i), i]].concat((i.irmaos || []).map(k => IMOVEL.get(k)).filter(Boolean).map(x => [refDe(x), x])));
         const e = c && c.envios.filter(x => refs.has(x.ref)).sort((a, b) => a.data < b.data ? 1 : -1)[0];
@@ -1332,7 +1334,7 @@ function imoveisFiltrados() {
   if (f.quartos) l = l.filter(i => i.q >= f.quartos);
   if (f.vmin) l = l.filter(i => i.p >= f.vmin);
   if (f.vmax) l = l.filter(i => i.p && i.p <= f.vmax);
-  if (palavras.length) l = l.filter(i => { const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, i.cp, i.bl].join(' ')); return palavras.every(p => t.includes(p)); });
+  if (palavras.length) l = l.filter(i => { const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, i.cp, i.bl, EST[i.src].parceiros ? i.ref : ''].join(' ')); return palavras.every(p => t.includes(p)); });
   const ordem = { maior: (a, b) => b.p - a.p, menor: (a, b) => (a.p || 9e15) - (b.p || 9e15), recentes: (a, b) => String(b.du).localeCompare(String(a.du)) }[f.ordem];
   return l.sort(ordem);
 }
@@ -1818,7 +1820,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-03a';
+const VERSAO = '2026-11-04a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

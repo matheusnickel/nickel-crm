@@ -9,10 +9,11 @@
 //
 // Quem fica: J8 (mostra o complemento), SIS3 (melhores fotos), depois pela qualidade das fotos medida em 31/10:
 // Arya (2560×1707), A. Gonçalves (1920×1280), Casa Prates (1920×1280, medida em 03/11), Zireh (1280×853).
+// A Pilar fica por último: tem foto boa (2048×1365), mas com marca d'água, e não mostra o endereço.
 import { readFile, writeFile } from 'node:fs/promises';
 
-const ORDEM = ['j8', 'sis3', 'arya', 'gon', 'prates', 'zireh'];
-const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates' };
+const ORDEM = ['j8', 'sis3', 'arya', 'gon', 'prates', 'zireh', 'pilar'];
+const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar' };
 const OUT = new URL('../dados/repetidos.json', import.meta.url);
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
