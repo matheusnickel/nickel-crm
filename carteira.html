@@ -871,7 +871,8 @@ const ESTOQUES = [
   { id: 'arya', nome: 'Arya', arq: 'dados/arya.json', det: 'dados/arya/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   // Casa Prates: só prontos à venda; mostra a rua com o número, sem complemento
   { id: 'prates', nome: 'Casa Prates', arq: 'dados/prates.json', det: 'dados/prates/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
-  // Pilar: marketplace, só Curitiba e só prontos; cada anúncio é de uma imobiliária parceira (em `ref`); esconde rua, número e complemento
+  // Pilar: marketplace, só Curitiba e só prontos; cada anúncio é de uma imobiliária parceira (em `ref`). O site da Pilar esconde o endereço:
+  // rua e número vêm do site da parceira, quando ela publica (cerca de 40% têm rua); complemento não existe nessa plataforma
   { id: 'pilar', nome: 'Pilar', arq: 'dados/pilar.json', det: 'dados/pilar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t, parceiros: true }
 ];
 const EST = Object.fromEntries(ESTOQUES.map(e => [e.id, e]));
@@ -1820,7 +1821,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-04a';
+const VERSAO = '2026-11-04b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

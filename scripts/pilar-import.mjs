@@ -1,10 +1,13 @@
 // Copia os imóveis PRONTOS à venda em Curitiba da PilarHomes (pilarhomes.com.br) para a Carteira, no mesmo formato das outras:
 //  - dados/pilar.json          resumo de todos os imóveis (para o cruzamento com os clientes)
 //  - dados/pilar/<codigo>.json detalhes + todas as fotos do anúncio (PDF, capa e descritivo)
-// A Pilar é um marketplace: cada anúncio é de uma imobiliária parceira (campo `par`). A lista vem do sitemap que o robots.txt
+// A Pilar é um marketplace: cada anúncio é de uma imobiliária parceira (campo `ref`). A lista vem do sitemap que o robots.txt
 // indica (sitemap-property-pages) e os dados do __NUXT_DATA__ de cada página. O robots.txt proíbe /api/*, /_ipx/* e os filtros
 // da busca, então nada disso é usado. A Pilar esconde rua, número e complemento (só bairro e condomínio), e as páginas por
 // rua não servem para descobrir: mostram o bairro inteiro. As fotos vêm com a marca d'água da Pilar, que fica como está.
+// O ENDEREÇO vem do site próprio da parceira: quase todas usam a mesma plataforma da Pilar, com o mesmo código de imóvel, e
+// a página <site>/imoveis/<código> traz rua e número quando a parceira publica (sem CEP na Carteira, a pedido do Matheus).
+// A plataforma não tem campo de complemento. Parceira nova sem site em SITES fica sem endereço: basta acrescentar.
 // Empreendimento com lançamento no futuro fica de fora: o Matheus só trabalha com prontos.
 // Roda à mão: node scripts/pilar-import.mjs
 import { writeFile, readdir, unlink, mkdir, readFile } from 'node:fs/promises';
@@ -14,8 +17,22 @@ const HEAD = { headers: { 'User-Agent': 'Mozilla/5.0 (CarteiraNickel)', 'Accept-
 const OUT = new URL('../dados/pilar.json', import.meta.url);
 const DIR = new URL('../dados/pilar/', import.meta.url);
 
+// o site de cada parceira (achado testando um código real dela em 04/11); sem site: Brunna Stavis, Casa Valente, Aura Home,
+// Carlos Osternack, Garcia Mendes, Henrique Martinkoski, Paulo Roberto, Thelma Goulart
+const SITES = {
+  'Valsa Homes': 'valsahomes.com.br', 'Galleria de Imóveis': 'galleriadeimoveis.com.br', 'Vila 5 Imóveis': 'vila5imoveis.com.br',
+  'Mocellin Imoveis': 'mocellinimoveis.com.br', 'Augusta Homes': 'augustahomes.com.br', 'Cammino Curadoria Imobiliária': 'camminoimoveis.com.br',
+  'Casa Uno': 'casaunoimoveis.com.br', 'MARAGNA Imóveis selecionados': 'maragnaimoveis.com.br', 'Leonardo Barrosa': 'leonardobarrosa.com.br',
+  'J.Assad': 'jassad.com.br', 'NestMob': 'nestmob.com.br', 'Simetria Imóveis': 'simetriaimoveis.com', 'Tria Imóveis': 'triaimoveis.imb.br',
+  'Luck Imóveis': 'luck.imb.br', 'Circino': 'circino.com.br', 'Livena Real Estate': 'livenarealestate.com.br', 'MSS Imóveis': 'mssimoveis.imb.br',
+  'ID Urbana & Propriedades': 'idurbana.com.br', 'Imobilliare': 'imobilliare.com.br', 'Faatto Imóveis': 'faattoimoveis.com.br',
+  'Katy Pedroso Consultoria Imobiliária': 'katypedrosoimoveis.com.br', 'Beth Bertinato': 'bethbertinatoimoveis.com.br', 'Casa Brave': 'casabrave.com.br',
+  'Janos Imobiliária': 'janos.imb.br', 'Lu Ferreira Imóveis': 'luferreiraimoveis.com.br', 'Cristina Marin - Curadoria de Imóveis': 'cristinamarinimoveis.com.br',
+  'Lumen - Soluções Imobiliárias': 'lumensolucoes.com.br', 'Livella': 'livella.imb.br', 'Investing Curitiba': 'investingcuritiba.com.br',
+  'Rodrigo França Imóveis': 'rodrigofrancaimoveis.com.br', 'STNI Imóveis': 'stni.com.br', 'Thais Fornielles': 'thaisfornielles.com.br', 'Pizzatto Imóveis': 'pizzattoimoveis.com.br'
+};
 const espera = ms => new Promise(s => setTimeout(s, ms));
-const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const norm =s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
 // propertyType.identifier/name do site → tipo da Carteira
 function tipoCarteira(nome, cond) {
@@ -82,8 +99,25 @@ for (let n = 1; n < 10; n++) {
 }
 if (lista.size < 300) throw new Error('Lista de imóveis estranha: ' + lista.size);
 
+// rua e número no site da parceira. Só número puro vale ("1202-2147483647" vira só a rua) e "rua" igual ao bairro é descartada
+const acha = (o, c, seen = new Set()) => {
+  if (!o || typeof o !== 'object' || seen.has(o)) return null; seen.add(o);
+  if (!Array.isArray(o) && o.commercialId === c && 'address' in o) return o;
+  for (const k in o) { const r = acha(o[k], c, seen); if (r) return r; }
+  return null;
+};
+function enderecoDe(d, c, bairro) {
+  const o = acha(d, c), rua = String((o && o.address) || '').trim(), num = String((o && o.number) || '').trim();
+  if (!rua || norm(rua) === norm(bairro)) return '';
+  return /^\d+$/.test(num) ? `${rua}, ${num}` : rua;
+}
+async function enderecoNaParceira(i) {
+  const site = SITES[i.ref]; if (!site) return '';
+  try { const html = await pega(`https://${site}/imoveis/${i.c}`, 2); const d = html && nuxt(html); return d ? enderecoDe(d, i.c, i.b) : ''; } catch (e) { return ''; }
+}
+
 // 2) a ficha de cada imóvel
-const hoje = new Date().toISOString().slice(0, 10);
+const hoje =new Date().toISOString().slice(0, 10);
 function ficha(html, c, u) {
   const d = nuxt(html); if (!d) return null;
   const v = (d.data || {})['imovel:' + c]; if (!v) return null;
@@ -131,6 +165,7 @@ async function trabalhador() {
       if (!r || r.fora === 'nv' || !r.i.p || r.cidade !== 'Curitiba') { naoVenda++; continue; }
       if (r.fora === 'lan') { lanc++; continue; }
       if (!r.i.t) { semTipo[r.i.cat] = (semTipo[r.i.cat] || 0) + 1; continue; }
+      r.i.en = r.detalhe.en = await enderecoNaParceira(r.i);
       await writeFile(new URL(c + '.json', DIR), JSON.stringify(r.detalhe));
       imoveis.push(r.i);
       parceiros[r.i.ref] = (parceiros[r.i.ref] || 0) + 1;
@@ -150,4 +185,6 @@ console.log(`Estoque da Pilar: ${imoveis.length} imóveis prontos à venda em Cu
 if (Object.keys(semTipo).length) console.log('Tipos fora da Carteira:', semTipo);
 const porTipo = {}; imoveis.forEach(i => { porTipo[i.t] = (porTipo[i.t] || 0) + 1; });
 console.log('Por tipo:', porTipo);
+console.log(`Endereço: ${imoveis.filter(i => i.en).length} com rua, ${imoveis.filter(i => /,\s*\d+$/.test(i.en)).length} com número.`);
+console.log('Parceiras sem site em SITES:', Object.keys(parceiros).filter(k => !SITES[k]).join(', ') || 'nenhuma');
 console.log('Parceiros:', Object.entries(parceiros).sort((a, b) => b[1] - a[1]).map(([k, n]) => k + ' ' + n).join(' · '));
