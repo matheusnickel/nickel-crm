@@ -1,6 +1,8 @@
-// Copia o estoque À VENDA do site da J8 (jota8) para a Carteira:
-//  - dados/j8.json          resumo de todos os imóveis (para o cruzamento com os clientes)
+// Copia os estoques do site da J8 (jota8) para a Carteira:
+//  - dados/j8.json          à venda: resumo de todos os imóveis (para o cruzamento com os clientes)
 //  - dados/j8/<codigo>.json detalhes + todas as fotos do anúncio (para o book)
+//  - dados/j8-locacao.json e dados/j8-locacao/<codigo>.json   para alugar: o mesmo, só para a aba Locação
+//    (fora do cruzamento com os compradores, das métricas e dos repetidos); em `p` vai o valor do aluguel
 // Os detalhes só são baixados de novo quando o imóvel muda (DataAtualizacao).
 // Roda 1x por dia pelo GitHub Actions (.github/workflows/j8.yml) ou à mão: node scripts/j8-import.mjs
 import { writeFile, readFile, readdir, unlink, mkdir } from 'node:fs/promises';
@@ -8,7 +10,7 @@ import { writeFile, readFile, readdir, unlink, mkdir } from 'node:fs/promises';
 const API = 'https://j8-busca-imoveis.gustavo-05e.workers.dev/v1/imoveis/';
 const HEAD = { headers: { 'User-Agent': 'Mozilla/5.0 (CarteiraNickel)', Origin: 'https://www.j8.com.br', Referer: 'https://www.j8.com.br/' } };
 const LISTA = ['Codigo', 'Categoria', 'CategoriaImovel', 'TituloImovel', 'Bairro', 'Cidade', 'Dormitorios', 'Suites', 'Vagas',
-  'AreaPrivativa', 'AreaTotal', 'ValorVenda', 'OcultarPrecoSite', 'FotoDestaquePequena', 'Empreendimento', 'Status', 'DataAtualizacao',
+  'AreaPrivativa', 'AreaTotal', 'ValorVenda', 'ValorLocacao', 'OcultarPrecoSite', 'FotoDestaquePequena', 'Empreendimento', 'Status', 'DataAtualizacao',
   'AreaTerreno', 'Mobiliado', 'EmConstrucao', 'Lancamento', 'Complemento', 'Bloco', 'TipoEndereco', 'Endereco', 'Numero'];
 // características "Sim/Nao" do anúncio → rótulo no PDF de informações
 const ITENS_IMOVEL = {
@@ -27,8 +29,12 @@ const DETALHE = ['Codigo', 'Descricao', 'ValorCondominio', 'ValorIptu', 'Banheir
   'Imediacoes', 'Mobiliado', 'Closet', 'AptosAndar', 'AreaConstruida', ...Object.keys(ITENS_IMOVEL), ...Object.keys(ITENS_COND), { Foto: ['Foto', 'Ordem', 'ExibirSite'] }];
 const FOTOS = 'todas'; // "Baixar fotos" e "Baixar PDF" usam todas as fotos que aparecem no anúncio (só imagens)
 const sim = v => /^sim$/i.test(String(v || '').trim());
-const OUT = new URL('../dados/j8.json', import.meta.url);
-const DIR = new URL('../dados/j8/', import.meta.url);
+const MODOS = [
+  { status: 'Venda', campo: 'ValorVenda', arq: 'j8', fonte: 'J8 Imóveis (j8.com.br)', nome: 'Estoque da J8',
+    link: (tipo, area, v) => `${slug(tipo.split(' ')[0] || 'imovel')}-${area}m2-venda-${slug(v.Bairro)}-${v.Codigo}` },
+  { status: 'Aluguel', campo: 'ValorLocacao', arq: 'j8-locacao', fonte: 'J8 Imóveis, locação (j8.com.br)', nome: 'Locação da J8',
+    link: (tipo, area, v) => `${slug(tipo)}-${area}m2-aluguel-${slug(v.Bairro)}-${v.Codigo}` }
+];
 
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };
 const slug = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -45,9 +51,9 @@ async function chama(metodo, query) {
   }
   throw new Error('J8 não respondeu: ' + metodo + ' ' + query.slice(0, 80));
 }
-const pagina = p => chama('listar', 'showtotal=1&pesquisa=' + encodeURIComponent(JSON.stringify({
-  advFilter: { ExibirNoSite: 'Sim', Status: ['Venda'], CodigoAgencia: ['1', '2', '3'] }, // todos os do site, exclusivos ou não
-  fields: LISTA, paginacao: { pagina: p, quantidade: 50 }, order: { ValorVenda: 'desc' }
+const pagina = (M, p) => chama('listar', 'showtotal=1&pesquisa=' + encodeURIComponent(JSON.stringify({
+  advFilter: { ExibirNoSite: 'Sim', Status: [M.status], CodigoAgencia: ['1', '2', '3'] }, // todos os do site, exclusivos ou não
+  fields: LISTA, paginacao: { pagina: p, quantidade: 50 }, order: { [M.campo]: 'desc' }
 })));
 
 // Separa a descrição em um parágrafo de abertura e uma lista de destaques (as linhas com marcador)
@@ -71,77 +77,82 @@ function leDescricao(txt) {
   return { intro, texto, destaques: [...new Set(destaques)].slice(0, 12) };
 }
 
-await mkdir(DIR, { recursive: true });
-const first = await pagina(1);
-const total = Number(first.total) || 0, paginas = Number(first.paginas) || 1;
-const brutos = [];
-const pega = j => Object.entries(j).forEach(([k, v]) => { if (/^\d+$/.test(k) && v && v.Codigo) brutos.push(v); });
-pega(first);
-for (let p = 2; p <= paginas; p++) { pega(await pagina(p)); await espera(400); }
+async function importa(M) {
+  const OUT = new URL(`../dados/${M.arq}.json`, import.meta.url);
+  const DIR = new URL(`../dados/${M.arq}/`, import.meta.url);
+  await mkdir(DIR, { recursive: true });
+  const first = await pagina(M, 1);
+  const total = Number(first.total) || 0, paginas = Number(first.paginas) || 1;
+  const brutos = [];
+  const pega = j => Object.entries(j).forEach(([k, v]) => { if (/^\d+$/.test(k) && v && v.Codigo) brutos.push(v); });
+  pega(first);
+  for (let p = 2; p <= paginas; p++) { pega(await pagina(M, p)); await espera(400); }
 
-const lista = brutos.filter(v => !/\bteste\b/i.test(v.TituloImovel || ''));
-const imoveis = lista.map(v => {
-  const area = num(v.AreaPrivativa) || num(v.AreaTotal);
-  const tipo = String(v.CategoriaImovel || v.Categoria || '').trim();
-  return {
-    c: String(v.Codigo), t: tipo, ti: String(v.TituloImovel || '').trim(),
-    b: String(v.Bairro || '').trim(), ci: String(v.Cidade || '').trim(),
-    q: num(v.Dormitorios), s: num(v.Suites), v: num(v.Vagas), a: Math.round(area),
-    at: Math.round(num(v.AreaTerreno)),
-    // mobília: s = mobiliado, m = semi, n = sem, '' = não informado
-    mo: { SIM: 's', SEMI: 'm', 'NÃO': 'n', NAO: 'n' }[String(v.Mobiliado || '').trim().toUpperCase()] || '',
-    // obra: p = na planta / em construção, r = pronto
-    ob: sim(v.Lancamento) || sim(v.EmConstrucao) ? 'p' : 'r',
-    p: v.OcultarPrecoSite === 'Sim' ? 0 : num(v.ValorVenda),
-    f: String(v.FotoDestaquePequena || '').replace(/^http:/, 'https:'),
-    e: String(v.Empreendimento || '').trim(),
-    cp: unidade(v.Complemento), bl: unidade(v.Bloco),
-    // endereço completo do cadastro (o site da J8 esconde o número), como está lá: "Alameda Júlia da Costa, 1945"
-    en: [[unidade(v.TipoEndereco), unidade(v.Endereco)].filter(Boolean).join(' '), unidade(v.Numero)].filter(Boolean).join(', '),
-    u: `https://www.j8.com.br/imovel/${slug(tipo.split(' ')[0] || 'imovel')}-${Math.round(area)}m2-venda-${slug(v.Bairro)}-${v.Codigo}`,
-    du: String(v.DataAtualizacao || '')
-  };
-});
+  const lista = brutos.filter(v => !/\bteste\b/i.test(v.TituloImovel || ''));
+  const imoveis = lista.map(v => {
+    const area = num(v.AreaPrivativa) || num(v.AreaTotal);
+    const tipo = String(v.CategoriaImovel || v.Categoria || '').trim();
+    return {
+      c: String(v.Codigo), t: tipo, ti: String(v.TituloImovel || '').trim(),
+      b: String(v.Bairro || '').trim(), ci: String(v.Cidade || '').trim(),
+      q: num(v.Dormitorios), s: num(v.Suites), v: num(v.Vagas), a: Math.round(area),
+      at: Math.round(num(v.AreaTerreno)),
+      // mobília: s = mobiliado, m = semi, n = sem, '' = não informado
+      mo: { SIM: 's', SEMI: 'm', 'NÃO': 'n', NAO: 'n' }[String(v.Mobiliado || '').trim().toUpperCase()] || '',
+      // obra: p = na planta / em construção, r = pronto
+      ob: sim(v.Lancamento) || sim(v.EmConstrucao) ? 'p' : 'r',
+      p: v.OcultarPrecoSite === 'Sim' ? 0 : num(v[M.campo]),
+      f: String(v.FotoDestaquePequena || '').replace(/^http:/, 'https:'),
+      e: String(v.Empreendimento || '').trim(),
+      cp: unidade(v.Complemento), bl: unidade(v.Bloco),
+      // endereço completo do cadastro (o site da J8 esconde o número), como está lá: "Alameda Júlia da Costa, 1945"
+      en: [[unidade(v.TipoEndereco), unidade(v.Endereco)].filter(Boolean).join(' '), unidade(v.Numero)].filter(Boolean).join(', '),
+      u: `https://www.j8.com.br/imovel/${M.link(tipo, Math.round(area), v)}`,
+      du: String(v.DataAtualizacao || '')
+    };
+  });
 
-// segurança: se vier muito menos do que o site diz ter, não sobrescreve o que já está bom
-if (imoveis.length < Math.max(20, total * 0.8)) throw new Error(`Importação incompleta: ${imoveis.length} de ${total}`);
+  // segurança: se vier muito menos do que o site diz ter, não sobrescreve o que já está bom
+  if (imoveis.length < Math.max(20, total * 0.8)) throw new Error(`Importação incompleta: ${imoveis.length} de ${total}`);
 
-// detalhes + fotos, só dos imóveis novos ou alterados (3 por vez, com pausa, para não pesar no site deles)
-const fila = [];
-for (const i of imoveis) {
-  let atual = null;
-  try { atual = JSON.parse(await readFile(new URL(i.c + '.json', DIR), 'utf8')); } catch {}
-  if (!atual || atual.nf !== FOTOS || atual.du !== i.du || atual.p !== i.p) fila.push(i);
-}
-let feitos = 0, falhas = 0;
-async function trabalhador() {
-  while (fila.length) {
-    const i = fila.shift();
-    try {
-      const d = await chama('detalhes', `imovel=${i.c}&pesquisa=${encodeURIComponent(JSON.stringify({ fields: DETALHE }))}`);
-      const fotos = Object.values(d.Foto || {}).filter(f => f.ExibirSite !== 'Nao' && /\.(jpe?g|png|webp)(\?|$)/i.test(String(f.Foto || ''))) // só imagens
-        .sort((a, b) => num(a.Ordem) - num(b.Ordem)).map(f => String(f.Foto).replace(/^http:/, 'https:'));
-      const { intro, texto, destaques } = leDescricao(d.Descricao);
-      const det = Object.assign({}, i, {
-        cond: num(d.ValorCondominio), iptu: num(d.ValorIptu), bh: num(d.BanheiroSocialQtd),
-        at: num(d.AreaTerreno), ap: num(d.AreaPrivativa), atot: num(d.AreaTotal), ano: num(d.AnoConstrucao),
-        im: String(d.Imediacoes || '').trim(), mob: sim(d.Mobiliado), cl: num(d.Closet),
-        apa: num(d.AptosAndar), ac: num(d.AreaConstruida),
-        itens: Object.entries(ITENS_IMOVEL).filter(([k]) => sim(d[k])).map(([, v]) => v),
-        condItens: Object.entries(ITENS_COND).filter(([k]) => sim(d[k])).map(([, v]) => v),
-        intro, texto, destaques, fotos, nf: FOTOS
-      });
-      await writeFile(new URL(i.c + '.json', DIR), JSON.stringify(det));
-      feitos++;
-    } catch (e) { falhas++; }
-    await espera(300);
+  // detalhes + fotos, só dos imóveis novos ou alterados (3 por vez, com pausa, para não pesar no site deles)
+  const fila = [];
+  for (const i of imoveis) {
+    let atual = null;
+    try { atual = JSON.parse(await readFile(new URL(i.c + '.json', DIR), 'utf8')); } catch {}
+    if (!atual || atual.nf !== FOTOS || atual.du !== i.du || atual.p !== i.p) fila.push(i);
   }
+  let feitos = 0, falhas = 0;
+  async function trabalhador() {
+    while (fila.length) {
+      const i = fila.shift();
+      try {
+        const d = await chama('detalhes', `imovel=${i.c}&pesquisa=${encodeURIComponent(JSON.stringify({ fields: DETALHE }))}`);
+        const fotos = Object.values(d.Foto || {}).filter(f => f.ExibirSite !== 'Nao' && /\.(jpe?g|png|webp)(\?|$)/i.test(String(f.Foto || ''))) // só imagens
+          .sort((a, b) => num(a.Ordem) - num(b.Ordem)).map(f => String(f.Foto).replace(/^http:/, 'https:'));
+        const { intro, texto, destaques } = leDescricao(d.Descricao);
+        const det = Object.assign({}, i, {
+          cond: num(d.ValorCondominio), iptu: num(d.ValorIptu), bh: num(d.BanheiroSocialQtd),
+          at: num(d.AreaTerreno), ap: num(d.AreaPrivativa), atot: num(d.AreaTotal), ano: num(d.AnoConstrucao),
+          im: String(d.Imediacoes || '').trim(), mob: sim(d.Mobiliado), cl: num(d.Closet),
+          apa: num(d.AptosAndar), ac: num(d.AreaConstruida),
+          itens: Object.entries(ITENS_IMOVEL).filter(([k]) => sim(d[k])).map(([, v]) => v),
+          condItens: Object.entries(ITENS_COND).filter(([k]) => sim(d[k])).map(([, v]) => v),
+          intro, texto, destaques, fotos, nf: FOTOS
+        });
+        await writeFile(new URL(i.c + '.json', DIR), JSON.stringify(det));
+        feitos++;
+      } catch (e) { falhas++; }
+      await espera(300);
+    }
+  }
+  await Promise.all([trabalhador(), trabalhador(), trabalhador()]);
+
+  // tira os books de imóveis que saíram do site
+  const ativos = new Set(imoveis.map(i => i.c));
+  for (const f of await readdir(DIR)) if (f.endsWith('.json') && !ativos.has(f.replace('.json', ''))) await unlink(new URL(f, DIR));
+
+  await writeFile(OUT, JSON.stringify({ fonte: M.fonte, atualizadoEm: new Date().toISOString(), total: imoveis.length, imoveis }));
+  console.log(`${M.nome}: ${imoveis.length} imóveis. Detalhes baixados: ${feitos}${falhas ? `, falhas: ${falhas}` : ''}.`);
 }
-await Promise.all([trabalhador(), trabalhador(), trabalhador()]);
-
-// tira os books de imóveis que saíram do site
-const ativos = new Set(imoveis.map(i => i.c));
-for (const f of await readdir(DIR)) if (f.endsWith('.json') && !ativos.has(f.replace('.json', ''))) await unlink(new URL(f, DIR));
-
-await writeFile(OUT, JSON.stringify({ fonte: 'J8 Imóveis (j8.com.br)', atualizadoEm: new Date().toISOString(), total: imoveis.length, imoveis }));
-console.log(`Estoque da J8: ${imoveis.length} imóveis. Detalhes baixados: ${feitos}${falhas ? `, falhas: ${falhas}` : ''}.`);
+for (const M of MODOS) await importa(M);

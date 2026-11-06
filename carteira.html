@@ -462,6 +462,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
     <nav class="tabs">
       <button data-tab="clientes" class="on">Clientes</button>
       <button data-tab="imoveis">Imóveis</button>
+      <button data-tab="locacao">Locação</button>
       <button data-tab="metricas">Métricas</button>
     </nav>
     <div class="top-r">
@@ -481,9 +482,9 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
   </header>
 
   <main>
-    <!-- IMÓVEIS: o estoque de todas as imobiliárias junto, para buscar sem cliente -->
+    <!-- IMÓVEIS: o estoque de todas as imobiliárias junto, para buscar sem cliente. A aba Locação usa esta mesma tela, só com a J8 -->
     <section id="v-imoveis" class="hidden">
-      <div class="phd"><div class="ttl"><span class="kick">J8, A. Gonçalves, SIS3, Zireh, Arya, Casa Prates e Pilar</span><h1>Imóveis</h1></div><span class="sub" id="i-total"></span></div>
+      <div class="phd"><div class="ttl"><span class="kick" id="i-kick"></span><h1 id="i-tit">Imóveis</h1></div><span class="sub" id="i-total"></span></div>
       <div class="bar-tools">
         <div class="ta"><input id="i-q" type="search" placeholder="Bairro, rua, empreendimento ou código…" autocomplete="off" aria-label="Buscar imóvel"></div>
       </div>
@@ -513,6 +514,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
   <nav class="bnav">
     <button data-tab="clientes" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M16 4.5a4 4 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6"/></svg>Clientes</button>
     <button data-tab="imoveis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V21H3z"/><path d="M9.5 21v-6h5v6"/></svg>Imóveis</button>
+    <button data-tab="locacao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8L20 3M16 7l3 3M13.5 9.5l2 2"/></svg>Locação</button>
     <button data-tab="metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</button>
   </nav>
   <button class="fab" data-act="novo" aria-label="Novo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -805,6 +807,7 @@ function updateSync() {
 const ui = {
   tab: 'clientes',
   i: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false }, // aba Imóveis
+  l: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false }, // aba Locação
   c: { q: '', f: 'ativos' },
   m: { p: 30, g: '', e: 'dia' }, // métricas: período em dias, família de imóvel ('' = todas) e envios por dia/semana/mês
   capaDe: null,      // imóvel ("j8:12345") com a grade de fotos aberta para escolher a capa do book
@@ -875,8 +878,13 @@ const ESTOQUES = [
   // rua e número vêm do site da parceira, quando ela publica (cerca de 40% têm rua); complemento não existe nessa plataforma
   { id: 'pilar', nome: 'Pilar', arq: 'dados/pilar.json', det: 'dados/pilar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t, parceiros: true }
 ];
-const EST = Object.fromEntries(ESTOQUES.map(e => [e.id, e]));
+// Locação: só a J8, à parte de ESTOQUES (não entra no cruzamento com os compradores, nas métricas nem nos repetidos); em `p` vem o aluguel
+const LOCACAO = { id: 'j8loc', nome: 'J8', arq: 'dados/j8-locacao.json', det: 'dados/j8-locacao/', tipo: t => J8_TIPO[t] || '', rotulo: t => J8_ROTULO[t] || t, loc: true };
+const EST = Object.fromEntries(ESTOQUES.concat(LOCACAO).map(e => [e.id, e]));
 const estoque = {}, estoqueErr = {};
+const ehLocacao = i => !!EST[i.src].loc;
+const naLocacao = () => ui.tab === 'locacao';
+const filtroI = () => naLocacao() ? ui.l : ui.i; // os filtros de cada aba ficam separados
 const prepara = (e, i) => Object.assign(i, { src: e.id, tc: e.tipo(i.t), rot: e.rotulo(i.t), k: e.id + ':' + i.c });
 let carregados = false;
 
@@ -901,7 +909,7 @@ async function aplicaRepetidos() {
   ESTOQUES.forEach(e => { if (estoque[e.id]) estoque[e.id].imoveis = estoque[e.id].imoveis.filter(i => !i.rep); });
 }
 async function loadEstoques() {
-  await Promise.all(ESTOQUES.map(async e => {
+  await Promise.all(ESTOQUES.concat(LOCACAO).map(async e => {
     try { const r = await fetch(e.arq, { cache: 'no-cache' }); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); j.imoveis.forEach(i => prepara(e, i)); estoque[e.id] = j; }
     catch (er) { estoqueErr[e.id] = true; }
   }));
@@ -909,7 +917,7 @@ async function loadEstoques() {
   carregados = true; j8Cache.clear();
   renderClientes();
   if (ui.tab === 'metricas') renderMetricas();
-  if (ui.tab === 'imoveis') renderImoveis();
+  if (ui.tab === 'imoveis' || naLocacao()) renderImoveis();
   if (ui.sheet && ui.sheet.kind === 'ficha') renderFicha(ui.sheet.id);
 }
 // "na J8, na A. Gonçalves e na SIS3" (os textos acompanham a lista de imobiliárias)
@@ -1227,7 +1235,7 @@ function descritivo(d) {
   // "Um apartamento por andar" só quando é um por andar (é o diferencial); cobertura não entra nessa regra
   const abre = grupo === 'Apartamento' && d.apa === 1 ? 'Um apartamento por andar, com ' : `${tipo} com `;
   const linha = partes.length ? (abre + listaPt(partes) + '.').replace(/,\.$/, '.') : '';
-  const valor = `Valor de venda: ${d.p ? 'R$ ' + Math.round(d.p).toLocaleString('pt-BR') : 'sob consulta'}`;
+  const valor = `${ehLocacao(d) ? 'Valor do aluguel' : 'Valor de venda'}: ${d.p ? 'R$ ' + Math.round(d.p).toLocaleString('pt-BR') : 'sob consulta'}`;
   const pergunta = `${fem ? 'Essa' : 'Esse'} ${nome} está dentro do que você está buscando?`;
   return [titulo, linha, d.mob ? 'Totalmente mobiliado.' : '', valor, pergunta].filter(Boolean).join('\n\n');
 }
@@ -1267,7 +1275,7 @@ function j8Card(i, c) {
         const por = e && refs.get(e.ref) !== i ? ` pela ${EST[refs.get(e.ref).src].nome}` : '';
         return e ? `<div class="env8">✓ Enviado para ${esc(nomeProprio(firstName(c.nome)))} em ${fmtShort(e.data)}${por}</div>` : '';
       })()}${(i.irmaos || []).length ? `<div class="dupl">Também anunciado ${listaPt([...new Set(i.irmaos.map(k => IMOVEL.get(k)).filter(Boolean).map(x => 'na ' + EST[x.src].nome))])}</div>` : ''}${selos.length ? `<div class="selos">${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
-        <div class="pr">${i.p ? fmtValor(i.p) : 'Preço sob consulta'}</div></div>
+        <div class="pr">${!i.p ? 'Preço sob consulta' : ehLocacao(i) ? 'R$ ' + Math.round(i.p).toLocaleString('pt-BR') + '/mês' : fmtValor(i.p)}</div></div>
     </div>
     <div class="j8act">
       <div class="cpl end${i.en ? '' : ' vazio'}"><span>Endereço</span>${i.en ? `<b>${esc(i.en)}</b>` : 'Não informado'}</div>
@@ -1317,9 +1325,12 @@ function j8Section(c) {
 const I_PASSO = 20;
 const I_ORDENS = [['maior', 'Maior valor'], ['menor', 'Menor valor'], ['recentes', 'Atualizados por último']];
 function renderImoveis() {
-  const f = ui.i, chip = (act, k, l) => `<button class="chip${String(f[act.slice(2)]) === String(k) ? ' on' : ''}" data-act="${act}" data-v="${esc(k)}">${l}</button>`;
+  const f = filtroI(), chip = (act, k, l) => `<button class="chip${String(f[act.slice(2)]) === String(k) ? ' on' : ''}" data-act="${act}" data-v="${esc(k)}">${l}</button>`;
   const din = v => v ? 'R$ ' + v.toLocaleString('pt-BR') : '';
-  $('#i-fil').innerHTML = `<div class="chips sm">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => chip('i-fonte', k, l)).join('')}</div>
+  $('#i-tit').textContent = naLocacao() ? 'Locação' : 'Imóveis';
+  $('#i-kick').textContent = naLocacao() ? 'Imóveis para alugar da J8' : listaPt(ESTOQUES.map(e => e.nome));
+  if ($('#i-q').value !== f.q) $('#i-q').value = f.q;
+  $('#i-fil').innerHTML = `${naLocacao() ? '' : `<div class="chips sm">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => chip('i-fonte', k, l)).join('')}</div>`}
     <div class="chips sm">${['', ...TIPOS].map(t => chip('i-tipo', t, t || 'Todos os tipos')).join('')}</div>
     <details class="imais"${f.mais ? ' open' : ''}><summary>Mais filtros</summary><div class="imais-b">
       <div><span class="lbl">Valor</span><div class="row-s" style="margin-top:0;flex-wrap:nowrap"><input id="i-vmin" inputmode="numeric" placeholder="De" value="${din(f.vmin)}" aria-label="Valor mínimo"><span class="muted">a</span><input id="i-vmax" inputmode="numeric" placeholder="Até" value="${din(f.vmax)}" aria-label="Valor máximo"></div></div>
@@ -1329,8 +1340,8 @@ function renderImoveis() {
   renderImoveisLista();
 }
 function imoveisFiltrados() {
-  const f = ui.i, palavras = norm(f.q).split(/\s+/).filter(Boolean);
-  let l = (f.fonte === 'todas' ? ESTOQUES.map(e => e.id) : [f.fonte]).flatMap(id => estoque[id] ? estoque[id].imoveis : []).filter(i => i.tc);
+  const f = filtroI(), palavras = norm(f.q).split(/\s+/).filter(Boolean);
+  let l = (naLocacao() ? [LOCACAO.id] : f.fonte === 'todas' ? ESTOQUES.map(e => e.id) : [f.fonte]).flatMap(id => estoque[id] ? estoque[id].imoveis : []).filter(i => i.tc);
   if (f.tipo) l = l.filter(i => i.tc === f.tipo);
   if (f.quartos) l = l.filter(i => i.q >= f.quartos);
   if (f.vmin) l = l.filter(i => i.p >= f.vmin);
@@ -1341,7 +1352,7 @@ function imoveisFiltrados() {
 }
 function renderImoveisLista() {
   if (!carregados) { $('#i-list').innerHTML = '<p class="muted" style="margin-top:18px">Carregando os estoques…</p>'; return; }
-  const l = imoveisFiltrados(), tela = l.slice(0, ui.i.n), resto = l.length - tela.length;
+  const l = imoveisFiltrados(), tela = l.slice(0, filtroI().n), resto = l.length - tela.length;
   $('#i-total').textContent = `${l.length.toLocaleString('pt-BR')} ${plural(l.length, 'imóvel', 'imóveis')}`;
   tela.slice(0, 6).forEach(i => j8Detalhe(i.k).catch(() => {})); // adianta fotos e dados dos primeiros
   if (tela.length) carregaJsPDF().catch(() => {});
@@ -1352,7 +1363,7 @@ function renderImoveisLista() {
 // cartões de imóvel aparecem na ficha e na aba Imóveis: redesenha onde estiverem
 function redesenhaCartoes() {
   if (fichaAberta()) renderFicha(fichaAberta());
-  if (ui.tab === 'imoveis') renderImoveisLista();
+  if (ui.tab === 'imoveis' || naLocacao()) renderImoveisLista();
 }
 
 // ── RENDER: CLIENTES ──
@@ -1505,9 +1516,9 @@ function renderAll() {
 // ── NAVEGAÇÃO ──
 function go(tab) {
   ui.tab = tab;
-  ['clientes', 'imoveis', 'metricas'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== tab));
+  ['clientes', 'imoveis', 'metricas'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== (tab === 'locacao' ? 'imoveis' : tab)));
   if (tab === 'metricas') renderMetricas();
-  if (tab === 'imoveis') renderImoveis();
+  if (tab === 'imoveis' || tab === 'locacao') renderImoveis();
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   window.scrollTo(0, 0);
 }
@@ -1769,9 +1780,9 @@ document.addEventListener('click', e => {
     case 'env-del': { const c = byId(id); if (c) { saveClient(Object.assign({}, c, { envios: c.envios.filter(x => x.id !== el.dataset.e) })); } break; }
     // bairro tocado na aba Bairros: abre os clientes ativos que procuram nele
     case 'bairro': ui.c.q = el.dataset.b; ui.c.f = 'ativos'; $('#c-q').value = el.dataset.b; go('clientes'); renderClientes(); break;
-    case 'i-fonte': case 'i-tipo': case 'i-ordem': ui.i[a.slice(2)] = v; ui.i.n = I_PASSO; renderImoveis(); break;
-    case 'i-quartos': ui.i.quartos = +v; ui.i.n = I_PASSO; renderImoveis(); break;
-    case 'i-mais': ui.i.n += I_PASSO; renderImoveisLista(); break;
+    case 'i-fonte': case 'i-tipo': case 'i-ordem': filtroI()[a.slice(2)] = v; filtroI().n = I_PASSO; renderImoveis(); break;
+    case 'i-quartos': filtroI().quartos = +v; filtroI().n = I_PASSO; renderImoveis(); break;
+    case 'i-mais': filtroI().n += I_PASSO; renderImoveisLista(); break;
     case 'tema': $('#menu-tema').classList.toggle('hidden'); break;
     case 'tema-set': aplicaTema(v); lsSet('carteira_tema', v); menu.classList.add('hidden'); $('#menu-tema').classList.add('hidden'); break;
     case 'm-e': ui.m.e = v; renderMetricas(); break;
@@ -1802,13 +1813,13 @@ document.addEventListener('click', e => {
 
 // ── CAMPOS DE BUSCA ──
 function bindBuscas() {
-  $('#i-q').addEventListener('input', e => { ui.i.q = e.target.value; ui.i.n = I_PASSO; renderImoveisLista(); });
+  $('#i-q').addEventListener('input', e => { filtroI().q = e.target.value; filtroI().n = I_PASSO; renderImoveisLista(); });
   // valor da aba Imóveis (os campos ficam em "Mais filtros", que é redesenhado; por isso o ouvinte fica no documento)
   document.addEventListener('input', e => {
     if (e.target.id !== 'i-vmin' && e.target.id !== 'i-vmax') return;
-    maskMoney(e.target); ui.i[e.target.id.slice(2)] = parseMoney(e.target.value); ui.i.n = I_PASSO; renderImoveisLista();
+    maskMoney(e.target); filtroI()[e.target.id.slice(2)] = parseMoney(e.target.value); filtroI().n = I_PASSO; renderImoveisLista();
   });
-  document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('imais')) ui.i.mais = e.target.open; }, true);
+  document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('imais')) filtroI().mais = e.target.open; }, true);
   $('#c-q').addEventListener('input', e => { ui.c.q = e.target.value; renderClientes(); });
 }
 
@@ -1821,7 +1832,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-04b';
+const VERSAO = '2026-11-06a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
