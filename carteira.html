@@ -876,7 +876,12 @@ const ESTOQUES = [
   { id: 'prates', nome: 'Casa Prates', arq: 'dados/prates.json', det: 'dados/prates/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   // Pilar: marketplace, só Curitiba e só prontos; cada anúncio é de uma imobiliária parceira (em `ref`). O site da Pilar esconde o endereço:
   // rua e número vêm do site da parceira, quando ela publica (cerca de 40% têm rua); complemento não existe nessa plataforma
-  { id: 'pilar', nome: 'Pilar', arq: 'dados/pilar.json', det: 'dados/pilar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t, parceiros: true }
+  { id: 'pilar', nome: 'Pilar', arq: 'dados/pilar.json', det: 'dados/pilar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t, parceiros: true },
+  // desde 08/11. Entre Imóveis e Urbanic Homes (site Tecimob): só prontos; a Entre mostra rua e número, a Urbanic esconde a rua
+  { id: 'entre', nome: 'Entre Imóveis', arq: 'dados/entre.json', det: 'dados/entre/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  { id: 'urbanic', nome: 'Urbanic', arq: 'dados/urbanic.json', det: 'dados/urbanic/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  // Baltazzar (site da Loft, cadastro no Vista): não publica rua, número nem complemento
+  { id: 'baltazzar', nome: 'Baltazzar', arq: 'dados/baltazzar.json', det: 'dados/baltazzar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
 // Locação: só a J8, à parte de ESTOQUES (não entra no cruzamento com os compradores, nas métricas nem nos repetidos); em `p` vem o aluguel
 const LOCACAO = { id: 'j8loc', nome: 'J8', arq: 'dados/j8-locacao.json', det: 'dados/j8-locacao/', tipo: t => J8_TIPO[t] || '', rotulo: t => J8_ROTULO[t] || t, loc: true };
@@ -1832,7 +1837,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-06a';
+const VERSAO = '2026-11-08a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
