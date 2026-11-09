@@ -330,6 +330,70 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .imais-b{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
 .iml{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-top:16px;align-items:start}
 
+/* parecer de mercado */
+select{width:100%;min-height:48px;background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:12px 40px 12px 14px;font:inherit;font-size:16px;color:inherit;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23878787' stroke-width='1.6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
+select:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,193,186,.2)}
+.sheet.wide{max-width:780px}
+.pintro{margin-top:10px;max-width:72ch;font-size:14px;color:var(--muted)}
+.pgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pgrid.q4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pgrid .full{grid-column:1 / -1}
+.pgrid .lbl{margin-bottom:7px}
+.prow{width:100%;text-align:left;display:flex;align-items:center;gap:16px;padding:16px 18px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh1);transition:border-color .15s,transform .15s}
+.prow:hover{border-color:var(--line2);transform:translateY(-1px)}
+.prow .pm{flex:1;min-width:0}
+.prow .pm b{display:block;font-size:16.5px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.prow .pm span{display:block;font-size:13.5px;color:var(--muted);margin-top:2px}
+.prow .pv{text-align:right;flex-shrink:0}
+.prow .pv b{display:block;font-weight:300;font-size:22px;line-height:1.2}
+.prow .pv span{font-size:12px;color:var(--muted)}
+.pfoto{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.pfoto .th{width:120px;height:80px;border-radius:10px;background:var(--bg2) center/cover no-repeat;flex-shrink:0}
+.pfoto label{cursor:pointer}
+.pfoto input{display:none}
+.pbox{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.pcl{display:flex;flex-direction:column;gap:8px}
+.pcs,.pcc{width:100%;text-align:left;display:flex;flex-direction:column;gap:10px;padding:10px;background:var(--card);border:1px solid var(--line);border-radius:12px}
+button.pcs{transition:border-color .15s}
+button.pcs:hover{border-color:var(--tq)}
+.pct{display:flex;align-items:center;gap:12px;min-width:0}
+.pct .th{width:72px;height:56px;border-radius:8px;background:var(--bg2) center/cover no-repeat;flex-shrink:0}
+.pct .tx{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13px;color:var(--muted);line-height:1.4}
+.pct .tx b{font-size:14px;font-weight:600;color:var(--text)}
+.pct .tx span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pct .pv{text-align:right;flex-shrink:0;display:flex;flex-direction:column;font-size:12px;color:var(--muted)}
+.pct .pv b{font-weight:300;font-size:18px;color:var(--text)}
+.pct .add{flex-shrink:0;font-size:12.5px;font-weight:600;color:var(--tq2);background:var(--tqbg);border-radius:99px;padding:5px 11px}
+.pct .rm{flex-shrink:0;width:30px;height:30px;border-radius:50%;font-size:19px;color:var(--faint)}
+.pct .rm:hover{color:var(--red);background:var(--redbg)}
+.paj{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.seg3{display:flex;border:1px solid var(--line2);border-radius:9px;overflow:hidden;flex:1;min-width:250px}
+.seg3 button{flex:1;padding:7px 6px;font-size:12.5px;font-weight:600;color:var(--text2);border-left:1px solid var(--line2)}
+.seg3 button:first-child{border-left:none}
+.seg3 button.on{background:var(--tq);color:#fff}
+.paj a{color:var(--tq2);font-weight:600}
+.pflag{font-size:11.5px;font-weight:600;color:var(--warn);background:var(--warnbg);border-radius:6px;padding:2px 8px}
+.pman summary{cursor:pointer;color:var(--tq2);font-weight:600;font-size:14px;width:max-content}
+.pman .pgrid{margin-top:12px}
+.pres{background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--sh1)}
+.pres .vc{font-weight:300;font-size:40px;line-height:1.1;font-variant-numeric:tabular-nums}
+.pres .vs{font-size:13.5px;color:var(--muted);margin-top:4px}
+.pfx{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pfx div{background:var(--bg);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.pfx div.c{background:var(--orbg)}
+.pfx span{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pfx b{font-weight:600;font-size:15.5px;font-variant-numeric:tabular-nums}
+.pfx small{font-size:12px;color:var(--muted)}
+.pped{font-size:14px;background:var(--warnbg);color:var(--dupt);border-radius:10px;padding:10px 12px}
+.pfila{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.pfila div{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--line);font-size:13.5px}
+.pfila div i{font-style:normal;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.pfila div b{font-weight:600;font-variant-numeric:tabular-nums}
+.pfila div.eu{background:var(--orbg);border-radius:8px;color:var(--or2);font-weight:600}
+.pfila .lt{font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px;margin-left:6px}
+.lt.ame{background:var(--redbg);color:var(--red)}.lt.van{background:var(--okbg);color:var(--ok)}.lt.con{background:var(--bg2);color:var(--text2)}
+
 /* menu: escolha do tema */
 .menu-tema{display:flex;flex-direction:column;gap:2px;padding:4px 0 6px 10px;border-left:2px solid var(--line2);margin:0 0 4px 12px}
 .menu-tema button{display:flex;align-items:center;gap:10px;font-weight:500}
@@ -409,6 +473,9 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
   .ifil > .chips::-webkit-scrollbar{display:none}
   .ifil > .chips .chip{flex-shrink:0}
   .iml{grid-template-columns:minmax(0,1fr)}
+  .pgrid.q4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pfx{grid-template-columns:minmax(0,1fr)}
+  .pfx div{flex-direction:row;align-items:baseline;gap:8px;flex-wrap:wrap}
   .m-card{padding:16px}
   .hb-l{grid-template-columns:minmax(0,7.5rem) minmax(0,1fr) auto;gap:10px;font-size:13.5px}
 }
@@ -464,6 +531,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
       <button data-tab="imoveis">Imóveis</button>
       <button data-tab="locacao">Locação</button>
       <button data-tab="metricas">Métricas</button>
+      <button data-tab="pareceres">Parecer</button>
     </nav>
     <div class="top-r">
       <span id="sync" class="sync"><span class="t">Carregando…</span></span>
@@ -499,6 +567,13 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
       <div id="m-body"></div>
     </section>
 
+    <!-- PARECER DE MERCADO: avaliação de um imóvel para o proprietário, com os comparáveis do estoque -->
+    <section id="v-pareceres" class="hidden">
+      <div class="phd"><div class="ttl"><span class="kick">Para o proprietário</span><h1>Parecer de mercado</h1></div><button class="btn-or sm" data-act="p-novo" style="margin-left:auto">+ Novo parecer</button></div>
+      <p class="pintro">O valor de mercado de um imóvel a partir dos imóveis parecidos à venda no estoque das imobiliárias (ou de anúncios que você adiciona), com as três faixas de preço e a fila do comprador. Vira um PDF para entregar ao proprietário.</p>
+      <div id="p-list" class="list" style="margin-top:20px"></div>
+    </section>
+
     <!-- CLIENTES -->
     <section id="v-clientes">
       <div class="phd"><div class="ttl"><span class="kick" id="c-hoje"></span><h1>Clientes</h1></div><span class="cnt" id="c-title"></span></div>
@@ -516,6 +591,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
     <button data-tab="imoveis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V21H3z"/><path d="M9.5 21v-6h5v6"/></svg>Imóveis</button>
     <button data-tab="locacao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8L20 3M16 7l3 3M13.5 9.5l2 2"/></svg>Locação</button>
     <button data-tab="metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</button>
+    <button data-tab="pareceres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M9 17v-3M12 17v-5M15 17v-2"/></svg>Parecer</button>
   </nav>
   <button class="fab" data-act="novo" aria-label="Novo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 </div>
@@ -926,6 +1002,7 @@ async function loadEstoques() {
   if (ui.tab === 'metricas') renderMetricas();
   if (ui.tab === 'imoveis' || naLocacao()) renderImoveis();
   if (ui.sheet && ui.sheet.kind === 'ficha') renderFicha(ui.sheet.id);
+  if (ui.sheet && ui.sheet.kind === 'parecer') renderParComps();
 }
 // "na J8, na A. Gonçalves e na SIS3" (os textos acompanham a lista de imobiliárias)
 const naTodas = () => { const n = ESTOQUES.map(e => 'na ' + e.nome); return n.slice(0, -1).join(', ') + ' e ' + n[n.length - 1]; };
@@ -1513,6 +1590,579 @@ function leColuna(c) {
 }
 document.addEventListener('mouseover', e => { const c = e.target.closest('.col'); if (c) leColuna(c); });
 
+// ── PARECER DE MERCADO ──
+// O Matheus avalia um imóvel para o proprietário (09/11, ideia tirada de um PTAM da Entre, mas curto e sem a parte técnica):
+// os comparáveis vêm do estoque das imobiliárias (ele escolhe) ou de um anúncio de fora que ele digita; para cada um ele
+// diz se é Superior, Equivalente ou Inferior ao imóvel. Conta: preço anunciado × 0,95 (anúncio não é venda) ÷ área ×
+// ajuste (superior 0,90 · inferior 1,10); a média × a área do imóvel = valor de mercado; faixas −5% e +5%.
+// NÃO é PTAM nem laudo (exigem CNAI e a ABNT NBR 14653): é parecer de mercado do corretor, e o PDF diz isso.
+// Fica no Firebase (carteira_pareceres; base de teste: carteira_pareceres_TESTE_CLAUDE) e vira um PDF de 4 a 5 páginas.
+const COLP = TESTE ? 'carteira_pareceres_TESTE_CLAUDE' : 'carteira_pareceres';
+const LS_RASC = 'carteira_parecer_rascunho_' + COLP;
+const P_OFERTA = 0.95;
+const P_AJUSTES = [['sup', 'Superior', 0.9], ['eq', 'Equivalente', 1], ['inf', 'Inferior', 1.1]];
+const P_FATOR = Object.fromEntries(P_AJUSTES.map(([k, , f]) => [k, f]));
+const P_ESTADOS = ['Novo', 'Reformado', 'Bom estado', 'Precisa de reforma'];
+const P_MOB = [['', 'Sem mobília'], ['m', 'Semi-mobiliado'], ['s', 'Mobiliado']];
+const P_TIPOS = TIPOS.filter(t => t !== 'Comercial');
+// as três faixas de preço: letra, nome, variação sobre o valor de mercado, prazo esperado e para que serve
+const P_FAIXAS = [
+  ['A', 'Venda rápida', -0.05, '30 a 60 dias', 'O preço chama quem compara por preço e encurta a negociação.'],
+  ['B', 'Valor de mercado', 0, '60 a 120 dias', 'Equilíbrio entre preço e prazo, sustentado pelos imóveis comparáveis.'],
+  ['C', 'Teto', 0.05, 'testar por 20 a 30 dias', 'Os diferenciais sustentam um teste curto. Sem proposta no prazo, voltar ao valor de mercado.']
+];
+const arred5 = v => Math.round(v / 5000) * 5000;
+const reais = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const hojeExtenso = () => new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+const naNo = b => /^(Vila|Cidade)\b/.test(b) ? 'na' : 'no';
+// rótulo da área conforme o tipo: casa = construída, apartamento e cobertura = privativa, terreno = do terreno
+const areaRot = tc => ({ Casa: 'Área construída', Apartamento: 'Área privativa', Cobertura: 'Área privativa', Terreno: 'Área do terreno' }[GRUPO[tc]] || 'Área');
+let pareceres = [], pareceresOk = false, pareceresErr = false, par = null, parSug = 12, parConfDel = false, parPdf = null;
+
+function limpaParecer(o) {
+  o = o || {};
+  const n = k => Number(o[k]) || 0, s = k => String(o[k] || '');
+  return {
+    id: s('id') || newId('pm'), prop: s('prop'), end: s('end'), b: s('b'), tc: P_TIPOS.includes(o.tc) ? o.tc : 'Casa',
+    area: n('area'), terreno: n('terreno'), q: n('q'), s: n('s'), v: n('v'), idade: n('idade'),
+    estado: P_ESTADOS.includes(o.estado) ? o.estado : '', mob: ['m', 's'].includes(o.mob) ? o.mob : '', dif: s('dif'), pedido: n('pedido'), foto: s('foto'),
+    bairros: Array.isArray(o.bairros) ? o.bairros.filter(Boolean).map(String) : [],
+    comps: (Array.isArray(o.comps) ? o.comps : []).filter(c => c && Number(c.a) > 0 && Number(c.p) > 0).map(c => ({
+      k: String(c.k || ''), src: String(c.src || ''), t: String(c.t || ''), b: String(c.b || ''), en: String(c.en || ''), e: String(c.e || ''),
+      a: Number(c.a) || 0, p: Number(c.p) || 0, q: Number(c.q) || 0, s: Number(c.s) || 0, v: Number(c.v) || 0,
+      f: String(c.f || ''), u: String(c.u || ''), aj: P_FATOR[c.aj] ? c.aj : 'eq'
+    })),
+    valor: n('valor'), criadoEm: s('criadoEm'), atualizadoEm: s('atualizadoEm')
+  };
+}
+// lista: só os campos do resumo (a foto da capa fica de fora, para não pesar)
+async function carregaPareceres() {
+  try {
+    const campos = ['prop', 'end', 'b', 'tc', 'area', 'valor', 'criadoEm', 'atualizadoEm'].map(f => 'mask.fieldPaths=' + f).join('&');
+    const out = []; let tok = '';
+    do {
+      const r = await fetch(`${FB_ROOT}/${COLP}?key=${FB_KEY}&pageSize=300&${campos}` + (tok ? '&pageToken=' + encodeURIComponent(tok) : ''));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      (j.documents || []).forEach(d => { const o = fromFs({ mapValue: { fields: d.fields || {} } }); o.id = d.name.split('/').pop(); out.push(o); });
+      tok = j.nextPageToken || '';
+    } while (tok);
+    pareceres = out.sort((a, b) => String(b.atualizadoEm).localeCompare(String(a.atualizadoEm)));
+    pareceresOk = true; pareceresErr = false;
+  } catch (e) { pareceresErr = true; }
+  if (ui.tab === 'pareceres') renderPareceres();
+}
+async function gravaParecer() {
+  const p = limpaParecer(par), r = calcParecer(p);
+  p.valor = r ? r.central : 0;
+  p.atualizadoEm = nowLocal(); if (!p.criadoEm) p.criadoEm = p.atualizadoEm;
+  const res = await fetch(`${FB_ROOT}/${COLP}/${encodeURIComponent(p.id)}?key=${FB_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(p) }) });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  if (par && par.id === p.id) Object.assign(par, { valor: p.valor, criadoEm: p.criadoEm, atualizadoEm: p.atualizadoEm, dirty: false });
+  const { foto, comps, ...resumo } = p;
+  pareceres = [resumo].concat(pareceres.filter(x => x.id !== p.id));
+  try { localStorage.removeItem(LS_RASC); } catch (e) {}
+  return p;
+}
+async function abreParecer(id) {
+  try {
+    const r = await fetch(`${FB_ROOT}/${COLP}/${encodeURIComponent(id)}?key=${FB_KEY}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json(), o = fromFs({ mapValue: { fields: d.fields || {} } }); o.id = id;
+    editaParecer(limpaParecer(o));
+  } catch (e) { toast('Não consegui abrir o parecer agora. Confira a internet.'); }
+}
+// rascunho: o que não foi salvo fica neste aparelho (sem a foto, se não couber)
+function guardaRascunho() {
+  if (!par) return;
+  const { dirty, ...p } = par;
+  try { localStorage.setItem(LS_RASC, JSON.stringify(p)); }
+  catch (e) { try { localStorage.setItem(LS_RASC, JSON.stringify(Object.assign({}, p, { foto: '' }))); } catch (e2) {} }
+}
+const mexeu = () => { if (!par) return; par.dirty = true; parPdf = null; const b = $('#pm-pdf'); if (b) { b.classList.remove('ready'); b.innerHTML = `${ICON_DOC}Baixar PDF`; } guardaRascunho(); };
+
+// ── a conta ──
+// cada comparável: R$/m² anunciado × 0,95 × ajuste; valor = média × área do imóvel (arredondado a R$ 5 mil)
+function calcParecer(p) {
+  if (!p || !p.area) return null;
+  const cs = p.comps.filter(c => c.a > 0 && c.p > 0).map(c => Object.assign({}, c, { m2: c.p / c.a, m2aj: c.p / c.a * P_OFERTA * P_FATOR[c.aj] }));
+  if (cs.length < 3) return null;
+  const media = cs.reduce((s, c) => s + c.m2aj, 0) / cs.length;
+  const ord = cs.map(c => c.m2aj).sort((a, b) => a - b), med = ord[ord.length >> 1];
+  cs.forEach(c => { c.fora = Math.abs(c.m2aj / med - 1) > 0.35; });
+  const central = arred5(media * p.area);
+  const faixas = P_FAIXAS.map(([l, nome, d, prazo, txt]) => ({ l, nome, d, prazo, txt, v: d ? arred5(central * (1 + d)) : central }));
+  // a fila do comprador: os comparáveis do mais barato para o mais caro, numerados nessa ordem
+  cs.sort((a, b) => a.p - b.p).forEach((c, n) => { c.n = n + 1; c.leit = leituraComp(c, central); });
+  const pos = v => cs.filter(c => c.p < v).length + 1;
+  return { cs, n: cs.length, media, central, m2: central / p.area, faixas, posCentral: pos(central), posPedido: p.pedido ? pos(p.pedido) : 0 };
+}
+// o que o comparável significa para o proprietário, pelo preço pedido e pelo ajuste que o Matheus deu
+function leituraComp(c, central) {
+  const melhor = c.aj === 'sup', pior = c.aj === 'inf';
+  // equivalente pedindo quase o mesmo (até 3% de diferença) é empate
+  if (!melhor && !pior && Math.abs(c.p / central - 1) <= 0.03) return ['con', 'Empate', 'Equivalente e no mesmo preço: disputa o mesmo comprador.'];
+  if (!pior && c.p < central) return ['ame', 'Ameaça', `${melhor ? 'Melhor' : 'Equivalente'} e pede menos: é quem disputa o comprador.`];
+  if (!melhor && c.p > central) return ['van', 'Vantagem sua', `${pior ? 'Inferior' : 'Equivalente'} e pede mais: o seu imóvel se destaca.`];
+  if (melhor) return ['con', 'Teto', 'Melhor e mais caro: mostra até onde o bairro vai.'];
+  if (pior) return ['con', 'Outro público', 'Inferior e mais barato: atende outro comprador.'];
+  return ['con', 'Empate', 'Disputa o mesmo comprador, no mesmo preço.'];
+}
+
+// ── sugestões do estoque: mesmo tipo de imóvel, nos bairros da busca, área de 70% a 140% e com preço ──
+const ruaDe = end => { const r = norm(String(end || '').split(',')[0]).replace(/^(rua|r|avenida|av|alameda|al|travessa|tv|rodovia|rod)\s+/, ''); return r.length >= 4 ? r : ''; };
+const numDe = end => (String(end || '').split(',')[1] || '').match(/\d+/)?.[0] || '';
+// o próprio imóvel avaliado costuma estar anunciado: mesmo endereço com número sai da lista; mesmo preço desejado e
+// mesma área (de outra imobiliária, que não mostra o endereço) fica com o aviso "pode ser o próprio imóvel"
+const ehOProprio = (p, i) => { const rua = ruaDe(p.end), n = numDe(p.end); return !!(rua && n && norm(i.en).includes(rua) && numDe(i.en) === n); };
+const pareceOProprio = (p, i, a) => !!(p.pedido && Math.abs(i.p / p.pedido - 1) < 0.01 && Math.abs(a / p.area - 1) < 0.03);
+function sugestoesParecer(p) {
+  const g = GRUPO[p.tc]; if (!g || !p.area || !p.bairros.length) return [];
+  const bs = new Set(p.bairros.map(bkey)), usados = new Set(p.comps.map(c => c.k).filter(Boolean)), rua = ruaDe(p.end);
+  const areaDe = i => g === 'Terreno' ? (i.at || i.a) : i.a;
+  return ESTOQUES.flatMap(e => estoque[e.id] ? estoque[e.id].imoveis : []).filter(i => {
+    if (GRUPO[i.tc] !== g || !(i.p > 0) || i.ob === 'p' || usados.has(i.k) || !bs.has(bkey(i.b)) || ehOProprio(p, i)) return false;
+    if (norm(i.b) === 'centro' && i.ci && norm(i.ci) !== 'curitiba') return false;
+    const a = areaDe(i); return a >= p.area * 0.7 && a <= p.area * 1.4;
+  }).map(i => {
+    const a = areaDe(i);
+    let s = 100 - Math.abs(a - p.area) / p.area * 100;
+    if (g !== 'Terreno') s -= Math.abs((i.q || 0) - p.q) * 6 + Math.abs((i.s || 0) - p.s) * 3 + Math.abs((i.v || 0) - p.v) * 5;
+    if (i.tc === p.tc) s += 8;
+    if (rua && norm(i.en).includes(rua)) s += 15; // mesma rua
+    return { i, a, s };
+  }).sort((x, y) => y.s - x.s);
+}
+const compDoEstoque = (i, a) => ({ k: i.k, src: i.src, t: i.rot || i.tc, b: i.b, en: i.en || '', e: i.e || '', a, p: i.p, q: i.q || 0, s: i.s || 0, v: i.v || 0, f: i.f || '', u: i.u || '', aj: 'eq' });
+
+// ── tela: lista de pareceres ──
+function renderPareceres() {
+  const el = $('#p-list'); if (!el) return;
+  const rasc = lsGet(LS_RASC, null), temRasc = rasc && (rasc.end || rasc.area || (rasc.comps || []).length);
+  const aviso = temRasc ? `<div class="dup">Parecer não salvo neste aparelho: <b>${esc(rasc.end || [rasc.tc, rasc.b].filter(Boolean).join(' · ') || 'sem endereço')}</b>. <button data-act="p-rasc">Continuar</button> · <button data-act="p-rasc-x">Descartar</button></div>` : '';
+  let corpo;
+  if (!pareceresOk && !pareceresErr) corpo = '<p class="muted">Carregando os pareceres…</p>';
+  else if (pareceresErr && !pareceres.length) corpo = '<p class="muted">Não consegui carregar os pareceres agora. Confira a internet e abra a aba de novo.</p>';
+  else if (!pareceres.length) corpo = '<div class="empty"><h3>Nenhum parecer ainda</h3><p>Comece pelo imóvel do proprietário: bairro, tipo e área. Os comparáveis do estoque aparecem na hora.</p><button class="btn-or" data-act="p-novo">+ Novo parecer</button></div>';
+  else corpo = pareceres.map(p => `<button class="prow" data-act="p-abre" data-id="${esc(p.id)}"><div class="pm"><b>${esc(p.end || [p.tc, p.b].filter(Boolean).join(' · ') || 'Sem endereço')}</b><span>${esc([p.end ? [p.tc, p.b].filter(Boolean).join(' · ') : '', p.area ? p.area + ' m²' : '', p.prop ? 'para ' + nomeProprio(p.prop) : ''].filter(Boolean).join(' · '))}</span></div><div class="pv"><b>${p.valor ? reais(p.valor) : '—'}</b><span>${p.atualizadoEm ? fmtDate(p.atualizadoEm) : ''}</span></div></button>`).join('');
+  el.innerHTML = aviso + corpo;
+}
+
+// ── tela: o parecer (folha larga) ──
+function editaParecer(p) {
+  par = p; par.dirty = false; parSug = 12; parConfDel = false; parPdf = null;
+  if (!par.bairros.length && par.b) par.bairros = [par.b];
+  const bairroOpts = sel => `<option value="">Escolha o bairro</option>` + allBairros().map(b => `<option${norm(b) === norm(sel) ? ' selected' : ''}>${esc(b)}</option>`).join('');
+  openSheet(`
+  <div class="sh-h"><div style="min-width:0"><div class="kick">Parecer de mercado</div><h2 id="pm-tit">${esc(p.end || 'Novo parecer')}</h2></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="sh-b">
+    <div><span class="lbl">O imóvel avaliado</span>
+      <div class="pgrid">
+        <div class="fl full"><label class="lbl" for="pm-end">Endereço</label><input id="pm-end" data-pm="end" value="${esc(p.end)}" placeholder="Ex.: Rua Raquel Prado, 1190" autocomplete="off"></div>
+        <div class="fl"><label class="lbl" for="pm-bairro">Bairro</label><select id="pm-bairro" data-pm="b">${bairroOpts(p.b)}</select></div>
+        <div class="fl"><label class="lbl" for="pm-prop">Proprietário<span class="hint">para quem é o parecer</span></label><input id="pm-prop" data-pm="prop" value="${esc(p.prop)}" placeholder="Nome" autocomplete="off"></div>
+      </div></div>
+    <div><span class="lbl">Tipo</span><div class="chips sm" id="pm-tc"></div></div>
+    <div class="pgrid">
+      <div class="fl"><label class="lbl" for="pm-area" id="pm-area-l">${areaRot(p.tc)} (m²)</label><input id="pm-area" data-pm="area" inputmode="numeric" value="${p.area || ''}" placeholder="Ex.: 177" autocomplete="off"></div>
+      <div class="fl" id="pm-terreno-box"><label class="lbl" for="pm-terreno">Terreno (m²)<span class="hint">opcional</span></label><input id="pm-terreno" data-pm="terreno" inputmode="numeric" value="${p.terreno || ''}" placeholder="Ex.: 360" autocomplete="off"></div>
+    </div>
+    <div class="pgrid q4" id="pm-comodos">
+      <div class="fl"><label class="lbl" for="pm-q">Quartos</label><input id="pm-q" data-pm="q" inputmode="numeric" value="${p.q || ''}" autocomplete="off"></div>
+      <div class="fl"><label class="lbl" for="pm-s">Suítes</label><input id="pm-s" data-pm="s" inputmode="numeric" value="${p.s || ''}" autocomplete="off"></div>
+      <div class="fl"><label class="lbl" for="pm-v">Vagas</label><input id="pm-v" data-pm="v" inputmode="numeric" value="${p.v || ''}" autocomplete="off"></div>
+      <div class="fl"><label class="lbl" for="pm-idade">Idade (anos)</label><input id="pm-idade" data-pm="idade" inputmode="numeric" value="${p.idade || ''}" autocomplete="off"></div>
+    </div>
+    <div id="pm-estado-box"><span class="lbl">Estado</span><div class="chips sm" id="pm-estado"></div></div>
+    <div id="pm-mob-box"><span class="lbl">Mobília</span><div class="chips sm" id="pm-mob"></div></div>
+    <div class="fl"><label class="lbl" for="pm-dif">Diferenciais<span class="hint">aparecem no PDF</span></label><textarea id="pm-dif" data-pm="dif" rows="2" placeholder="Ex.: reformada em 2024, porteira fechada, área gourmet com churrasqueira">${esc(p.dif)}</textarea></div>
+    <div class="fl"><label class="lbl" for="pm-pedido">Preço que o proprietário quer<span class="hint">opcional · mostra onde ele cai na fila</span></label><input id="pm-pedido" data-pm="pedido" inputmode="numeric" value="${p.pedido ? reais(p.pedido) : ''}" placeholder="R$ 0" autocomplete="off"></div>
+    <div><span class="lbl">Foto da capa<span class="hint">opcional · a fachada ou a melhor foto</span></span><div id="pm-foto"></div></div>
+    <div id="pm-comps" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div id="pm-res"></div>
+    <div id="pm-del" class="fimficha"></div>
+  </div>
+  <div class="sh-f"><button class="btn-ghost" data-act="close">Fechar</button><button class="btn-ghost" data-act="pm-salvar">Salvar</button><button class="btn-or" id="pm-pdf" data-act="pm-pdf">${ICON_DOC}Baixar PDF</button></div>`, { kind: 'parecer' });
+  renderParChips(); renderParFoto(); renderParComps(); renderParRes(); renderParDel();
+}
+function renderParChips() {
+  if (!par || !$('#pm-tc')) return;
+  const g = GRUPO[par.tc];
+  $('#pm-tc').innerHTML = P_TIPOS.map(t => `<button class="chip${par.tc === t ? ' on' : ''}" data-act="pm-tc" data-v="${t}">${t}</button>`).join('');
+  $('#pm-estado').innerHTML = P_ESTADOS.map(t => `<button class="chip${par.estado === t ? ' on' : ''}" data-act="pm-estado" data-v="${t}">${t}</button>`).join('');
+  $('#pm-mob').innerHTML = P_MOB.map(([k, l]) => `<button class="chip${par.mob === k ? ' on' : ''}" data-act="pm-mob" data-v="${k}">${l}</button>`).join('');
+  $('#pm-area-l').textContent = areaRot(par.tc) + ' (m²)';
+  $('#pm-terreno-box').classList.toggle('hidden', g !== 'Casa');
+  ['#pm-comodos', '#pm-estado-box', '#pm-mob-box'].forEach(s => $(s).classList.toggle('hidden', g === 'Terreno'));
+}
+function renderParFoto() {
+  const el = $('#pm-foto'); if (!el || !par) return;
+  el.innerHTML = `<div class="pfoto">${par.foto ? `<span class="th" style="background-image:url('${par.foto}')"></span>` : ''}
+    <label class="btn-ghost" for="pm-file">${par.foto ? 'Trocar foto' : 'Escolher foto'}</label><input type="file" id="pm-file" accept="image/*">
+    ${par.foto ? '<button class="link" data-act="pm-foto-x">Tirar a foto</button>' : ''}</div>`;
+}
+// foto escolhida: reduzida para 1400 px (fica leve para salvar na nuvem)
+async function fotoParaCapa(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const im = new Image(); await new Promise((ok, err) => { im.onload = ok; im.onerror = err; im.src = url; });
+    const k = Math.min(1, 1400 / Math.max(im.naturalWidth, im.naturalHeight));
+    const cv = document.createElement('canvas'); cv.width = Math.round(im.naturalWidth * k); cv.height = Math.round(im.naturalHeight * k);
+    cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+    return cv.toDataURL('image/jpeg', .8);
+  } finally { URL.revokeObjectURL(url); }
+}
+const thumbComp = c => c.f ? `style="background-image:url('${esc(miniatura(c.f))}')"` : '';
+function renderParComps() {
+  const el = $('#pm-comps'); if (!el || !par) return;
+  const p = par, r = calcParecer(p);
+  const calc = r ? new Map(r.cs.map(c => [c.k + '|' + c.p + '|' + c.a, c])) : new Map();
+  const escolhidos = p.comps.map((c, n) => {
+    const x = calc.get(c.k + '|' + c.p + '|' + c.a);
+    const spec = [c.a ? c.a + ' m²' : '', c.q ? c.q + plural(c.q, ' quarto', ' quartos') : '', c.v ? c.v + plural(c.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
+    return `<div class="pcc"><div class="pct"><span class="th" ${thumbComp(c)}></span><div class="tx"><b>${esc([c.t, c.b].filter(Boolean).join(' · '))}</b><span>${esc(c.en || c.e || (c.k ? EST[c.src] ? 'Anúncio na ' + EST[c.src].nome : '' : 'Anúncio de fora'))}</span><span>${esc(spec)}</span></div>
+      <div class="pv"><b>${fmtValor(c.p)}</b><span>${reais(c.p / c.a)}/m²</span></div><button class="rm" data-act="pm-rm" data-n="${n}" aria-label="Tirar do cálculo">×</button></div>
+      <div class="paj"><span>Comparado ao imóvel avaliado:</span><div class="seg3">${P_AJUSTES.map(([k, l]) => `<button class="${c.aj === k ? 'on' : ''}" data-act="pm-aj" data-n="${n}" data-v="${k}">${l}</button>`).join('')}</div>
+      ${x && x.fora ? '<span class="pflag">Fora da curva: confira</span>' : ''}${c.u ? `<a href="${esc(c.u)}" target="_blank" rel="noopener">Ver anúncio</a>` : ''}</div></div>`;
+  }).join('');
+  let sug;
+  if (!carregados) sug = '<p class="muted" style="font-size:14px">Carregando o estoque…</p>';
+  else if (!p.b || !p.area) sug = '<p class="muted" style="font-size:14px">Preencha o bairro e a área para eu sugerir os imóveis parecidos que estão à venda.</p>';
+  else {
+    const l = sugestoesParecer(p);
+    sug = l.length ? l.slice(0, parSug).map(({ i, a }) => `<button class="pcs" data-act="pm-add" data-k="${esc(i.k)}"><div class="pct"><span class="th" ${thumbComp(i)}></span><div class="tx"><b>${esc((i.rot || i.tc) + ' · ' + i.b)}</b><span>${esc(i.en || i.e || 'Anúncio na ' + EST[i.src].nome)}</span><span>${esc([a + ' m²', i.q ? i.q + plural(i.q, ' quarto', ' quartos') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · '))}</span></div><div class="pv"><b>${fmtValor(i.p)}</b><span>${reais(i.p / a)}/m²</span></div><span class="add">+ Usar</span></div>${pareceOProprio(p, i, a) ? '<span class="pflag" style="align-self:flex-start">Mesmo preço e área: pode ser o próprio imóvel anunciado</span>' : ''}</button>`).join('')
+        + (l.length > parSug ? `<button class="j8mais" data-act="pm-sug-mais">Ver mais ${Math.min(12, l.length - parSug)} <span class="muted">· ${l.length - parSug} ${plural(l.length - parSug, 'restante', 'restantes')}</span></button>` : '')
+      : '<p class="muted" style="font-size:14px">Nenhum imóvel parecido à venda nesses bairros. Inclua um bairro vizinho ou adicione um anúncio de fora.</p>';
+  }
+  const outros = allBairros().filter(b => !p.bairros.some(x => bkey(x) === bkey(b)));
+  el.innerHTML = `<div><span class="lbl">Comparáveis no cálculo · ${p.comps.length}<span class="hint">mínimo 3; o ideal é de 5 a 10</span></span>
+      ${escolhidos ? `<div class="pcl">${escolhidos}</div>` : '<p class="muted" style="font-size:14px">Nenhum ainda. Toque em “+ Usar” nos imóveis mais parecidos abaixo.</p>'}</div>
+    <div class="pbox"><span class="lbl" style="color:var(--or2);margin:0">Sugestões do estoque · do mais parecido para o menos</span>
+      <div><div class="chips sm" style="margin-bottom:8px">${p.bairros.map(b => `<span class="chip tag">${esc(b)}<button class="rm" data-act="pm-b-rm" data-b="${esc(b)}" aria-label="Tirar ${esc(b)} da busca">×</button></span>`).join('')}</div>
+        <select id="pm-addb" aria-label="Incluir bairro na busca"><option value="">+ Incluir outro bairro na busca</option>${outros.map(b => `<option>${esc(b)}</option>`).join('')}</select></div>
+      <div class="pcl">${sug}</div>
+      <details class="pman"><summary>+ Adicionar um anúncio de fora</summary>
+        <div class="pgrid">
+          <div class="fl full"><label class="lbl" for="pmm-en">Endereço ou descrição</label><input id="pmm-en" placeholder="Ex.: Rua Raquel Prado, 891" autocomplete="off"></div>
+          <div class="fl"><label class="lbl" for="pmm-b">Bairro</label><select id="pmm-b">${bairroOptsSimples(p.b)}</select></div>
+          <div class="fl"><label class="lbl" for="pmm-p">Preço anunciado</label><input id="pmm-p" class="money" inputmode="numeric" placeholder="R$ 0" autocomplete="off"></div>
+          <div class="fl"><label class="lbl" for="pmm-a">${areaRot(p.tc)} (m²)</label><input id="pmm-a" inputmode="numeric" autocomplete="off"></div>
+          <div class="fl"><label class="lbl" for="pmm-q">Quartos</label><input id="pmm-q" inputmode="numeric" autocomplete="off"></div>
+          <div class="fl"><label class="lbl" for="pmm-v">Vagas</label><input id="pmm-v" inputmode="numeric" autocomplete="off"></div>
+          <div class="fl"><label class="lbl" for="pmm-u">Link do anúncio<span class="hint">opcional</span></label><input id="pmm-u" autocomplete="off" placeholder="https://"></div>
+          <div class="full"><button class="btn-ghost" data-act="pm-man">Adicionar ao cálculo</button><div class="err" id="pmm-err"></div></div>
+        </div></details>
+    </div>`;
+}
+const bairroOptsSimples = sel => allBairros().map(b => `<option${norm(b) === norm(sel) ? ' selected' : ''}>${esc(b)}</option>`).join('');
+function renderParRes() {
+  const el = $('#pm-res'); if (!el || !par) return;
+  const p = par, r = calcParecer(p);
+  if (!r) { el.innerHTML = `<div class="pres"><span class="lbl" style="margin:0">Valor de mercado</span><p class="muted" style="font-size:14px">Com a área do imóvel e pelo menos 3 comparáveis, o valor aparece aqui.${p.comps.length ? ` Faltam ${Math.max(0, 3 - p.comps.length)}.` : ''}</p></div>`; return; }
+  const dif = p.pedido ? p.pedido / r.central - 1 : 0;
+  const fila = r.cs.map(c => ({ c, p: c.p })).concat([{ eu: 'Valor de mercado', p: r.central }], p.pedido ? [{ eu: 'Preço do proprietário', p: p.pedido }] : []).sort((a, b) => a.p - b.p || (a.eu ? 1 : -1));
+  el.innerHTML = `<div class="pres">
+    <div><span class="lbl" style="margin-bottom:6px">Valor de mercado</span><div class="vc">${reais(r.central)}</div>
+      <div class="vs">${reais(r.m2)}/m² · média de ${r.n} comparáveis ajustados (anúncio −5%, superior −10%, inferior +10%)</div></div>
+    <div class="pfx">${r.faixas.map(f => `<div class="${f.d ? '' : 'c'}"><span>${f.l} · ${f.nome}</span><b>${reais(f.v)}</b><small>${f.prazo}</small></div>`).join('')}</div>
+    ${p.pedido ? `<div class="pped">O proprietário quer <b>${reais(p.pedido)}</b>: ${Math.abs(dif) < 0.005 ? 'igual ao valor de mercado' : `${Math.round(Math.abs(dif) * 100)}% ${dif > 0 ? 'acima' : 'abaixo'} do valor de mercado`}. Na fila do comprador, ele fica em ${r.posPedido}º de ${r.n + 1}.</div>` : ''}
+    <div><span class="lbl">A fila do comprador · no valor de mercado, ${r.posCentral}º de ${r.n + 1}</span>
+      <div class="pfila">${fila.map(x => x.eu ? `<div class="eu"><i>●</i><span>Imóvel avaliado · ${x.eu.toLowerCase()}</span><b>${reais(x.p)}</b></div>`
+        : `<div><i>${x.c.n}</i><span>${esc([x.c.t, x.c.b].filter(Boolean).join(' · '))} · ${x.c.a} m²<span class="lt ${x.c.leit[0]}">${x.c.leit[1]}</span></span><b>${reais(x.p)}</b></div>`).join('')}</div></div>
+  </div>`;
+}
+function renderParDel() {
+  const el = $('#pm-del'); if (!el || !par) return;
+  const salvo = pareceres.some(x => x.id === par.id);
+  el.innerHTML = !salvo ? '' : parConfDel
+    ? `<div class="confirm"><span>Excluir este parecer de vez?</span><button class="btn-del" data-act="pm-del-yes">Sim, excluir</button><button class="link" data-act="pm-del-no">Cancelar</button></div>`
+    : '<button class="danger" data-act="pm-del-ask">Excluir parecer</button>';
+}
+const parRedesenha = () => { renderParComps(); renderParRes(); };
+function parAcao(a, el) {
+  const v = el.dataset.v, n = +el.dataset.n;
+  switch (a) {
+    case 'pm-tc': par.tc = v; renderParChips(); break;
+    case 'pm-estado': par.estado = par.estado === v ? '' : v; renderParChips(); break;
+    case 'pm-mob': par.mob = v; renderParChips(); break;
+    case 'pm-aj': par.comps[n].aj = v; break;
+    case 'pm-rm': par.comps.splice(n, 1); break;
+    case 'pm-add': {
+      const i = IMOVEL.get(el.dataset.k); if (!i) return;
+      par.comps.push(compDoEstoque(i, GRUPO[par.tc] === 'Terreno' ? (i.at || i.a) : i.a)); break;
+    }
+    case 'pm-sug-mais': parSug += 12; renderParComps(); return;
+    case 'pm-b-rm': par.bairros = par.bairros.filter(b => b !== el.dataset.b); break;
+    case 'pm-foto-x': par.foto = ''; renderParFoto(); break;
+    case 'pm-man': {
+      const val = id => $(id).value.trim(), num = id => Number(digits($(id).value)) || 0;
+      const c = { k: '', src: '', t: par.tc, b: val('#pmm-b'), en: val('#pmm-en'), e: '', a: num('#pmm-a'), p: parseMoney($('#pmm-p').value), q: num('#pmm-q'), s: 0, v: num('#pmm-v'), f: '', u: val('#pmm-u'), aj: 'eq' };
+      if (!c.p || !c.a) { $('#pmm-err').textContent = 'Preencha o preço e a área.'; return; }
+      if (c.u && !/^https?:\/\//i.test(c.u)) c.u = 'https://' + c.u;
+      par.comps.push(c); break;
+    }
+    case 'pm-del-ask': parConfDel = true; renderParDel(); return;
+    case 'pm-del-no': parConfDel = false; renderParDel(); return;
+    case 'pm-del-yes': excluiParecer(); return;
+    case 'pm-salvar': salvaParecerBotao(el); return;
+    case 'pm-pdf': pdfParecer(el); return;
+    default: return;
+  }
+  mexeu(); parRedesenha();
+}
+async function salvaParecerBotao(btn) {
+  if (btn.dataset.busy) return; btn.dataset.busy = '1'; const o = btn.innerHTML; btn.innerHTML = 'Salvando…';
+  try { await gravaParecer(); toast('Parecer salvo.'); renderParDel(); if (ui.tab === 'pareceres') renderPareceres(); }
+  catch (e) { toast('Não consegui salvar agora. Ficou como rascunho neste aparelho.'); }
+  btn.innerHTML = o; delete btn.dataset.busy;
+}
+async function excluiParecer() {
+  const id = par.id;
+  try {
+    const r = await fetch(`${FB_ROOT}/${COLP}/${encodeURIComponent(id)}?key=${FB_KEY}`, { method: 'DELETE' });
+    if (!r.ok && r.status !== 404) throw new Error('HTTP ' + r.status);
+    pareceres = pareceres.filter(x => x.id !== id); par.dirty = false;
+    closeSheet(); toast('Parecer excluído.'); renderPareceres();
+  } catch (e) { toast('Não consegui excluir agora. Tente de novo.'); }
+}
+// ── PDF do parecer (920×660, o mesmo formato e as mesmas cores do book dos imóveis) ──
+// 1 capa com a foto e o valor · 2 as três faixas e como cheguei ao valor · 3-4 os comparáveis com foto (6 por página)
+// · última: a fila do comprador, as ressalvas e a assinatura
+const PC = { tx: [44, 46, 51], t2: [85, 88, 94], mu: [135, 135, 135], fa: [185, 187, 189], or: [224, 102, 44], or2: [184, 82, 31], orbg: [252, 236, 226],
+  tq2: [63, 140, 132], tqbg: [228, 243, 241], bg: [243, 244, 242], li: [228, 228, 228], red: [180, 71, 75], redbg: [248, 227, 226] };
+const pTx = (doc, c) => doc.setTextColor(...PC[c]);
+const pFill = (doc, c) => doc.setFillColor(...PC[c]);
+const pDraw = (doc, c) => doc.setDrawColor(...PC[c]);
+const fotoCardPDF = u => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/_p(\.\w+)$/, '$1').replace(/^https?:\/\//, '')) + '&w=660&h=260&fit=cover&q=80&output=jpg';
+function tituloParecer(p) { const t = p.tc || 'Imóvel'; return p.b ? `${t} ${naNo(p.b)} ${p.b}` : t; }
+// topo e rodapé das páginas internas
+function paginaParecer(doc, p, kick, titulo, pg, tot) {
+  doc.addPage([920, 660], 'landscape');
+  pFill(doc, 'bg'); doc.rect(0, 0, 920, 660, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); pTx(doc, 'tx'); doc.text('MATHEUS NICKEL', 34, 40, { charSpace: 1.6 });
+  // alinhado à direita "na mão": com espaçamento entre letras o align do jsPDF erra a largura
+  doc.setFont('helvetica', 'normal'); pTx(doc, 'mu'); const pm = 'PARECER DE MERCADO'; doc.text(pm, 886 - doc.getTextWidth(pm) - 1.6 * (pm.length - 1), 40, { charSpace: 1.6 });
+  doc.setFontSize(8); pTx(doc, 'or'); doc.text(kick.toLocaleUpperCase('pt-BR'), 34, 82, { charSpace: 1.6 });
+  doc.setFontSize(25); pTx(doc, 'tx'); doc.text(titulo, 34, 112);
+  pDraw(doc, 'li'); doc.setLineWidth(.6); doc.line(34, 622, 886, 622);
+  doc.setFontSize(8.5); pTx(doc, 'mu');
+  doc.text(`${p.end || tituloParecer(p)} · ${CORRETOR.creci}`, 34, 638);
+  doc.text(`${pg} / ${tot}`, 886, 638, { align: 'right' });
+}
+function capaParecerPDF(doc, p, r, foto) {
+  const { x, y: fy, w, pe, rx, rw } = CAPA;
+  doc.setFillColor(255, 255, 255); doc.rect(0, 0, 920, 660, 'F');
+  if (foto) doc.addImage(foto.du, 'JPEG', x + (w - foto.pw) / 2, fy, foto.pw, foto.ph, undefined, 'FAST');
+  else {
+    // sem foto: um bloco claro com o endereço
+    pFill(doc, 'bg'); doc.rect(x, fy, w, pe - 60 - fy, 'F');
+    doc.setFontSize(9); pTx(doc, 'or'); doc.text('PARECER DE MERCADO', x + 40, fy + 60, { charSpace: 1.8 });
+    doc.setFontSize(30); pTx(doc, 'tx'); doc.text(doc.splitTextToSize(p.end || tituloParecer(p), w - 80).slice(0, 3), x + 40, fy + 110, { lineHeightFactor: 1.2 });
+  }
+  // cartão do corretor no pé, igual ao do book
+  doc.setDrawColor(228, 228, 228); doc.setLineWidth(.6); doc.line(x, pe - 44, x + w, pe - 44);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'tx'); doc.text(CORRETOR.nome, x, pe - 18, { charSpace: 2 });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); pTx(doc, 'mu'); doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, pe - 2);
+  doc.setFontSize(10); doc.setTextColor(56, 56, 56);
+  [[CORRETOR.insta, 'insta', pe - 18], [CORRETOR.whats, 'wa', pe - 2]].forEach(([t, ic, yy]) => {
+    doc.text(t, x + w, yy, { align: 'right' });
+    doc.addImage(iconePDF(ic, '#383838'), 'PNG', x + w - doc.getTextWidth(t) - 17, yy - 9, 11, 11);
+  });
+  // coluna da direita: o imóvel e o valor
+  let y = fy + 8;
+  doc.setFontSize(8); pTx(doc, 'or'); doc.text('PARECER DE MERCADO', rx, y, { charSpace: 1.6 });
+  y += 34; doc.setFontSize(23); pTx(doc, 'tx');
+  const tl = doc.splitTextToSize(tituloParecer(p), rw).slice(0, 2); doc.text(tl, rx, y, { lineHeightFactor: 1.15 }); y += (tl.length - 1) * 26.5 + 20;
+  if (p.end) { doc.setFontSize(10.5); pTx(doc, 'mu'); const el = doc.splitTextToSize(p.end, rw).slice(0, 2); doc.text(el, rx, y, { lineHeightFactor: 1.35 }); y += (el.length - 1) * 14; }
+  y += 20; pDraw(doc, 'or'); doc.setLineWidth(1); doc.line(rx, y, rx + 36, y); y += 30;
+  doc.setFontSize(7.5); pTx(doc, 'mu'); doc.text('VALOR DE MERCADO', rx, y, { charSpace: 1.2 }); y += 32;
+  doc.setFontSize(30); pTx(doc, 'tx'); doc.text(reais(r.central), rx, y); y += 20;
+  doc.setFontSize(10); pTx(doc, 'mu'); doc.text(`${reais(r.m2)}/m² · ${areaRot(p.tc).toLowerCase()} de ${p.area.toLocaleString('pt-BR')} m²`, rx, y); y += 15;
+  doc.text(`Faixa de ${reais(r.faixas[0].v)} a ${reais(r.faixas[2].v)}`, rx, y); y += 30;
+  // ficha do imóvel em duas colunas
+  const g = GRUPO[p.tc], cel = [];
+  if (g === 'Casa' && p.terreno) cel.push(['Terreno', p.terreno.toLocaleString('pt-BR') + ' m²']);
+  if (g !== 'Terreno') { if (p.q) cel.push(['Quartos', p.q]); if (p.s) cel.push(['Suítes', p.s]); if (p.v) cel.push(['Vagas', p.v]); if (p.idade) cel.push(['Idade', p.idade + plural(p.idade, ' ano', ' anos')]); if (p.estado) cel.push(['Estado', p.estado]); if (p.mob) cel.push(['Mobília', p.mob === 's' ? 'Mobiliado' : 'Semi-mobiliado']); }
+  const cw = (rw - 20) / 2, lin = Math.ceil(Math.min(cel.length, 6) / 2);
+  doc.setDrawColor(236, 236, 236); doc.setLineWidth(.6);
+  for (let k = 0; k < lin; k++) doc.line(rx, y + k * 46 + 27, rx + rw, y + k * 46 + 27);
+  cel.slice(0, 6).forEach(([rot, val], i) => {
+    const cx = rx + (i % 2) * (cw + 20), cy = y + Math.floor(i / 2) * 46;
+    doc.setFontSize(7); pTx(doc, 'mu'); doc.text(rot.toLocaleUpperCase('pt-BR'), cx, cy, { charSpace: 1 });
+    doc.setFontSize(13.5); pTx(doc, 'tx'); doc.text(String(val), cx, cy + 17);
+  });
+  // para quem e quando, no pé da coluna
+  doc.setFontSize(9.5); pTx(doc, 'mu');
+  doc.text([p.prop ? 'Preparado para ' + nomeProprio(p.prop) : '', 'Curitiba, ' + hojeExtenso()].filter(Boolean), rx, pe - 18, { lineHeightFactor: 1.6 });
+}
+function faixasParecerPDF(doc, p, r, pg, tot) {
+  paginaParecer(doc, p, 'Três faixas de preço', 'Cada faixa serve a um objetivo de venda.', pg, tot);
+  const cw = 273, gap = 16, y0 = 140, ch = 232;
+  r.faixas.forEach((f, i) => {
+    const x = 34 + i * (cw + gap), meio = !f.d;
+    doc.setFillColor(...(meio ? PC.orbg : [255, 255, 255])); pDraw(doc, meio ? 'or' : 'li'); doc.setLineWidth(meio ? 1 : .6);
+    doc.roundedRect(x, y0, cw, ch, 10, 10, 'FD');
+    doc.setFontSize(8); pTx(doc, meio ? 'or2' : 'mu'); doc.text(`${f.l} · ${f.nome.toLocaleUpperCase('pt-BR')}`, x + 20, y0 + 30, { charSpace: 1.4 });
+    doc.setFontSize(26); pTx(doc, 'tx'); doc.text(reais(f.v), x + 20, y0 + 70);
+    doc.setFontSize(9.5); pTx(doc, 'mu'); doc.text(f.d ? `${f.d > 0 ? '+' : '-'}${Math.abs(f.d * 100)}% sobre o valor de mercado` : 'o resultado deste parecer', x + 20, y0 + 90);
+    pDraw(doc, meio ? 'or' : 'li'); doc.setLineWidth(.6); doc.line(x + 20, y0 + 108, x + cw - 20, y0 + 108);
+    doc.setFontSize(7.5); pTx(doc, 'mu'); doc.text('PRAZO ESPERADO', x + 20, y0 + 130, { charSpace: 1.2 });
+    doc.setFontSize(12.5); pTx(doc, 'tx'); doc.text(f.prazo, x + 20, y0 + 148);
+    doc.setFontSize(10); pTx(doc, 't2'); doc.text(doc.splitTextToSize(f.txt, cw - 40).slice(0, 4), x + 20, y0 + 174, { lineHeightFactor: 1.45 });
+  });
+  doc.setFontSize(9); pTx(doc, 'mu');
+  doc.text('Os prazos consideram o imóvel bem apresentado (fotos, vídeo e descrição) e divulgado de forma ativa. O preço final depende do momento do mercado e da negociação.', 34, y0 + ch + 22, { maxWidth: 852 });
+  // como cheguei ao valor: quatro passos numa faixa
+  let y = y0 + ch + 60;
+  doc.setFontSize(8); pTx(doc, 'or'); doc.text('COMO CHEGUEI AO VALOR', 34, y, { charSpace: 1.6 }); y += 14;
+  const bairros = listaPt([...new Set(r.cs.map(c => c.b).filter(Boolean))].slice(0, 4));
+  const passos = [
+    [String(r.n), `imóveis parecidos à venda${bairros ? ' em ' + bairros : ''}`],
+    ['-5%', 'no preço anunciado: anúncio não é preço de venda'],
+    ['±10%', 'para cada comparável superior (-10%) ou inferior (+10%) ao seu imóvel'],
+    [reais(r.media) + '/m²', `média ajustada × ${p.area.toLocaleString('pt-BR')} m² = ${reais(r.central)}`]
+  ];
+  const pw = (852 - 3 * 12) / 4;
+  passos.forEach(([n, t], i) => {
+    const x = 34 + i * (pw + 12);
+    doc.setFillColor(255, 255, 255); pDraw(doc, 'li'); doc.setLineWidth(.6); doc.roundedRect(x, y, pw, 92, 8, 8, 'FD');
+    doc.setFontSize(18); pTx(doc, 'tx'); doc.text(n, x + 16, y + 32);
+    doc.setFontSize(9.5); pTx(doc, 't2'); doc.text(doc.splitTextToSize(t, pw - 32).slice(0, 3), x + 16, y + 52, { lineHeightFactor: 1.4 });
+  });
+  if (p.pedido) {
+    const dif = p.pedido / r.central - 1;
+    doc.setFontSize(10); pTx(doc, 'or2');
+    doc.text(`Preço desejado pelo proprietário: ${reais(p.pedido)}, ${Math.abs(dif) < 0.005 ? 'igual ao valor de mercado' : `${Math.round(Math.abs(dif) * 100)}% ${dif > 0 ? 'acima' : 'abaixo'} do valor de mercado`}.`, 34, y + 116);
+  }
+}
+function compsParecerPDF(doc, p, r, fotos, pg0, tot) {
+  const cw = 273, gx = 16, ch = 226, gy = 14, y0 = 136, fh = 108;
+  // até 6 por página, divididos por igual (7 comparáveis = 4 + 3, não 6 + 1)
+  const npg = Math.ceil(r.cs.length / 6), porPag = Math.ceil(r.cs.length / npg);
+  for (let k = 0, f = 0; k < r.cs.length; k += porPag, f++) {
+    const pg = pg0 + f, parte = npg > 1 ? ` (${f + 1} de ${npg})` : '';
+    paginaParecer(doc, p, 'Os comparáveis' + parte, 'Os imóveis parecidos à venda, do mais barato ao mais caro.', pg, tot);
+    r.cs.slice(k, k + porPag).forEach((c, j) => {
+      const x = 34 + (j % 3) * (cw + gx), y = y0 + Math.floor(j / 3) * (ch + gy);
+      doc.setFillColor(255, 255, 255); pDraw(doc, 'li'); doc.setLineWidth(.6); doc.roundedRect(x, y, cw, ch, 8, 8, 'FD');
+      const f = fotos.get(c);
+      if (f) doc.addImage(f, 'JPEG', x + 1, y + 1, cw - 2, fh, undefined, 'FAST');
+      else { pFill(doc, 'bg'); doc.rect(x + 1, y + 1, cw - 2, fh, 'F'); doc.setFontSize(9); pTx(doc, 'fa'); doc.text('sem foto', x + cw / 2, y + fh / 2 + 3, { align: 'center' }); }
+      // número do comparável sobre a foto
+      pFill(doc, 'tx'); doc.circle(x + 18, y + 18, 10, 'F'); doc.setFontSize(9); doc.setTextColor(255, 255, 255); doc.text(String(c.n), x + 18, y + 21.2, { align: 'center' });
+      let ty = y + fh + 20;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); pTx(doc, 'tx'); doc.text(doc.splitTextToSize([c.t, c.b].filter(Boolean).join(' · '), cw - 28)[0], x + 14, ty);
+      doc.setFont('helvetica', 'normal'); ty += 13;
+      doc.setFontSize(8.5); pTx(doc, 'mu'); doc.text(doc.splitTextToSize(c.en || c.e || 'Endereço não informado no anúncio', cw - 28)[0], x + 14, ty); ty += 13;
+      doc.text([c.a + ' m²', c.q ? c.q + plural(c.q, ' quarto', ' quartos') : '', c.v ? c.v + plural(c.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · '), x + 14, ty); ty += 22;
+      doc.setFontSize(15); pTx(doc, 'tx'); doc.text(reais(c.p), x + 14, ty);
+      doc.setFontSize(8.5); pTx(doc, 'mu'); doc.text(`${reais(c.m2)}/m²`, x + cw - 14, ty, { align: 'right' }); ty += 18;
+      // ajuste e leitura
+      const aj = P_AJUSTES.find(a => a[0] === c.aj)[1], [cl, rot, txt] = c.leit;
+      doc.setFontSize(7.5);
+      const tag = (t, x0, fundo, letra) => { const tw = doc.getTextWidth(t) + 12; doc.setFillColor(...fundo); doc.roundedRect(x0, ty - 9, tw, 13, 3, 3, 'F'); doc.setTextColor(...letra); doc.text(t, x0 + 6, ty); return x0 + tw + 6; };
+      let tx0 = tag(aj.toLocaleUpperCase('pt-BR'), x + 14, PC.bg, PC.t2);
+      tag(rot.toLocaleUpperCase('pt-BR'), tx0, cl === 'ame' ? PC.redbg : cl === 'van' ? PC.tqbg : PC.bg, cl === 'ame' ? PC.red : cl === 'van' ? PC.tq2 : PC.t2);
+      ty += 15; doc.setFontSize(8.5); pTx(doc, 't2'); doc.text(doc.splitTextToSize(txt, cw - 28).slice(0, 2), x + 14, ty, { lineHeightFactor: 1.35 });
+    });
+  }
+}
+function filaParecerPDF(doc, p, r, pg, tot) {
+  paginaParecer(doc, p, 'A fila do comprador', 'O que o comprador vê antes de chegar ao seu imóvel.', pg, tot);
+  const fila = r.cs.map(c => ({ c, p: c.p })).concat([{ eu: 'no valor de mercado', p: r.central }], p.pedido ? [{ eu: 'no preço desejado', p: p.pedido }] : []).sort((a, b) => a.p - b.p || (a.eu ? 1 : -1));
+  const lh = Math.min(30, 470 / fila.length), x0 = 34, w = 470;
+  let y = 140;
+  fila.forEach(it => {
+    if (it.eu) { pFill(doc, 'orbg'); doc.roundedRect(x0, y, w, lh - 4, 5, 5, 'F'); }
+    const by = y + (lh - 4) / 2 + 3.5;
+    doc.setFontSize(9.5);
+    if (it.eu) { pFill(doc, 'or'); doc.circle(x0 + 14, by - 3, 3.5, 'F'); doc.setFont('helvetica', 'bold'); pTx(doc, 'or2'); doc.text('Seu imóvel ' + it.eu, x0 + 30, by); doc.text(reais(it.p), x0 + w - 12, by, { align: 'right' }); doc.setFont('helvetica', 'normal'); }
+    else {
+      const c = it.c; pTx(doc, 'mu'); doc.text(String(c.n), x0 + 14, by, { align: 'center' });
+      pTx(doc, 'tx'); doc.text(doc.splitTextToSize(`${[c.t, c.b].filter(Boolean).join(' · ')} · ${c.a} m²`, 250)[0], x0 + 30, by);
+      const [cl, rot] = c.leit; doc.setFontSize(7.5); doc.setTextColor(...(cl === 'ame' ? PC.red : cl === 'van' ? PC.tq2 : PC.mu)); doc.text(rot.toLocaleUpperCase('pt-BR'), x0 + 292, by, { charSpace: .6 });
+      doc.setFontSize(9.5); pTx(doc, 'tx'); doc.text(reais(c.p), x0 + w - 12, by, { align: 'right' });
+      pDraw(doc, 'li'); doc.setLineWidth(.4); doc.line(x0, y + lh - 2, x0 + w, y + lh - 2);
+    }
+    y += lh;
+  });
+  // à direita: a leitura, as ressalvas e a assinatura
+  const rx = 540, rw = 346; let ry = 146;
+  const ames = r.cs.filter(c => c.leit[0] === 'ame');
+  doc.setFontSize(8); pTx(doc, 'or'); doc.text('LEITURA', rx, ry, { charSpace: 1.6 }); ry += 20;
+  const frases = [`No valor de mercado, o seu imóvel é o ${r.posCentral}º de ${r.n + 1} na fila: ${r.posCentral - 1} ${plural(r.posCentral - 1, 'imóvel parecido custa', 'imóveis parecidos custam')} menos.`];
+  if (p.pedido) frases.push(`No preço desejado (${reais(p.pedido)}), ele passa a ser o ${r.posPedido}º de ${r.n + 1}.`);
+  frases.push(ames.length ? `${ames.length} ${plural(ames.length, 'comparável é ameaça', 'comparáveis são ameaça')} (equivalente ou melhor, pedindo menos): ${ames.length === 1 ? 'o nº ' + ames[0].n : 'os nº ' + listaPt(ames.map(c => String(c.n)))}. ${ames.length === 1 ? 'É ele que o comprador vai usar' : 'São eles que o comprador vai usar'} na negociação.` : 'Nenhum comparável equivalente ou melhor pede menos que o valor de mercado: o seu imóvel está bem posicionado.');
+  doc.setFontSize(10.5); pTx(doc, 'tx');
+  frases.forEach(f => { const l = doc.splitTextToSize(f, rw); doc.text(l, rx, ry, { lineHeightFactor: 1.45 }); ry += l.length * 15.2 + 8; });
+  ry += 10; doc.setFontSize(8); pTx(doc, 'or'); doc.text('RESSALVAS', rx, ry, { charSpace: 1.6 }); ry += 16;
+  const ress = 'Este é um parecer de mercado do corretor, uma opinião de valor feita com imóveis à venda anunciados nesta data; não é laudo de avaliação nem PTAM e não segue a ABNT NBR 14653. Áreas e características conforme informado pelo proprietário, sem medição no local; documentação, matrícula e IPTU não foram analisados. Anúncios podem mudar ou sair do ar depois da pesquisa.';
+  doc.setFontSize(8.5); pTx(doc, 'mu'); const rl = doc.splitTextToSize(ress, rw); doc.text(rl, rx, ry, { lineHeightFactor: 1.45 }); ry += rl.length * 12.3;
+  // assinatura no pé da coluna
+  const sy = 560;
+  pDraw(doc, 'tx'); doc.setLineWidth(.5); doc.line(rx, sy, rx + 200, sy);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'tx'); doc.text('Matheus Nickel', rx, sy + 16);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); pTx(doc, 'mu'); doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci} · Curitiba, ${hojeExtenso()}`, rx, sy + 30);
+}
+async function pdfParecer(btn) {
+  if (btn.dataset.busy) return;
+  if (parPdf) { try { await navigator.share({ files: [parPdf] }); } catch (e) { if (e.name !== 'AbortError') salvarArquivos([parPdf]); } return; }
+  const r = calcParecer(par);
+  if (!r) { toast(par.area ? 'Escolha pelo menos 3 comparáveis para montar o PDF.' : 'Preencha a área do imóvel e escolha pelo menos 3 comparáveis.'); return; }
+  btn.dataset.busy = '1'; const original = btn.innerHTML; btn.innerHTML = 'Montando…';
+  try {
+    // salva antes (o PDF é sempre de um parecer guardado); sem internet, monta assim mesmo
+    let salvo = true; try { await gravaParecer(); renderParDel(); } catch (e) { salvo = false; }
+    const p = limpaParecer(par);
+    const JsPDF = await carregaJsPDF();
+    const fotos = new Map();
+    await emLotes(r.cs.filter(c => c.f), async c => {
+      const rs = await fetch(fotoCardPDF(c.f)); if (!rs.ok) throw new Error('HTTP ' + rs.status);
+      fotos.set(c, await paraDataURL(await rs.blob()));
+    });
+    let capa = null;
+    if (p.foto) { try { const [w, h] = await tamanhoImg(p.foto); capa = await fotoDaCapa({ du: p.foto, w, h }); } catch (e) {} }
+    const tot = 3 + Math.ceil(r.cs.length / 6);
+    const doc = new JsPDF({ unit: 'pt', format: [920, 660], orientation: 'landscape', compress: true });
+    capaParecerPDF(doc, p, r, capa);
+    faixasParecerPDF(doc, p, r, 2, tot);
+    compsParecerPDF(doc, p, r, fotos, 3, tot);
+    filaParecerPDF(doc, p, r, tot, tot);
+    const nome = `Parecer de mercado - ${tituloParecer(p)} - Matheus Nickel.pdf`.replace(/[\\/:*?"<>|]/g, '');
+    const pdf = new File([doc.output('blob')], nome, { type: 'application/pdf' });
+    const aviso = salvo ? '' : ' (sem internet: o parecer ficou como rascunho neste aparelho)';
+    if (telaDeToque && navigator.canShare && navigator.canShare({ files: [pdf] })) {
+      parPdf = pdf; btn.classList.add('ready'); btn.innerHTML = `${ICON_DOC}Salvar PDF`;
+      toast('PDF pronto. Toque em “Salvar PDF” para salvar ou mandar no WhatsApp.' + aviso);
+    } else { salvarArquivos([pdf]); btn.innerHTML = original; toast('PDF baixado.' + aviso); }
+    if (ui.tab === 'pareceres') renderPareceres();
+  } catch (e) { btn.innerHTML = original; toast('Não consegui montar o PDF agora. Tente de novo.'); }
+  delete btn.dataset.busy;
+}
+
+// campos digitados do parecer (o ouvinte fica no documento porque a folha é redesenhada)
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'pmm-p') { maskMoney(t); return; }
+  if (!par || !t.dataset || !t.dataset.pm) return;
+  const k = t.dataset.pm;
+  if (k === 'pedido') { maskMoney(t); par.pedido = parseMoney(t.value); }
+  else if (['area', 'terreno', 'q', 's', 'v', 'idade'].includes(k)) par[k] = Number(digits(t.value)) || 0;
+  else par[k] = t.value;
+  if (k === 'b') { const velho = par.bairros; par.bairros = t.value ? [t.value].concat(velho.length > 1 ? velho.filter(b => bkey(b) !== bkey(t.value)) : []) : []; }
+  if (k === 'end') $('#pm-tit').textContent = t.value || 'Novo parecer';
+  mexeu();
+  if (['area', 'b', 'q', 's', 'v', 'pedido', 'end'].includes(k)) parRedesenha();
+});
+document.addEventListener('change', async e => {
+  const t = e.target; if (!par) return;
+  if (t.id === 'pm-addb' && t.value) { if (!par.bairros.some(b => bkey(b) === bkey(t.value))) par.bairros.push(t.value); mexeu(); renderParComps(); }
+  if (t.id === 'pm-file' && t.files && t.files[0]) {
+    try { par.foto = await fotoParaCapa(t.files[0]); mexeu(); renderParFoto(); }
+    catch (er) { toast('Não consegui abrir essa foto. Tente outra.'); }
+  }
+});
+
 function renderAll() {
   renderClientes();
   if (ui.tab === 'metricas') renderMetricas();
@@ -1523,8 +2173,9 @@ function renderAll() {
 // ── NAVEGAÇÃO ──
 function go(tab) {
   ui.tab = tab;
-  ['clientes', 'imoveis', 'metricas'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== (tab === 'locacao' ? 'imoveis' : tab)));
+  ['clientes', 'imoveis', 'metricas', 'pareceres'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== (tab === 'locacao' ? 'imoveis' : tab)));
   if (tab === 'metricas') renderMetricas();
+  if (tab === 'pareceres') { renderPareceres(); carregaPareceres(); }
   if (tab === 'imoveis' || tab === 'locacao') renderImoveis();
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   window.scrollTo(0, 0);
@@ -1542,11 +2193,18 @@ function encaixa() {
 telaLarga.addEventListener('change', encaixa);
 function openSheet(html, state) {
   ui.sheet = state;
+  $('#sheet').classList.toggle('wide', !!state && state.kind === 'parecer');
   $('#sheet').innerHTML = html;
   $('#ov').classList.remove('hidden');
   encaixa();
 }
 function closeSheet() {
+  // parecer fechado sem salvar: fica como rascunho neste aparelho (aviso na aba Parecer)
+  if (ui.sheet && ui.sheet.kind === 'parecer') {
+    if (par && par.dirty) { guardaRascunho(); toast('O parecer não foi salvo. Ficou como rascunho na aba Parecer.'); }
+    par = null; parPdf = null;
+    if (ui.tab === 'pareceres') setTimeout(renderPareceres, 0);
+  }
   ui.sheet = null; form = null;
   $('#ov').classList.add('hidden');
   $('#sheet').innerHTML = '';
@@ -1764,7 +2422,12 @@ document.addEventListener('click', e => {
   if (menu && !menu.classList.contains('hidden') && !e.target.closest('#menu') && !e.target.closest('[data-act="menu"]')) menu.classList.add('hidden');
   const el = e.target.closest('[data-act]'); if (!el) return;
   const a = el.dataset.act, id = el.dataset.id, v = el.dataset.v;
+  if (a.startsWith('pm-')) { if (par) parAcao(a, el); return; }
   switch (a) {
+    case 'p-novo': editaParecer(limpaParecer({})); break;
+    case 'p-abre': abreParecer(id); break;
+    case 'p-rasc': { const r = lsGet(LS_RASC, null); if (r) { editaParecer(limpaParecer(r)); par.dirty = true; } break; }
+    case 'p-rasc-x': try { localStorage.removeItem(LS_RASC); } catch (er) {} renderPareceres(); break;
     case 'novo': openForm(); break;
     case 'menu': menu.classList.toggle('hidden'); break;
     case 'recarregar': menu.classList.add('hidden'); loaded = false; updateSync(); refresh(); break;
@@ -1839,7 +2502,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-09a';
+const VERSAO = '2026-11-09b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
