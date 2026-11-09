@@ -880,6 +880,8 @@ const ESTOQUES = [
   // desde 08/11. Entre Imóveis e Urbanic Homes (site Tecimob): só prontos; a Entre mostra rua e número, a Urbanic esconde a rua
   { id: 'entre', nome: 'Entre Imóveis', arq: 'dados/entre.json', det: 'dados/entre/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   { id: 'urbanic', nome: 'Urbanic', arq: 'dados/urbanic.json', det: 'dados/urbanic/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  // desde 09/11. V6 Imóveis (mesma plataforma): só prontos; mostra a rua, quase nunca o número, sem complemento
+  { id: 'v6', nome: 'V6', arq: 'dados/v6.json', det: 'dados/v6/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   // Baltazzar (site da Loft, cadastro no Vista): não publica rua, número nem complemento
   { id: 'baltazzar', nome: 'Baltazzar', arq: 'dados/baltazzar.json', det: 'dados/baltazzar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
@@ -1837,7 +1839,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-08a';
+const VERSAO = '2026-11-09a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

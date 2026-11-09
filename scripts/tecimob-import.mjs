@@ -1,7 +1,7 @@
 // Copia os imóveis PRONTOS à venda de imobiliárias com site na plataforma Tecimob para a Carteira, no mesmo formato das outras:
 //  - dados/<arq>.json          resumo de todos os imóveis (para o cruzamento com os clientes)
 //  - dados/<arq>/<codigo>.json detalhes + todas as fotos do anúncio (PDF, capa e descritivo)
-// Hoje: Entre Imóveis (entreimoveiscuritiba.com.br) e Urbanic Homes (urbanichomes.com.br), desde 08/11.
+// Hoje: Entre Imóveis (entreimoveiscuritiba.com.br) e Urbanic Homes (urbanichomes.com.br), desde 08/11; V6 Imóveis (v6imoveis.com.br), desde 09/11.
 // A lista junta o sitemap (que o robots.txt indica) com as páginas "comprar/<tipo>/…" do site, porque o sitemap às vezes
 // deixa imóvel de fora; os dados vêm do __NEXT_DATA__ de cada página (props.initialState.property.data). O robots.txt proíbe
 // /api/ e os filtros da busca, que não são usados. Endereço e complemento são copiados como estão no cadastro (a Urbanic
@@ -11,7 +11,9 @@ import { writeFile, readdir, unlink, mkdir, readFile } from 'node:fs/promises';
 
 const SITES = [
   { arq: 'entre', nome: 'Entre Imóveis', site: 'https://entreimoveiscuritiba.com.br' },
-  { arq: 'urbanic', nome: 'Urbanic Homes', site: 'https://urbanichomes.com.br' }
+  { arq: 'urbanic', nome: 'Urbanic Homes', site: 'https://urbanichomes.com.br' },
+  // desde 09/11; os códigos da V6 também têm letras ("AP0040", "LC0425")
+  { arq: 'v6', nome: 'V6 Imóveis', site: 'https://v6imoveis.com.br' }
 ];
 const HEAD = { headers: { 'User-Agent': 'Mozilla/5.0 (CarteiraNickel)', 'Accept-Encoding': 'gzip' } };
 const espera = ms => new Promise(s => setTimeout(s, ms));
@@ -71,11 +73,14 @@ function ficha(html, c, u) {
   const fotos = [...new Set(JSON.stringify(P).match(new RegExp(`https://imagens\\.tecimob\\.com\\.br/media/[^"]+/properties/${d.id}/images/[^/"]+\\.(?:jpe?g|png|webp)`, 'gi')) || [])];
   const end = d.address || {};
   const en = [end.street, end.street_number].filter(Boolean).join(', ');
+  // "Água Verde - Curitiba/PR"; sem bairro vem só "Itapema/SC" (aí o bairro fica vazio e o anúncio não cruza com ninguém)
+  const fmt = String(end.formatted || ''), temBairro = fmt.includes(' - ');
+  const bairro = temBairro ? fmt.split(' - ')[0].trim() : '', cidadeSite = (temBairro ? fmt.split(' - ')[1] : fmt).replace(/\/[A-Z]{2}$/, '').trim();
   const carac = (d.characteristics || []).map(x => x.title), condC = (d.condo_characteristics || []).map(x => x.title);
   const extras = []; if (sala('closet')) extras.push('Closet'); if (sala('office')) extras.push('Escritório'); if (sala('lavabo') || sala('toilet')) extras.push('Lavabo');
   const i = {
     c: String(c), t, cat: tipoSite, ti: texto(d.title_formatted || d.meta_title || ''),
-    b: String(end.formatted || '').split(' - ')[0].trim(), ci: (String(end.formatted || '').split(' - ')[1] || '').replace(/\/[A-Z]{2}$/, '').trim(),
+    b: bairro, ci: cidadeSite,
     q: sala('bedroom'), s: sala('suite'), v: sala('garage'),
     a: Math.round(terreno ? (atot || ap || ac) : (ap || ac || atot)), at: Math.round(casa || terreno ? atot : 0),
     mo: /semi/i.test(d.furniture || '') ? 'm' : /mobiliad/i.test(d.furniture || '') ? 's' : '', ob: 'r', p: reais(d.price),
@@ -90,7 +95,8 @@ function ficha(html, c, u) {
   });
   // preço digitado errado no cadastro (Entre 118: "R$635.000.000" num apartamento de 75 m²): fica "sob consulta"
   if (i.p && i.a && i.p / i.a > 200000) { console.log(`  ${c}: preço ${d.price} para ${i.a} m² parece erro de digitação; fica sob consulta`); i.p = detalhe.p = 0; }
-  const fora = d.transaction !== 'VENDA' ? 'nv' : /constru|planta|lan[cç]amento/i.test(d.situation || '') ? 'lan' : '';
+  // "Em construção" e lançamento ficam de fora; terreno "Pronto para construir" entra (09/11: antes saía junto, por causa do "constru")
+  const fora = d.transaction !== 'VENDA' ? 'nv' : /constru[cç][aã]o|planta|lan[cç]amento/i.test(d.situation || '') ? 'lan' : '';
   return { i, detalhe, fora, cidade: i.ci };
 }
 
@@ -100,9 +106,9 @@ async function importa(S) {
   const lista = new Map();
   const sm = await pega(`${S.site}/sitemap.xml`);
   const locs = [...sm.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(m => m[1]);
-  // o código é a última parte do link e pode ter sufixo ("132-GT")
-  const pegaLinks = html => [...html.matchAll(/\/imovel\/[a-z0-9-]+\/(\d+(?:-[A-Za-z0-9]+)?)(?=["'?#\s\\])/g)].forEach(m => { if (!lista.has(m[1])) lista.set(m[1], S.site + m[0]); });
-  locs.filter(u => /\/imovel\//.test(u)).forEach(u => { const m = u.match(/\/(\d+(?:-[A-Za-z0-9]+)?)\/?$/); if (m) lista.set(m[1], u.replace(/\/$/, '')); });
+  // o código é a última parte do link: número, número com sufixo ("132-GT") ou letras e número ("AP0040", na V6)
+  const pegaLinks = html => [...html.matchAll(/\/imovel\/[a-z0-9-]+\/([A-Za-z0-9]+(?:-[A-Za-z0-9]+)?)(?=["'?#\s\\])/g)].forEach(m => { if (!lista.has(m[1])) lista.set(m[1], S.site + m[0]); });
+  locs.filter(u => /\/imovel\//.test(u)).forEach(u => { const m = u.match(/\/([A-Za-z0-9]+(?:-[A-Za-z0-9]+)?)\/?$/); if (m) lista.set(m[1], u.replace(/\/$/, '')); });
   for (const cat of locs.filter(u => /\/comprar\//.test(u))) {
     for (let pg = 1; pg < 50; pg++) {
       const antes = lista.size, html = await pega(pg === 1 ? cat : `${cat}?page=${pg}`);

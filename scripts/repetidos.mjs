@@ -11,10 +11,11 @@
 // Arya (2560×1707), A. Gonçalves (1920×1280), Casa Prates (1920×1280, medida em 03/11), Zireh (1280×853).
 // A Pilar fica por último: tem foto boa (2048×1365), mas com marca d'água, e não mostra o endereço.
 // 08/11: Entre Imóveis e Urbanic (1920×1280) depois da Casa Prates; Baltazzar (1280×853, sem endereço) junto da Zireh.
+// 09/11: V6 Imóveis (mesma plataforma da Entre, rua quase sempre sem número) depois da Urbanic.
 import { readFile, writeFile } from 'node:fs/promises';
 
-const ORDEM = ['j8', 'sis3', 'arya', 'gon', 'prates', 'entre', 'urbanic', 'zireh', 'baltazzar', 'pilar'];
-const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', baltazzar: 'baltazzar' };
+const ORDEM = ['j8', 'sis3', 'arya', 'gon', 'prates', 'entre', 'urbanic', 'v6', 'zireh', 'baltazzar', 'pilar'];
+const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', v6: 'v6', baltazzar: 'baltazzar' };
 const OUT = new URL('../dados/repetidos.json', import.meta.url);
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
