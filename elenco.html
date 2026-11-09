@@ -97,7 +97,10 @@ main{max-width:1180px;margin:0 auto;padding:30px 28px calc(120px + var(--sab))}
 .chip.tag .rm{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:16px;line-height:1;color:var(--text2)}
 .chip.tag .rm:hover{background:rgba(40,42,46,.12);color:var(--text)}
 .chip.sug{border-style:dashed;font-size:13px;padding:6px 11px}
-input,textarea{width:100%;background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s}
+input,textarea,select{width:100%;background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s}
+select{font:inherit;color:inherit;min-height:48px;-webkit-appearance:none;appearance:none;padding-right:40px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23878787' stroke-width='1.6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
+select:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,193,186,.2)}
 textarea{resize:vertical;line-height:1.5}
 input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,193,186,.2)}
 input[type=date]{min-height:48px}
@@ -687,7 +690,6 @@ input[type=date]{min-height:48px}
 <main id="main"></main>
 
 <button class="fab adm" data-act="novo" aria-label="Novo corretor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-<datalist id="bairros"></datalist>
 <div id="ov" class="ov hidden"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div id="toast" class="toast hidden"></div>
 
@@ -818,10 +820,19 @@ const CHAVES = [...new Set(ATTRS.map(a => a.k).concat(ATTRS_ANTIGOS, ETAPAS_ANTI
 const PROD = { visita: 'Visita de angariação', angariacao: 'Angariação' };
 const TIPOS_IMOVEL = ['Casa', 'Apartamento', 'Cobertura', 'Terreno', 'Comercial'];
 const PERIODOS = [['1', '1º mês'], ['2', '2º mês'], ['3', '3º mês'], ['tudo', 'Tudo']];
-const BAIRROS_CWB = ['Abranches', 'Água Verde', 'Ahú', 'Alto da Glória', 'Alto da XV', 'Bacacheri', 'Batel', 'Bigorrilho', 'Boa Vista', 'Bom Retiro',
-  'Cabral', 'Campina do Siqueira', 'Campo Comprido', 'Centro', 'Centro Cívico', 'Champagnat', 'Cristo Rei', 'Ecoville', 'Hugo Lange', 'Jardim Botânico',
-  'Jardim Social', 'Juvevê', 'Mercês', 'Mossunguê', 'Orleans', 'Portão', 'Rebouças', 'Santa Felicidade', 'Santo Inácio', 'São Braz', 'São Francisco',
-  'São João', 'São Lourenço', 'Seminário', 'Tarumã', 'Vila Izabel', 'Vista Alegre', 'Alphaville Graciosa', 'Butiatuvinha', 'Pilarzinho', 'Água Verde'];
+// todos os bairros de Curitiba (a mesma lista da Carteira) + os nomes que o mercado usa (Ecoville, Champagnat, Alphaville Graciosa)
+const BAIRROS_CWB = [...new Set(['Abranches', 'Água Verde', 'Ahú', 'Alto Boqueirão', 'Alto da Glória', 'Alto da XV', 'Atuba', 'Augusta', 'Bacacheri',
+  'Bairro Alto', 'Barreirinha', 'Batel', 'Bigorrilho', 'Boa Vista', 'Boqueirão', 'Bom Retiro', 'Butiatuvinha', 'Cabral', 'Cachoeira', 'Cajuru',
+  'Campina do Siqueira', 'Campo Comprido', 'Campo de Santana', 'Capão da Imbuia', 'Capão Raso', 'Cascatinha', 'Caximba', 'Centro', 'Centro Cívico',
+  'Champagnat', 'CIC', 'Cristo Rei', 'Ecoville', 'Fanny', 'Fazendinha', 'Ganchinho', 'Guabirotuba', 'Guaíra', 'Hauer', 'Hugo Lange', 'Jardim Botânico',
+  'Jardim das Américas', 'Jardim Social', 'Juvevê', 'Lamenha Pequena', 'Lindóia', 'Mercês', 'Mossunguê', 'Novo Mundo', 'Orleans', 'Parolin', 'Pilarzinho',
+  'Pinheirinho', 'Portão', 'Prado Velho', 'Rebouças', 'Riviera', 'Santa Cândida', 'Santa Felicidade', 'Santa Quitéria', 'Santo Inácio', 'São Braz',
+  'São Francisco', 'São João', 'São Lourenço', 'São Miguel', 'Seminário', 'Sítio Cercado', 'Taboão', 'Tarumã', 'Tatuquara', 'Tingui', 'Uberaba', 'Umbará',
+  'Vila Izabel', 'Vista Alegre', 'Xaxim', 'Alphaville Graciosa'])].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+const OUTRO_BAIRRO = '__outro';
+// o bairro gravado ("VISTA ALEGRE", "vista alegre") volta para o nome da lista ("Vista Alegre"); fora da lista fica como está
+const semAcento = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const bairroDaLista = b => BAIRROS_CWB.find(x => semAcento(x) === semAcento(b)) || '';
 
 // ── UTIL ──
 const $ = s => document.querySelector(s);
@@ -1838,7 +1849,7 @@ function sheetProd(id, tipo, pid) {
     <div class="fl" id="p-nome-box"><label class="lbl" for="p-nome">Imóvel<span class="hint">para reconhecer na carteira</span></label><input id="p-nome" value="${esc(p ? p.nome : '')}" placeholder="Ex.: Apto 1201 Ed. Kaá" autocomplete="off"></div>
     <div class="fl"><label class="lbl" for="p-valor">Valor do imóvel</label><input id="p-valor" inputmode="numeric" placeholder="R$ 0" autocomplete="off" value="${p && p.valor ? 'R$ ' + p.valor.toLocaleString('pt-BR') : ''}"></div>
     <div><span class="lbl">Tipo do imóvel</span><div class="chips" id="p-ti"></div></div>
-    <div class="fl" id="p-bairro-box"><label class="lbl" for="p-bairro">Bairro</label><input id="p-bairro" list="bairros" placeholder="Ex.: Santa Felicidade" autocomplete="off" value="${esc(p ? p.bairro : '')}"></div>
+    <div class="fl" id="p-bairro-box"><label class="lbl" for="p-bairro">Bairro</label>${campoBairro(p ? p.bairro : '')}</div>
     <div id="p-fase-box"><span class="lbl">Em que fase está</span><div class="chips sm" id="p-fase"></div>
       <label class="tgl"><input type="checkbox" id="p-prop" ${form.prop ? 'checked' : ''}> Já recebeu proposta</label></div>
     <div class="row2"><div class="fl"><label class="lbl" for="p-data" id="p-data-l">Data</label><input id="p-data" type="date" value="${p ? p.data : hoje()}"></div></div>
@@ -1846,8 +1857,21 @@ function sheetProd(id, tipo, pid) {
   </div>
   <div class="sh-f"><button class="btn-ghost" data-act="fechar">Cancelar</button><button class="btn-or" data-act="save-prod">${p ? 'Salvar' : 'Registrar'}</button></div>`, 'prod');
   $('#p-valor').addEventListener('input', e => maskMoney(e.target));
+  // "Outro bairro" abre o campo para digitar (bairro de fora de Curitiba, por exemplo)
+  $('#p-bairro').addEventListener('change', e => { const o = e.target.value === OUTRO_BAIRRO; $('#p-bairro-outro').classList.toggle('hidden', !o); if (o) $('#p-bairro-outro').focus(); });
   renderSeg();
 }
+// lista com todos os bairros para tocar e escolher; o que estava gravado fora da lista aparece no campo "Outro bairro"
+function campoBairro(atual) {
+  const daLista = bairroDaLista(atual), outro = atual && !daLista ? atual : '';
+  return `<select id="p-bairro">
+      <option value="">Escolha o bairro</option>
+      ${BAIRROS_CWB.map(b => `<option value="${esc(b)}"${b === daLista ? ' selected' : ''}>${esc(b)}</option>`).join('')}
+      <option value="${OUTRO_BAIRRO}"${outro ? ' selected' : ''}>Outro bairro (digitar)</option>
+    </select>
+    <input id="p-bairro-outro" class="${outro ? '' : 'hidden'}" placeholder="Digite o bairro" autocomplete="off" value="${esc(outro)}" style="margin-top:8px">`;
+}
+const bairroEscolhido = () => $('#p-bairro').value === OUTRO_BAIRRO ? $('#p-bairro-outro').value.trim() : $('#p-bairro').value;
 function renderSeg() {
   const vis = form.ptipo === 'visita';
   if ($('#p-seg')) $('#p-seg').innerHTML = Object.entries(PROD).map(([k, l]) => `<button class="${form.ptipo === k ? 'on' : ''}" data-act="ptipo" data-v="${k}">${l}</button>`).join('');
@@ -1861,7 +1885,7 @@ function saveProd() {
   const c = byId(form.id);
   if (!c) { $('#p-err').textContent = 'Escolha de quem é.'; return; }
   const vis = form.ptipo === 'visita';
-  const p = { id: form.pid || newId('p'), data: $('#p-data').value || hoje(), tipo: form.ptipo, valor: parseMoney($('#p-valor').value), ti: form.ti, bairro: vis ? '' : $('#p-bairro').value.trim() };
+  const p = { id: form.pid || newId('p'), data: $('#p-data').value || hoje(), tipo: form.ptipo, valor: parseMoney($('#p-valor').value), ti: form.ti, bairro: vis ? '' : bairroEscolhido() };
   if (!vis) Object.assign(p, { nome: $('#p-nome').value.trim(), fase: form.fase, prop: $('#p-prop').checked });
   const producao = form.pid ? c.producao.map(x => x.id === form.pid ? p : x) : c.producao.concat([p]);
   saveCorretor(Object.assign({}, c, { producao }));
@@ -2119,7 +2143,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-02z';
+const VERSAO = '2026-11-09a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
@@ -2137,7 +2161,6 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 // ── ENTRADA ──
 if (TESTE) $('#teste-bar').classList.remove('hidden');
-$('#bairros').innerHTML = [...new Set(BAIRROS_CWB)].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(b => `<option value="${esc(b)}">`).join('');
 mentoria = cleanMentoria(lsGet(LS_CACHE + '_m', null));
 corretores = applyPending(lsGet(LS_CACHE, []).filter(o => o && o.id !== MID).map(cleanCorretor));
 route();
