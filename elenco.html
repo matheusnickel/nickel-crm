@@ -701,7 +701,7 @@ const FB_ROOT = 'https://firestore.googleapis.com/v1/projects/nickel-crm/databas
 const TESTE = new URLSearchParams(location.search).get('base') === 'teste';
 const COL = TESTE ? 'elenco_angariacao_TESTE_CLAUDE' : 'elenco_angariacao';
 const LS_CACHE = 'elenco_cache_' + COL, LS_PEND = 'elenco_pending_' + COL;
-const LS_AUTH = 'elenco_auth', LS_PER = 'elenco_periodo2';
+const LS_AUTH = 'elenco_auth';
 const SENHA = 'flor2301';
 
 // Atributos do angariador, como os do Football Manager: nota de 1 a 20 dada pelo Matheus em cada avaliação.
@@ -1146,11 +1146,12 @@ function updateSync() {
 }
 
 // ── ESTADO DA TELA ──
-const ui = { rel: { per: '1', quem: '' }, ficha: null, tela: 'elenco', aba: 'geral', info: new Set(), per: lsGet(LS_PER, 'tudo'), sheet: null, prodAll: false, fromElenco: false };
+const ui = { rel: { per: '1', quem: '' }, ficha: null, tela: 'elenco', aba: 'geral', info: new Set(), per: 'tudo', sheet: null, prodAll: false, fromElenco: false };
 // telas do topo (cada uma com o seu #endereço, para dar para mandar o link direto)
 const TELAS = [['elenco', 'Plantel'], ['treino', 'Treino'], ['carteira', 'Carteira'], ['relatorio', 'Relatórios']];
 const TELAS_ANTIGAS = { processo: 'treino', treinos: 'treino' }; // links antigos continuam abrindo
-if (!PERIODOS.some(p => p[0] === ui.per)) ui.per = 'tudo';
+// o período da produção sempre abre em "Tudo" (pedido dele em 09/11); trocar para 1º/2º/3º mês vale só até fechar
+try { localStorage.removeItem('elenco_periodo2'); } catch (e) {}
 let form = null;
 let admin = lsGet(LS_AUTH, false) === true;
 
@@ -2059,7 +2060,7 @@ document.addEventListener('click', e => {
       else { history.replaceState(null, '', location.pathname + location.search); route(); }
       break;
     case 'aba': ui.aba = v; ui.prodAll = false; render(); break;
-    case 'per': ui.per = v; lsSet(LS_PER, v); render(); break;
+    case 'per': ui.per = v; render(); break;
     case 'prod-all': ui.prodAll = true; render(); break;
     case 'novo': sheetPerfil(); break;
     case 'perfil': sheetPerfil(id); break;
@@ -2143,7 +2144,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-09a';
+const VERSAO = '2026-11-09b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
