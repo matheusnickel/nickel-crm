@@ -373,6 +373,10 @@ button.pcs:hover{border-color:var(--tq)}
 .seg3 button:first-child{border-left:none}
 .seg3 button.on{background:var(--tq);color:#fff}
 .paj a{color:var(--tq2);font-weight:600}
+.pviz{display:inline-block;margin-left:8px;font-size:10.5px;font-weight:600;color:var(--tq2);background:var(--tqbg);border-radius:99px;padding:1px 8px;vertical-align:1px}
+.chip.tag small{font-size:11px;font-weight:400;opacity:.75}
+.chip.tag.main{background:var(--or);border-color:var(--or);color:#fff}
+.chip.tag.main .rm{color:#fff}
 .pflag{font-size:11.5px;font-weight:600;color:var(--warn);background:var(--warnbg);border-radius:6px;padding:2px 8px}
 .pman summary{cursor:pointer;color:var(--tq2);font-weight:600;font-size:14px;width:max-content}
 .pman .pgrid{margin-top:12px}
@@ -1227,7 +1231,7 @@ function capaPDF(doc, d, foto, cl) {
   if (dif.length && y < pe - 70) {
     doc.setFontSize(7.5); doc.setTextColor(224, 102, 44); doc.text('DIFERENCIAIS', rx, y, { charSpace: 1.2 }); y += 20;
     doc.setFontSize(10.5); doc.setTextColor(56, 56, 56); doc.setFillColor(224, 102, 44);
-    dif.forEach((t, i) => { const cx = rx + (i % 2) * (cw + 20), cy = y + Math.floor(i / 2) * 21; doc.circle(cx + 1.5, cy - 3.4, 1.6, 'F'); doc.text(t, cx + 9, cy); });
+    dif.forEach((t, i) => { const cx = rx + (i % 2) * (cw + 20), cy = y + Math.floor(i / 2) * 21; doc.setFillColor(224, 102, 44); doc.circle(cx + 1.5, cy - 3.4, 1.6, 'F'); doc.text(t, cx + 9, cy); });
     y += Math.ceil(dif.length / 2) * 21 + 18;
   }
   // o que o condomínio oferece, em uma ou duas linhas
@@ -1590,6 +1594,87 @@ function leColuna(c) {
 }
 document.addEventListener('mouseover', e => { const c = e.target.closest('.col'); if (c) leColuna(c); });
 
+// Bairros de Curitiba que fazem divisa com cada bairro (calculado em 09/11 pelo mapa oficial do IPPUC, via github.com/gustavokira/geo-curitiba):
+// nome do vizinho e distância entre os centros dos dois bairros, em km, do mais perto para o mais longe. Ecoville e Champagnat usam o bairro oficial.
+const VIZINHOS = {
+  'Abranches': [['Barreirinha',1.3],['Taboão',1.3],['Cachoeira',2],['São Lourenço',3],['Pilarzinho',3.3]],
+  'Água Verde': [['Vila Izabel',0.9],['Batel',1.7],['Guaíra',1.8],['Parolin',2.2],['Seminário',2.3],['Portão',2.5],['Rebouças',2.7],['Centro',3.2]],
+  'Ahú': [['Cabral',1.2],['Juvevê',1.4],['Centro Cívico',1.5],['São Lourenço',1.5],['Bom Retiro',1.6],['Boa Vista',2.1]],
+  'Alto Boqueirão': [['Sítio Cercado',3.6],['Boqueirão',3.9],['Xaxim',4.4],['Ganchinho',4.5]],
+  'Alto da Glória': [['Juvevê',0.7],['Centro Cívico',0.9],['Alto da XV',1.6],['Centro',1.6]],
+  'Alto da XV': [['Hugo Lange',1.1],['Cristo Rei',1.3],['Jardim Social',1.6],['Alto da Glória',1.6],['Juvevê',1.6],['Centro',2.3],['Tarumã',3.1]],
+  'Atuba': [['Tingui',1.7],['Santa Cândida',3.4],['Bairro Alto',3.9]],
+  'Augusta': [['Riviera',3.4],['São Miguel',4.6],['CIC',5]],
+  'Bacacheri': [['Jardim Social',1.9],['Tingui',1.9],['Cabral',2],['Hugo Lange',2.1],['Boa Vista',2.6],['Bairro Alto',2.8],['Santa Cândida',4.8]],
+  'Bairro Alto': [['Tarumã',1.6],['Bacacheri',2.8],['Capão da Imbuia',2.9],['Jardim Social',3],['Tingui',3.4],['Atuba',3.9]],
+  'Barreirinha': [['Abranches',1.3],['Cachoeira',2],['Boa Vista',2.3],['São Lourenço',2.3],['Santa Cândida',3.3]],
+  'Batel': [['Bigorrilho',1.6],['Água Verde',1.7],['Seminário',1.8],['Campina do Siqueira',1.8],['Centro',2.3]],
+  'Bigorrilho': [['Campina do Siqueira',1.1],['Mercês',1.2],['Batel',1.6],['Cascatinha',2.4],['Mossunguê',2.5],['Santo Inácio',2.6],['Centro',3.1]],
+  'Boa Vista': [['São Lourenço',1.8],['Cabral',1.9],['Ahú',2.1],['Barreirinha',2.3],['Bacacheri',2.6],['Tingui',2.9],['Santa Cândida',3.6]],
+  'Bom Retiro': [['Centro Cívico',1.1],['Ahú',1.6],['São Francisco',1.9],['São Lourenço',2.2],['Mercês',2.4],['Vista Alegre',2.4],['Pilarzinho',3]],
+  'Boqueirão': [['Uberaba',2.4],['Xaxim',3.8],['Alto Boqueirão',3.9],['Hauer',4.4]],
+  'Butiatuvinha': [['São Braz',3.4],['Orleans',3.6],['Santa Felicidade',3.7],['Lamenha Pequena',3.9]],
+  'Cabral': [['Ahú',1.2],['Juvevê',1.4],['Hugo Lange',1.6],['Boa Vista',1.9],['Bacacheri',2]],
+  'Cachoeira': [['Barreirinha',2],['Abranches',2],['Santa Cândida',2.7]],
+  'Cajuru': [['Jardim das Américas',2.9],['Capão da Imbuia',2.9],['Uberaba',4.2],['Cristo Rei',4.9],['Jardim Botânico',5.1]],
+  'Campina do Siqueira': [['Seminário',1.1],['Bigorrilho',1.1],['Mossunguê',1.7],['Batel',1.8],['Santo Inácio',2.4]],
+  'Campo Comprido': [['Mossunguê',1.9],['Santa Quitéria',2.4],['Seminário',2.9],['Fazendinha',3.2],['CIC',3.8],['Orleans',5.5]],
+  'Campo de Santana': [['Tatuquara',2.3],['Umbará',3.3],['Caximba',4.5]],
+  'Capão da Imbuia': [['Tarumã',1.6],['Cristo Rei',2.6],['Bairro Alto',2.9],['Cajuru',2.9],['Jardim Botânico',3]],
+  'Capão Raso': [['Novo Mundo',2],['Pinheirinho',2.7],['CIC',3.8],['Xaxim',3.9]],
+  'Cascatinha': [['Vista Alegre',1],['São João',1.8],['Mercês',1.9],['Santa Felicidade',2.2],['Santo Inácio',2.3],['Bigorrilho',2.4]],
+  'Caximba': [['Campo de Santana',4.5]],
+  'Centro': [['São Francisco',0.9],['Alto da Glória',1.6],['Centro Cívico',1.8],['Rebouças',1.8],['Alto da XV',2.3],['Batel',2.3],['Mercês',2.6],['Jardim Botânico',2.8],['Cristo Rei',3],['Bigorrilho',3.1],['Água Verde',3.2]],
+  'Centro Cívico': [['Alto da Glória',0.9],['Bom Retiro',1.1],['Juvevê',1.2],['São Francisco',1.3],['Ahú',1.5],['Centro',1.8]],
+  'CIC': [['Fazendinha',1.2],['São Miguel',3.5],['Campo Comprido',3.8],['Capão Raso',3.8],['Novo Mundo',3.9],['Augusta',5],['Pinheirinho',6.1],['Riviera',7.7],['Orleans',8.5],['Tatuquara',9.3]],
+  'Cristo Rei': [['Jardim Botânico',0.7],['Alto da XV',1.3],['Jardim Social',2],['Capão da Imbuia',2.6],['Tarumã',2.7],['Centro',3],['Cajuru',4.9]],
+  'Fanny': [['Lindóia',0.6],['Guaíra',1.4],['Parolin',1.9],['Hauer',1.9],['Novo Mundo',2.9],['Xaxim',3.8]],
+  'Fazendinha': [['CIC',1.2],['Portão',2.6],['Santa Quitéria',2.7],['Novo Mundo',2.9],['Campo Comprido',3.2]],
+  'Ganchinho': [['Umbará',3.3],['Alto Boqueirão',4.5],['Sítio Cercado',4.7]],
+  'Guabirotuba': [['Hauer',1.2],['Prado Velho',1.7],['Jardim das Américas',1.8],['Jardim Botânico',2.9],['Uberaba',5.1]],
+  'Guaíra': [['Parolin',0.9],['Lindóia',1.2],['Fanny',1.4],['Água Verde',1.8],['Portão',3]],
+  'Hauer': [['Guabirotuba',1.2],['Fanny',1.9],['Parolin',2.1],['Prado Velho',2.5],['Xaxim',4.4],['Boqueirão',4.4],['Uberaba',5]],
+  'Hugo Lange': [['Jardim Social',0.9],['Alto da XV',1.1],['Juvevê',1.4],['Cabral',1.6],['Bacacheri',2.1]],
+  'Jardim Botânico': [['Cristo Rei',0.7],['Prado Velho',1.5],['Rebouças',1.6],['Alto da XV',1.6],['Jardim das Américas',2.5],['Centro',2.8],['Guabirotuba',2.9],['Capão da Imbuia',3],['Cajuru',5.1]],
+  'Jardim das Américas': [['Guabirotuba',1.8],['Prado Velho',2.3],['Jardim Botânico',2.5],['Cajuru',2.9],['Uberaba',5.1]],
+  'Jardim Social': [['Hugo Lange',0.9],['Alto da XV',1.6],['Tarumã',1.9],['Bacacheri',1.9],['Cristo Rei',2],['Bairro Alto',3]],
+  'Juvevê': [['Alto da Glória',0.7],['Centro Cívico',1.2],['Cabral',1.4],['Hugo Lange',1.4],['Ahú',1.4],['Alto da XV',1.6]],
+  'Lamenha Pequena': [['Butiatuvinha',3.9],['Santa Felicidade',4.3]],
+  'Lindóia': [['Fanny',0.6],['Guaíra',1.2],['Parolin',1.9],['Novo Mundo',2.5],['Portão',2.8]],
+  'Mercês': [['Bigorrilho',1.2],['Vista Alegre',1.8],['Cascatinha',1.9],['São Francisco',2],['Bom Retiro',2.4],['Centro',2.6],['Santo Inácio',3.1]],
+  'Mossunguê': [['Campina do Siqueira',1.7],['Santo Inácio',1.8],['Campo Comprido',1.9],['Seminário',2],['Bigorrilho',2.5],['Orleans',5.6]],
+  'Novo Mundo': [['Portão',1.8],['Capão Raso',2],['Lindóia',2.5],['Fanny',2.9],['Fazendinha',2.9],['Guaíra',3.3],['CIC',3.9],['Xaxim',4.3]],
+  'Orleans': [['Riviera',1.8],['São Braz',3.3],['Butiatuvinha',3.6],['Santo Inácio',5],['Campo Comprido',5.5],['Mossunguê',5.6],['CIC',8.5]],
+  'Parolin': [['Guaíra',0.9],['Prado Velho',1.8],['Lindóia',1.9],['Fanny',1.9],['Hauer',2.1],['Água Verde',2.2],['Rebouças',2.2]],
+  'Pilarzinho': [['São João',1.7],['Taboão',2.1],['Vista Alegre',2.4],['São Lourenço',2.8],['Bom Retiro',3],['Abranches',3.3]],
+  'Pinheirinho': [['Sítio Cercado',2.5],['Capão Raso',2.7],['Xaxim',3.3],['Tatuquara',5.7],['CIC',6.1]],
+  'Portão': [['Santa Quitéria',1.7],['Novo Mundo',1.8],['Vila Izabel',2],['Água Verde',2.5],['Fazendinha',2.6],['Lindóia',2.8],['Guaíra',3]],
+  'Prado Velho': [['Rebouças',1.4],['Jardim Botânico',1.5],['Guabirotuba',1.7],['Parolin',1.8],['Jardim das Américas',2.3],['Hauer',2.5]],
+  'Rebouças': [['Prado Velho',1.4],['Jardim Botânico',1.6],['Centro',1.8],['Parolin',2.2],['Água Verde',2.7]],
+  'Riviera': [['Orleans',1.8],['Augusta',3.4],['CIC',7.7]],
+  'Santa Cândida': [['Cachoeira',2.7],['Barreirinha',3.3],['Tingui',3.3],['Atuba',3.4],['Boa Vista',3.6],['Bacacheri',4.8]],
+  'Santa Felicidade': [['São João',2.1],['Cascatinha',2.2],['São Braz',2.7],['Santo Inácio',2.9],['Butiatuvinha',3.7],['Lamenha Pequena',4.3]],
+  'Santa Quitéria': [['Seminário',1.5],['Portão',1.7],['Vila Izabel',1.9],['Campo Comprido',2.4],['Fazendinha',2.7]],
+  'Santo Inácio': [['Mossunguê',1.8],['São Braz',2],['Cascatinha',2.3],['Campina do Siqueira',2.4],['Bigorrilho',2.6],['Santa Felicidade',2.9],['Mercês',3.1],['Orleans',5]],
+  'São Braz': [['Santo Inácio',2],['Santa Felicidade',2.7],['Orleans',3.3],['Butiatuvinha',3.4]],
+  'São Francisco': [['Centro',0.9],['Centro Cívico',1.3],['Bom Retiro',1.9],['Mercês',2]],
+  'São João': [['Vista Alegre',1.4],['Pilarzinho',1.7],['Cascatinha',1.8],['Santa Felicidade',2.1]],
+  'São Lourenço': [['Ahú',1.5],['Boa Vista',1.8],['Bom Retiro',2.2],['Barreirinha',2.3],['Pilarzinho',2.8],['Abranches',3]],
+  'São Miguel': [['CIC',3.5],['Augusta',4.6]],
+  'Seminário': [['Campina do Siqueira',1.1],['Vila Izabel',1.5],['Santa Quitéria',1.5],['Batel',1.8],['Mossunguê',2],['Água Verde',2.3],['Campo Comprido',2.9]],
+  'Sítio Cercado': [['Pinheirinho',2.5],['Xaxim',2.8],['Alto Boqueirão',3.6],['Ganchinho',4.7],['Umbará',5.8],['Tatuquara',6.5]],
+  'Taboão': [['Abranches',1.3],['Pilarzinho',2.1]],
+  'Tarumã': [['Bairro Alto',1.6],['Capão da Imbuia',1.6],['Jardim Social',1.9],['Cristo Rei',2.7],['Alto da XV',3.1]],
+  'Tatuquara': [['Campo de Santana',2.3],['Umbará',3.9],['Pinheirinho',5.7],['Sítio Cercado',6.5],['CIC',9.3]],
+  'Tingui': [['Atuba',1.7],['Bacacheri',1.9],['Boa Vista',2.9],['Santa Cândida',3.3],['Bairro Alto',3.4]],
+  'Uberaba': [['Boqueirão',2.4],['Cajuru',4.2],['Hauer',5],['Jardim das Américas',5.1],['Guabirotuba',5.1]],
+  'Umbará': [['Campo de Santana',3.3],['Ganchinho',3.3],['Tatuquara',3.9],['Sítio Cercado',5.8]],
+  'Vila Izabel': [['Água Verde',0.9],['Seminário',1.5],['Santa Quitéria',1.9],['Portão',2]],
+  'Vista Alegre': [['Cascatinha',1],['São João',1.4],['Mercês',1.8],['Pilarzinho',2.4],['Bom Retiro',2.4]],
+  'Xaxim': [['Sítio Cercado',2.8],['Pinheirinho',3.3],['Boqueirão',3.8],['Fanny',3.8],['Capão Raso',3.9],['Novo Mundo',4.3],['Hauer',4.4],['Alto Boqueirão',4.4]]
+};
+const vizinhosDe = b => { const k = Object.keys(VIZINHOS).find(x => bkey(x) === bkey(b)); return k ? VIZINHOS[k] : []; };
+
 // ── PARECER DE MERCADO ──
 // O Matheus avalia um imóvel para o proprietário (09/11, ideia tirada de um PTAM da Entre, mas curto e sem a parte técnica):
 // os comparáveis vêm do estoque das imobiliárias (ele escolhe) ou de um anúncio de fora que ele digita; para cada um ele
@@ -1602,7 +1687,9 @@ const LS_RASC = 'carteira_parecer_rascunho_' + COLP;
 const P_OFERTA = 0.95;
 const P_AJUSTES = [['sup', 'Superior', 0.9], ['eq', 'Equivalente', 1], ['inf', 'Inferior', 1.1]];
 const P_FATOR = Object.fromEntries(P_AJUSTES.map(([k, , f]) => [k, f]));
-const P_ESTADOS = ['Novo', 'Reformado', 'Bom estado', 'Precisa de reforma'];
+const P_ESTADOS = ['Novo', 'Excelente estado', 'Reformado', 'Bom estado', 'Precisa de reforma'];
+// a busca começa no bairro do imóvel e nos que fazem divisa com ele
+const bairrosBusca = b => b ? [b].concat(vizinhosDe(b).map(v => v[0]).filter(x => bkey(x) !== bkey(b))) : [];
 const P_MOB = [['', 'Sem mobília'], ['m', 'Semi-mobiliado'], ['s', 'Mobiliado']];
 const P_TIPOS = TIPOS.filter(t => t !== 'Comercial');
 // as três faixas de preço: letra, nome, variação sobre o valor de mercado, prazo esperado e para que serve
@@ -1730,7 +1817,10 @@ function sugestoesParecer(p) {
     if (g !== 'Terreno') s -= Math.abs((i.q || 0) - p.q) * 6 + Math.abs((i.s || 0) - p.s) * 3 + Math.abs((i.v || 0) - p.v) * 5;
     if (i.tc === p.tc) s += 8;
     if (rua && norm(i.en).includes(rua)) s += 15; // mesma rua
-    return { i, a, s };
+    // o próprio bairro vem antes; bairro vizinho perde um pouco conforme a distância
+    const viz = bkey(i.b) === bkey(p.b) ? null : vizinhosDe(p.b).find(v => bkey(v[0]) === bkey(i.b));
+    s += bkey(i.b) === bkey(p.b) ? 12 : viz ? -viz[1] * 2 : -6;
+    return { i, a, s, viz };
   }).sort((x, y) => y.s - x.s);
 }
 const compDoEstoque = (i, a) => ({ k: i.k, src: i.src, t: i.rot || i.tc, b: i.b, en: i.en || '', e: i.e || '', a, p: i.p, q: i.q || 0, s: i.s || 0, v: i.v || 0, f: i.f || '', u: i.u || '', aj: 'eq' });
@@ -1751,7 +1841,7 @@ function renderPareceres() {
 // ── tela: o parecer (folha larga) ──
 function editaParecer(p) {
   par = p; par.dirty = false; parSug = 12; parConfDel = false; parPdf = null;
-  if (!par.bairros.length && par.b) par.bairros = [par.b];
+  if (!par.bairros.length && par.b) par.bairros = bairrosBusca(par.b);
   const bairroOpts = sel => `<option value="">Escolha o bairro</option>` + allBairros().map(b => `<option${norm(b) === norm(sel) ? ' selected' : ''}>${esc(b)}</option>`).join('');
   openSheet(`
   <div class="sh-h"><div style="min-width:0"><div class="kick">Parecer de mercado</div><h2 id="pm-tit">${esc(p.end || 'Novo parecer')}</h2></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
@@ -1830,15 +1920,15 @@ function renderParComps() {
   else if (!p.b || !p.area) sug = '<p class="muted" style="font-size:14px">Preencha o bairro e a área para eu sugerir os imóveis parecidos que estão à venda.</p>';
   else {
     const l = sugestoesParecer(p);
-    sug = l.length ? l.slice(0, parSug).map(({ i, a }) => `<button class="pcs" data-act="pm-add" data-k="${esc(i.k)}"><div class="pct"><span class="th" ${thumbComp(i)}></span><div class="tx"><b>${esc((i.rot || i.tc) + ' · ' + i.b)}</b><span>${esc(i.en || i.e || 'Anúncio na ' + EST[i.src].nome)}</span><span>${esc([a + ' m²', i.q ? i.q + plural(i.q, ' quarto', ' quartos') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · '))}</span></div><div class="pv"><b>${fmtValor(i.p)}</b><span>${reais(i.p / a)}/m²</span></div><span class="add">+ Usar</span></div>${pareceOProprio(p, i, a) ? '<span class="pflag" style="align-self:flex-start">Mesmo preço e área: pode ser o próprio imóvel anunciado</span>' : ''}</button>`).join('')
+    sug = l.length ? l.slice(0, parSug).map(({ i, a, viz }) => `<button class="pcs" data-act="pm-add" data-k="${esc(i.k)}"><div class="pct"><span class="th" ${thumbComp(i)}></span><div class="tx"><b>${esc((i.rot || i.tc) + ' · ' + i.b)}${viz ? `<span class="pviz">vizinho · ${String(viz[1]).replace('.', ',')} km</span>` : ''}</b><span>${esc(i.en || i.e || 'Anúncio na ' + EST[i.src].nome)}</span><span>${esc([a + ' m²', i.q ? i.q + plural(i.q, ' quarto', ' quartos') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · '))}</span></div><div class="pv"><b>${fmtValor(i.p)}</b><span>${reais(i.p / a)}/m²</span></div><span class="add">+ Usar</span></div>${pareceOProprio(p, i, a) ? '<span class="pflag" style="align-self:flex-start">Mesmo preço e área: pode ser o próprio imóvel anunciado</span>' : ''}</button>`).join('')
         + (l.length > parSug ? `<button class="j8mais" data-act="pm-sug-mais">Ver mais ${Math.min(12, l.length - parSug)} <span class="muted">· ${l.length - parSug} ${plural(l.length - parSug, 'restante', 'restantes')}</span></button>` : '')
       : '<p class="muted" style="font-size:14px">Nenhum imóvel parecido à venda nesses bairros. Inclua um bairro vizinho ou adicione um anúncio de fora.</p>';
   }
   const outros = allBairros().filter(b => !p.bairros.some(x => bkey(x) === bkey(b)));
   el.innerHTML = `<div><span class="lbl">Comparáveis no cálculo · ${p.comps.length}<span class="hint">mínimo 3; o ideal é de 5 a 10</span></span>
       ${escolhidos ? `<div class="pcl">${escolhidos}</div>` : '<p class="muted" style="font-size:14px">Nenhum ainda. Toque em “+ Usar” nos imóveis mais parecidos abaixo.</p>'}</div>
-    <div class="pbox"><span class="lbl" style="color:var(--or2);margin:0">Sugestões do estoque · do mais parecido para o menos</span>
-      <div><div class="chips sm" style="margin-bottom:8px">${p.bairros.map(b => `<span class="chip tag">${esc(b)}<button class="rm" data-act="pm-b-rm" data-b="${esc(b)}" aria-label="Tirar ${esc(b)} da busca">×</button></span>`).join('')}</div>
+    <div class="pbox"><span class="lbl" style="color:var(--or2);margin:0">Sugestões do estoque · no bairro e nos vizinhos, do mais parecido para o menos</span>
+      <div><div class="chips sm" style="margin-bottom:8px">${p.bairros.map(b => { const vz = bkey(b) === bkey(p.b) ? null : vizinhosDe(p.b).find(v => bkey(v[0]) === bkey(b)); return `<span class="chip tag${bkey(b) === bkey(p.b) ? ' main' : ''}">${esc(b)}${vz ? `<small>${String(vz[1]).replace('.', ',')} km</small>` : ''}<button class="rm" data-act="pm-b-rm" data-b="${esc(b)}" aria-label="Tirar ${esc(b)} da busca">×</button></span>`; }).join('')}</div>
         <select id="pm-addb" aria-label="Incluir bairro na busca"><option value="">+ Incluir outro bairro na busca</option>${outros.map(b => `<option>${esc(b)}</option>`).join('')}</select></div>
       <div class="pcl">${sug}</div>
       <details class="pman"><summary>+ Adicionar um anúncio de fora</summary>
@@ -1934,6 +2024,28 @@ const pTx = (doc, c) => doc.setTextColor(...PC[c]);
 const pFill = (doc, c) => doc.setFillColor(...PC[c]);
 const pDraw = (doc, c) => doc.setDrawColor(...PC[c]);
 const fotoCardPDF = u => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/_p(\.\w+)$/, '$1').replace(/^https?:\/\//, '')) + '&w=660&h=260&fit=cover&q=80&output=jpg';
+// "reformada em 2024, porteira fechada; área gourmet" → ['Reformada em 2024', 'Porteira fechada', 'Área gourmet']
+const difsDe = t => String(t || '').split(/[,;\n•]+/).map(x => x.trim().replace(/^[-–]\s*/, '').replace(/\.$/, '')).filter(Boolean).map(x => x[0].toLocaleUpperCase('pt-BR') + x.slice(1)).slice(0, 8);
+// assinatura do Matheus (pedido dele em 09/11): o nome numa fonte de caligrafia (Mrs Saint Delafield, Google Fonts), em tinta
+// azul-escura e levemente inclinado, desenhado num canvas; sem internet para a fonte, o PDF sai só com a linha e o nome
+let assinaturaProm = null;
+function assinaturaPDF() {
+  if (!assinaturaProm) assinaturaProm = (async () => {
+    const fam = 'Mrs Saint Delafield';
+    if (!document.querySelector('link[data-assinatura]')) {
+      const l = document.createElement('link'); l.rel = 'stylesheet'; l.dataset.assinatura = '1';
+      l.href = 'https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&display=swap';
+      await new Promise(ok => { l.onload = ok; l.onerror = ok; setTimeout(ok, 5000); document.head.appendChild(l); });
+    }
+    await Promise.race([document.fonts.load(`150px "${fam}"`, 'Matheus Nickel'), new Promise(ok => setTimeout(ok, 5000))]);
+    if (![...document.fonts].some(f => f.family.replace(/["']/g, '') === fam && f.status === 'loaded')) { assinaturaProm = null; return null; }
+    const cv = document.createElement('canvas'); cv.width = 1000; cv.height = 300;
+    const g = cv.getContext('2d'); g.translate(40, 200); g.rotate(-0.07);
+    g.font = `150px "${fam}"`; g.fillStyle = '#1d2b4f'; g.fillText('Matheus Nickel', 0, 0);
+    return cv.toDataURL('image/png');
+  })().catch(() => { assinaturaProm = null; return null; });
+  return assinaturaProm;
+}
 function tituloParecer(p) { const t = p.tc || 'Imóvel'; return p.b ? `${t} ${naNo(p.b)} ${p.b}` : t; }
 // topo e rodapé das páginas internas
 function paginaParecer(doc, p, kick, titulo, pg, tot) {
@@ -1991,6 +2103,17 @@ function capaParecerPDF(doc, p, r, foto) {
     doc.setFontSize(7); pTx(doc, 'mu'); doc.text(rot.toLocaleUpperCase('pt-BR'), cx, cy, { charSpace: 1 });
     doc.setFontSize(13.5); pTx(doc, 'tx'); doc.text(String(val), cx, cy + 17);
   });
+  // os diferenciais que ele digitou: o proprietário vê que foram considerados
+  const difs = difsDe(p.dif), fim = pe - 44;
+  if (difs.length) {
+    y += lin * 46 + (lin ? 12 : 0);
+    doc.setFontSize(7.5); pTx(doc, 'or'); doc.text('DIFERENCIAIS CONSIDERADOS', rx, y, { charSpace: 1.2 }); y += 19;
+    doc.setFontSize(10); doc.setTextColor(56, 56, 56); pFill(doc, 'or');
+    const curtos = difs.every(d => doc.getTextWidth(d) < cw - 12);
+    // a cor do texto também vale para o preenchimento: o ponto laranja é pintado de novo a cada item
+    if (curtos) difs.forEach((d, i) => { const cx = rx + (i % 2) * (cw + 20), cy = y + Math.floor(i / 2) * 19; if (cy > fim) return; pFill(doc, 'or'); doc.circle(cx + 1.5, cy - 3.4, 1.6, 'F'); doc.text(d, cx + 9, cy); });
+    else for (const d of difs) { const l = doc.splitTextToSize(d, rw - 10).slice(0, 2); if (y + (l.length - 1) * 13 > fim) break; pFill(doc, 'or'); doc.circle(rx + 1.5, y - 3.4, 1.6, 'F'); doc.text(l, rx + 9, y, { lineHeightFactor: 1.3 }); y += l.length * 13 + 6; }
+  }
   // para quem e quando, no pé da coluna
   doc.setFontSize(9.5); pTx(doc, 'mu');
   doc.text([p.prop ? 'Preparado para ' + nomeProprio(p.prop) : '', 'Curitiba, ' + hojeExtenso()].filter(Boolean), rx, pe - 18, { lineHeightFactor: 1.6 });
@@ -2019,7 +2142,7 @@ function faixasParecerPDF(doc, p, r, pg, tot) {
   const passos = [
     [String(r.n), `imóveis parecidos à venda${bairros ? ' em ' + bairros : ''}`],
     ['-5%', 'no preço anunciado: anúncio não é preço de venda'],
-    ['±10%', 'para cada comparável superior (-10%) ou inferior (+10%) ao seu imóvel'],
+    ['±10%', 'para cada comparável superior (-10%) ou inferior (+10%), pesando estado, vagas e diferenciais'],
     [reais(r.media) + '/m²', `média ajustada × ${p.area.toLocaleString('pt-BR')} m² = ${reais(r.central)}`]
   ];
   const pw = (852 - 3 * 12) / 4;
@@ -2029,10 +2152,17 @@ function faixasParecerPDF(doc, p, r, pg, tot) {
     doc.setFontSize(18); pTx(doc, 'tx'); doc.text(n, x + 16, y + 32);
     doc.setFontSize(9.5); pTx(doc, 't2'); doc.text(doc.splitTextToSize(t, pw - 32).slice(0, 3), x + 16, y + 52, { lineHeightFactor: 1.4 });
   });
+  let ny = y + 116;
+  const difs = difsDe(p.dif);
+  if (difs.length) {
+    doc.setFontSize(10); pTx(doc, 't2');
+    const l = doc.splitTextToSize(`Diferenciais do seu imóvel considerados na comparação: ${listaPt(difs.map((d, i) => i ? d[0].toLocaleLowerCase('pt-BR') + d.slice(1) : d))}.`, 852).slice(0, 2);
+    doc.text(l, 34, ny, { lineHeightFactor: 1.4 }); ny += l.length * 14 + 4;
+  }
   if (p.pedido) {
     const dif = p.pedido / r.central - 1;
     doc.setFontSize(10); pTx(doc, 'or2');
-    doc.text(`Preço desejado pelo proprietário: ${reais(p.pedido)}, ${Math.abs(dif) < 0.005 ? 'igual ao valor de mercado' : `${Math.round(Math.abs(dif) * 100)}% ${dif > 0 ? 'acima' : 'abaixo'} do valor de mercado`}.`, 34, y + 116);
+    doc.text(`Preço desejado pelo proprietário: ${reais(p.pedido)}, ${Math.abs(dif) < 0.005 ? 'igual ao valor de mercado' : `${Math.round(Math.abs(dif) * 100)}% ${dif > 0 ? 'acima' : 'abaixo'} do valor de mercado`}.`, 34, ny);
   }
 }
 function compsParecerPDF(doc, p, r, fotos, pg0, tot) {
@@ -2067,7 +2197,7 @@ function compsParecerPDF(doc, p, r, fotos, pg0, tot) {
     });
   }
 }
-function filaParecerPDF(doc, p, r, pg, tot) {
+function filaParecerPDF(doc, p, r, pg, tot, assin) {
   paginaParecer(doc, p, 'A fila do comprador', 'O que o comprador vê antes de chegar ao seu imóvel.', pg, tot);
   const fila = r.cs.map(c => ({ c, p: c.p })).concat([{ eu: 'no valor de mercado', p: r.central }], p.pedido ? [{ eu: 'no preço desejado', p: p.pedido }] : []).sort((a, b) => a.p - b.p || (a.eu ? 1 : -1));
   const lh = Math.min(30, 470 / fila.length), x0 = 34, w = 470;
@@ -2100,6 +2230,7 @@ function filaParecerPDF(doc, p, r, pg, tot) {
   doc.setFontSize(8.5); pTx(doc, 'mu'); const rl = doc.splitTextToSize(ress, rw); doc.text(rl, rx, ry, { lineHeightFactor: 1.45 }); ry += rl.length * 12.3;
   // assinatura no pé da coluna
   const sy = 560;
+  if (assin) doc.addImage(assin, 'PNG', rx - 8, sy - 62, 220, 66, undefined, 'FAST');
   pDraw(doc, 'tx'); doc.setLineWidth(.5); doc.line(rx, sy, rx + 200, sy);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'tx'); doc.text('Matheus Nickel', rx, sy + 16);
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); pTx(doc, 'mu'); doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci} · Curitiba, ${hojeExtenso()}`, rx, sy + 30);
@@ -2114,7 +2245,7 @@ async function pdfParecer(btn) {
     // salva antes (o PDF é sempre de um parecer guardado); sem internet, monta assim mesmo
     let salvo = true; try { await gravaParecer(); renderParDel(); } catch (e) { salvo = false; }
     const p = limpaParecer(par);
-    const JsPDF = await carregaJsPDF();
+    const [JsPDF, assin] = await Promise.all([carregaJsPDF(), assinaturaPDF()]);
     const fotos = new Map();
     await emLotes(r.cs.filter(c => c.f), async c => {
       const rs = await fetch(fotoCardPDF(c.f)); if (!rs.ok) throw new Error('HTTP ' + rs.status);
@@ -2127,7 +2258,7 @@ async function pdfParecer(btn) {
     capaParecerPDF(doc, p, r, capa);
     faixasParecerPDF(doc, p, r, 2, tot);
     compsParecerPDF(doc, p, r, fotos, 3, tot);
-    filaParecerPDF(doc, p, r, tot, tot);
+    filaParecerPDF(doc, p, r, tot, tot, assin);
     const nome = `Parecer de mercado - ${tituloParecer(p)} - Matheus Nickel.pdf`.replace(/[\\/:*?"<>|]/g, '');
     const pdf = new File([doc.output('blob')], nome, { type: 'application/pdf' });
     const aviso = salvo ? '' : ' (sem internet: o parecer ficou como rascunho neste aparelho)';
@@ -2149,7 +2280,7 @@ document.addEventListener('input', e => {
   if (k === 'pedido') { maskMoney(t); par.pedido = parseMoney(t.value); }
   else if (['area', 'terreno', 'q', 's', 'v', 'idade'].includes(k)) par[k] = Number(digits(t.value)) || 0;
   else par[k] = t.value;
-  if (k === 'b') { const velho = par.bairros; par.bairros = t.value ? [t.value].concat(velho.length > 1 ? velho.filter(b => bkey(b) !== bkey(t.value)) : []) : []; }
+  if (k === 'b') par.bairros = bairrosBusca(t.value);
   if (k === 'end') $('#pm-tit').textContent = t.value || 'Novo parecer';
   mexeu();
   if (['area', 'b', 'q', 's', 'v', 'pedido', 'end'].includes(k)) parRedesenha();
@@ -2502,7 +2633,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-09b';
+const VERSAO = '2026-11-09c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
