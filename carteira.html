@@ -336,14 +336,14 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .modo button{padding:6px 14px;font-size:13px;font-weight:600;color:var(--text2)}
 .modo button.on{background:var(--ink);color:var(--onink)}
 .kjump{display:none}
-.kb{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:12px;align-items:start;overflow-x:auto;padding-bottom:6px}
+.kb{display:grid;grid-template-columns:repeat(5,minmax(205px,1fr));gap:12px;align-items:start;overflow-x:auto;padding-bottom:6px}
 .kcol{background:var(--bg2);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0;border-top:3px solid var(--faint);transition:background .15s,box-shadow .15s}
 .kcol.over{background:var(--tqbg);box-shadow:0 0 0 2px var(--tq) inset}
 .kcol header{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:4px 4px 2px}
 .kcol header b{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}
 .kcol header .n{font-size:12px;font-weight:700;color:var(--text2);background:var(--card);border-radius:99px;padding:0 9px}
 .kcol header small{grid-column:1 / -1;font-size:12px;color:var(--muted);line-height:1.35}
-.k-cq{border-top-color:var(--tq)}.k-visita{border-top-color:var(--or)}.k-proposta{border-top-color:var(--ink)}
+.k-standby{border-top-color:#e0b25a}.k-cq{border-top-color:var(--tq)}.k-visita{border-top-color:var(--or)}.k-proposta{border-top-color:var(--ink)}
 .kl{display:flex;flex-direction:column;gap:8px}
 .kv{font-size:13px;color:var(--muted);padding:6px 4px}
 .kcard{text-align:left;display:flex;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px;box-shadow:var(--sh1);cursor:grab;transition:border-color .15s,transform .15s}
@@ -356,12 +356,12 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .kcard .kf .ctt{font-size:11.5px;padding:3px 8px;white-space:normal}
 .kcard .kt{font-size:11.5px;font-weight:600;color:var(--or2)}
 .kcard .kd{font-size:11px;color:var(--faint)}
-.pill.et-qual{background:var(--bg2);color:var(--text2)}.pill.et-cq{background:var(--tqbg);color:var(--tq2)}
+.pill.et-qual{background:var(--bg2);color:var(--text2)}.pill.et-standby{background:var(--warnbg);color:var(--warn)}.pill.et-cq{background:var(--tqbg);color:var(--tq2)}
 .pill.et-visita{background:var(--orbg);color:var(--or2)}.pill.et-proposta{background:var(--ink);color:var(--onink)}
-.etseg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line2);border-radius:10px;overflow:hidden}
-.etseg button{padding:10px 6px;font-size:13px;font-weight:600;color:var(--text2);border-left:1px solid var(--line2);line-height:1.25}
+.etseg{display:grid;grid-template-columns:1.3fr repeat(4,minmax(0,1fr));border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.etseg button{padding:10px 4px;font-size:12.5px;font-weight:600;color:var(--text2);border-left:1px solid var(--line2);line-height:1.25}
 .etseg button:first-child{border-left:none}
-.etseg button.on.et-qual{background:var(--text2);color:#fff}.etseg button.on.et-cq{background:var(--tq);color:#fff}
+.etseg button.on.et-qual{background:var(--text2);color:#fff}.etseg button.on.et-standby{background:#d9a03c;color:#fff}.etseg button.on.et-cq{background:var(--tq);color:#fff}
 .etseg button.on.et-visita{background:var(--or);color:#fff}.etseg button.on.et-proposta{background:var(--ink);color:var(--onink)}
 
 /* parecer de mercado */
@@ -517,10 +517,10 @@ button.pcs:hover{border-color:var(--tq)}
   .kb::-webkit-scrollbar{display:none}
   .kcol{scroll-snap-align:start}
   .kcard{cursor:pointer}
-  .kjump{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:10px}
-  .kjump button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 4px;border-radius:10px;background:var(--card);border:1px solid var(--line2);font-size:12px;font-weight:600;color:var(--text2);border-top:3px solid var(--faint)}
+  .kjump{display:grid;grid-template-columns:1.3fr repeat(4,minmax(0,1fr));gap:5px;margin-bottom:10px}
+  .kjump button{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 2px;border-radius:10px;background:var(--card);border:1px solid var(--line2);font-size:11.5px;font-weight:600;color:var(--text2);border-top:3px solid var(--faint)}
   .kjump button span{font-size:17px;font-weight:300;color:var(--text)}
-  .kjump .et-cq{border-top-color:var(--tq)}.kjump .et-visita{border-top-color:var(--or)}.kjump .et-proposta{border-top-color:var(--ink)}
+  .kjump .et-standby{border-top-color:#e0b25a}.kjump .et-cq{border-top-color:var(--tq)}.kjump .et-visita{border-top-color:var(--or)}.kjump .et-proposta{border-top-color:var(--ink)}
   .pfx{grid-template-columns:minmax(0,1fr)}
   .pfx div{flex-direction:row;align-items:baseline;gap:8px;flex-wrap:wrap}
   .m-card{padding:16px}
@@ -676,6 +676,7 @@ const SITUACOES = [['r', 'Imóveis prontos'], ['p', 'Imóveis na planta']];
 // Etapas do funil do comprador (10/11, nomes do Matheus): chave, nome, nome curto e o que significa
 const ETAPAS = [
   ['qual', 'Qualificando', 'Qualificando', 'Entendendo o que ele busca; ainda não recebeu imóvel'],
+  ['standby', 'Standby', 'Standby', 'Em espera: sem urgência agora, retomar mais tarde'], // 10/11, pedido dele: entre Qualificando e CQ
   ['cq', 'Conversa qualificada', 'CQ', 'Já recebe imóveis e dá retorno'],
   ['visita', 'Visita', 'Visita', 'Visita agendada ou feita'],
   ['proposta', 'Proposta', 'Proposta', 'Proposta ou negociação em andamento']
@@ -2450,7 +2451,7 @@ function renderFicha(id, confirmDel) {
       <button class="btn-ghost" data-act="edit" data-id="${c.id}">Editar ficha</button>
     </div>
     ${c.status === 'ativo' ? `<div><span class="lbl">Etapa<span class="hint">${(() => { const d = daysSince(etapaDesde(c)); return d === null ? '' : d <= 0 ? 'desde hoje' : 'há ' + d + plural(d, ' dia', ' dias'); })()}</span></span>
-      <div class="etseg">${ETAPAS.map(([k, nome]) => `<button class="et-${k}${c.etapa === k ? ' on' : ''}" data-act="etapa" data-id="${c.id}" data-v="${k}">${nome}</button>`).join('')}</div></div>` : ''}
+      <div class="etseg">${ETAPAS.map(([k, nome, curto]) => `<button class="et-${k}${c.etapa === k ? ' on' : ''}" data-act="etapa" data-id="${c.id}" data-v="${k}" title="${nome}">${curto}</button>`).join('')}</div></div>` : ''}
     <div class="j8box">${j8Section(c)}</div>
     <div><span class="lbl">O que procura</span>
       <dl class="info">
@@ -2735,7 +2736,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-10a';
+const VERSAO = '2026-11-10b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
