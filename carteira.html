@@ -336,7 +336,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .modo button{padding:6px 14px;font-size:13px;font-weight:600;color:var(--text2)}
 .modo button.on{background:var(--ink);color:var(--onink)}
 .kjump{display:none}
-.kb{display:grid;grid-template-columns:repeat(5,minmax(205px,1fr));gap:12px;align-items:start;overflow-x:auto;padding-bottom:6px}
+.kb{display:grid;grid-template-columns:repeat(5,minmax(205px,1fr));gap:12px;align-items:stretch;min-height:420px;overflow-x:auto;padding-bottom:6px}
 .kcol{background:var(--bg2);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0;border-top:3px solid var(--faint);transition:background .15s,box-shadow .15s}
 .kcol.over{background:var(--tqbg);box-shadow:0 0 0 2px var(--tq) inset}
 .kcol header{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:4px 4px 2px}
@@ -2709,11 +2709,14 @@ document.addEventListener('click', e => {
 });
 
 // ── QUADRO DE ETAPAS: arrastar o cartão para outra coluna muda a etapa (computador) ──
+// Vale a coluna em que o mouse está da esquerda para a direita, em qualquer altura (10/11: soltar abaixo de uma coluna
+// vazia, que é baixinha, não registrava nada)
 let arrastando = null;
+const colunaEm = (e) => (e.target.closest && e.target.closest('.kcol')) || [...document.querySelectorAll('.kcol')].find(c => { const r = c.getBoundingClientRect(); return e.clientX >= r.left - 6 && e.clientX <= r.right + 6; });
 document.addEventListener('dragstart', e => { const k = e.target.closest && e.target.closest('.kcard'); if (!k) return; arrastando = k.dataset.id; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', arrastando); k.classList.add('drag'); });
 document.addEventListener('dragend', () => { arrastando = null; document.querySelectorAll('.kcard.drag,.kcol.over').forEach(x => x.classList.remove('drag', 'over')); });
-document.addEventListener('dragover', e => { const col = arrastando && e.target.closest('.kcol'); if (!col) return; e.preventDefault(); document.querySelectorAll('.kcol.over').forEach(x => x !== col && x.classList.remove('over')); col.classList.add('over'); });
-document.addEventListener('drop', e => { const col = arrastando && e.target.closest('.kcol'); if (!col) return; e.preventDefault(); const id = arrastando; arrastando = null; col.classList.remove('over'); mudaEtapa(id, col.dataset.etapa); });
+document.addEventListener('dragover', e => { const col = arrastando && colunaEm(e); if (!col) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; document.querySelectorAll('.kcol.over').forEach(x => x !== col && x.classList.remove('over')); col.classList.add('over'); });
+document.addEventListener('drop', e => { const col = arrastando && colunaEm(e); if (!col) return; e.preventDefault(); const id = arrastando; arrastando = null; col.classList.remove('over'); mudaEtapa(id, col.dataset.etapa); });
 
 // ── CAMPOS DE BUSCA ──
 function bindBuscas() {
@@ -2736,7 +2739,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-10b';
+const VERSAO = '2026-11-10c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
