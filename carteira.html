@@ -273,6 +273,37 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .env-i a{color:var(--tq2);word-break:break-all;font-size:13px}
 .env-i .rm{color:var(--faint);font-size:18px;line-height:1;width:24px;height:24px;border-radius:50%}
 .env-i .rm:hover{color:var(--red);background:var(--redbg)}
+/* visitas (12/11) */
+.vis-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.vis-top .link{font-weight:600;color:var(--or2)}
+.vis-l{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.vis-i{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px}
+.vis-i .d{display:flex;flex-direction:column;align-items:center;min-width:46px;font-weight:600;font-size:15px;font-variant-numeric:tabular-nums;color:var(--or2)}
+.vis-i .d small{font-size:9px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:1px}
+.vis-i .w{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;font-size:14px}
+.vis-i .w b{font-weight:600}
+.vis-i .w small{font-size:12.5px;color:var(--muted)}
+.vis-i .w a{font-size:12.5px;color:var(--tq2);font-weight:600;margin-top:2px}
+.vis-i .rm{color:var(--faint);font-size:18px;line-height:1;width:24px;height:24px;border-radius:50%}
+.vis-i .rm:hover{color:var(--red);background:var(--redbg)}
+.vis-f{display:flex;flex-direction:column;gap:12px;margin:6px 0 10px;padding:14px;background:var(--bg);border:1px solid var(--line2);border-radius:12px}
+.vis-f label{display:block}
+.vis-f input{width:100%}
+.vis-f input[type=date]{max-width:200px}
+.vis-res{display:flex;flex-direction:column;gap:6px;margin-top:8px;max-height:360px;overflow-y:auto}
+.vis-r,.vis-sel{display:flex;align-items:center;gap:11px;text-align:left;padding:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;width:100%}
+.vis-r:hover{border-color:var(--or)}
+.vis-r i,.vis-sel i{flex-shrink:0;width:58px;height:44px;border-radius:7px;background:var(--bg2) center/cover}
+.vis-r span,.vis-sel span{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;font-size:14px}
+.vis-r b,.vis-sel b{font-weight:600}
+.vis-r small,.vis-sel small{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.vis-r em{font-style:normal;font-size:12px;font-weight:600;color:var(--ok)}
+.vis-sel{border-color:var(--or)}
+.vis-h{font-size:13px;color:var(--muted);margin:2px 0 0}
+.vis-txt{text-align:left;font-size:13px;color:var(--tq2);font-weight:600;padding:6px 2px}
+.vis-err{color:var(--red);font-size:13px;margin:0}
+.vis-err:empty{display:none}
+.vis-a{display:flex;align-items:center;gap:14px}
 .fimficha{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px}
 .danger{color:var(--red);font-weight:600;font-size:14px}
 .confirm{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--redbg);border-radius:10px;padding:12px 14px;font-size:14px}
@@ -380,6 +411,7 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .kcard .kf .ctt{font-size:11.5px;padding:3px 8px;white-space:normal}
 .kcard .kt{font-size:11.5px;font-weight:600;color:var(--or2)}
 .kcard .kd{font-size:11px;color:var(--faint)}
+.kcard .kv2{font-size:12px;font-weight:600;color:var(--or2);line-height:1.35}
 .pill.et-qual{background:var(--bg2);color:var(--text2)}.pill.et-standby{background:var(--warnbg);color:var(--warn)}.pill.et-cqq{background:var(--redbg);color:var(--red)}.pill.et-cq{background:var(--tqbg);color:var(--tq2)}
 .pill.et-visita{background:var(--orbg);color:var(--or2)}.pill.et-proposta{background:var(--ink);color:var(--onink)}
 .etseg{display:grid;grid-template-columns:1.3fr repeat(4,minmax(0,1fr));border:1px solid var(--line2);border-radius:10px;overflow:hidden}
@@ -862,7 +894,11 @@ function cleanClient(o) {
     status: ['arquivado', 'pausado', 'comprou'].includes(o.status) ? 'arquivado' : 'ativo',
     criadoEm: String(o.criadoEm || ''),
     atualizadoEm: String(o.atualizadoEm || ''),
-    envios
+    envios,
+    // visitas (12/11): a data e o imóvel visitado; o resumo do imóvel fica guardado, caso o anúncio saia do estoque
+    visitas: (Array.isArray(o.visitas) ? o.visitas : []).filter(x => x && x.data).map(x => ({ id: String(x.id || newId('v')), data: String(x.data).slice(0, 10),
+      k: String(x.k || ''), tipo: String(x.tipo || ''), bairro: String(x.bairro || ''), nome: String(x.nome || ''), valor: Number(x.valor) || 0,
+      link: String(x.link || ''), src: String(x.src || ''), txt: String(x.txt || '') }))
   };
 }
 
@@ -1680,6 +1716,7 @@ function quadroClientes(rows) {
     return `<button class="kcard${fichaAberta() === c.id ? ' sel' : ''}" draggable="true" data-act="ficha" data-id="${c.id}">
       <span class="kn np">${esc(nomeProprio(c.nome))}</span><span class="km">${esc(meta)}</span>
       <span class="kf"><span class="ctt ${cor}"><span class="dot"></span>${frase}</span>${tot ? `<span class="kt">${tot} ${plural(tot, 'compatível', 'compatíveis')}</span>` : ''}${nn ? `<span class="nvb">${nn} ${plural(nn, 'novo', 'novos')}</span>` : ''}</span>
+      ${(() => { const uv = [...c.visitas].sort((a, b) => a.data < b.data ? 1 : -1)[0]; return uv ? `<span class="kv2">${uv.data > hojeISO() ? 'Visita agendada' : 'Visitou'} ${fmtDate(uv.data).slice(0, 5)}: ${esc(uv.k ? uv.nome || [uv.tipo, uv.bairro].filter(Boolean).join(' · ') : uv.txt)}</span>` : ''; })()}
       ${d !== null ? `<span class="kd">Na etapa ${d <= 0 ? 'desde hoje' : 'há ' + d + plural(d, ' dia', ' dias')}</span>` : ''}</button>`;
   };
   // no celular: atalhos para pular direto para a coluna (as colunas deslizam para o lado)
@@ -2559,6 +2596,7 @@ function openSheet(html, state) {
   encaixa();
 }
 function closeSheet() {
+  ui.vis = null; // visita começada e não salva some ao fechar a ficha
   // parecer fechado sem salvar: fica como rascunho neste aparelho (aviso na aba Parecer)
   if (ui.sheet && ui.sheet.kind === 'parecer') {
     if (par && par.dirty) { guardaRascunho(); toast('O parecer não foi salvo. Ficou como rascunho na aba Parecer.'); }
@@ -2577,6 +2615,66 @@ document.addEventListener('keydown', e => {
   else if (e.key === '/' && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName) && !(ui.sheet && ui.sheet.kind === 'form')) { e.preventDefault(); go('clientes'); $('#c-q').focus(); }
 });
 
+// ── VISITAS (12/11) ──
+// Bem básico, como ele pediu: a data e o imóvel visitado. O imóvel se acha pela busca (nome do condomínio, rua, bairro ou
+// código); os que o cliente já recebeu aparecem primeiro. Imóvel fora do estoque: usa o texto digitado.
+// Registrar a visita leva o cliente para a etapa Visita (se ainda estava antes dela).
+const hojeISO = () => nowLocal().slice(0, 10);
+const tituloImovel = i => [i.rot || i.t, i.b].filter(Boolean).join(' · ');
+function buscaVisita(c, q) {
+  const palavras = norm(q).split(/\s+/).filter(Boolean); if (!palavras.length || !carregados) return [];
+  const l = ESTOQUES.flatMap(e => estoque[e.id] ? estoque[e.id].imoveis : []).filter(i => {
+    const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, i.cp, i.bl, EST[i.src].nome, EST[i.src].parceiros ? i.ref : ''].join(' '));
+    return palavras.every(p => t.includes(p));
+  });
+  return l.map(i => ({ i, env: envioDe(c, i) })).sort((a, b) => (!!b.env - !!a.env) || (b.i.p || 0) - (a.i.p || 0)).slice(0, 8);
+}
+function visResultados(c) {
+  const f = ui.vis, q = f.q.trim();
+  if (!q) return '<p class="vis-h">Digite o nome do condomínio, a rua, o bairro ou o código.</p>';
+  if (!carregados) return '<p class="vis-h">Carregando os estoques…</p>';
+  const r = buscaVisita(c, q);
+  return (r.length ? r.map(({ i, env }) => `<button class="vis-r" data-act="vis-pick" data-id="${c.id}" data-k="${esc(i.k)}"><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i><span><b>${esc(tituloImovel(i))}</b>${i.e ? `<small>${esc(i.e)}</small>` : ''}<small>${[i.en, i.p ? fmtValor(i.p) : '', EST[i.src].nome].filter(Boolean).map(esc).join(' · ')}</small>${env ? `<em>✓ Enviado em ${fmtShort(env)}</em>` : ''}</span></button>`).join('')
+    : '<p class="vis-h">Nenhum imóvel do estoque com isso.</p>')
+    + `<button class="vis-txt" data-act="vis-txt" data-id="${c.id}">Não está no estoque? Registrar como “${esc(q)}”</button>`;
+}
+function visitasSection(c) {
+  const vs = [...c.visitas].sort((a, b) => a.data < b.data ? 1 : -1), hoje = hojeISO();
+  const item = x => {
+    const t = x.k ? [x.tipo, x.bairro].filter(Boolean).join(' · ') : x.txt;
+    const det = x.k ? [x.nome, x.valor ? fmtValor(x.valor) : '', EST[x.src] ? EST[x.src].nome : ''].filter(Boolean).join(' · ') : 'Fora do estoque';
+    return `<div class="vis-i"><span class="d">${fmtDate(x.data).slice(0, 5)}<small>${x.data > hoje ? 'Agendada' : 'Feita'}</small></span><div class="w"><b>${esc(t || 'Imóvel')}</b><small>${esc(det)}</small>${x.link ? `<a href="${esc(x.link)}" target="_blank" rel="noopener">Ver anúncio</a>` : ''}</div><button class="rm" data-act="vis-del" data-id="${c.id}" data-v="${esc(x.id)}" aria-label="Apagar visita">×</button></div>`;
+  };
+  const f = ui.vis && ui.vis.id === c.id ? ui.vis : null;
+  let form = '';
+  if (f) {
+    const sel = f.k ? IMOVEL.get(f.k) : null;
+    form = `<div class="vis-f">
+      <label><span class="lbl">Data da visita</span><input type="date" id="v-data" value="${esc(f.data)}"></label>
+      <div><span class="lbl">Imóvel visitado</span>${sel || f.txt
+        ? `<div class="vis-sel">${sel ? `<i style="background-image:url('${esc(miniatura(capas[sel.k] || sel.f))}')"></i><span><b>${esc(tituloImovel(sel))}</b><small>${[sel.e, sel.en, sel.p ? fmtValor(sel.p) : '', EST[sel.src].nome].filter(Boolean).map(esc).join(' · ')}</small></span>` : `<span><b>${esc(f.txt)}</b><small>Fora do estoque</small></span>`}<button class="link" data-act="vis-troca" data-id="${c.id}">Trocar</button></div>`
+        : `<input id="v-q" type="search" autocomplete="off" placeholder="Ex.: Tabor, Rua Nestor Victor, 78322" value="${esc(f.q)}"><div id="v-res" class="vis-res">${visResultados(c)}</div>`}</div>
+      <p class="vis-err" id="v-err"></p>
+      <div class="vis-a"><button class="btn-or" data-act="vis-salvar" data-id="${c.id}">Salvar visita</button><button class="link" data-act="vis-cancel" data-id="${c.id}">Cancelar</button></div>
+    </div>`;
+  }
+  return `<div class="vis"><div class="vis-top"><span class="lbl">Visitas · ${vs.length}</span>${f ? '' : `<button class="link" data-act="vis-novo" data-id="${c.id}">+ Registrar visita</button>`}</div>
+    ${form}${vs.length ? `<div class="vis-l">${vs.map(item).join('')}</div>` : f ? '' : '<p class="muted" style="font-size:14px;margin:0">Nenhuma visita registrada.</p>'}</div>`;
+}
+function salvarVisita(id) {
+  const c = byId(id), f = ui.vis; if (!c || !f) return;
+  const i = f.k ? IMOVEL.get(f.k) : null;
+  if (!f.data) { $('#v-err').textContent = 'Escolha a data da visita.'; return; }
+  if (!i && !f.txt) { $('#v-err').textContent = 'Escolha o imóvel visitado.'; return; }
+  const v = i ? { id: newId('v'), data: f.data, k: i.k, tipo: i.rot || i.t || '', bairro: i.b || '', nome: i.e || '', valor: i.p || 0, link: i.u || '', src: i.src, txt: '' }
+    : { id: newId('v'), data: f.data, k: '', tipo: '', bairro: '', nome: '', valor: 0, link: '', src: '', txt: f.txt };
+  // quem estava antes da Visita (Qualificando, CQ fria, CQ quente ou standby) vai para Visita
+  const sobe = c.status === 'ativo' && ['qual', 'cq', 'cqq', 'standby'].includes(c.etapa) ? { etapa: 'visita', etapaEm: nowLocal() } : {};
+  ui.vis = null;
+  saveClient(Object.assign({}, c, { visitas: c.visitas.concat([v]) }, sobe));
+  toast(`Visita registrada${sobe.etapa ? `. ${nomeProprio(firstName(c.nome))} foi para Visita` : ''}.`);
+}
+
 function renderFicha(id, confirmDel) {
   const c = byId(id); if (!c) return;
   const envios = [...c.envios].sort((a, b) => a.data < b.data ? 1 : -1);
@@ -2592,6 +2690,7 @@ function renderFicha(id, confirmDel) {
       <div class="etseg">${ETAPAS_QUADRO.map(([k, nome, curto]) => `<button class="et-${k}${c.etapa === k ? ' on' : ''}" data-act="etapa" data-id="${c.id}" data-v="${k}" title="${nome}">${curto}</button>`).join('')}</div>
       ${emStandby(c) ? '<div class="dup" style="margin-top:10px">Em standby. Para tirar, escolha a etapa acima.</div>'
         : `<button class="link" style="margin-top:10px" data-act="etapa" data-id="${c.id}" data-v="standby">Colocar em standby</button>`}</div>` : ''}
+    ${visitasSection(c)}
     <div class="j8box">${j8Section(c)}</div>
     <div><span class="lbl">O que procura</span>
       <dl class="info">
@@ -2616,7 +2715,11 @@ function renderFicha(id, confirmDel) {
         ? `<div class="confirm"><span>Excluir <b class="np">${esc(nomeProprio(c.nome))}</b> de vez?</span><button class="btn-del" data-act="del-yes" data-id="${c.id}">Sim, excluir</button><button class="link" data-act="del-no" data-id="${c.id}">Cancelar</button></div>`
         : `<button class="danger" data-act="del-ask" data-id="${c.id}">Excluir de vez</button>`}`}</div>
   </div>`;
-  if (ui.sheet && ui.sheet.kind === 'ficha' && ui.sheet.id === id) { const sb = $('#sheet .sh-b'), top = sb ? sb.scrollTop : 0; $('#sheet').innerHTML = html; const nb = $('#sheet .sh-b'); if (nb) nb.scrollTop = top; }
+  if (ui.sheet && ui.sheet.kind === 'ficha' && ui.sheet.id === id) {
+    const sb = $('#sheet .sh-b'), top = sb ? sb.scrollTop : 0, foco = document.activeElement && document.activeElement.id === 'v-q';
+    $('#sheet').innerHTML = html; const nb = $('#sheet .sh-b'); if (nb) nb.scrollTop = top;
+    if (foco && $('#v-q')) { const q = $('#v-q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); } // redesenho (sincronização) no meio da busca da visita
+  }
   else openSheet(html, { kind: 'ficha', id });
 }
 
@@ -2814,6 +2917,19 @@ document.addEventListener('click', e => {
       break;
     }
     case 'env-del': { const c = byId(id); if (c) { saveClient(Object.assign({}, c, { envios: c.envios.filter(x => x.id !== el.dataset.e) })); } break; }
+    // visitas
+    case 'vis-novo': ui.vis = { id, data: hojeISO(), q: '', k: '', txt: '' }; renderFicha(id); setTimeout(() => { const q = $('#v-q'); if (q) q.focus(); }, 30); break;
+    case 'vis-cancel': ui.vis = null; renderFicha(id); break;
+    case 'vis-pick': if (ui.vis) { ui.vis.k = el.dataset.k; ui.vis.txt = ''; renderFicha(id); } break;
+    case 'vis-txt': if (ui.vis) { ui.vis.txt = ui.vis.q.trim(); ui.vis.k = ''; renderFicha(id); } break;
+    case 'vis-troca': if (ui.vis) { ui.vis.k = ''; ui.vis.txt = ''; renderFicha(id); setTimeout(() => { const q = $('#v-q'); if (q) q.focus(); }, 30); } break;
+    case 'vis-salvar': salvarVisita(id); break;
+    case 'vis-del': {
+      const c = byId(id); if (!c) break; const antes = c.visitas;
+      saveClient(Object.assign({}, c, { visitas: c.visitas.filter(x => x.id !== v) }));
+      toast('Visita apagada.', { label: 'Desfazer', fn: () => { const x = byId(id); if (x) saveClient(Object.assign({}, x, { visitas: antes })); } });
+      break;
+    }
     // bairro tocado na aba Bairros: abre os clientes ativos que procuram nele
     case 'bairro': ui.c.q = el.dataset.b; ui.c.f = 'ativos'; $('#c-q').value = el.dataset.b; go('clientes'); renderClientes(); break;
     case 'i-fonte': case 'i-tipo': case 'i-ordem': filtroI()[a.slice(2)] = v; filtroI().n = I_PASSO; renderImoveis(); break;
@@ -2870,6 +2986,12 @@ function bindBuscas() {
     if (e.target.id !== 'i-vmin' && e.target.id !== 'i-vmax') return;
     maskMoney(e.target); filtroI()[e.target.id.slice(2)] = parseMoney(e.target.value); filtroI().n = I_PASSO; renderImoveisLista();
   });
+  // visita: a busca redesenha só os resultados (o campo continua com o foco); a data fica guardada no rascunho
+  document.addEventListener('input', e => {
+    if (!ui.vis) return;
+    if (e.target.id === 'v-q') { ui.vis.q = e.target.value; const c = byId(ui.vis.id), r = $('#v-res'); if (c && r) r.innerHTML = visResultados(c); }
+    if (e.target.id === 'v-data') ui.vis.data = e.target.value;
+  });
   document.addEventListener('change', e => { if (e.target.id !== 'i-bairro') return; filtroI().bairro = e.target.value; filtroI().n = I_PASSO; renderImoveis(); });
   document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('imais')) filtroI().mais = e.target.open; }, true);
   $('#c-q').addEventListener('input', e => { ui.c.q = e.target.value; renderClientes(); });
@@ -2884,7 +3006,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-12f';
+const VERSAO = '2026-11-12g';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
