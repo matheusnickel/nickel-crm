@@ -1359,8 +1359,8 @@ async function baixarPDF(btn, c, cli) {
 // Descritivo para o cliente, no modelo do Matheus. Casa: terreno + área construída. Apartamento: só a privativa.
 const m2 = v => Math.round(v).toLocaleString('pt-BR') + ' m²';
 const listaPt = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
-// casa e sobrado que não são de condomínio: "Casa de rua" / "Sobrado de rua" (o resto fica com o nome do tipo)
-const tipoDeRua = d => ({ Casa: 'Casa de rua', Sobrado: 'Sobrado de rua' })[d.tc] || '';
+// casa e sobrado que não são de condomínio: "Casa de rua" (ele prefere "casa", nunca "sobrado"); o resto fica com o nome do tipo
+const tipoDeRua = d => ({ Casa: 'Casa de rua', Sobrado: 'Casa de rua' })[d.tc] || '';
 // endereço (rua e número) vem do resumo do estoque; o arquivo de detalhes de algumas imobiliárias não traz
 const enDe = d => String(d.en || (IMOVEL.get(d.k) || {}).en || '').trim();
 function descritivo(d) {
@@ -2749,7 +2749,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-12a';
+const VERSAO = '2026-11-12b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
