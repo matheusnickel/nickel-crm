@@ -1097,17 +1097,34 @@ async function carregaEntradas() {
 const diasNovo = i => { const d = i.ent ? daysSince(i.ent) : null; return d !== null && d <= NOVO_DIAS ? Math.max(0, d) : null; };
 const ehNovo = i => diasNovo(i) !== null;
 const entrouTxt = i => { const d = diasNovo(i); return d === 0 ? 'Entrou hoje' : d === 1 ? 'Entrou ontem' : `Entrou há ${d} dias`; };
-// o cliente já recebeu este imóvel (por esta imobiliária ou por outra que anuncia o mesmo)?
-function recebeu(c, i) {
+// quando o cliente recebeu este imóvel pela última vez (por esta imobiliária ou por outra que anuncia o mesmo); null = nunca
+function envioDe(c, i) {
   const refs = new Set([i, ...(i.irmaos || []).map(k => IMOVEL.get(k)).filter(Boolean)].map(refDe));
-  return c.envios.some(e => refs.has(e.ref));
+  return c.envios.filter(e => refs.has(e.ref)).map(e => String(e.data)).sort().pop() || null;
 }
-// imóveis novos que servem para o cliente e ele ainda não recebeu, do que entrou por último
-const novosPara = c => carregados && c.status === 'ativo' ? j8Match(c).todos.filter(i => ehNovo(i) && !recebeu(c, i)).sort((a, b) => b.ent.localeCompare(a.ent)) : [];
+const recebeu = (c, i) => !!envioDe(c, i);
+// 12/11 (pedido dele): o imóvel enviado continua nos Novos por 5 minutos — dá tempo de copiar o descritivo, ir ao WhatsApp,
+// voltar e baixar o PDF. Depois sai sozinho (o relógio abaixo redesenha a tela) e fica só na aba da imobiliária.
+const SEGURA_MIN = 5;
+let proximaSaida = Infinity; // quando o próximo imóvel enviado sai dos Novos
+const minutosDesde = d => (Date.now() - new Date(d).getTime()) / 6e4; // "AAAA-MM-DDTHH:MM" = hora local
+function saiDosNovos(c, i) {
+  const d = envioDe(c, i); if (!d) return false;
+  if (d.length < 16) return true; // envio antigo, só com o dia
+  const m = minutosDesde(d); if (m >= SEGURA_MIN) return true;
+  proximaSaida = Math.min(proximaSaida, Date.now() + (SEGURA_MIN - m) * 6e4);
+  return false;
+}
+setInterval(() => {
+  if (Date.now() < proximaSaida) return;
+  proximaSaida = Infinity; renderClientes(); redesenhaCartoes();
+}, 15000);
+// imóveis novos que servem para o cliente e ele ainda não recebeu (ou recebeu há menos de 5 min), do que entrou por último
+const novosPara = c => carregados && c.status === 'ativo' ? j8Match(c).todos.filter(i => ehNovo(i) && !saiDosNovos(c, i)).sort((a, b) => b.ent.localeCompare(a.ent)) : [];
 // para quem enviar um imóvel: clientes ativos com esse perfil que ainda não receberam; CQ quente e quem está mais adiante primeiro
 const ET_PRIO = ['cqq', 'proposta', 'visita', 'cq', 'qual', 'standby'];
 function quemQuer(i) {
-  const l = clientes.filter(c => c.status === 'ativo' && j8Score(c, i) >= 0 && !recebeu(c, i))
+  const l = clientes.filter(c => c.status === 'ativo' && j8Score(c, i) >= 0 && !saiDosNovos(c, i))
     .sort((a, b) => (ET_PRIO.indexOf(a.etapa) - ET_PRIO.indexOf(b.etapa)) || a.nome.localeCompare(b.nome, 'pt-BR'));
   return { ativos: l.filter(c => !emStandby(c)), standby: l.filter(emStandby) };
 }
@@ -1490,7 +1507,10 @@ function j8Card(i, c) {
         const refs = new Map([[refDe(i), i]].concat((i.irmaos || []).map(k => IMOVEL.get(k)).filter(Boolean).map(x => [refDe(x), x])));
         const e = c && c.envios.filter(x => refs.has(x.ref)).sort((a, b) => a.data < b.data ? 1 : -1)[0];
         const por = e && refs.get(e.ref) !== i ? ` pela ${EST[refs.get(e.ref).src].nome}` : '';
-        return e ? `<div class="env8">✓ Enviado para ${esc(nomeProprio(firstName(c.nome)))} em ${fmtShort(e.data)}${por}</div>` : '';
+        // nos Novos, o enviado fica 5 minutos e avisa quando sai
+        const m = e && fonteAtual() === 'novos' && String(e.data).length >= 16 ? minutosDesde(e.data) : Infinity;
+        const sai = m < SEGURA_MIN ? ` · sai dos Novos em ${Math.max(1, Math.ceil(SEGURA_MIN - m))} min` : '';
+        return e ? `<div class="env8">✓ Enviado para ${esc(nomeProprio(firstName(c.nome)))} em ${fmtShort(e.data)}${por}${sai}</div>` : '';
       })()}${(i.irmaos || []).length ? `<div class="dupl">Também anunciado ${listaPt([...new Set(i.irmaos.map(k => IMOVEL.get(k)).filter(Boolean).map(x => 'na ' + EST[x.src].nome))])}</div>` : ''}${selos.length || ehNovo(i) ? `<div class="selos">${ehNovo(i) ? `<span class="nv">Novo · ${entrouTxt(i)}</span>` : ''}${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
         <div class="pr">${!i.p ? 'Preço sob consulta' : ehLocacao(i) ? 'R$ ' + Math.round(i.p).toLocaleString('pt-BR') + '/mês' : fmtValor(i.p)}</div></div>
     </div>
@@ -2818,7 +2838,7 @@ document.addEventListener('click', e => {
     case 'f-save': saveForm(); break;
     case 'j8-pdf': baixarPDF(el, el.dataset.c, el.dataset.cli); break;
     case 'j8-mais': ui.j8Mais[id] = (ui.j8Mais[id] || 5) + 5; renderFicha(id); break;
-    case 'fonte': ui.fonte = v; if (v !== 'novos') lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
+    case 'fonte': ui.fonte = v; lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
     case 'j8-desc': copiarDescritivo(el, el.dataset.c); break;
     case 'j8-capa': ui.capaDe = ui.capaDe === el.dataset.c ? null : el.dataset.c; redesenhaCartoes(); break;
     case 'capa-pick': {
@@ -2864,7 +2884,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-12e';
+const VERSAO = '2026-11-12f';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
