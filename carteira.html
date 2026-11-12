@@ -347,7 +347,10 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .pq-v,.pq-st{display:block;font-size:12.5px;color:var(--muted);margin:0}
 .pq-st{margin-top:7px}
 .imais summary{cursor:pointer;color:var(--tq2);font-weight:600;padding:4px 0;width:max-content}
-.imais-b{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.imais-b{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+@media (max-width:1180px){.imais-b{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.imais-b select{width:100%}
+.imais-on{color:var(--or2)}
 .iml{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-top:16px;align-items:start}
 
 /* etapas do funil: cinza = qualificando, verde-água = conversa qualificada, laranja = visita, grafite = proposta */
@@ -1555,17 +1558,32 @@ function renderImoveis() {
   if ($('#i-q').value !== f.q) $('#i-q').value = f.q;
   $('#i-fil').innerHTML = `${naLocacao() ? '' : `<button class="inovos${f.novos ? ' on' : ''}" data-act="i-novos"><b>Entraram nos últimos ${NOVO_DIAS} dias</b><span id="i-novos-n"></span></button>`}${naLocacao() ? '' : `<div class="chips sm">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => chip('i-fonte', k, l)).join('')}</div>`}
     <div class="chips sm">${['', ...TIPOS].map(t => chip('i-tipo', t, t || 'Todos os tipos')).join('')}</div>
-    <details class="imais"${f.mais ? ' open' : ''}><summary>Mais filtros</summary><div class="imais-b">
+    <details class="imais"${f.mais ? ' open' : ''}><summary>Mais filtros${f.bairro && bairrosI()[f.bairro] ? ` <span class="imais-on">· ${esc(bairrosI()[f.bairro].nome)}</span>` : ''}</summary><div class="imais-b">
+      <div><span class="lbl">Bairro</span><select id="i-bairro" aria-label="Bairro"><option value="">Todos os bairros</option>${Object.entries(bairrosI()).sort((a, b) => a[1].nome.localeCompare(b[1].nome, 'pt-BR')).map(([k, x]) => `<option value="${esc(k)}"${f.bairro === k ? ' selected' : ''}>${esc(x.nome)} (${x.n})</option>`).join('')}</select></div>
       <div><span class="lbl">Valor</span><div class="row-s" style="margin-top:0;flex-wrap:nowrap"><input id="i-vmin" inputmode="numeric" placeholder="De" value="${din(f.vmin)}" aria-label="Valor mínimo"><span class="muted">a</span><input id="i-vmax" inputmode="numeric" placeholder="Até" value="${din(f.vmax)}" aria-label="Valor máximo"></div></div>
       <div><span class="lbl">Quartos (no mínimo)</span><div class="chips sm">${[0, 1, 2, 3, 4].map(n => chip('i-quartos', n, n ? n + '+' : 'Tanto faz')).join('')}</div></div>
       <div><span class="lbl">Ordenar</span><div class="chips sm">${I_ORDENS.map(([k, l]) => chip('i-ordem', k, l)).join('')}</div></div>
     </div></details>`;
   renderImoveisLista();
 }
+// bairros do estoque da aba (Imóveis ou Locação), para o filtro de bairro: chave -> { nome, n }; fora de Curitiba leva a cidade
+function bairrosI() {
+  const ids = naLocacao() ? [LOCACAO.id] : ESTOQUES.map(e => e.id), out = {}, nomes = {};
+  ids.flatMap(id => estoque[id] ? estoque[id].imoveis : []).forEach(i => {
+    if (!i.tc || !String(i.b || '').trim()) return;
+    const k = bkey(i.b), x = out[k] || (out[k] = { n: 0, cwb: 0 });
+    x.n++; if (!i.ci || norm(i.ci) === 'curitiba') x.cwb++;
+    (nomes[k] ||= {})[i.b] = ((nomes[k] || {})[i.b] || 0) + 1;
+    if (i.ci && norm(i.ci) !== 'curitiba') x.ci = i.ci;
+  });
+  for (const [k, x] of Object.entries(out)) { const nome = Object.entries(nomes[k]).sort((a, b) => b[1] - a[1])[0][0]; x.nome = x.cwb * 2 >= x.n || !x.ci || norm(x.ci) === norm(nome) ? nome : `${nome} · ${x.ci}`; }
+  return out;
+}
 function imoveisFiltrados() {
   const f = filtroI(), palavras = norm(f.q).split(/\s+/).filter(Boolean);
   let l = (naLocacao() ? [LOCACAO.id] : f.fonte === 'todas' ? ESTOQUES.map(e => e.id) : [f.fonte]).flatMap(id => estoque[id] ? estoque[id].imoveis : []).filter(i => i.tc);
   if (f.tipo) l = l.filter(i => i.tc === f.tipo);
+  if (f.bairro) l = l.filter(i => i.b && bkey(i.b) === f.bairro);
   if (f.quartos) l = l.filter(i => i.q >= f.quartos);
   if (f.vmin) l = l.filter(i => i.p >= f.vmin);
   if (f.vmax) l = l.filter(i => i.p && i.p <= f.vmax);
@@ -2832,6 +2850,7 @@ function bindBuscas() {
     if (e.target.id !== 'i-vmin' && e.target.id !== 'i-vmax') return;
     maskMoney(e.target); filtroI()[e.target.id.slice(2)] = parseMoney(e.target.value); filtroI().n = I_PASSO; renderImoveisLista();
   });
+  document.addEventListener('change', e => { if (e.target.id !== 'i-bairro') return; filtroI().bairro = e.target.value; filtroI().n = I_PASSO; renderImoveis(); });
   document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('imais')) filtroI().mais = e.target.open; }, true);
   $('#c-q').addEventListener('input', e => { ui.c.q = e.target.value; renderClientes(); });
 }
@@ -2845,7 +2864,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-12d';
+const VERSAO = '2026-11-12e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
