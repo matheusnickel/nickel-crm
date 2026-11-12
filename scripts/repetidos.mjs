@@ -112,3 +112,6 @@ grupos.forEach(g => { const [p, ...o] = g; fica[p.split(':')[0]] = (fica[p.split
 console.log(`${todos.length} anúncios · ${grupos.length} imóveis repetidos · ${grupos.reduce((s, g) => s + g.length - 1, 0)} anúncios a menos · ${ambiguos} casos ambíguos mantidos`);
 console.log('fica de quem:', fica);
 console.log('sai de quem:', sai);
+
+// depois dos repetidos: grava quando cada imóvel entrou (dados/entradas.json), para o "Entraram nos últimos 30 dias"
+await import('./entradas.mjs');

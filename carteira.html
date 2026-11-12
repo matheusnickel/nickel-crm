@@ -328,6 +328,24 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 /* aba Imóveis */
 .ifil{display:flex;flex-direction:column;gap:8px;margin-top:14px}
 .imais{font-size:14px}
+/* imóveis que entraram nos últimos 30 dias (12/11): botão da aba Imóveis, selo no cartão, "para quem enviar" e contagem no cliente */
+.inovos{align-self:flex-start;display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:min(100%,330px);padding:10px 12px 10px 15px;border:1px solid var(--orline);border-radius:10px;background:var(--card);color:var(--or2);font-size:14px;text-align:left}
+.inovos b{font-weight:600}
+.inovos span{font-weight:700;font-size:13px;background:var(--orbg);border-radius:99px;padding:2px 10px;font-variant-numeric:tabular-nums}
+.inovos:hover{background:var(--orbg)}
+.inovos.on{background:var(--or);border-color:var(--or);color:#fff}
+.inovos.on span{background:rgba(255,255,255,.22)}
+.j8c .selos span.nv{color:#fff;background:var(--or)}
+.nvb{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;color:#fff;background:var(--or);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.chip.nv:not(.on){color:var(--or2);border-color:var(--orline)}
+.pq{padding:11px 12px 12px;border-top:1px solid var(--line);background:var(--orbg)}
+.pq-t{display:block;font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--or2);margin-bottom:7px}
+.pq-l{display:flex;flex-wrap:wrap;gap:6px}
+.pq-l button{display:inline-flex;align-items:center;gap:2px;padding:4px 6px 4px 11px;border:1px solid var(--line2);border-radius:99px;background:var(--card);font-size:13.5px;color:var(--text)}
+.pq-l button:hover{border-color:var(--or)}
+.pq-l .pill{margin-left:6px;font-size:9px;padding:2px 7px}
+.pq-v,.pq-st{display:block;font-size:12.5px;color:var(--muted);margin:0}
+.pq-st{margin-top:7px}
 .imais summary{cursor:pointer;color:var(--tq2);font-weight:600;padding:4px 0;width:max-content}
 .imais-b{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
 .iml{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-top:16px;align-items:start}
@@ -950,7 +968,7 @@ function updateSync() {
 // ── ESTADO DA TELA ──
 const ui = {
   tab: 'clientes',
-  i: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false }, // aba Imóveis
+  i: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false, novos: false }, // aba Imóveis (novos = só os que entraram nos últimos 30 dias)
   l: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false }, // aba Locação
   c: { q: '', f: 'ativos', modo: lsGet('carteira_modo', 'quadro') }, // modo: quadro de etapas ou lista (fica salvo neste aparelho)
   m: { p: 30, g: '', e: 'dia' }, // métricas: período em dias, família de imóvel ('' = todas) e envios por dia/semana/mês
@@ -1059,12 +1077,44 @@ async function aplicaRepetidos() {
   }
   ESTOQUES.forEach(e => { if (estoque[e.id]) estoque[e.id].imoveis = estoque[e.id].imoveis.filter(i => !i.rep); });
 }
+// ── IMÓVEIS QUE ENTRARAM (12/11) ──
+// dados/entradas.json (scripts/entradas.mjs, roda junto com os repetidos a cada atualização) guarda o dia em que cada
+// anúncio apareceu no estoque pela primeira vez; "" = já estava na 1ª importação daquela imobiliária (não é novo).
+// Se o mesmo imóvel já estava em outra imobiliária, vale a data mais antiga: não é novo só porque outra passou a anunciar.
+const NOVO_DIAS = 30;
+const ENTRADA = new Map(); // "src:código" -> 'AAAA-MM-DD' ou ''
+async function carregaEntradas() {
+  ENTRADA.clear();
+  try {
+    const r = await fetch('dados/entradas.json', { cache: 'no-cache' });
+    if (r.ok) { const j = await r.json(); for (const [src, por] of Object.entries(j.por || {})) for (const [d, cods] of Object.entries(por)) cods.forEach(c => ENTRADA.set(src + ':' + c, d)); }
+  } catch (e) {}
+  IMOVEL.forEach(i => { const ds = [i.k, ...(i.irmaos || [])].map(k => ENTRADA.get(k)); i.ent = ds.every(Boolean) ? ds.sort()[0] : ''; });
+}
+const diasNovo = i => { const d = i.ent ? daysSince(i.ent) : null; return d !== null && d <= NOVO_DIAS ? Math.max(0, d) : null; };
+const ehNovo = i => diasNovo(i) !== null;
+const entrouTxt = i => { const d = diasNovo(i); return d === 0 ? 'Entrou hoje' : d === 1 ? 'Entrou ontem' : `Entrou há ${d} dias`; };
+// o cliente já recebeu este imóvel (por esta imobiliária ou por outra que anuncia o mesmo)?
+function recebeu(c, i) {
+  const refs = new Set([i, ...(i.irmaos || []).map(k => IMOVEL.get(k)).filter(Boolean)].map(refDe));
+  return c.envios.some(e => refs.has(e.ref));
+}
+// imóveis novos que servem para o cliente e ele ainda não recebeu, do que entrou por último
+const novosPara = c => carregados && c.status === 'ativo' ? j8Match(c).todos.filter(i => ehNovo(i) && !recebeu(c, i)).sort((a, b) => b.ent.localeCompare(a.ent)) : [];
+// para quem enviar um imóvel: clientes ativos com esse perfil que ainda não receberam; CQ quente e quem está mais adiante primeiro
+const ET_PRIO = ['cqq', 'proposta', 'visita', 'cq', 'qual', 'standby'];
+function quemQuer(i) {
+  const l = clientes.filter(c => c.status === 'ativo' && j8Score(c, i) >= 0 && !recebeu(c, i))
+    .sort((a, b) => (ET_PRIO.indexOf(a.etapa) - ET_PRIO.indexOf(b.etapa)) || a.nome.localeCompare(b.nome, 'pt-BR'));
+  return { ativos: l.filter(c => !emStandby(c)), standby: l.filter(emStandby) };
+}
 async function loadEstoques() {
   await Promise.all(ESTOQUES.concat(LOCACAO).map(async e => {
     try { const r = await fetch(e.arq, { cache: 'no-cache' }); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); j.imoveis.forEach(i => prepara(e, i)); estoque[e.id] = j; }
     catch (er) { estoqueErr[e.id] = true; }
   }));
   await aplicaRepetidos();
+  await carregaEntradas();
   carregados = true; j8Cache.clear();
   renderClientes();
   if (ui.tab === 'metricas') renderMetricas();
@@ -1075,7 +1125,7 @@ async function loadEstoques() {
 // "na J8, na A. Gonçalves e na SIS3" (os textos acompanham a lista de imobiliárias)
 const naTodas = () => { const n = ESTOQUES.map(e => 'na ' + e.nome); return n.slice(0, -1).join(', ') + ' e ' + n[n.length - 1]; };
 // de qual imobiliária mostrar na ficha: 'todas', 'j8', 'gon' ou 'sis3' (fica salvo neste aparelho)
-const fonteAtual = () => ui.fonte === 'todas' || EST[ui.fonte] ? ui.fonte : 'todas';
+const fonteAtual = () => ui.fonte === 'todas' || ui.fonte === 'novos' || EST[ui.fonte] ? ui.fonte : 'todas';
 // envios antigos da J8 guardam só o código; os da Gonçalves guardam "gon:código"
 const refDe = i => i.src === 'j8' ? i.c : i.k;
 // -1 = não serve. Quanto maior, melhor.
@@ -1438,7 +1488,7 @@ function j8Card(i, c) {
         const e = c && c.envios.filter(x => refs.has(x.ref)).sort((a, b) => a.data < b.data ? 1 : -1)[0];
         const por = e && refs.get(e.ref) !== i ? ` pela ${EST[refs.get(e.ref).src].nome}` : '';
         return e ? `<div class="env8">✓ Enviado para ${esc(nomeProprio(firstName(c.nome)))} em ${fmtShort(e.data)}${por}</div>` : '';
-      })()}${(i.irmaos || []).length ? `<div class="dupl">Também anunciado ${listaPt([...new Set(i.irmaos.map(k => IMOVEL.get(k)).filter(Boolean).map(x => 'na ' + EST[x.src].nome))])}</div>` : ''}${selos.length ? `<div class="selos">${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
+      })()}${(i.irmaos || []).length ? `<div class="dupl">Também anunciado ${listaPt([...new Set(i.irmaos.map(k => IMOVEL.get(k)).filter(Boolean).map(x => 'na ' + EST[x.src].nome))])}</div>` : ''}${selos.length || ehNovo(i) ? `<div class="selos">${ehNovo(i) ? `<span class="nv">Novo · ${entrouTxt(i)}</span>` : ''}${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
         <div class="pr">${!i.p ? 'Preço sob consulta' : ehLocacao(i) ? 'R$ ' + Math.round(i.p).toLocaleString('pt-BR') + '/mês' : fmtValor(i.p)}</div></div>
     </div>
     <div class="j8act">
@@ -1448,7 +1498,14 @@ function j8Card(i, c) {
       <button class="bk pdf${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
       <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo para cliente</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
-    </div>${ui.capaDe === i.k ? escolheCapa(i) : ''}</div>`;
+    </div>${!c && ehNovo(i) ? paraQuem(i) : ''}${ui.capaDe === i.k ? escolheCapa(i) : ''}</div>`;
+}
+// na aba Imóveis, embaixo de cada imóvel novo: os clientes com esse perfil que ainda não receberam (tocar abre a ficha)
+function paraQuem(i) {
+  const { ativos, standby } = quemQuer(i);
+  const nome = c => `<button data-act="pq-ficha" data-id="${c.id}"><span class="np">${esc(nomeProprio(c.nome))}</span><small class="pill et-${c.etapa}">${ETAPA[c.etapa][2]}</small></button>`;
+  const st = standby.length ? `<small class="pq-st">+ ${standby.length} em standby: ${standby.slice(0, 4).map(c => esc(nomeProprio(firstName(c.nome)))).join(', ')}${standby.length > 4 ? '…' : ''}</small>` : '';
+  return `<div class="pq"><span class="pq-t">Para quem enviar${ativos.length ? ` · ${ativos.length} ${plural(ativos.length, 'cliente', 'clientes')}` : ''}</span>${ativos.length ? `<div class="pq-l">${ativos.map(nome).join('')}</div>` : '<p class="pq-v">Nenhum cliente ativo com esse perfil para receber.</p>'}${st}</div>`;
 }
 // grade com todas as fotos do anúncio para escolher a da capa do book
 const miniCapa = u => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) + '&w=240&h=180&fit=cover&q=70';
@@ -1463,16 +1520,18 @@ function escolheCapa(i) {
     <div class="capas-g">${(d.fotos || []).map(u => `<button class="${nomeFoto(u) === atual ? 'on' : ''}" data-act="capa-pick" data-c="${esc(i.k)}" data-u="${esc(u)}" aria-label="Usar esta foto na capa"><img loading="lazy" src="${esc(miniCapa(u))}" alt=""></button>`).join('')}</div></div>`;
 }
 function j8Section(c) {
-  const fonte = fonteAtual();
-  const chips = `<div class="chips sm fontes">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => `<button class="chip${fonte === k ? ' on' : ''}" data-act="fonte" data-v="${k}" data-id="${c.id}">${l}${carregados ? `<span class="n">${j8Match(c, k).total}</span>` : ''}</button>`).join('')}</div>`;
+  // "Novos": os que entraram nos últimos 30 dias, servem para ele e ele ainda não recebeu (o botão só aparece quando há)
+  const nov = novosPara(c);
+  const fonte = fonteAtual() === 'novos' && !nov.length ? 'todas' : fonteAtual();
+  const chips = `<div class="chips sm fontes">${[['todas', 'Todas'], ...(nov.length ? [['novos', 'Novos']] : []), ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => `<button class="chip${fonte === k ? ' on' : ''}${k === 'novos' ? ' nv' : ''}" data-act="fonte" data-v="${k}" data-id="${c.id}">${l}${carregados ? `<span class="n">${k === 'novos' ? nov.length : j8Match(c, k).total}</span>` : ''}</button>`).join('')}</div>`;
   if (!carregados) return `<span class="lbl">Imóveis das imobiliárias</span>${chips}<p class="muted" style="font-size:14px">Carregando os estoques…</p>`;
-  const falhou = (fonte === 'todas' ? ESTOQUES : [EST[fonte]]).filter(e => estoqueErr[e.id]).map(e => e.nome);
-  const { todos, total } = j8Match(c, fonte);
+  const falhou = (EST[fonte] ? [EST[fonte]] : ESTOQUES).filter(e => estoqueErr[e.id]).map(e => e.nome);
+  const { todos, total } = fonte === 'novos' ? { todos: nov, total: nov.length } : j8Match(c, fonte);
   // mostra os 5 melhores; cada "Ver mais 5" abre os próximos da lista (que já vem do melhor para o pior)
   const mostrar = Math.min(total, ui.j8Mais[c.id] || 5);
   const top = todos.slice(0, mostrar);
-  const onde = fonte === 'todas' ? 'N' + naTodas().slice(1) : 'Na ' + EST[fonte].nome;
-  const titulo = total > mostrar ? `${onde} · os ${mostrar} melhores de ${total} para ${esc(firstName(c.nome))}` : total ? `${onde} · ${total} ${plural(total, 'imóvel', 'imóveis')} para ${esc(firstName(c.nome))}` : onde;
+  const onde = fonte === 'todas' || fonte === 'novos' ? 'N' + naTodas().slice(1) : 'Na ' + EST[fonte].nome;
+  const titulo = fonte === 'novos' ? `${total} ${plural(total, 'imóvel novo', 'imóveis novos')} para ${esc(firstName(c.nome))} · últimos ${NOVO_DIAS} dias, ainda não ${plural(total, 'enviado', 'enviados')}` : total > mostrar ? `${onde} · os ${mostrar} melhores de ${total} para ${esc(firstName(c.nome))}` : total ? `${onde} · ${total} ${plural(total, 'imóvel', 'imóveis')} para ${esc(firstName(c.nome))}` : onde;
   top.forEach(i => j8Detalhe(i.k).catch(() => {})); // adianta as fotos e os dados dos imóveis que estão na tela
   if (top.length) carregaJsPDF().catch(() => {});
   const resto = total - mostrar;
@@ -1494,7 +1553,7 @@ function renderImoveis() {
   $('#i-tit').textContent = naLocacao() ? 'Locação' : 'Imóveis';
   $('#i-kick').textContent = naLocacao() ? 'Imóveis para alugar da J8' : listaPt(ESTOQUES.map(e => e.nome));
   if ($('#i-q').value !== f.q) $('#i-q').value = f.q;
-  $('#i-fil').innerHTML = `${naLocacao() ? '' : `<div class="chips sm">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => chip('i-fonte', k, l)).join('')}</div>`}
+  $('#i-fil').innerHTML = `${naLocacao() ? '' : `<button class="inovos${f.novos ? ' on' : ''}" data-act="i-novos"><b>Entraram nos últimos ${NOVO_DIAS} dias</b><span id="i-novos-n"></span></button>`}${naLocacao() ? '' : `<div class="chips sm">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => chip('i-fonte', k, l)).join('')}</div>`}
     <div class="chips sm">${['', ...TIPOS].map(t => chip('i-tipo', t, t || 'Todos os tipos')).join('')}</div>
     <details class="imais"${f.mais ? ' open' : ''}><summary>Mais filtros</summary><div class="imais-b">
       <div><span class="lbl">Valor</span><div class="row-s" style="margin-top:0;flex-wrap:nowrap"><input id="i-vmin" inputmode="numeric" placeholder="De" value="${din(f.vmin)}" aria-label="Valor mínimo"><span class="muted">a</span><input id="i-vmax" inputmode="numeric" placeholder="Até" value="${din(f.vmax)}" aria-label="Valor máximo"></div></div>
@@ -1512,12 +1571,17 @@ function imoveisFiltrados() {
   if (f.vmax) l = l.filter(i => i.p && i.p <= f.vmax);
   if (palavras.length) l = l.filter(i => { const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, i.cp, i.bl, EST[i.src].parceiros ? i.ref : ''].join(' ')); return palavras.every(p => t.includes(p)); });
   const ordem = { maior: (a, b) => b.p - a.p, menor: (a, b) => (a.p || 9e15) - (b.p || 9e15), recentes: (a, b) => String(b.du).localeCompare(String(a.du)) }[f.ordem];
+  const novos = naLocacao() ? [] : l.filter(ehNovo);
+  imoveisFiltrados.novos = novos.length; // contagem do botão "Entraram nos últimos 30 dias" (com os outros filtros)
+  // só os novos: do que entrou por último para o mais antigo
+  if (f.novos && !naLocacao()) return novos.sort((a, b) => b.ent.localeCompare(a.ent) || ordem(a, b));
   return l.sort(ordem);
 }
 function renderImoveisLista() {
   if (!carregados) { $('#i-list').innerHTML = '<p class="muted" style="margin-top:18px">Carregando os estoques…</p>'; return; }
   const l = imoveisFiltrados(), tela = l.slice(0, filtroI().n), resto = l.length - tela.length;
-  $('#i-total').textContent = `${l.length.toLocaleString('pt-BR')} ${plural(l.length, 'imóvel', 'imóveis')}`;
+  $('#i-total').textContent = `${l.length.toLocaleString('pt-BR')} ${plural(l.length, 'imóvel', 'imóveis')}${filtroI().novos && !naLocacao() ? (l.length === 1 ? ' novo' : ' novos') : ''}`;
+  if ($('#i-novos-n')) $('#i-novos-n').textContent = imoveisFiltrados.novos;
   tela.slice(0, 6).forEach(i => j8Detalhe(i.k).catch(() => {})); // adianta fotos e dados dos primeiros
   if (tela.length) carregaJsPDF().catch(() => {});
   $('#i-list').innerHTML = l.length
@@ -1573,11 +1637,11 @@ function mudaEtapa(id, etapa) {
 // quadro de etapas: 4 colunas (no computador arrasta de uma para outra; no celular as colunas deslizam para o lado)
 function quadroClientes(rows) {
   const card = c => {
-    const tot = carregados ? j8Match(c).total : 0, [cor, frase] = contatoTxt(c), d = daysSince(etapaDesde(c));
+    const tot = carregados ? j8Match(c).total : 0, [cor, frase] = contatoTxt(c), d = daysSince(etapaDesde(c)), nn = novosPara(c).length;
     const meta = [tiposResumo(c.tipos).join(', '), c.bairros.join(', '), faixaValor(c)].filter(Boolean).join(' · ');
     return `<button class="kcard${fichaAberta() === c.id ? ' sel' : ''}" draggable="true" data-act="ficha" data-id="${c.id}">
       <span class="kn np">${esc(nomeProprio(c.nome))}</span><span class="km">${esc(meta)}</span>
-      <span class="kf"><span class="ctt ${cor}"><span class="dot"></span>${frase}</span>${tot ? `<span class="kt">${tot} ${plural(tot, 'compatível', 'compatíveis')}</span>` : ''}</span>
+      <span class="kf"><span class="ctt ${cor}"><span class="dot"></span>${frase}</span>${tot ? `<span class="kt">${tot} ${plural(tot, 'compatível', 'compatíveis')}</span>` : ''}${nn ? `<span class="nvb">${nn} ${plural(nn, 'novo', 'novos')}</span>` : ''}</span>
       ${d !== null ? `<span class="kd">Na etapa ${d <= 0 ? 'desde hoje' : 'há ' + d + plural(d, ' dia', ' dias')}</span>` : ''}</button>`;
   };
   // no celular: atalhos para pular direto para a coluna (as colunas deslizam para o lado)
@@ -1610,7 +1674,9 @@ function renderClientes() {
     // só o total ("9 imóveis compatíveis"); quanto há em cada imobiliária aparece dentro da ficha. E "Recebeu imóvel há 6 dias"
     const [cor, frase] = contatoTxt(c);
     const dSt = c.status === 'ativo' && emStandby(c) ? daysSince(etapaDesde(c)) : null;
+    const nn = novosPara(c).length; // novos (últimos 30 dias) que servem e ele ainda não recebeu
     const side = (tot ? `<span class="est"><b>${tot} ${plural(tot, 'imóvel compatível', 'imóveis compatíveis')}</b></span>` : '')
+      + (nn ? `<span class="nvb">${nn} ${plural(nn, 'novo', 'novos')} para enviar</span>` : '')
       + (dSt !== null ? `<span class="ctt warn"><span class="dot"></span>Em standby ${dSt <= 0 ? 'desde hoje' : 'há ' + dSt + plural(dSt, ' dia', ' dias')}</span>`
         : c.status === 'ativo' ? `<span class="ctt ${cor}"><span class="dot"></span>${frase}</span>` : '');
     // tipo, bairros e valor com cor própria, para não virar uma frase só
@@ -2694,6 +2760,8 @@ document.addEventListener('click', e => {
     case 'sair': try { localStorage.removeItem(LS_AUTH); } catch (er) {} location.reload(); break;
     case 'alimentar': ui.c.f = 'alimentar'; go('clientes'); renderClientes(); break;
     case 'ficha': if (ui.sheet && ui.sheet.kind === 'form') closeSheet(); renderFicha(id); break;
+    // do "Para quem enviar" (aba Imóveis): abre a ficha já nos imóveis novos dele
+    case 'pq-ficha': ui.fonte = 'novos'; ui.j8Mais[id] = 5; if (ui.sheet && ui.sheet.kind === 'form') closeSheet(); renderFicha(id); break;
     case 'edit': openForm(id); break;
     case 'close': closeSheet(); break;
     case 'arquivar': { const c = byId(id); if (c) { saveClient(Object.assign({}, c, { status: 'arquivado' })); closeSheet(); toast(`${firstName(c.nome)} foi para os arquivados.`, { label: 'Desfazer', fn: () => { const x = byId(id); if (x) saveClient(Object.assign({}, x, { status: 'ativo' })); } }); } break; }
@@ -2711,6 +2779,7 @@ document.addEventListener('click', e => {
     // bairro tocado na aba Bairros: abre os clientes ativos que procuram nele
     case 'bairro': ui.c.q = el.dataset.b; ui.c.f = 'ativos'; $('#c-q').value = el.dataset.b; go('clientes'); renderClientes(); break;
     case 'i-fonte': case 'i-tipo': case 'i-ordem': filtroI()[a.slice(2)] = v; filtroI().n = I_PASSO; renderImoveis(); break;
+    case 'i-novos': ui.i.novos = !ui.i.novos; ui.i.n = I_PASSO; renderImoveis(); break;
     case 'i-quartos': filtroI().quartos = +v; filtroI().n = I_PASSO; renderImoveis(); break;
     case 'i-mais': filtroI().n += I_PASSO; renderImoveisLista(); break;
     case 'tema': $('#menu-tema').classList.toggle('hidden'); break;
@@ -2731,7 +2800,7 @@ document.addEventListener('click', e => {
     case 'f-save': saveForm(); break;
     case 'j8-pdf': baixarPDF(el, el.dataset.c, el.dataset.cli); break;
     case 'j8-mais': ui.j8Mais[id] = (ui.j8Mais[id] || 5) + 5; renderFicha(id); break;
-    case 'fonte': ui.fonte = v; lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
+    case 'fonte': ui.fonte = v; if (v !== 'novos') lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
     case 'j8-desc': copiarDescritivo(el, el.dataset.c); break;
     case 'j8-capa': ui.capaDe = ui.capaDe === el.dataset.c ? null : el.dataset.c; redesenhaCartoes(); break;
     case 'capa-pick': {
@@ -2776,7 +2845,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-12c';
+const VERSAO = '2026-11-12d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
