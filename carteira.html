@@ -1209,9 +1209,9 @@ function fichaPDF(d) {
   else if (grupo === 'Terreno') { if (d.at || d.a) l.push(['Área do terreno', m2(d.at || d.a)]); }
   else if (d.a) l.push(['Área', m2(d.a)]);
   if (ehCasa || ehApto) {
-    if (d.q) l.push(['Quartos', d.q]);
+    // 12/11, pedido dele: 4 quartos e 4 suítes = só "Suítes 4"; 4 quartos e 3 suítes = os dois. Banheiros não entram.
+    if (d.q && !(d.s && d.s >= d.q)) l.push(['Quartos', d.q]);
     if (d.s) l.push(['Suítes', d.s]);
-    if (d.bh) l.push(['Banheiros', d.bh]);
     if (d.v) l.push(['Vagas', d.v]);
   }
   if (d.ano > 1900) l.push(['Ano de construção', d.ano]);
@@ -1265,14 +1265,18 @@ function capaPDF(doc, d, foto, cl) {
   });
   // coluna da direita
   const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
-  // título: o empreendimento; sem ele, no padrão do Matheus, "Casa no Jardim Social"
-  const titulo = emp || `${tipo} ${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`;
+  // título: o empreendimento; sem ele, no padrão do Matheus, "Casa de rua no Portão" / "Apartamento no Batel"
+  const titulo = emp || `${tipoDeRua(d) || tipo} ${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`;
   let y = fy + 8;
+  // "SELEÇÃO EXCLUSIVA" e, embaixo, para quem é, com o nome completo (12/11, pedido dele)
   doc.setFontSize(8); doc.setTextColor(224, 102, 44);
-  doc.text(cl ? 'SELEÇÃO PARA ' + firstName(cl.nome).toLocaleUpperCase('pt-BR') : 'SELEÇÃO EXCLUSIVA', rx, y, { charSpace: 1.6 });
+  doc.text('SELEÇÃO EXCLUSIVA', rx, y, { charSpace: 1.6 });
+  if (cl) { y += 17; doc.setFontSize(11); doc.setTextColor(56, 56, 56); doc.text(doc.splitTextToSize('Para ' + nomeProprio(cl.nome), rw)[0], rx, y); }
   y += 34; doc.setFontSize(24); doc.setTextColor(44, 46, 51);
   const tl = doc.splitTextToSize(titulo, rw).slice(0, 2); doc.text(tl, rx, y, { lineHeightFactor: 1.15 }); y += (tl.length - 1) * 27.6 + 22;
   doc.setFontSize(10.5); doc.setTextColor(135, 135, 135); doc.text(emp ? `${tipo} · ${d.b}` : (d.ci || 'Curitiba'), rx, y);
+  // endereço do anúncio, quando ele mostra (rua e número; o complemento não entra)
+  if (enDe(d)) { const el = doc.splitTextToSize(enDe(d), rw).slice(0, 2); y += 15; doc.text(el, rx, y, { lineHeightFactor: 1.35 }); y += (el.length - 1) * 14; }
   y += 22; doc.setDrawColor(224, 102, 44); doc.setLineWidth(1); doc.line(rx, y, rx + 36, y); y += 30;
   // ficha técnica em duas colunas: rótulo pequeno em maiúsculas e o número grande
   const cel = fichaPDF(d), cw = (rw - 20) / 2, lin = Math.ceil(cel.length / 2);
@@ -1355,12 +1359,18 @@ async function baixarPDF(btn, c, cli) {
 // Descritivo para o cliente, no modelo do Matheus. Casa: terreno + área construída. Apartamento: só a privativa.
 const m2 = v => Math.round(v).toLocaleString('pt-BR') + ' m²';
 const listaPt = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
+// casa e sobrado que não são de condomínio: "Casa de rua" / "Sobrado de rua" (o resto fica com o nome do tipo)
+const tipoDeRua = d => ({ Casa: 'Casa de rua', Sobrado: 'Sobrado de rua' })[d.tc] || '';
+// endereço (rua e número) vem do resumo do estoque; o arquivo de detalhes de algumas imobiliárias não traz
+const enDe = d => String(d.en || (IMOVEL.get(d.k) || {}).en || '').trim();
 function descritivo(d) {
   const tipo = d.rot || 'Imóvel';
   const grupo = GRUPO[d.tc] || '';
   const ehCasa = grupo === 'Casa', ehApto = grupo === 'Apartamento' || grupo === 'Cobertura';
   const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
-  const titulo = `*${emp || tipo}, ${d.b}*`;
+  // 12/11, pedido dele: "*Vivenda Tabor, Campo Comprido*" e, na linha de baixo, o endereço (quando o anúncio mostra);
+  // casa ou sobrado fora de condomínio vira "Casa de rua, Portão"
+  const titulo = `*${emp || tipoDeRua(d) || tipo}, ${d.b}*` + (enDe(d) ? '\n' + enDe(d) : '');
   // cômodos e vagas
   const partes = [];
   if (ehCasa) {
@@ -2739,7 +2749,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-10c';
+const VERSAO = '2026-11-12a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
