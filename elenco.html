@@ -711,11 +711,13 @@ const SENHA = 'flor2301';
 const GRUPOS_N = [
   { k: 'ang', nome: 'Angariação', sub: 'Achar o imóvel, o proprietário e visitar', attrs: [
     { k: 'anu', nome: 'Leitura de anúncios', curto: 'Anúncios', desc: 'Lê os anúncios das outras imobiliárias para descobrir o que entregam sem querer: andar, número da casa ou do apartamento, vagas, fotos, e se o imóvel está em várias.' },
-    { k: 'eem', nome: 'Eemovel Brokers', curto: 'Eemovel', desc: 'Com a unidade em mãos, encontra no Eemovel Brokers quem é o proprietário e o telefone dele.' },
-    { k: 'min', nome: 'Mind', curto: 'Mind', desc: 'Sabe usar o Mind, o outro sistema da VIP, para encontrar o proprietário e os dados do imóvel.' },
+    // 12/11 (pedido dele): Eemovel Brokers e Mind viraram um só, "Ferramentas online", e entrou o Parecer de mercado;
+    // os dois começam em 0 para todos (zero0: sem nota guardada, quem já foi avaliado aparece com 0)
+    { k: 'fer', nome: 'Ferramentas online', curto: 'Ferramentas', zero0: true, desc: 'Com a unidade em mãos, usa as ferramentas online da VIP (Eemovel Brokers e Mind) para encontrar o proprietário, o telefone dele e os dados do imóvel.' },
     { k: 'map', nome: 'Mapa cadastral', curto: 'Mapa', desc: 'Localiza o imóvel no Mapa Cadastral: lote, indicação fiscal, sublotes, andares e apartamentos por andar.' },
     { k: 'dun', nome: 'Declaração Unificada', curto: 'Declaração', desc: 'Emite a Declaração Unificada da unidade e confirma qual é o imóvel, a matrícula e a área construída.' },
-    { k: 'vis', nome: 'Visita de angariação', curto: 'Visita', desc: 'Na visita, deixa o proprietário falar, conhece o imóvel e o motivo da venda e mostra autoridade.' }
+    { k: 'vis', nome: 'Visita de angariação', curto: 'Visita', desc: 'Na visita, deixa o proprietário falar, conhece o imóvel e o motivo da venda e mostra autoridade.' },
+    { k: 'par', nome: 'Parecer de mercado', curto: 'Parecer', zero0: true, desc: 'Monta o parecer de mercado do imóvel: escolhe os comparáveis, classifica cada um e chega no valor e nas faixas de preço para apresentar ao proprietário.' }
   ] },
   { k: 'doc', nome: 'Documentação', sub: 'O que pedir, ler os documentos e tirar a matrícula', attrs: [
     { k: 'nec', nome: 'Documentos necessários', curto: 'Necessários', desc: 'Sabe quais documentos pedir ao proprietário para angariar: do imóvel e dele.' },
@@ -736,7 +738,9 @@ const GRUPOS_N = [
 const ATRS = GRUPOS_N.flatMap(g => g.attrs.map(a => Object.assign({ g: g.k }, a)));
 const TEC = ATRS.filter(a => !a.fixo); // os atributos treináveis fazem a capacidade; a dedicação fica à parte
 const TREINAVEIS = TEC;
-const atr = k => ATRS.find(a => a.k === k);
+// Eemovel Brokers e Mind (até 12/11): saíram da tela, mas os treinos já dados neles continuam no histórico e no relatório
+const ATR_LEGADO = [{ k: 'eem', g: 'ang', nome: 'Eemovel Brokers', curto: 'Eemovel' }, { k: 'min', g: 'ang', nome: 'Mind', curto: 'Mind' }];
+const atr = k => ATRS.find(a => a.k === k) || ATR_LEGADO.find(a => a.k === k);
 const REGUA_N = [
   { de: 1, ate: 5, nome: 'Não treinou', o: 'Ainda não aprendeu.' },
   { de: 6, ate: 10, nome: 'Treinou e faz com apoio', o: 'Fez o treinamento e já faz, com apoio.' },
@@ -816,7 +820,8 @@ const ATTRS_ANTIGOS = ['pre'];
 // das etapas de 01/11 (m: 2), guardadas só como histórico
 // e as do Processo (Jetimob, Assinatura, Fotos), que saiu da tela em 02/11
 const ETAPAS_ANTIGAS = ['pes', 'ibk', 'cad', 'abo', 'vis', 'doc', 'jet', 'fot', 'anu', 'ass'];
-const CHAVES = [...new Set(ATTRS.map(a => a.k).concat(ATTRS_ANTIGOS, ETAPAS_ANTIGAS, ATRS.map(a => a.k), ['det']))];
+// e Eemovel ('eem') e Mind ('min'), que viraram Ferramentas online em 12/11: as notas antigas ficam guardadas
+const CHAVES = [...new Set(ATTRS.map(a => a.k).concat(ATTRS_ANTIGOS, ETAPAS_ANTIGAS, ['eem', 'min'], ATRS.map(a => a.k), ['det']))];
 const PROD = { visita: 'Visita de angariação', angariacao: 'Angariação' };
 const TIPOS_IMOVEL = ['Casa', 'Apartamento', 'Cobertura', 'Terreno', 'Comercial'];
 const PERIODOS = [['1', '1º mês'], ['2', '2º mês'], ['3', '3º mês'], ['tudo', 'Tudo']];
@@ -991,7 +996,7 @@ function cleanMentoria(o) {
     foco: typeof o.foco === 'string' ? o.foco : MENT_PADRAO.foco,
     // treino: o que foi treinado (atributos) e quem estava; o título é opcional
     treinos: arr(o.treinos).filter(t => t && t.data && (arr(t.temas).length || t.tema))
-      .map(t => ({ id: String(t.id || newId('t')), data: String(t.data), temas: arr(t.temas).filter(k => ATRS.some(a => a.k === k)), tema: String(t.tema || ''), quem: arr(t.quem).map(String), obs: String(t.obs || ''), res: t.res && typeof t.res === 'object' ? t.res : {} }))
+      .map(t => ({ id: String(t.id || newId('t')), data: String(t.data), temas: arr(t.temas).filter(k => !!atr(k)), tema: String(t.tema || ''), quem: arr(t.quem).map(String), obs: String(t.obs || ''), res: t.res && typeof t.res === 'object' ? t.res : {} }))
       .sort((a, b) => b.data.localeCompare(a.data)),
     atualizadoEm: String(o.atualizadoEm || '')
   };
@@ -1016,6 +1021,8 @@ function notasAte(c, ate, semT) {
     if (a.t) ATRS.forEach(x => { if (n[x.k] === undefined && typeof a.notas[x.k] === 'number') { n[x.k] = a.notas[x.k]; origem[x.k] = 'aval'; } });
     ks.forEach(k => { const v = res && Array.isArray(res[k]) ? res[k][1] : a.notas[k]; if (typeof v === 'number') { n[k] = v; origem[k] = 'aval'; } });
   });
+  // atributos que entraram depois (Ferramentas online, Parecer de mercado): quem já foi avaliado começa em 0
+  if (avs.length) ATRS.forEach(x => { if (x.zero0 && n[x.k] === undefined) { n[x.k] = 0; origem[x.k] = 'aval'; } });
   return { n, origem, av: avs[avs.length - 1] || null };
 }
 // notas de hoje (ou de uma data); quem participou de um treino do atributo está, no mínimo, em 6 ("Treinou")
@@ -1451,7 +1458,7 @@ function graficoProd(linhas) {
 // ── TREINO: os treinos dados e o quadro do time (todos os atributos de todo mundo) ──
 function renderTreino() {
   const T = mentoria.treinos, lista = ordenados();
-  const cob = new Set(T.flatMap(t => t.temas)), pessoas = new Set(T.flatMap(t => t.quem));
+  const cob = new Set(T.flatMap(t => t.temas).filter(k => ATRS.some(a => a.k === k))), pessoas = new Set(T.flatMap(t => t.quem));
   const cel = (c, N, a) => { const v = N.n[a.k]; return `<td class="mxn ${nivel(v)}${N.origem[a.k] === 'treino' ? ' tr' : ''}" title="${esc(c.nome)} · ${a.nome}">${typeof v === 'number' ? v : '–'}</td>`; };
   const Ns = lista.map(c => ({ c, N: notasDe(c) }));
   const mediaAt = a => { const v = Ns.map(x => x.N.n[a.k]).filter(x => typeof x === 'number'); return v.length ? Math.round(v.reduce((s, x) => s + x, 0) / v.length) : null; };
@@ -1546,7 +1553,7 @@ function paginasRelatorio(opt) {
   const seta = E => { const d = (mediaTec(E.hj) ?? 0) - (mediaTec(E.p) ?? 0); return d > 0.001 ? '<span class="r-up r-seta">▲</span>' : d < -0.001 ? '<span class="r-dn r-seta">▼</span>' : '<span class="r-eq r-seta">–</span>'; };
   const periodoTxt = `${fmtDate(P.de)} a ${fmtDate(P.fim)}`;
   // o que foi treinado no período, por grupo, sem contar vezes; as visitas em campo à parte, com o valor dos imóveis
-  const temasP = TREINAVEIS.filter(a => T.some(t => t.temas.includes(a.k)));
+  const temasP = TREINAVEIS.concat(ATR_LEGADO).filter(a => T.some(t => t.temas.includes(a.k)));
   const valorCampo = T.reduce((s, t) => s + t.quem.reduce((s2, id) => { const c = byId(id), v = c ? visitaDoTreino(t, c) : null; return s2 + (v ? v.valor : 0); }, 0), 0);
   // a leitura do mês: o texto, o foco do mês seguinte em destaque e as ações (linhas com "- ")
   const linhasL = (mentoria.leitura || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
@@ -1805,7 +1812,7 @@ function sheetAval(id, avId) {
   form = { tipo: 'aval', id, avId: avId || null, notas: {}, ref: atual || !N.av ? {} : N.n };
   ATRS.forEach(a => { form.notas[a.k] = typeof base[a.k] === 'number' ? base[a.k] : 1; });
   const linha = a => `<div class="sl"><div class="sl-t"><b>${a.nome}</b><span class="sl-f" id="rb-${a.k}"></span><span class="sl-v" id="v-${a.k}"></span></div>
-    <input type="range" min="1" max="20" step="1" id="r-${a.k}" data-k="${a.k}" value="${form.notas[a.k]}" aria-label="${a.nome}"></div>`;
+    <input type="range" min="0" max="20" step="1" id="r-${a.k}" data-k="${a.k}" value="${form.notas[a.k]}" aria-label="${a.nome}"></div>`;
   openSheet(shHead(atual ? 'Editar avaliação' : N.av ? 'Atualizar notas' : 'Primeira avaliação', esc(c.nome)) + `<div class="sh-b">
     <p class="hintp">${N.av && !atual ? 'Já vem com as notas de hoje. Arraste só o que mudou.' : 'Arraste cada barra até a nota.'}</p>
     <div class="escala">${REGUA_N.map(r => `<div><b class="${nivel(r.ate)}">${r.de} a ${r.ate} · ${r.nome}</b>${r.o}</div>`).join('')}</div>
@@ -2144,7 +2151,7 @@ document.addEventListener('click', e => {
 // ── VERSÃO ──
 // O GitHub Pages deixa o navegador guardar a página por 10 minutos. Ao abrir, confere se
 // já existe versão nova e, se existir, abre por um endereço novo (que não está guardado).
-const VERSAO = '2026-11-09b';
+const VERSAO = '2026-11-12a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
