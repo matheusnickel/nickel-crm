@@ -383,6 +383,45 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .imais-b select{width:100%}
 .imais-on{color:var(--or2)}
 .iml{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-top:16px;align-items:start}
+/* temperatura (15/11): avisos, triagem e escolha do standby */
+.cavisos{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.cavisos:empty{display:none}
+.aviso{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;padding:10px 14px;border-radius:10px;border:1px solid var(--orline);background:var(--orbg);color:var(--or2);font-size:13px;flex:1 1 280px}
+.aviso b{font-size:14px;font-weight:700}
+.aviso span{color:var(--text2)}
+.aviso.ret{border-color:#e0b25a;background:var(--warnbg);color:var(--warn)}
+.aviso.ret.on{box-shadow:0 0 0 2px #e0b25a inset}
+.tri-c{display:flex;flex-direction:column;gap:12px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.tri-n{display:flex;align-items:center;gap:12px}
+.tri-n > div{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0}
+.tri-n b{font-size:19px;font-weight:600}
+.tri-n small{flex-basis:100%;font-size:13px;color:var(--muted)}
+.tri-env{display:flex;flex-direction:column;gap:1px;margin-top:3px;font-size:12.5px;color:var(--muted)}
+.tri-wa{justify-content:center}
+.tri-sug{font-size:13.5px;color:var(--text2);padding:2px 2px 0}
+.tri-sug b{color:var(--text)}
+.tri-bs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tri-b{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:13px 12px;border-radius:12px;border:1.5px solid var(--line2);background:var(--card)}
+.tri-b b{font-size:16px;font-weight:700}
+.tri-b small{font-size:12px;color:var(--muted);line-height:1.35}
+.tri-b em{position:absolute;top:-9px;right:10px;font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--onink);border-radius:99px;padding:2px 8px}
+.tri-b.t-cqq b{color:var(--red)}.tri-b.t-cq b{color:var(--tq2)}.tri-b.t-st b{color:var(--warn)}
+.tri-b.t-cqq:hover,.tri-b.t-cqq.sug{border-color:var(--red);background:var(--redbg)}
+.tri-b.t-cq:hover,.tri-b.t-cq.sug{border-color:var(--tq);background:var(--tqbg)}
+.tri-b.t-st:hover,.tri-b.t-st.sug,.tri-b.t-st.on{border-color:#e0b25a;background:var(--warnbg)}
+.tri-nav{display:flex;justify-content:space-between;gap:10px;padding-top:2px}
+.tri-fim{display:flex;flex-direction:column;gap:16px;align-items:flex-start;font-size:14.5px}
+.tri-tot{display:flex;gap:10px}
+.tri-tot span{display:flex;flex-direction:column;align-items:center;min-width:86px;padding:10px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+.tri-tot b{font-size:24px;font-weight:300}
+.tri-tot .t-cqq b{color:var(--red)}.tri-tot .t-cq b{color:var(--tq2)}.tri-tot .t-st b{color:var(--warn)}
+.stp{display:flex;flex-direction:column;gap:10px;padding:14px;background:var(--warnbg);border-radius:12px}
+.stp .lbl{margin:0}
+.stp-d{display:flex;align-items:center;gap:10px;font-size:13px}
+.stp-d input{max-width:190px}
+.stp > input{width:100%}
+/* no celular os três botões ficam lado a lado e sem a explicação, para caber na tela sem rolar */
+@media (max-width:520px){.tri-b{align-items:center;padding:14px 6px}.tri-b small{display:none}.tri-b em{right:50%;transform:translateX(50%)}.tri-c{gap:8px;padding:12px}.tri-c .info{font-size:13.5px}}
 /* novos separados por atualização (15/11) */
 .ents{margin-top:14px}
 .ent-h{grid-column:1 / -1;display:flex;align-items:baseline;gap:10px;padding:10px 2px 2px;border-bottom:1px solid var(--line2)}
@@ -691,6 +730,7 @@ button.pcs:hover{border-color:var(--tq)}
       <div class="bar-tools">
         <div class="ta"><input id="c-q" type="search" placeholder="Nome, bairro ou telefone…" autocomplete="off" aria-label="Buscar cliente"><span class="kbd" id="c-kbd">/</span></div>
       </div>
+      <div class="cavisos" id="c-avisos"></div>
       <div class="chips sm" id="c-filtros" style="margin-top:14px"></div>
       <div id="c-list" class="list" style="margin-top:16px"></div>
     </section>
@@ -874,7 +914,12 @@ function docFields(c) { const o = Object.assign({}, c); delete o.id; return toFs
 function cleanClient(o) {
   o = o || {};
   const envios = Array.isArray(o.envios) ? o.envios.filter(e => e && e.data) : [];
+  const st = o.etapa === 'standby';
   return {
+    // temperatura (15/11): standby com data para retomar e o motivo ("só ano que vem"); revisadoEm = última triagem
+    retomar: st && /^\d{4}-\d{2}-\d{2}$/.test(o.retomar || '') ? o.retomar : '',
+    motivoSt: st ? String(o.motivoSt || '') : '',
+    revisadoEm: String(o.revisadoEm || ''),
     // etapa do funil: sem etapa gravada, quem já recebeu imóvel está em Conversa qualificada; quem não recebeu, em Qualificando
     etapa: ETAPA[o.etapa] ? o.etapa : envios.length ? 'cq' : 'qual',
     etapaEm: String(o.etapaEm || ''),
@@ -1693,12 +1738,17 @@ function redesenhaCartoes() {
 
 // ── RENDER: CLIENTES ──
 // os três botões de cima (12/11): Ativos (o quadro), Standby e Arquivados; "precisam receber imóvel" continua no cartão do painel
+// 15/11: Quente e Fria também viram botões (os três níveis: Quente · Fria · Standby)
 const FILTROS = [
   ['ativos', 'Ativos', c => c.status === 'ativo' && !emStandby(c)],
+  ['quente', 'Quente', c => c.status === 'ativo' && c.etapa === 'cqq'],
+  ['fria', 'Fria', c => c.status === 'ativo' && c.etapa === 'cq'],
   ['standby', 'Standby', c => c.status === 'ativo' && emStandby(c)],
   ['arquivado', 'Arquivados', c => c.status === 'arquivado'],
-  ['alimentar', 'Precisam receber imóvel', precisaAlimentar, true] // sem botão: abre pelo cartão "Precisam de imóvel"
+  ['alimentar', 'Precisam receber imóvel', precisaAlimentar, true], // sem botão: abre pelo cartão "Precisam de imóvel"
+  ['retomar', 'Retomar agora', c => paraRetomar(c), true] // sem botão: abre pelo aviso "N para retomar"
 ];
+const paraRetomar = c => c.status === 'ativo' && emStandby(c) && !!c.retomar && c.retomar <= hojeISO();
 function matchQ(c, q) {
   if (!q) return true;
   const qd = digits(q);
@@ -1759,11 +1809,17 @@ function renderClientes() {
   // o botão Standby também recebe o cartão arrastado do quadro (solta em cima dele = vai para Standby)
   $('#c-filtros').innerHTML = FILTROS.filter(f => !f[3]).map(([k, l, fn]) => `<button class="chip${ui.c.f === k ? ' on' : ''}${k === 'standby' ? ' drop-st' : ''}" data-act="c-f" data-v="${k}"${k === 'standby' ? ' data-etapa="standby"' : ''}>${l}<span class="n">${clientes.filter(fn).length}</span></button>`).join('')
     + `<div class="modo">${[['quadro', 'Etapas'], ['lista', 'Lista']].map(([k, l]) => `<button class="${ui.c.modo === k ? 'on' : ''}" data-act="c-modo" data-v="${k}">${l}</button>`).join('')}</div>`;
+  // avisos em cima dos botões: clientes a revisar (triagem da temperatura) e standby com a data de retomar vencida
+  const nTri = filaTriagem().length, nRet = clientes.filter(paraRetomar).length;
+  $('#c-avisos').innerHTML = (nTri ? `<button class="aviso tri" data-act="tri-abrir"><b>Revisar temperatura</b><span>${nTri} ${plural(nTri, 'cliente', 'clientes')} para classificar em Quente, Fria ou Standby</span></button>` : '')
+    + (nRet ? `<button class="aviso ret${ui.c.f === 'retomar' ? ' on' : ''}" data-act="c-f" data-v="retomar"><b>Retomar agora</b><span>${nRet} ${plural(nRet, 'cliente', 'clientes')} em standby já ${plural(nRet, 'chegou', 'chegaram')} na data de retomar</span></button>` : '');
   const fn = (FILTROS.find(f => f[0] === ui.c.f) || FILTROS[0])[2];
   let rows = clientes.filter(c => fn(c) && matchQ(c, q));
   if (quadro && clientes.length) { $('#c-list').innerHTML = quadroClientes(rows); return; }
-  if (ui.c.f === 'alimentar') rows.sort((a, b) => { const da = diasSemEnvio(a), db = diasSemEnvio(b); return (db === null ? 1e6 : db) - (da === null ? 1e6 : da); });
-  else if (ui.c.f === 'standby') rows.sort((a, b) => String(etapaDesde(a)).localeCompare(String(etapaDesde(b)))); // há mais tempo em standby primeiro
+  // Quente e Fria: quem está há mais tempo sem receber imóvel primeiro
+  if (ui.c.f === 'alimentar' || ui.c.f === 'quente' || ui.c.f === 'fria') rows.sort((a, b) => { const da = diasSemEnvio(a), db = diasSemEnvio(b); return (db === null ? 1e6 : db) - (da === null ? 1e6 : da); });
+  // Standby: pela data de retomar (a mais próxima primeiro; sem data no fim, há mais tempo em standby primeiro)
+  else if (ui.c.f === 'standby' || ui.c.f === 'retomar') rows.sort((a, b) => (a.retomar || '9999').localeCompare(b.retomar || '9999') || String(etapaDesde(a)).localeCompare(String(etapaDesde(b))));
   else rows.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   if (!clientes.length) { $('#c-list').innerHTML = `<div class="empty"><h3>Sua carteira está vazia</h3><p>Comece pelos clientes que estão no seu WhatsApp agora.</p><button class="btn-or" data-act="novo">+ Cadastrar cliente</button></div>`; return; }
   if (!rows.length) { $('#c-list').innerHTML = `<div class="empty"><h3>Ninguém encontrado</h3><p>${q ? 'Nenhum cliente com “' + esc(ui.c.q) + '” neste filtro.' : 'Nenhum cliente neste filtro.'}</p></div>`; return; }
@@ -1775,7 +1831,7 @@ function renderClientes() {
     const nn = novosPara(c).length; // novos (últimos 30 dias) que servem e ele ainda não recebeu
     const side = (tot ? `<span class="est"><b>${tot} ${plural(tot, 'imóvel compatível', 'imóveis compatíveis')}</b></span>` : '')
       + (nn ? `<span class="nvb">${nn} ${plural(nn, 'novo', 'novos')} para enviar</span>` : '')
-      + (dSt !== null ? `<span class="ctt warn"><span class="dot"></span>Em standby ${dSt <= 0 ? 'desde hoje' : 'há ' + dSt + plural(dSt, ' dia', ' dias')}</span>`
+      + (dSt !== null ? `<span class="ctt warn"><span class="dot"></span>${c.retomar ? (c.retomar <= hojeISO() ? 'Retomar agora' : 'Retomar em ' + fmtDate(c.retomar)) : 'Em standby ' + (dSt <= 0 ? 'desde hoje' : 'há ' + dSt + plural(dSt, ' dia', ' dias'))}${c.motivoSt ? ' · ' + esc(c.motivoSt) : ''}</span>`
         : c.status === 'ativo' ? `<span class="ctt ${cor}"><span class="dot"></span>${frase}</span>` : '');
     // tipo, bairros e valor com cor própria, para não virar uma frase só
     const meta = [['mt', tiposResumo(c.tipos).join(', ')], ['mb', c.bairros.join(', ')], ['mv', faixaValor(c)]].filter(x => x[1]).map(([k, v]) => `<span class="${k}">${esc(v)}</span>`).join('<i class="ms"></i>');
@@ -2587,6 +2643,7 @@ function renderAll() {
   renderClientes();
   if (ui.tab === 'metricas') renderMetricas();
   if (ui.sheet && ui.sheet.kind === 'ficha') { if (byId(ui.sheet.id)) renderFicha(ui.sheet.id); else closeSheet(); }
+  if (ui.sheet && ui.sheet.kind === 'triagem') renderTriagem();
   updateSync();
 }
 
@@ -2619,7 +2676,7 @@ function openSheet(html, state) {
   encaixa();
 }
 function closeSheet() {
-  ui.vis = null; // visita começada e não salva some ao fechar a ficha
+  ui.vis = null; ui.stF = null; ui.tri = null; // visita/standby começados e não salvos somem ao fechar
   // parecer fechado sem salvar: fica como rascunho neste aparelho (aviso na aba Parecer)
   if (ui.sheet && ui.sheet.kind === 'parecer') {
     if (par && par.dirty) { guardaRascunho(); toast('O parecer não foi salvo. Ficou como rascunho na aba Parecer.'); }
@@ -2698,6 +2755,97 @@ function salvarVisita(id) {
   toast(`Visita registrada${sobe.etapa ? `. ${nomeProprio(firstName(c.nome))} foi para Visita` : ''}.`);
 }
 
+// ── TEMPERATURA: QUENTE · FRIA · STANDBY (15/11) ──
+// O sistema não lê o WhatsApp: a triagem mostra um cliente por vez (o que procura, o que já recebeu, visitas), com uma
+// sugestão pelos dados, e o Matheus confirma com um toque depois de olhar a conversa. Quem foi classificado sai da fila
+// e volta para ela 30 dias depois (revisão do mês); standby com data de retomar no futuro não volta antes da data.
+const TRI_ETAPAS = ['qual', 'cq', 'cqq', 'standby'];
+const TRI_REVISA = 30;
+function filaTriagem() {
+  const h = hojeISO(), pul = (ui.tri && ui.tri.pulados) || [];
+  return clientes.filter(c => c.status === 'ativo' && TRI_ETAPAS.includes(c.etapa) && !pul.includes(c.id)
+      // standby que chegou na data de retomar entra na fila na hora, mesmo revisado há pouco
+      && (!c.revisadoEm || daysSince(c.revisadoEm) >= TRI_REVISA || paraRetomar(c)) && !(c.etapa === 'standby' && c.retomar && c.retomar > h))
+    // CQ quente, CQ fria, Qualificando e por último o standby; dentro de cada um, quem recebeu imóvel mais recentemente
+    // primeiro (é a conversa que está no topo do WhatsApp)
+    .sort((a, b) => ['cqq', 'cq', 'qual', 'standby'].indexOf(a.etapa) - ['cqq', 'cq', 'qual', 'standby'].indexOf(b.etapa)
+      || ((diasSemEnvio(a) ?? 1e6) - (diasSemEnvio(b) ?? 1e6)));
+}
+// sugestão pelos dados que existem (envios, visitas, cadastro); o que está no WhatsApp só ele sabe
+function sugereTemp(c) {
+  const env14 = c.envios.filter(e => (daysSince(e.data) ?? 99) <= 14).length, sem = diasSemEnvio(c), cad = daysSince(c.criadoEm) ?? 0;
+  if (c.visitas.length) return ['cqq', 'Tem visita registrada'];
+  if (c.etapa === 'cqq') return ['cqq', 'Já estava em CQ quente'];
+  if (env14 >= 3) return ['cqq', `Recebeu ${env14} imóveis nas últimas 2 semanas`];
+  if (c.etapa === 'standby') return ['standby', 'Já estava em standby'];
+  if (sem !== null && sem > 30) return ['standby', `Há ${sem} dias sem receber imóvel`];
+  if (sem === null && cad > 30) return ['standby', `Cadastrado há ${cad} dias e nunca recebeu imóvel`];
+  if (sem === null) return ['cq', 'Lead novo, ainda não recebeu imóvel'];
+  return ['cq', 'Recebe imóveis, sem sinal de urgência'];
+}
+const TEMP = { cqq: ['Quente', 'Quer comprar nos próximos meses e responde. Recebe imóvel toda semana.'], cq: ['Fria', 'Quer comprar, mas sem pressa. Recebe imóvel quando aparecer algo muito bom.'], standby: ['Standby', 'Não compra agora. Fica parado até a data de retomar.'] };
+// datas prontas para retomar o standby
+function opcoesRetomar() {
+  const d = new Date(), mais = m => { const x = new Date(d.getFullYear(), d.getMonth() + m, d.getDate()); return `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`; };
+  const jan = `${d.getFullYear() + 1}-01-05`;
+  return [[mais(1), 'Em 1 mês'], [mais(3), 'Em 3 meses'], [mais(6), 'Em 6 meses'], [jan, 'Janeiro de ' + (d.getFullYear() + 1)], ['', 'Sem data']];
+}
+// escolha da data de retomar e do motivo (na triagem e na ficha); p = prefixo das ações
+function stPicker(s, p) {
+  return `<div class="stp"><span class="lbl">Retomar quando?</span>
+    <div class="chips sm">${opcoesRetomar().map(([d, l]) => `<button class="chip${s.retomar === d ? ' on' : ''}" data-act="${p}-ret" data-v="${d}">${l}</button>`).join('')}</div>
+    <label class="stp-d"><span class="muted">ou no dia</span><input type="date" id="${p}-data" value="${esc(s.retomar)}"></label>
+    <input id="${p}-mot" maxlength="80" placeholder="Motivo (opcional): só ano que vem, precisa vender o dele…" value="${esc(s.motivo)}">
+    <div class="vis-a"><button class="btn-or" data-act="${p}-ok">Colocar em standby</button><button class="link" data-act="${p}-cancel">Cancelar</button></div></div>`;
+}
+function classifica(c, etapa, st) {
+  const muda = c.etapa !== etapa;
+  saveClient(Object.assign({}, c, { etapa, revisadoEm: hojeISO() }, muda ? { etapaEm: nowLocal() } : {},
+    etapa === 'standby' ? { retomar: (st && st.retomar) || '', motivoSt: ((st && st.motivo) || '').trim() } : {}));
+}
+function abreTriagem() {
+  ui.tri = { atual: null, hist: [], pulados: [], st: null, feitos: 0 };
+  openSheet('', { kind: 'triagem' }); renderTriagem();
+}
+function renderTriagem() {
+  const t = ui.tri; if (!t) return;
+  const fila = filaTriagem();
+  if (!t.atual || !byId(t.atual)) t.atual = fila.length ? fila[0].id : null;
+  const c = t.atual && byId(t.atual), resta = fila.filter(x => x.id !== t.atual).length + (c ? 1 : 0);
+  const topo = `<div class="sh-h"><div style="min-width:0"><div class="kick">Revisar temperatura</div><h2>${c ? `Faltam ${resta}` : 'Tudo revisado'}</h2><div class="muted" style="font-size:13.5px;margin-top:3px">${t.feitos} ${plural(t.feitos, 'classificado', 'classificados')} agora · abra a conversa no WhatsApp e escolha</div></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>`;
+  if (!c) {
+    const n = k => clientes.filter(x => x.status === 'ativo' && x.etapa === k).length;
+    const np = t.pulados.length;
+    $('#sheet').innerHTML = topo + `<div class="sh-b"><div class="tri-fim"><p>${np ? `Pronto. ${np} ${plural(np, 'cliente pulado ficou', 'clientes pulados ficaram')} para depois: ${plural(np, 'aparece', 'aparecem')} de novo da próxima vez que você abrir a revisão.` : 'Todos os clientes ativos estão classificados.'} Cada um volta para cá 30 dias depois da revisão (os de standby, só na data de retomar).</p>
+      <div class="tri-tot"><span class="t-cqq"><b>${n('cqq')}</b>Quente</span><span class="t-cq"><b>${n('cq')}</b>Fria</span><span class="t-st"><b>${n('standby')}</b>Standby</span></div>
+      <button class="btn-ghost" data-act="close">Fechar</button></div></div>`;
+    return;
+  }
+  const [sug, porque] = sugereTemp(c), wa = c.whats && waNumber(c.whats).length >= 12;
+  const envs = [...c.envios].sort((a, b) => a.data < b.data ? 1 : -1), sem = diasSemEnvio(c), cad = daysSince(c.criadoEm);
+  const meta = [tiposResumo(c.tipos).join(', '), c.bairros.join(', '), faixaValor(c)].filter(Boolean).join(' · ');
+  const btn = k => `<button class="tri-b t-${k === 'standby' ? 'st' : k}${sug === k ? ' sug' : ''}${t.st && k === 'standby' ? ' on' : ''}" data-act="${k === 'standby' ? 'tri-st' : 'tri-set'}" data-v="${k}"><b>${TEMP[k][0]}</b><small>${TEMP[k][1]}</small>${sug === k ? '<em>Sugestão</em>' : ''}</button>`;
+  $('#sheet').innerHTML = topo + `<div class="sh-b">
+    <div class="tri-c">
+      <div class="tri-n">${avatar(c)}<div style="min-width:0"><b class="np">${esc(nomeProprio(c.nome))}</b><span class="pill et-${c.etapa}">${ETAPA[c.etapa][2]}</span><small>${esc(meta)}</small></div></div>
+      <dl class="info">
+        <dt>Cadastro</dt><dd>${c.criadoEm ? fmtDate(c.criadoEm) + (cad !== null ? ` · há ${cad} ${plural(cad, 'dia', 'dias')}` : '') : '—'}</dd>
+        <dt>Imóveis enviados</dt><dd>${envs.length ? `${envs.length} · o último ${sem === 0 ? 'hoje' : 'há ' + sem + plural(sem, ' dia', ' dias')}` : 'Nenhum ainda'}${envs.length ? `<div class="tri-env">${envs.slice(0, 3).map(e => `<span>${fmtShort(e.data)} · ${esc([e.tipo, e.bairro].filter(Boolean).join(' · ') || 'Imóvel')}${e.valor ? ' · ' + fmtValor(e.valor) : ''}</span>`).join('')}</div>` : ''}</dd>
+        ${c.visitas.length ? `<dt>Visitas</dt><dd>${c.visitas.map(v => `${fmtDate(v.data).slice(0, 5)} · ${esc(v.k ? v.nome || [v.tipo, v.bairro].filter(Boolean).join(' · ') : v.txt)}`).join('<br>')}</dd>` : ''}
+        ${c.obs ? `<dt>Observações</dt><dd>${esc(c.obs)}</dd>` : ''}
+        ${c.revisadoEm ? `<dt>Última revisão</dt><dd>${fmtDate(c.revisadoEm)}</dd>` : ''}
+      </dl>
+      ${wa ? `<a class="btn-or tri-wa" href="${esc(waLink(c))}" target="_blank" rel="noopener">${WA_ICON.replace('<svg', '<svg width="18" height="18"')}Abrir conversa no WhatsApp</a>` : ''}
+    </div>
+    <div class="tri-sug">Sugestão: <b>${TEMP[sug][0]}</b> · ${esc(porque)}</div>
+    <div class="tri-bs">${btn('cqq')}${btn('cq')}${btn('standby')}</div>
+    ${t.st ? stPicker(t.st, 'tri') : ''}
+    <div class="tri-nav">${t.hist.length ? '<button class="link" data-act="tri-voltar">← Voltar ao anterior</button>' : '<span></span>'}<button class="link" data-act="tri-pular">Pular (ainda não sei)</button></div>
+  </div>`;
+}
+// depois de classificar: guarda quem foi (para "Voltar") e passa para o próximo da fila
+function triProximo(id) { const t = ui.tri; t.hist.push(id); t.feitos++; t.atual = null; t.st = null; renderTriagem(); const b = $('#sheet .sh-b'); if (b) b.scrollTop = 0; }
+
 function renderFicha(id, confirmDel) {
   const c = byId(id); if (!c) return;
   const envios = [...c.envios].sort((a, b) => a.data < b.data ? 1 : -1);
@@ -2711,8 +2859,9 @@ function renderFicha(id, confirmDel) {
     </div>
     ${c.status === 'ativo' ? `<div><span class="lbl">Etapa<span class="hint">${(() => { const d = daysSince(etapaDesde(c)); return d === null ? '' : d <= 0 ? 'desde hoje' : 'há ' + d + plural(d, ' dia', ' dias'); })()}</span></span>
       <div class="etseg">${ETAPAS_QUADRO.map(([k, nome, curto]) => `<button class="et-${k}${c.etapa === k ? ' on' : ''}" data-act="etapa" data-id="${c.id}" data-v="${k}" title="${nome}">${curto}</button>`).join('')}</div>
-      ${emStandby(c) ? '<div class="dup" style="margin-top:10px">Em standby. Para tirar, escolha a etapa acima.</div>'
-        : `<button class="link" style="margin-top:10px" data-act="etapa" data-id="${c.id}" data-v="standby">Colocar em standby</button>`}</div>` : ''}
+      ${ui.stF && ui.stF.id === c.id ? `<div style="margin-top:10px">${stPicker(ui.stF, 'st')}</div>`
+        : emStandby(c) ? `<div class="dup" style="margin-top:10px">Em standby${c.retomar ? `: retomar em <b>${fmtDate(c.retomar)}</b>` : ', sem data para retomar'}${c.motivoSt ? ` · ${esc(c.motivoSt)}` : ''}. <button class="link" data-act="st-abrir" data-id="${c.id}">Alterar</button><br><small>Para tirar do standby, escolha a etapa acima.</small></div>`
+        : `<button class="link" style="margin-top:10px" data-act="st-abrir" data-id="${c.id}">Colocar em standby</button>`}</div>` : ''}
     ${visitasSection(c)}
     <div class="j8box">${j8Section(c)}</div>
     <div><span class="lbl">O que procura</span>
@@ -2940,6 +3089,20 @@ document.addEventListener('click', e => {
       break;
     }
     case 'env-del': { const c = byId(id); if (c) { saveClient(Object.assign({}, c, { envios: c.envios.filter(x => x.id !== el.dataset.e) })); } break; }
+    // temperatura: triagem
+    case 'tri-abrir': abreTriagem(); break;
+    case 'tri-set': { const c = ui.tri && byId(ui.tri.atual); if (c) { classifica(c, v); toast(`${nomeProprio(firstName(c.nome))}: ${TEMP[v][0]}.`); triProximo(c.id); } break; }
+    case 'tri-st': if (ui.tri) { const c = byId(ui.tri.atual); ui.tri.st = ui.tri.st ? null : { retomar: (c && c.retomar) || '', motivo: (c && c.motivoSt) || '' }; renderTriagem(); const p = $('.stp'); if (p) p.scrollIntoView({ block: 'nearest' }); } break;
+    case 'tri-ret': if (ui.tri && ui.tri.st) { ui.tri.st.retomar = v; renderTriagem(); } break;
+    case 'tri-cancel': if (ui.tri) { ui.tri.st = null; renderTriagem(); } break;
+    case 'tri-ok': { const c = ui.tri && byId(ui.tri.atual); if (c && ui.tri.st) { classifica(c, 'standby', ui.tri.st); toast(`${nomeProprio(firstName(c.nome))}: Standby${ui.tri.st.retomar ? ', retomar em ' + fmtDate(ui.tri.st.retomar) : ''}.`); triProximo(c.id); } break; }
+    case 'tri-pular': if (ui.tri && ui.tri.atual) { ui.tri.pulados.push(ui.tri.atual); ui.tri.atual = null; ui.tri.st = null; renderTriagem(); } break;
+    case 'tri-voltar': if (ui.tri && ui.tri.hist.length) { ui.tri.atual = ui.tri.hist.pop(); ui.tri.feitos = Math.max(0, ui.tri.feitos - 1); ui.tri.st = null; renderTriagem(); } break;
+    // standby pela ficha: data de retomar e motivo
+    case 'st-abrir': { const c = byId(id); if (c) { ui.stF = { id, retomar: emStandby(c) ? c.retomar : '', motivo: emStandby(c) ? c.motivoSt : '' }; renderFicha(id); } break; }
+    case 'st-ret': if (ui.stF) { ui.stF.retomar = v; renderFicha(ui.stF.id); } break;
+    case 'st-cancel': if (ui.stF) { const i = ui.stF.id; ui.stF = null; renderFicha(i); } break;
+    case 'st-ok': if (ui.stF) { const c = byId(ui.stF.id), s = ui.stF; ui.stF = null; if (c) { saveClient(Object.assign({}, c, { etapa: 'standby', retomar: s.retomar || '', motivoSt: (s.motivo || '').trim() }, c.etapa !== 'standby' ? { etapaEm: nowLocal() } : {})); toast(`${nomeProprio(firstName(c.nome))} em standby${s.retomar ? ', retomar em ' + fmtDate(s.retomar) : ''}.`); } } break;
     // visitas
     case 'vis-novo': ui.vis = { id, data: hojeISO(), q: '', k: '', txt: '' }; renderFicha(id); setTimeout(() => { const q = $('#v-q'); if (q) q.focus(); }, 30); break;
     case 'vis-cancel': ui.vis = null; renderFicha(id); break;
@@ -3011,6 +3174,12 @@ function bindBuscas() {
     maskMoney(e.target); filtroI()[e.target.id.slice(2)] = parseMoney(e.target.value); filtroI().n = I_PASSO; renderImoveisLista();
   });
   // visita: a busca redesenha só os resultados (o campo continua com o foco); a data fica guardada no rascunho
+  // standby: data e motivo digitados (triagem e ficha) ficam no rascunho
+  document.addEventListener('input', e => {
+    const s = /^tri-/.test(e.target.id) ? ui.tri && ui.tri.st : /^st-/.test(e.target.id) ? ui.stF : null; if (!s) return;
+    if (/-mot$/.test(e.target.id)) s.motivo = e.target.value;
+    if (/-data$/.test(e.target.id)) { s.retomar = e.target.value; e.target.closest('.stp').querySelectorAll('.chip').forEach(b => b.classList.toggle('on', b.dataset.v === s.retomar)); }
+  });
   document.addEventListener('input', e => {
     if (!ui.vis) return;
     if (e.target.id === 'v-q') { ui.vis.q = e.target.value; const c = byId(ui.vis.id), r = $('#v-res'); if (c && r) r.innerHTML = visResultados(c); }
@@ -3030,7 +3199,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-15a';
+const VERSAO = '2026-11-15b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
