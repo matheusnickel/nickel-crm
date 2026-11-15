@@ -383,6 +383,13 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .imais-b select{width:100%}
 .imais-on{color:var(--or2)}
 .iml{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-top:16px;align-items:start}
+/* novos separados por atualização (15/11) */
+.ents{margin-top:14px}
+.ent-h{grid-column:1 / -1;display:flex;align-items:baseline;gap:10px;padding:10px 2px 2px;border-bottom:1px solid var(--line2)}
+.ent-h:first-child{padding-top:0}
+.ent-h b{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.ent-h.ult b{color:var(--or2)}
+.ent-h span{font-size:12.5px;color:var(--faint)}
 
 /* etapas do funil: cinza = qualificando, verde-água = conversa qualificada, laranja = visita, grafite = proposta */
 #c-filtros{align-items:center}
@@ -1129,7 +1136,19 @@ async function carregaEntradas() {
     if (r.ok) { const j = await r.json(); for (const [src, por] of Object.entries(j.por || {})) for (const [d, cods] of Object.entries(por)) cods.forEach(c => ENTRADA.set(src + ':' + c, d)); }
   } catch (e) {}
   IMOVEL.forEach(i => { const ds = [i.k, ...(i.irmaos || [])].map(k => ENTRADA.get(k)); i.ent = ds.every(Boolean) ? ds.sort()[0] : ''; });
+  // dia da última atualização dos estoques (se ela não trouxe nada novo, nenhum grupo leva o nome de "última")
+  ULTIMA_ENT = ESTOQUES.map(e => estoque[e.id] && estoque[e.id].atualizadoEm ? new Date(estoque[e.id].atualizadoEm) : null).filter(d => d && !isNaN(d))
+    .map(d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`).reduce((m, d) => d > m ? d : m, '');
 }
+// 15/11 (pedido dele): os novos separados por atualização — a última (o que acabou de entrar) e as anteriores dos 30 dias
+let ULTIMA_ENT = '';
+const rotuloEnt = d => d === ULTIMA_ENT ? `Última atualização · ${fmtDate(d).slice(0, 5)}${d === hojeISO() ? ' (hoje)' : ''}` : `Atualização de ${fmtDate(d).slice(0, 5)}`;
+// lista de cartões com um título a cada atualização (a lista já vem do que entrou por último para o mais antigo)
+function porAtualizacao(l, card, conta) {
+  let atual = null;
+  return l.map(i => { const h = i.ent !== atual ? `<div class="ent-h${i.ent === ULTIMA_ENT ? ' ult' : ''}"><b>${rotuloEnt(i.ent)}</b>${conta && conta[i.ent] ? `<span>${conta[i.ent]} ${plural(conta[i.ent], 'imóvel', 'imóveis')}</span>` : ''}</div>` : ''; atual = i.ent; return h + card(i); }).join('');
+}
+const contaPorEnt = l => l.reduce((o, i) => (o[i.ent] = (o[i.ent] || 0) + 1, o), {});
 const diasNovo = i => { const d = i.ent ? daysSince(i.ent) : null; return d !== null && d <= NOVO_DIAS ? Math.max(0, d) : null; };
 const ehNovo = i => diasNovo(i) !== null;
 const entrouTxt = i => { const d = diasNovo(i); return d === 0 ? 'Entrou hoje' : d === 1 ? 'Entrou ontem' : `Entrou há ${d} dias`; };
@@ -1595,7 +1614,7 @@ function j8Section(c) {
   if (top.length) carregaJsPDF().catch(() => {});
   const resto = total - mostrar;
   const mais = resto > 0 ? `<button class="j8mais" data-act="j8-mais" data-id="${c.id}">Ver mais ${Math.min(5, resto)} que podem fazer sentido <span class="muted">· ${resto} ${plural(resto, 'restante', 'restantes')}</span></button>` : '';
-  const corpo = top.length ? `<div class="j8l">${top.map(i => j8Card(i, c)).join('')}</div>${mais}`
+  const corpo = top.length ? `<div class="j8l">${fonte === 'novos' ? porAtualizacao(top, i => j8Card(i, c), contaPorEnt(todos)) : top.map(i => j8Card(i, c)).join('')}</div>${mais}`
     : `<p class="muted" style="font-size:14px">Nenhum imóvel à venda ${fonte === 'todas' ? 'nas imobiliárias' : 'na ' + EST[fonte].nome} dentro desse perfil agora. Tente abrir mais os bairros, a metragem ou o valor.</p>`;
   const quando = ESTOQUES.filter(e => estoque[e.id]).map(e => { const d = new Date(estoque[e.id].atualizadoEm); return `${e.nome} de ${pad(d.getDate())}/${pad(d.getMonth() + 1)} · ${estoque[e.id].total.toLocaleString('pt-BR')} à venda`; }).join(' · ');
   return `<span class="lbl">${titulo}</span>${chips}${falhou.length ? `<p class="muted" style="font-size:13px">Não consegui carregar o estoque da ${falhou.join(' e da ')} agora.</p>` : ''}${corpo}<div class="muted xs" style="margin-top:8px">Estoque ${quando}</div>`;
@@ -1647,8 +1666,9 @@ function imoveisFiltrados() {
   const ordem = { maior: (a, b) => b.p - a.p, menor: (a, b) => (a.p || 9e15) - (b.p || 9e15), recentes: (a, b) => String(b.du).localeCompare(String(a.du)) }[f.ordem];
   const novos = naLocacao() ? [] : l.filter(ehNovo);
   imoveisFiltrados.novos = novos.length; // contagem do botão "Entraram nos últimos 30 dias" (com os outros filtros)
-  // só os novos: do que entrou por último para o mais antigo
-  if (f.novos && !naLocacao()) return novos.sort((a, b) => b.ent.localeCompare(a.ent) || ordem(a, b));
+  imoveisFiltrados.porEnt = contaPorEnt(novos); // quantos em cada atualização (botões e títulos)
+  // só os novos: do que entrou por último para o mais antigo; f.entD = só uma atualização
+  if (f.novos && !naLocacao()) return novos.filter(i => !f.entD || i.ent === f.entD).sort((a, b) => b.ent.localeCompare(a.ent) || ordem(a, b));
   return l.sort(ordem);
 }
 function renderImoveisLista() {
@@ -1658,9 +1678,12 @@ function renderImoveisLista() {
   if ($('#i-novos-n')) $('#i-novos-n').textContent = imoveisFiltrados.novos;
   tela.slice(0, 6).forEach(i => j8Detalhe(i.k).catch(() => {})); // adianta fotos e dados dos primeiros
   if (tela.length) carregaJsPDF().catch(() => {});
-  $('#i-list').innerHTML = l.length
-    ? `<div class="iml">${tela.map(i => j8Card(i)).join('')}</div>${resto > 0 ? `<button class="j8mais" data-act="i-mais">Ver mais ${Math.min(I_PASSO, resto)} <span class="muted">· ${resto.toLocaleString('pt-BR')} ${plural(resto, 'restante', 'restantes')}</span></button>` : ''}`
-    : '<div class="empty" style="margin-top:18px"><h3>Nenhum imóvel</h3><p>Nada no estoque com esses filtros. Tente abrir o valor, o tipo ou a busca.</p></div>';
+  const f = filtroI(), nv = f.novos && !naLocacao(), pe = imoveisFiltrados.porEnt || {};
+  // nos novos: um botão por atualização (a última primeiro) e um título a cada atualização na lista
+  const ents = nv ? `<div class="chips sm ents">${[['', 'Todas as atualizações', imoveisFiltrados.novos], ...Object.keys(pe).sort().reverse().map(d => [d, rotuloEnt(d), pe[d]])].map(([d, l, n]) => `<button class="chip${(f.entD || '') === d ? ' on' : ''}${d && d === ULTIMA_ENT ? ' nv' : ''}" data-act="i-ent" data-v="${d}">${l}<span class="n">${n}</span></button>`).join('')}</div>` : '';
+  $('#i-list').innerHTML = ents + (l.length
+    ? `<div class="iml">${nv ? porAtualizacao(tela, i => j8Card(i), pe) : tela.map(i => j8Card(i)).join('')}</div>${resto > 0 ? `<button class="j8mais" data-act="i-mais">Ver mais ${Math.min(I_PASSO, resto)} <span class="muted">· ${resto.toLocaleString('pt-BR')} ${plural(resto, 'restante', 'restantes')}</span></button>` : ''}`
+    : '<div class="empty" style="margin-top:18px"><h3>Nenhum imóvel</h3><p>Nada no estoque com esses filtros. Tente abrir o valor, o tipo ou a busca.</p></div>');
 }
 // cartões de imóvel aparecem na ficha e na aba Imóveis: redesenha onde estiverem
 function redesenhaCartoes() {
@@ -2933,7 +2956,8 @@ document.addEventListener('click', e => {
     // bairro tocado na aba Bairros: abre os clientes ativos que procuram nele
     case 'bairro': ui.c.q = el.dataset.b; ui.c.f = 'ativos'; $('#c-q').value = el.dataset.b; go('clientes'); renderClientes(); break;
     case 'i-fonte': case 'i-tipo': case 'i-ordem': filtroI()[a.slice(2)] = v; filtroI().n = I_PASSO; renderImoveis(); break;
-    case 'i-novos': ui.i.novos = !ui.i.novos; ui.i.n = I_PASSO; renderImoveis(); break;
+    case 'i-novos': ui.i.novos = !ui.i.novos; ui.i.entD = ''; ui.i.n = I_PASSO; renderImoveis(); break;
+    case 'i-ent': ui.i.entD = v; ui.i.n = I_PASSO; renderImoveisLista(); break;
     case 'i-quartos': filtroI().quartos = +v; filtroI().n = I_PASSO; renderImoveis(); break;
     case 'i-mais': filtroI().n += I_PASSO; renderImoveisLista(); break;
     case 'tema': $('#menu-tema').classList.toggle('hidden'); break;
@@ -3006,7 +3030,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-12g';
+const VERSAO = '2026-11-15a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
