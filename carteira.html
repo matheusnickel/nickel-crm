@@ -771,12 +771,13 @@ const FB_ROOT = 'https://firestore.googleapis.com/v1/projects/nickel-crm/databas
 const TESTE = new URLSearchParams(location.search).get('base') === 'teste';
 // ── LOGINS (16/11) ──
 // Matheus = acesso master (todas as imobiliárias, complemento, Parecer). Felipe Moreira (corretor de confiança dele) =
-// carteira própria e separada (outra coleção no Firebase), só o estoque da J8, sem complemento, sem Parecer, PDF só com o nome dele.
+// carteira própria e separada (outra coleção no Firebase), todas as imobiliárias (desde 16/11 à noite), SEM complemento,
+// Parecer próprio, PDF só com o nome dele.
 // A senha não fica escrita aqui: só o SHA-256 dela (com o prefixo "carteira-nickel:").
 const PERFIS = {
   matheus: { nome: 'Matheus Nickel', usuarios: ['matheus', 'matheus nickel'], hash: '18ad40b356ed78cf279f05bac632061e5cc24d842649fc99566bb98f7575ce23', master: true, estoques: null, col: 'carteira_clientes',
     corretor: { nome: 'MATHEUS NICKEL', cargo: 'Corretor de Imóveis', creci: 'CRECI-PR 53436', insta: '@matheus.nickel', whats: '(41) 98500-0305' } },
-  felipe: { nome: 'Felipe Moreira', usuarios: ['felipe', 'felipe moreira'], hash: 'dd54a2717986878f618599759b1ec209b4e36c855fca9177768b84c1a030c535', master: false, estoques: ['j8'], col: 'carteira_clientes_felipe',
+  felipe: { nome: 'Felipe Moreira', usuarios: ['felipe', 'felipe moreira'], hash: 'dd54a2717986878f618599759b1ec209b4e36c855fca9177768b84c1a030c535', master: false, estoques: null /* desde 16/11 à noite: todas as imobiliárias (antes só J8) */, col: 'carteira_clientes_felipe',
     corretor: { nome: 'FELIPE MOREIRA' } }
 };
 const LS_AUTH = 'carteira_auth';
@@ -3359,7 +3360,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-16g';
+const VERSAO = '2026-11-16h';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
