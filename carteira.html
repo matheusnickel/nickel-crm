@@ -97,6 +97,7 @@ main{max-width:1180px;margin:0 auto;padding:30px 28px calc(120px + var(--sab));t
 .kpi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--faint)}
 .kpi.warn{background:linear-gradient(180deg,var(--warnbg),var(--card) 70%)}.kpi.warn::before{background:#e0b25a}
 .kpi.ok{background:linear-gradient(180deg,var(--tqbg),var(--card) 70%)}.kpi.ok::before{background:var(--tq)}
+.kpi.alerta{background:linear-gradient(180deg,var(--redbg),var(--card) 70%)}.kpi.alerta::before{background:var(--red)}.kpi.alerta .v{color:var(--red)}
 .kpi.or{background:linear-gradient(180deg,var(--orbg),var(--card) 70%)}.kpi.or::before{background:var(--or)}
 button.kpi:hover{border-color:var(--line2);transform:translateY(-1px)}
 .kpi.on{border-color:var(--text2);box-shadow:var(--sh2)}
@@ -1888,7 +1889,8 @@ function renderPainel() {
   $('#c-kpis').innerHTML =
     (() => { const st = A.filter(emStandby).length; return tile('Ativos', '', A.length - st, st ? `${st} em standby · ${clientes.length} na carteira` : `de ${clientes.length} na carteira`, 'ativos'); })() +
     tile('Precisam de imóvel', 'warn', alimentar, `há ${ALIMENTAR_DIAS} dias ou mais sem receber`, 'alimentar') +
-    tile('Receberam hoje', 'ok', hoje, `${plural(hoje, 'cliente recebeu', 'clientes receberam')} imóvel hoje`) +
+    // 16/11 (pedido dele): no lugar de "Receberam hoje", o aviso dos standby que chegaram na data de retomar o contato
+    (() => { const nr = clientes.filter(paraRetomar).length, ns = A.filter(emStandby).length; return tile('Standby: retomar', nr ? 'alerta' : '', nr, nr ? `${plural(nr, 'chegou', 'chegaram')} na data de retomar o contato` : ns ? `nenhum na data ainda · ${ns} em standby` : 'ninguém em standby', 'retomar'); })() +
     tile('Novos no mês', 'or', novos, `${plural(novos, 'cadastrado', 'cadastrados')} em ${agora.toLocaleDateString('pt-BR', { month: 'long' })}`);
 }
 // desde quando o cliente está na etapa: a data gravada na mudança; sem ela, o 1º envio (CQ) ou o cadastro
@@ -1932,9 +1934,9 @@ function renderClientes() {
   $('#c-filtros').innerHTML = FILTROS.filter(f => !f[3]).map(([k, l, fn]) => `<button class="chip${ui.c.f === k ? ' on' : ''}${k === 'standby' ? ' drop-st' : ''}" data-act="c-f" data-v="${k}"${k === 'standby' ? ' data-etapa="standby"' : ''}>${l}<span class="n">${clientes.filter(fn).length}</span></button>`).join('')
     + `<div class="modo">${[['quadro', 'Etapas'], ['lista', 'Lista']].map(([k, l]) => `<button class="${ui.c.modo === k ? 'on' : ''}" data-act="c-modo" data-v="${k}">${l}</button>`).join('')}</div>`;
   // avisos em cima dos botões: clientes a revisar (triagem da temperatura) e standby com a data de retomar vencida
-  const nTri = filaTriagem().length, nRet = clientes.filter(paraRetomar).length;
-  $('#c-avisos').innerHTML = (nTri ? `<button class="aviso tri" data-act="tri-abrir"><b>Revisar temperatura</b><span>${nTri} ${plural(nTri, 'cliente', 'clientes')} para classificar em Quente, Fria ou Standby</span></button>` : '')
-    + (nRet ? `<button class="aviso ret${ui.c.f === 'retomar' ? ' on' : ''}" data-act="c-f" data-v="retomar"><b>Retomar agora</b><span>${nRet} ${plural(nRet, 'cliente', 'clientes')} em standby já ${plural(nRet, 'chegou', 'chegaram')} na data de retomar</span></button>` : '');
+  // 16/11: o aviso "Revisar temperatura" saiu a pedido dele (classifica à mão, pelo quadro e pela ficha); a triagem fica no código, sem botão
+  // o aviso dos standby a retomar virou cartão do painel (16/11); a faixa de avisos fica vazia
+  $('#c-avisos').innerHTML = '';
   const fn = (FILTROS.find(f => f[0] === ui.c.f) || FILTROS[0])[2];
   let rows = clientes.filter(c => fn(c) && matchQ(c, q));
   if (quadro && clientes.length) { $('#c-list').innerHTML = quadroClientes(rows); return; }
@@ -3313,7 +3315,10 @@ const colunaEm = (e) => (e.target.closest && e.target.closest('.drop-st, .kcol')
 document.addEventListener('dragstart', e => { const k = e.target.closest && e.target.closest('.kcard'); if (!k) return; arrastando = k.dataset.id; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', arrastando); k.classList.add('drag'); });
 document.addEventListener('dragend', () => { arrastando = null; document.querySelectorAll('.kcard.drag,.over').forEach(x => x.classList.remove('drag', 'over')); });
 document.addEventListener('dragover', e => { const col = arrastando && colunaEm(e); if (!col) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; document.querySelectorAll('.over').forEach(x => x !== col && x.classList.remove('over')); col.classList.add('over'); });
-document.addEventListener('drop', e => { const col = arrastando && colunaEm(e); if (!col) return; e.preventDefault(); const id = arrastando; arrastando = null; col.classList.remove('over'); mudaEtapa(id, col.dataset.etapa); });
+document.addEventListener('drop', e => { const col = arrastando && colunaEm(e); if (!col) return; e.preventDefault(); const id = arrastando; arrastando = null; col.classList.remove('over');
+  // soltar no Standby abre a ficha pedindo a data de retomar o contato (16/11); só vai para standby ao confirmar
+  if (col.dataset.etapa === 'standby') { const c = byId(id); if (c && !emStandby(c)) { ui.stF = { id, retomar: '', motivo: '' }; renderFicha(id); setTimeout(() => { const p = $('#sheet .stp'); if (p) p.scrollIntoView({ block: 'center' }); }, 60); } return; }
+  mudaEtapa(id, col.dataset.etapa); });
 
 // ── CAMPOS DE BUSCA ──
 function bindBuscas() {
@@ -3349,7 +3354,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-16c';
+const VERSAO = '2026-11-16e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
