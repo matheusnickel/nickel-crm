@@ -109,6 +109,7 @@ function ficha(html, c, u) {
     b: ((prop.containedInPlace || {}).name) || partes[1] || '', ci: ((prop.address || {}).addressLocality) || (partes[2] || '').replace(/\/[A-Z]{2}$/, ''),
     q: +(num['quartos'] || prop.numberOfBedrooms || 0) || 0, s: +(num['suites'] || 0) || 0, v: +(num['vagas'] || 0) || 0,
     a: Math.round(terreno ? (aterr || atot || ap) : (ap || atot)), at: Math.round(casa ? aterr : terreno ? (aterr || atot) : 0),
+    aq: Math.round(terreno ? (aterr || atot) : ap), // área da nota (16/11): nunca a total
     mo: mob ? 's' : 'n', ob: 'r', p: venda ? reais(String(venda.price).replace('.', ',')) || +venda.price || 0 : 0,
     f: fotos[0] || (prop.image || [])[0] || '', e: edificio,
     en: partes.length > 1 ? partes[0] : '', cp: '', bl: '', ref: '', u, du: ''

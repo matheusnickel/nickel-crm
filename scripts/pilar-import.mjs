@@ -134,6 +134,7 @@ function ficha(html, c, u) {
     q: +v.bedrooms || 0, s: +v.suites || 0, v: +v.parkingSpots || 0,
     // at fica 0: a Pilar só diz "Área útil" e "Área total", e a total de casa não é necessariamente o terreno (VA126: 178 e 193 m²)
     a: Math.round(+v.area || +v.totalArea || 0), at: 0,
+    aq: Math.round(/^Terreno/.test(t) ? (+v.area || +v.totalArea || 0) : (+v.area || 0)), // área da nota (16/11): útil; nunca a total
     mo: mob ? 's' : 'n', ob: 'r', p: +v.askingPrice || 0,
     f: fotos[0] || '', e: String(v.condoName || (v.building && v.building.name) || '').trim(),
     en: '', cp: '', bl: '', ref: (v.company || {}).name || '', u, du: ''

@@ -98,6 +98,7 @@ function ficha(html, c, info) {
     b: det['Bairro'] || '', ci: (det['Município/UF'] || '').replace(/\s*-\s*[A-Z]{2}$/, '').toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase()),
     q: +(icone.dormitorios || ld.numberOfBedrooms || 0) || 0, s: +(icone.suites || 0) || 0, v: +(icone.garagens || 0) || 0,
     a: Math.round(ap || atot), at: Math.round(casa || /^Terreno/.test(t) ? aterr : 0),
+    aq: Math.round(/^Terreno/.test(t) ? (aterr || atot) : ap), // área da nota (16/11): nunca a total
     mo: mob ? 's' : 'n', ob: info.lanc ? 'p' : 'r',
     p: reais(det['Valor do imóvel']) || Number(ld.offers && ld.offers.price) || 0,
     f: fotos[0] ? fotos[0].replace(/(\.\w+)$/, '_640$1') : '',

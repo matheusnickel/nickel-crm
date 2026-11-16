@@ -97,6 +97,7 @@ function ficha(html, c, info) {
     b: det['Bairro'] || '', ci: nomeCidade(det['Município/UF']),
     q: +(det['Dormitórios'] || 0) || 0, s: +(det['Suítes'] || 0) || 0, v: +(det['Garagens'] || 0) || 0,
     a: Math.round(ap || atot), at: Math.round(casa || /^Terreno/.test(t) ? aterr : 0),
+    aq: Math.round(/^Terreno/.test(t) ? (aterr || atot) : ap), // área da nota (16/11): nunca a total
     mo: mob ? 's' : 'n', ob: 'r', p: reais(valor),
     f: destaque || fotos[0] || '', e: edificio,
     en: det['Endereço'] || '', cp: '', bl: '', ref: det['Referência'] || '', u: info.u, du: ''

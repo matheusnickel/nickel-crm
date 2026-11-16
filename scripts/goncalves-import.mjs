@@ -113,6 +113,8 @@ async function trabalhador() {
         q: num(o.Dormitorios), s: num(o.Suites), v: num(o.Vagas), a: Math.round(ap || ac || atot),
         // terreno: só o campo próprio (a área total da Gonçalves não é o terreno)
         at: Math.round(aterr),
+        // aq = área da nota (16/11): apto privativa, casa construída; terreno = área do terreno; nunca a área total
+        aq: Math.round(/^Terreno/.test(t) ? (aterr || atot) : /^(Casa|Sobrado)/.test(t) ? (ac || ap) : (ap || ac)),
         mo: sim(car.Mobiliado) ? 's' : sim(car['Semi Mobiliado']) ? 'm' : 'n',
         ob: sim(o.Lancamento) || /lan[cç]amento|constru|planta/i.test(o.Situacao || '') ? 'p' : 'r',
         p: num(o.ValorVenda),

@@ -383,6 +383,16 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .imais-b select{width:100%}
 .imais-on{color:var(--or2)}
 .iml{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-top:16px;align-items:start}
+/* nota do imóvel (16/11): número num quadradinho com a cor da faixa e, ao lado, o porquê */
+.nota{display:flex;align-items:center;gap:9px;margin-top:7px}
+.nota b{flex-shrink:0;display:grid;place-items:center;min-width:38px;height:30px;padding:0 6px;border-radius:8px;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;background:var(--nc)}
+.nota span{display:flex;flex-direction:column;font-size:12px;line-height:1.3;color:var(--muted);min-width:0}
+.nota em{font-style:normal;font-weight:700;font-size:12px;color:var(--nc)}
+.nota.n-ok{--nc:#2e7d4f}.nota.n-tq{--nc:var(--tq2)}.nota.n-warn{--nc:var(--warn)}.nota.n-red{--nc:var(--red)}
+.nota.grande{padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line)}
+.nota.grande b{min-width:54px;height:44px;font-size:21px;border-radius:10px}
+.nota.grande span{font-size:13px}.nota.grande em{font-size:13.5px}
+.nota .regua{margin-top:4px;font-size:11.5px;color:var(--faint)}
 /* temperatura (15/11): avisos, triagem e escolha do standby */
 .cavisos{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .cavisos:empty{display:none}
@@ -1245,6 +1255,93 @@ function quemQuer(i) {
     .sort((a, b) => (ET_PRIO.indexOf(a.etapa) - ET_PRIO.indexOf(b.etapa)) || a.nome.localeCompare(b.nome, 'pt-BR'));
   return { ativos: l.filter(c => !emStandby(c)), standby: l.filter(emStandby) };
 }
+
+// ── NOTA DO IMÓVEL (16/11) ──
+// Ideia dele: dar uma nota pelo mercado, para saber se o imóvel está bom para vender (preço competitivo e líquido).
+// Nota de 0 a 10 = preço (65%) + liquidez (35%).
+//  · Preço: R$/m² do imóvel × a mediana do R$/m² dos 12 anúncios mais parecidos do estoque (pedido dele: usar a base como
+//    parâmetro) — mesmo grupo de tipo, área de 60% a 160%, prontos e com preço; mesmo condomínio, suítes, vagas e o
+//    próprio bairro pesam mais; bairros vizinhos entram com desconto. Escala em log (ver notaDe).
+//  · Liquidez: faixa de valor (até R$ 1,5 mi = 8 … acima de R$ 10 mi = 3) + até 2 pontos por clientes da carteira com esse
+//    perfil (0,5 cada).
+// Não enxerga acabamento, andar, vista ou estado: é a leitura do anúncio contra o mercado. Sem 4 parecidos, fica sem nota.
+// a régua (pedido dele: "um parâmetro com o que essa nota quer dizer")
+const NOTA_ROT = [[9, 'Excelente', 'n-ok', 'Oportunidade: bem abaixo do m² da região'], [7.5, 'Muito boa', 'n-ok', 'Competitivo: se destaca na região'],
+  [6, 'Boa', 'n-tq', 'No preço da região'], [4.5, 'Regular', 'n-warn', 'Acima da região: tende a vender mais devagar'], [0, 'Fraca', 'n-red', 'Caro para a região: precisa de diferencial ou de ajuste no preço']];
+const REGUA_NOTA = '9 a 10 oportunidade · 7,5 a 9 competitivo · 6 a 7,5 no preço da região · 4,5 a 6 acima da região · abaixo de 4,5 caro';
+// área da conta (16/11, pedido dele): apartamento = privativa; casa = construída; terreno = área do terreno; NUNCA a área total.
+// Vem pronta dos importadores no campo `aq`; anúncio que só informa a área total fica sem nota.
+const areaComp = i => i.aq || 0;
+const lim = (v, a, b) => Math.max(a, Math.min(b, v));
+let notaIdx = null; const notaCache = new Map(), refCache = new Map();
+const zeraNotas = () => { notaIdx = null; notaCache.clear(); refCache.clear(); };
+function indiceNota() {
+  if (notaIdx) return notaIdx;
+  notaIdx = new Map();
+  ESTOQUES.flatMap(e => estoque[e.id] ? estoque[e.id].imoveis : []).forEach(i => {
+    const g = GRUPO[i.tc], a = areaComp(i); if (!g || !(i.p > 0) || !(a > 0) || i.ob === 'p' || !i.b) return;
+    const ppm = i.p / a; if (ppm < 300 || ppm > 200000) return; // preço ou área errados no anúncio
+    const k = g + '|' + bkey(i.b); if (!notaIdx.has(k)) notaIdx.set(k, []);
+    notaIdx.get(k).push({ k: i.k, a, ppm, tc: i.tc, q: i.q || 0, s: i.s || 0, v: i.v || 0, e: norm(i.e || ''), b: i.b });
+  });
+  return notaIdx;
+}
+// os 12 mais parecidos (como no Parecer): mesmo condomínio vale muito; depois área, suítes, vagas, quartos, mesmo tipo
+// e o próprio bairro (vizinho perde um pouco por km). Assim um alto padrão é comparado com alto padrão, não com o bairro todo.
+const NOTA_K = 12;
+function parecidosNota(x) {
+  const g = GRUPO[x.tc], a = areaComp(x), idx = indiceNota(); if (!g || !(a > 0) || !x.b) return { l: [], viz: false };
+  const e = norm(x.e || ''), semQ = g === 'Terreno' || g === 'Comercial';
+  const bs = [[x.b, 0]].concat(vizinhosDe(x.b));
+  const l = bs.flatMap(([b, km]) => (idx.get(g + '|' + bkey(b)) || []).filter(c => c.k !== x.k && c.a >= a * 0.6 && c.a <= a * 1.6).map(c => {
+    let s = 100 - Math.abs(c.a - a) / a * 100;
+    if (!semQ) s -= Math.abs(c.s - (x.s || 0)) * 5 + Math.abs(c.v - (x.v || 0)) * 5 + Math.abs(c.q - (x.q || 0)) * 3;
+    if (c.tc === x.tc) s += 8;
+    if (e && e.length > 3 && c.e === e) s += 40;
+    s += km ? -6 - km * 2 : 12;
+    return { c, s, km };
+  })).sort((u, v) => v.s - u.s).slice(0, NOTA_K);
+  return { l: l.map(x => x.c), viz: l.some(x => x.km) };
+}
+// x = um anúncio (ou o imóvel do parecer); ref = { ppm, n } quando o m² de referência já é conhecido (parecer)
+function notaDe(x, ref) {
+  const a = areaComp(x); if (!(x.p > 0) || !(a > 0) || !GRUPO[x.tc]) return null;
+  if (!ref && x.k && notaCache.has(x.k)) return notaCache.get(x.k);
+  // a referência de m² (os parecidos) só muda quando o estoque muda: fica guardada à parte
+  if (!ref) {
+    if (!refCache.has(x.k)) {
+      const P = parecidosNota(x), o = P.l.map(c => c.ppm).sort((u, v) => u - v);
+      refCache.set(x.k, P.l.length < 4 ? null : { ppm: o[o.length >> 1], n: P.l.length, viz: P.viz });
+    }
+    ref = refCache.get(x.k);
+    if (!ref) { notaCache.set(x.k, null); return null; }
+  }
+  const { ppm: med, n } = ref, viz = !!ref.viz;
+  // escala em log, calibrada no estoque (16/11): metade dos anúncios fica entre 15% abaixo e 20% acima dos parecidos.
+  // No m² dos parecidos = 6,5; 10% abaixo ≈ 7,6; 30% abaixo ≈ 10; 10% acima ≈ 5,5; 45% acima ≈ 2,8; o dobro = 0
+  const r = x.p / a / med, preco = lim(6.5 - 10 * Math.log(r), 0, 10);
+  const faixa = x.p <= 1.5e6 ? 8 : x.p <= 3e6 ? 7 : x.p <= 5e6 ? 6 : x.p <= 1e7 ? 4.5 : 3;
+  const dem = clientes.filter(c => c.status === 'ativo' && !emStandby(c) && j8Score(c, x) >= 0).length;
+  const liq = lim(faixa + Math.min(2, dem * 0.5), 0, 10);
+  const nota = Math.round((preco * 0.65 + liq * 0.35) * 10) / 10;
+  const res = { nota, preco, liq, r, med, n, viz, dem, rot: NOTA_ROT.find(([m]) => nota >= m) };
+  if (x.k) notaCache.set(x.k, res);
+  return res;
+}
+// os parecidos de todo o estoque são calculados aos poucos, em segundo plano (no celular, tudo de uma vez travaria a tela)
+function preparaNotas() {
+  const l = ESTOQUES.flatMap(e => estoque[e.id] ? estoque[e.id].imoveis : []); let n = 0;
+  const passo = () => { const fim = Math.min(l.length, n + 150); for (; n < fim; n++) { const i = l[n]; if (!refCache.has(i.k)) { notaDe(i); notaCache.delete(i.k); } } if (n < l.length) setTimeout(passo, 0); };
+  setTimeout(passo, 1500);
+}
+const fmtNota = v => v.toFixed(1).replace('.', ',');
+// o parâmetro à vista (pedido dele): "R$ 12,3 mil/m² · 9% abaixo dos parecidos (R$ 13,5 mil/m², 14 no Batel e vizinhos)"
+const milM2 = v => 'R$ ' + (v >= 1000 ? (Math.round(v / 100) / 10).toLocaleString('pt-BR') + ' mil' : Math.round(v).toLocaleString('pt-BR')) + '/m²';
+const notaTxt = (N, b) => `${milM2(N.med * N.r)} · ${Math.abs(N.r - 1) < 0.02 ? 'no m² médio' : `${Math.round(Math.abs(N.r - 1) * 100)}% ${N.r < 1 ? 'abaixo' : 'acima'}`} dos parecidos da região (${milM2(N.med)}, ${N.n}${b ? ` ${naNo(b)} ${b}${N.viz ? ' e vizinhos' : ''}` : ''})`;
+function notaHTML(i) {
+  const N = notaDe(i); if (!N) return '';
+  return `<div class="nota ${N.rot[2]}" title="Preço ${fmtNota(N.preco)} · liquidez ${fmtNota(N.liq)} · Régua: ${REGUA_NOTA}"><b>${fmtNota(N.nota)}</b><span><em>${N.rot[3]}</em>${esc(notaTxt(N, i.b))}${N.dem ? ` · ${N.dem} ${plural(N.dem, 'cliente seu procura', 'clientes seus procuram')}` : ''}</span></div>`;
+}
 async function loadEstoques() {
   await Promise.all(ESTOQUES.concat(LOCACAO).map(async e => {
     try { const r = await fetch(e.arq, { cache: 'no-cache' }); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); j.imoveis.forEach(i => prepara(e, i)); estoque[e.id] = j; }
@@ -1252,6 +1349,7 @@ async function loadEstoques() {
   }));
   await aplicaRepetidos();
   await carregaEntradas();
+  zeraNotas(); preparaNotas();
   carregados = true; j8Cache.clear();
   renderClientes();
   if (ui.tab === 'metricas') renderMetricas();
@@ -1635,7 +1733,7 @@ function j8Card(i, c) {
         const sai = m < SEGURA_MIN ? ` · sai dos Novos em ${Math.max(1, Math.ceil(SEGURA_MIN - m))} min` : '';
         return e ? `<div class="env8">✓ Enviado para ${esc(nomeProprio(firstName(c.nome)))} em ${fmtShort(e.data)}${por}${sai}</div>` : '';
       })()}${(i.irmaos || []).length ? `<div class="dupl">Também anunciado ${listaPt([...new Set(i.irmaos.map(k => IMOVEL.get(k)).filter(Boolean).map(x => 'na ' + EST[x.src].nome))])}</div>` : ''}${selos.length || ehNovo(i) ? `<div class="selos">${ehNovo(i) ? `<span class="nv">Novo · ${entrouTxt(i)}</span>` : ''}${selos.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
-        <div class="pr">${!i.p ? 'Preço sob consulta' : ehLocacao(i) ? 'R$ ' + Math.round(i.p).toLocaleString('pt-BR') + '/mês' : fmtValor(i.p)}</div></div>
+        <div class="pr">${!i.p ? 'Preço sob consulta' : ehLocacao(i) ? 'R$ ' + Math.round(i.p).toLocaleString('pt-BR') + '/mês' : fmtValor(i.p)}</div>${ehLocacao(i) ? '' : notaHTML(i)}</div>
     </div>
     <div class="j8act">
       <div class="cpl end${i.en ? '' : ' vazio'}"><span>Endereço</span>${i.en ? `<b>${esc(i.en)}</b>` : 'Não informado'}</div>
@@ -1692,7 +1790,7 @@ function j8Section(c) {
 // O estoque de todas as imobiliárias junto, como num site: busca, filtros e os mesmos cartões da ficha (PDF, descritivo,
 // foto da capa), sem cliente. Mostra 20 por vez.
 const I_PASSO = 20;
-const I_ORDENS = [['maior', 'Maior valor'], ['menor', 'Menor valor'], ['recentes', 'Atualizados por último']];
+const I_ORDENS = [['maior', 'Maior valor'], ['menor', 'Menor valor'], ['nota', 'Melhor nota'], ['recentes', 'Atualizados por último']];
 function renderImoveis() {
   const f = filtroI(), chip = (act, k, l) => `<button class="chip${String(f[act.slice(2)]) === String(k) ? ' on' : ''}" data-act="${act}" data-v="${esc(k)}">${l}</button>`;
   const din = v => v ? 'R$ ' + v.toLocaleString('pt-BR') : '';
@@ -1731,7 +1829,8 @@ function imoveisFiltrados() {
   if (f.vmin) l = l.filter(i => i.p >= f.vmin);
   if (f.vmax) l = l.filter(i => i.p && i.p <= f.vmax);
   if (palavras.length) l = l.filter(i => { const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, MASTER ? i.cp : '', MASTER ? i.bl : '',EST[i.src].parceiros ? i.ref : ''].join(' ')); return palavras.every(p => t.includes(p)); });
-  const ordem = { maior: (a, b) => b.p - a.p, menor: (a, b) => (a.p || 9e15) - (b.p || 9e15), recentes: (a, b) => String(b.du).localeCompare(String(a.du)) }[f.ordem];
+  const notaN = i => { const N = naLocacao() ? null : notaDe(i); return N ? N.nota : -1; }; // sem nota vai para o fim
+  const ordem = { maior: (a, b) => b.p - a.p, menor: (a, b) => (a.p || 9e15) - (b.p || 9e15), nota: (a, b) => notaN(b) - notaN(a) || b.p - a.p, recentes: (a, b) => String(b.du).localeCompare(String(a.du)) }[f.ordem];
   const novos = naLocacao() ? [] : l.filter(ehNovo);
   imoveisFiltrados.novos = novos.length; // contagem do botão "Entraram nos últimos 30 dias" (com os outros filtros)
   imoveisFiltrados.porEnt = contaPorEnt(novos); // quantos em cada atualização (botões e títulos)
@@ -2153,6 +2252,15 @@ function calcParecer(p) {
   const pos = v => cs.filter(c => c.p < v).length + 1;
   return { cs, n: cs.length, media, central, m2: central / p.area, faixas, posCentral: pos(central), posPedido: p.pedido ? pos(p.pedido) : 0 };
 }
+// nota do imóvel avaliado (16/11): no preço que o proprietário quer (ou, sem ele, no valor de mercado). A referência de
+// m² é a média ajustada dos comparáveis que ele classificou, voltando ao nível de anúncio (÷ 0,95), igual aos anúncios.
+function notaParecer(p, r) {
+  if (!r) return null;
+  const g = GRUPO[p.tc], preco = p.pedido || r.central;
+  const x = { tc: p.tc, b: p.b, p: preco, a: p.area, aq: p.area, at: g === 'Terreno' ? p.area : (p.terreno || 0), q: p.q || 0, s: p.s || 0, v: p.v || 0, ob: 'r', mo: p.mob || 'n', src: 'parecer', ci: 'Curitiba' };
+  const N = notaDe(x, { ppm: r.media / P_OFERTA, n: r.n });
+  return N && Object.assign(N, { preco: N.preco, base: p.pedido ? 'no preço desejado' : 'no valor de mercado', valor: preco });
+}
 // o que o comparável significa para o proprietário, pelo preço pedido e pelo ajuste que o Matheus deu
 function leituraComp(c, central) {
   const melhor = c.aj === 'sup', pior = c.aj === 'inf';
@@ -2175,9 +2283,10 @@ const pareceOProprio = (p, i, a) => !!(p.pedido && Math.abs(i.p / p.pedido - 1) 
 function sugestoesParecer(p) {
   const g = GRUPO[p.tc]; if (!g || !p.area || !p.bairros.length) return [];
   const bs = new Set(p.bairros.map(bkey)), usados = new Set(p.comps.map(c => c.k).filter(Boolean)), rua = ruaDe(p.end);
-  const areaDe = i => g === 'Terreno' ? (i.at || i.a) : i.a;
+  // 16/11: a área do comparável é a privativa (apto) / construída (casa) / do terreno — nunca a total; sem ela, não entra
+  const areaDe = areaComp;
   return ESTOQUES.flatMap(e => estoque[e.id] ? estoque[e.id].imoveis : []).filter(i => {
-    if (GRUPO[i.tc] !== g || !(i.p > 0) || i.ob === 'p' || usados.has(i.k) || !bs.has(bkey(i.b)) || ehOProprio(p, i)) return false;
+    if (GRUPO[i.tc] !== g || !(i.p > 0) || !(areaDe(i) > 0) || i.ob === 'p' || usados.has(i.k) || !bs.has(bkey(i.b)) || ehOProprio(p, i)) return false;
     if (norm(i.b) === 'centro' && i.ci && norm(i.ci) !== 'curitiba') return false;
     const a = areaDe(i); return a >= p.area * 0.7 && a <= p.area * 1.4;
   }).map(i => {
@@ -2324,6 +2433,7 @@ function renderParRes() {
     <div><span class="lbl" style="margin-bottom:6px">Valor de mercado</span><div class="vc">${reais(r.central)}</div>
       <div class="vs">${reais(r.m2)}/m² · média de ${r.n} comparáveis ajustados (anúncio −5%, superior −10%, inferior +10%)</div></div>
     <div class="pfx">${r.faixas.map(f => `<div class="${f.d ? '' : 'c'}"><span>${f.l} · ${f.nome}</span><b>${reais(f.v)}</b><small>${f.prazo}</small></div>`).join('')}</div>
+    ${(() => { const N = notaParecer(p, r); return N ? `<div class="nota grande ${N.rot[2]}"><b>${fmtNota(N.nota)}</b><span><em>Nota do imóvel ${N.base} (${reais(N.valor)}): ${N.rot[3].charAt(0).toLowerCase() + N.rot[3].slice(1)}</em>Preço ${fmtNota(N.preco)} · liquidez ${fmtNota(N.liq)} · ${esc(notaTxt(N))}${N.dem ? ` · ${N.dem} ${plural(N.dem, 'cliente seu procura', 'clientes seus procuram')} algo assim` : ''}<small class="regua">Régua: ${REGUA_NOTA}</small></span></div>` : ''; })()}
     ${p.pedido ? `<div class="pped">O proprietário quer <b>${reais(p.pedido)}</b>: ${Math.abs(dif) < 0.005 ? 'igual ao valor de mercado' : `${Math.round(Math.abs(dif) * 100)}% ${dif > 0 ? 'acima' : 'abaixo'} do valor de mercado`}. Na fila do comprador, ele fica em ${r.posPedido}º de ${r.n + 1}.</div>` : ''}
     <div><span class="lbl">A fila do comprador · no valor de mercado, ${r.posCentral}º de ${r.n + 1}</span>
       <div class="pfila">${fila.map(x => x.eu ? `<div class="eu"><i>●</i><span>Imóvel avaliado · ${x.eu.toLowerCase()}</span><b>${reais(x.p)}</b></div>`
@@ -2459,7 +2569,14 @@ function capaParecerPDF(doc, p, r, foto) {
   doc.setFontSize(7.5); pTx(doc, 'mu'); doc.text('VALOR DE MERCADO', rx, y, { charSpace: 1.2 }); y += 32;
   doc.setFontSize(30); pTx(doc, 'tx'); doc.text(reais(r.central), rx, y); y += 20;
   doc.setFontSize(10); pTx(doc, 'mu'); doc.text(`${reais(r.m2)}/m² · ${areaRot(p.tc).toLowerCase()} de ${p.area.toLocaleString('pt-BR')} m²`, rx, y); y += 15;
-  doc.text(`Faixa de ${reais(r.faixas[0].v)} a ${reais(r.faixas[2].v)}`, rx, y); y += 30;
+  doc.text(`Faixa de ${reais(r.faixas[0].v)} a ${reais(r.faixas[2].v)}`, rx, y);
+  // nota do imóvel (16/11): no preço desejado ou no valor de mercado
+  const N = notaParecer(p, r);
+  if (N) {
+    y += 17; doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'or2'); doc.text(`Nota ${fmtNota(N.nota)} de 10 ${N.base}`, rx, y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); const nl = doc.splitTextToSize(N.rot[3], rw).slice(0, 2); doc.text(nl, rx, y + 13, { lineHeightFactor: 1.3 }); y += 13 * nl.length;
+  }
+  y += 30;
   // ficha do imóvel em duas colunas
   const g = GRUPO[p.tc], cel = [];
   if (g === 'Casa' && p.terreno) cel.push(['Terreno', p.terreno.toLocaleString('pt-BR') + ' m²']);
@@ -2532,6 +2649,14 @@ function faixasParecerPDF(doc, p, r, pg, tot) {
     const dif = p.pedido / r.central - 1;
     doc.setFontSize(10); pTx(doc, 'or2');
     doc.text(`Preço desejado pelo proprietário: ${reais(p.pedido)}, ${Math.abs(dif) < 0.005 ? 'igual ao valor de mercado' : `${Math.round(Math.abs(dif) * 100)}% ${dif > 0 ? 'acima' : 'abaixo'} do valor de mercado`}.`, 34, ny);
+    ny += 16;
+  }
+  // como sai a nota (sem citar os clientes da carteira: o PDF vai para o proprietário)
+  const N = notaParecer(p, r);
+  if (N && ny < 612) {
+    doc.setFontSize(10); pTx(doc, 't2');
+    const l = doc.splitTextToSize(`Nota do imóvel ${N.base}: ${fmtNota(N.nota)} de 10 — ${N.rot[3].charAt(0).toLowerCase() + N.rot[3].slice(1)}. Preço ${fmtNota(N.preco)}, pelo m² (${areaRot(p.tc).toLowerCase()}) contra os parecidos à venda na região; liquidez ${fmtNota(N.liq)}, pela faixa de valor e pela procura. Régua: ${REGUA_NOTA}.`, 852).slice(0, Math.max(1, Math.floor((618 - ny) / 13)));
+    doc.text(l, 34, ny, { lineHeightFactor: 1.3 });
   }
 }
 function compsParecerPDF(doc, p, r, fotos, pg0, tot) {
@@ -2664,6 +2789,7 @@ document.addEventListener('change', async e => {
 });
 
 function renderAll() {
+  notaCache.clear(); // a liquidez da nota conta os clientes, que podem ter mudado
   renderClientes();
   if (ui.tab === 'metricas') renderMetricas();
   if (ui.sheet && ui.sheet.kind === 'ficha') { if (byId(ui.sheet.id)) renderFicha(ui.sheet.id); else closeSheet(); }
@@ -3223,7 +3349,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-16a';
+const VERSAO = '2026-11-16c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

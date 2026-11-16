@@ -97,6 +97,8 @@ async function importa(M) {
       b: String(v.Bairro || '').trim(), ci: String(v.Cidade || '').trim(),
       q: num(v.Dormitorios), s: num(v.Suites), v: num(v.Vagas), a: Math.round(area),
       at: Math.round(num(v.AreaTerreno)),
+      // aq = área da nota (16/11): privativa/construída; terreno = área do terreno; nunca a área total
+      aq: Math.round(/terreno|lote/i.test(tipo) ? (num(v.AreaTerreno) || num(v.AreaTotal)) : (num(v.AreaPrivativa) || num(v.AreaConstruida))),
       // mobília: s = mobiliado, m = semi, n = sem, '' = não informado
       mo: { SIM: 's', SEMI: 'm', 'NÃO': 'n', NAO: 'n' }[String(v.Mobiliado || '').trim().toUpperCase()] || '',
       // obra: p = na planta / em construção, r = pronto

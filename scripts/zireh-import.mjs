@@ -101,6 +101,7 @@ function ficha(html, c, u) {
     b: det['Bairro'] || '', ci: det['Município'] || '',
     q: +(sobre['Quartos'] || ld.numberOfBedrooms || 0) || 0, s: +(sobre['Suítes'] || 0) || 0, v: +(sobre['Vagas'] || 0) || 0,
     a: Math.round(ap || atot), at: Math.round(casa || /^Terreno/.test(t) ? (aterr || (casa ? 0 : atot)) : 0),
+    aq: Math.round(/^Terreno/.test(t) ? (aterr || atot) : ap), // área da nota (16/11): nunca a total
     mo: mob ? 's' : 'n', ob: 'r', p: reais(valor) || Number(ld.offers && ld.offers.price) || 0,
     f: fotos[0] || '', e: '',
     // em geral a Zireh mostra só o nome da rua, sem número nem complemento

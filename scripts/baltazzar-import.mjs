@@ -72,7 +72,7 @@ function ficha(html, c, u) {
   const i = {
     c: String(c), t, cat, ti: (resumo && resumo.titulo) || '',
     b: bairro || attr('neighborhood'), ci: (cidade || attr('city')).replace(/\s*-\s*[A-Z]{2}$/, ''),
-    q: +attr('bedrooms') || num('Dormitório'), s: 0, v: num('Vaga'), a: Math.round(area), at: 0,
+    q: +attr('bedrooms') || num('Dormitório'), s: 0, v: num('Vaga'), a: Math.round(area), at: 0, aq: Math.round(area), // área da nota: a privativa do link
     mo: mob ? 's' : '', ob: 'r', p: +((resumo && resumo.valorVenda) || attr('price-venda') || 0) || 0,
     f: fotos[0] || attr('image'), e: '', en: '', cp: '', bl: '', ref: '', u, du: ''
   };

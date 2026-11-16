@@ -83,6 +83,7 @@ function ficha(html, c, u) {
     b: bairro, ci: cidadeSite,
     q: sala('bedroom'), s: sala('suite'), v: sala('garage'),
     a: Math.round(terreno ? (atot || ap || ac) : (ap || ac || atot)), at: Math.round(casa || terreno ? atot : 0),
+    aq: Math.round(terreno ? (atot || ap) : casa ? (ac || ap) : (ap || ac)), // área da nota (16/11): nunca a total
     mo: /semi/i.test(d.furniture || '') ? 'm' : /mobiliad/i.test(d.furniture || '') ? 's' : '', ob: 'r', p: reais(d.price),
     f: fotos[0] || '', e: String((d.condominium && (d.condominium.title || d.condominium.name)) || '').trim(),
     en, cp: String(end.complement || '').trim(), bl: '', ref: '', u, du: String(d.updated_at_timestamp || '')
