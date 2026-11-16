@@ -577,6 +577,8 @@ button.pcs:hover{border-color:var(--tq)}
 .lg-card h1{font-weight:300;font-size:46px;line-height:1.08;margin:30px 0 12px}
 .lg-card p{color:var(--muted);margin-bottom:28px;font-size:12px;letter-spacing:.18em;text-transform:uppercase}
 .lg-card form{display:flex;flex-direction:column;gap:12px}
+/* login de corretor (16/11): a foto da capa ocupa a linha do complemento */
+.j8c .cpl.capa.so{grid-column:1 / -1}
 
 /* navegação de baixo (celular) */
 .bnav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:none;background:var(--topbg);backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);border-top:1px solid var(--line);padding:8px 8px calc(8px + var(--sab))}
@@ -664,6 +666,7 @@ button.pcs:hover{border-color:var(--tq)}
     <h1>Quem procura <em>o quê, onde.</em></h1>
     <p>Matheus Nickel · Curitiba</p>
     <form id="lg-form" autocomplete="on">
+      <input type="text" id="lg-user" placeholder="Usuário (seu nome)" autocomplete="username" autocapitalize="words" aria-label="Usuário">
       <input type="password" id="lg-pass" placeholder="Senha" autocomplete="current-password" aria-label="Senha">
       <button class="btn-or" type="submit">Entrar</button>
       <div class="err" id="lg-err"></div>
@@ -755,10 +758,22 @@ button.pcs:hover{border-color:var(--tq)}
 const FB_KEY = 'AIzaSyAV1IBBj0usYroywP0i-SLFSHVJh8_S2-g';
 const FB_ROOT = 'https://firestore.googleapis.com/v1/projects/nickel-crm/databases/(default)/documents';
 const TESTE = new URLSearchParams(location.search).get('base') === 'teste';
-const COL = TESTE ? 'carteira_clientes_TESTE_CLAUDE' : 'carteira_clientes';
-const LS_CACHE = 'carteira_cache_' + COL, LS_PEND = 'carteira_pending_' + COL;
+// ── LOGINS (16/11) ──
+// Matheus = acesso master (todas as imobiliárias, complemento, Parecer). Felipe Moreira (corretor de confiança dele) =
+// carteira própria e separada (outra coleção no Firebase), só o estoque da J8, sem complemento, sem Parecer, PDF só com o nome dele.
+// A senha não fica escrita aqui: só o SHA-256 dela (com o prefixo "carteira-nickel:").
+const PERFIS = {
+  matheus: { nome: 'Matheus Nickel', usuarios: ['matheus', 'matheus nickel'], hash: '18ad40b356ed78cf279f05bac632061e5cc24d842649fc99566bb98f7575ce23', master: true, estoques: null, col: 'carteira_clientes',
+    corretor: { nome: 'MATHEUS NICKEL', cargo: 'Corretor de Imóveis', creci: 'CRECI-PR 53436', insta: '@matheus.nickel', whats: '(41) 98500-0305' } },
+  felipe: { nome: 'Felipe Moreira', usuarios: ['felipe', 'felipe moreira'], hash: 'dd54a2717986878f618599759b1ec209b4e36c855fca9177768b84c1a030c535', master: false, estoques: ['j8'], col: 'carteira_clientes_felipe',
+    corretor: { nome: 'FELIPE MOREIRA' } }
+};
 const LS_AUTH = 'carteira_auth';
-const SENHA = 'flor2301';
+// sessão guardada no aparelho: o id do perfil (o "true" de antes de 16/11 era o login do Matheus)
+const PERFIL_ID = (() => { try { const s = JSON.parse(localStorage.getItem(LS_AUTH)); return s === true ? 'matheus' : PERFIS[s] ? s : null; } catch (e) { return null; } })();
+const PERFIL = PERFIS[PERFIL_ID || 'matheus'], MASTER = PERFIL.master;
+const COL = PERFIL.col + (TESTE ? '_TESTE_CLAUDE' : '');
+const LS_CACHE = 'carteira_cache_' + COL, LS_PEND = 'carteira_pending_' + COL;
 const ALIMENTAR_DIAS = 14; // ativo sem receber imóvel há esse tanto de dias = precisa ser alimentado
 
 // tipos de imóvel iguais às categorias do site da J8
@@ -1117,7 +1132,7 @@ const waLink = (c, msg) => `https://wa.me/${TESTE ? '' : waNumber(c.whats)}` + (
 // ── ESTOQUES DAS IMOBILIÁRIAS (J8 e Gonçalves) ──
 // dados/<arquivo>.json é atualizado quando o Matheus pede (scripts/j8-import.mjs e scripts/goncalves-import.mjs).
 // Cada imóvel ganha: src (de qual imobiliária), tc (tipo da Carteira), rot (nome do tipo) e k (chave única "src:código").
-const ESTOQUES = [
+const ESTOQUES_TODOS = [
   { id: 'j8', nome: 'J8', arq: 'dados/j8.json', det: 'dados/j8/', tipo: t => J8_TIPO[t] || '', rotulo: t => J8_ROTULO[t] || t },
   { id: 'gon', nome: 'A. Gonçalves', arq: 'dados/goncalves.json', det: 'dados/goncalves/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   { id: 'sis3', nome: 'SIS3', arq: 'dados/sis3.json', det: 'dados/sis3/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
@@ -1138,6 +1153,8 @@ const ESTOQUES = [
   // Baltazzar (site da Loft, cadastro no Vista): não publica rua, número nem complemento
   { id: 'baltazzar', nome: 'Baltazzar', arq: 'dados/baltazzar.json', det: 'dados/baltazzar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
+// cada login vê só as imobiliárias dele (Felipe: só a J8)
+const ESTOQUES = ESTOQUES_TODOS.filter(e => !PERFIL.estoques || PERFIL.estoques.includes(e.id));
 // Locação: só a J8, à parte de ESTOQUES (não entra no cruzamento com os compradores, nas métricas nem nos repetidos); em `p` vem o aluguel
 const LOCACAO = { id: 'j8loc', nome: 'J8', arq: 'dados/j8-locacao.json', det: 'dados/j8-locacao/', tipo: t => J8_TIPO[t] || '', rotulo: t => J8_ROTULO[t] || t, loc: true };
 const EST = Object.fromEntries(ESTOQUES.concat(LOCACAO).map(e => [e.id, e]));
@@ -1357,7 +1374,9 @@ function registrarContatoJ8(cliId, d) {
   return saveClient(Object.assign({}, cl, { envios: cl.envios.concat([e]) }, sobe));
 }
 // quem assina o book (capa e rodapé)
-const CORRETOR = { nome: 'MATHEUS NICKEL', cargo: 'Corretor de Imóveis', creci: 'CRECI-PR 53436', insta: '@matheus.nickel', whats: '(41) 98500-0305' };
+// do login (16/11): no do Felipe, só o nome dele (sem CRECI, Instagram e WhatsApp, pedido do Matheus)
+const CORRETOR = PERFIL.corretor;
+const nomeEspacado = n => n.split(' ').map(w => w.split('').join(' ')).join('   '); // "M A T H E U S   N I C K E L"
 const WA_PATH = WA_ICON.match(/ d="([^"]+)"/)[1];
 // ícones do Instagram e do WhatsApp desenhados num canvas e postos no PDF como imagem
 const iconesPDF = {};
@@ -1375,7 +1394,8 @@ function iconePDF(tipo, cor) {
 }
 function rodapePDF(doc, PW, PH) {
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9.5); doc.setTextColor(56, 56, 56); doc.text('M A T H E U S   N I C K E L', 34, PH - 31);
+  doc.setFontSize(9.5); doc.setTextColor(56, 56, 56); doc.text(nomeEspacado(CORRETOR.nome), 34, PH - 31);
+  if (!CORRETOR.insta) return;
   doc.setFontSize(9); doc.setTextColor(120, 120, 120); doc.text(CORRETOR.insta, PW - 34, PH - 31, { align: 'right' });
   doc.addImage(iconePDF('insta', '#787878'), 'PNG', PW - 34 - doc.getTextWidth(CORRETOR.insta) - 14, PH - 39.5, 9.5, 9.5);
 }
@@ -1434,10 +1454,12 @@ function capaPDF(doc, d, foto, cl) {
   doc.setFont('helvetica', 'normal');
   // cartão do corretor no pé da página: nome e CRECI à esquerda, Instagram e WhatsApp à direita
   doc.setDrawColor(228, 228, 228); doc.setLineWidth(.6); doc.line(x, pe - 44, x + w, pe - 44);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(44, 46, 51); doc.text(CORRETOR.nome, x, pe - 18, { charSpace: 2 });
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(120, 120, 120); doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, pe - 2);
+  // só o nome (login do Felipe): no meio da faixa do cartão
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(44, 46, 51); doc.text(CORRETOR.nome, x, CORRETOR.creci ? pe - 18 : pe - 10, { charSpace: 2 });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(120, 120, 120);
+  if (CORRETOR.creci) doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, pe - 2);
   doc.setFontSize(10); doc.setTextColor(56, 56, 56);
-  [[CORRETOR.insta, 'insta', pe - 18], [CORRETOR.whats, 'wa', pe - 2]].forEach(([t, ic, yy]) => {
+  [[CORRETOR.insta, 'insta', pe - 18], [CORRETOR.whats, 'wa', pe - 2]].filter(([t]) => t).forEach(([t, ic, yy]) => {
     doc.text(t, x + w, yy, { align: 'right' });
     doc.addImage(iconePDF(ic, '#383838'), 'PNG', x + w - doc.getTextWidth(t) - 17, yy - 9, 11, 11);
   });
@@ -1520,7 +1542,7 @@ async function baixarPDF(btn, c, cli) {
       rodapePDF(doc, PW, PH);
     });
     const tipo = d.rot || 'Imóvel';
-    const pdf = new File([doc.output('blob')], `${tipo} ${d.b} - Matheus Nickel.pdf`, { type: 'application/pdf' });
+    const pdf = new File([doc.output('blob')], `${tipo} ${d.b} - ${PERFIL.nome}.pdf`, { type: 'application/pdf' });
     const quem = registrarContatoJ8(cli, d);
     const reg = quem ? ` Contato com ${nomeProprio(firstName(quem.nome))} registrado hoje.` : '';
     if (telaDeToque && navigator.canShare && navigator.canShare({ files: [pdf] })) {
@@ -1599,6 +1621,7 @@ function j8Card(i, c) {
   // complemento e bloco copiados exatamente como estão no cadastro (a A. Gonçalves só informa o bloco); o rótulo diz de que é
   const deQue = { Apartamento: 'do apartamento', Cobertura: 'da cobertura', Casa: 'da casa', Terreno: 'do terreno' }[grupo] || 'do imóvel';
   const unid = i.cp ? `<b>${esc(i.cp)}</b>${i.bl ? `<small>Bloco: ${esc(i.bl)}</small>` : ''}` : i.bl ? `<b>Bloco: ${esc(i.bl)}</b>` : '';
+  // complemento e bloco: só no login master (Matheus); no do Felipe a caixa nem aparece
   return `<div class="j8c">
     <div class="j8top">
       <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
@@ -1616,8 +1639,8 @@ function j8Card(i, c) {
     </div>
     <div class="j8act">
       <div class="cpl end${i.en ? '' : ' vazio'}"><span>Endereço</span>${i.en ? `<b>${esc(i.en)}</b>` : 'Não informado'}</div>
-      <div class="cpl${unid ? '' : ' vazio'}"><span>Complemento ${deQue}</span>${unid || 'Não informado'}</div>
-      <button class="cpl capa" data-act="j8-capa" data-c="${esc(i.k)}"><span>Foto da capa</span><b><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i>Trocar</b></button>
+      ${MASTER ? `<div class="cpl${unid ? '' : ' vazio'}"><span>Complemento ${deQue}</span>${unid || 'Não informado'}</div>` : ''}
+      <button class="cpl capa${MASTER ? '' : ' so'}" data-act="j8-capa" data-c="${esc(i.k)}"><span>Foto da capa</span><b><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i>Trocar</b></button>
       <button class="bk pdf${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
       <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo para cliente</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
@@ -1707,7 +1730,7 @@ function imoveisFiltrados() {
   if (f.quartos) l = l.filter(i => i.q >= f.quartos);
   if (f.vmin) l = l.filter(i => i.p >= f.vmin);
   if (f.vmax) l = l.filter(i => i.p && i.p <= f.vmax);
-  if (palavras.length) l = l.filter(i => { const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, i.cp, i.bl, EST[i.src].parceiros ? i.ref : ''].join(' ')); return palavras.every(p => t.includes(p)); });
+  if (palavras.length) l = l.filter(i => { const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, MASTER ? i.cp : '', MASTER ? i.bl : '',EST[i.src].parceiros ? i.ref : ''].join(' ')); return palavras.every(p => t.includes(p)); });
   const ordem = { maior: (a, b) => b.p - a.p, menor: (a, b) => (a.p || 9e15) - (b.p || 9e15), recentes: (a, b) => String(b.du).localeCompare(String(a.du)) }[f.ordem];
   const novos = naLocacao() ? [] : l.filter(ehNovo);
   imoveisFiltrados.novos = novos.length; // contagem do botão "Entraram nos últimos 30 dias" (com os outros filtros)
@@ -1757,7 +1780,7 @@ function matchQ(c, q) {
 // painel do topo: data e saudação, e os quatro números da carteira (os dois primeiros filtram a lista)
 function renderPainel() {
   const agora = new Date(), h = agora.getHours();
-  $('#c-hoje').textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + (h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite') + ', Matheus';
+  $('#c-hoje').textContent = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }) + ' · ' + (h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite') + ', ' + PERFIL.nome.split(' ')[0];
   const A = ativos();
   const hoje = A.filter(c => diasSemEnvio(c) === 0).length;
   const alimentar = clientes.filter(precisaAlimentar).length;
@@ -2027,7 +2050,8 @@ const vizinhosDe = b => { const k = Object.keys(VIZINHOS).find(x => bkey(x) === 
 // ajuste (superior 0,90 · inferior 1,10); a média × a área do imóvel = valor de mercado; faixas −5% e +5%.
 // NÃO é PTAM nem laudo (exigem CNAI e a ABNT NBR 14653): é parecer de mercado do corretor, e o PDF diz isso.
 // Fica no Firebase (carteira_pareceres; base de teste: carteira_pareceres_TESTE_CLAUDE) e vira um PDF de 4 a 5 páginas.
-const COLP = TESTE ? 'carteira_pareceres_TESTE_CLAUDE' : 'carteira_pareceres';
+// cada login tem os pareceres dele (o do Felipe em carteira_pareceres_felipe)
+const COLP = PERFIL.col.replace('carteira_clientes', 'carteira_pareceres') + (TESTE ? '_TESTE_CLAUDE' : '');
 const LS_RASC = 'carteira_parecer_rascunho_' + COLP;
 const P_OFERTA = 0.95;
 const P_AJUSTES = [['sup', 'Superior', 0.9], ['eq', 'Equivalente', 1], ['inf', 'Inferior', 1.1]];
@@ -2382,11 +2406,11 @@ function assinaturaPDF() {
       l.href = 'https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&display=swap';
       await new Promise(ok => { l.onload = ok; l.onerror = ok; setTimeout(ok, 5000); document.head.appendChild(l); });
     }
-    await Promise.race([document.fonts.load(`150px "${fam}"`, 'Matheus Nickel'), new Promise(ok => setTimeout(ok, 5000))]);
+    await Promise.race([document.fonts.load(`150px "${fam}"`, PERFIL.nome), new Promise(ok => setTimeout(ok, 5000))]);
     if (![...document.fonts].some(f => f.family.replace(/["']/g, '') === fam && f.status === 'loaded')) { assinaturaProm = null; return null; }
     const cv = document.createElement('canvas'); cv.width = 1000; cv.height = 300;
     const g = cv.getContext('2d'); g.translate(40, 200); g.rotate(-0.07);
-    g.font = `150px "${fam}"`; g.fillStyle = '#1d2b4f'; g.fillText('Matheus Nickel', 0, 0);
+    g.font = `150px "${fam}"`; g.fillStyle = '#1d2b4f'; g.fillText(PERFIL.nome, 0, 0); // a assinatura é do login (Matheus ou Felipe)
     return cv.toDataURL('image/png');
   })().catch(() => { assinaturaProm = null; return null; });
   return assinaturaProm;
@@ -2396,14 +2420,14 @@ function tituloParecer(p) { const t = p.tc || 'Imóvel'; return p.b ? `${t} ${na
 function paginaParecer(doc, p, kick, titulo, pg, tot) {
   doc.addPage([920, 660], 'landscape');
   pFill(doc, 'bg'); doc.rect(0, 0, 920, 660, 'F');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); pTx(doc, 'tx'); doc.text('MATHEUS NICKEL', 34, 40, { charSpace: 1.6 });
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); pTx(doc, 'tx'); doc.text(CORRETOR.nome, 34, 40, { charSpace: 1.6 });
   // alinhado à direita "na mão": com espaçamento entre letras o align do jsPDF erra a largura
   doc.setFont('helvetica', 'normal'); pTx(doc, 'mu'); const pm = 'PARECER DE MERCADO'; doc.text(pm, 886 - doc.getTextWidth(pm) - 1.6 * (pm.length - 1), 40, { charSpace: 1.6 });
   doc.setFontSize(8); pTx(doc, 'or'); doc.text(kick.toLocaleUpperCase('pt-BR'), 34, 82, { charSpace: 1.6 });
   doc.setFontSize(25); pTx(doc, 'tx'); doc.text(titulo, 34, 112);
   pDraw(doc, 'li'); doc.setLineWidth(.6); doc.line(34, 622, 886, 622);
   doc.setFontSize(8.5); pTx(doc, 'mu');
-  doc.text(`${p.end || tituloParecer(p)} · ${CORRETOR.creci}`, 34, 638);
+  doc.text([p.end || tituloParecer(p), CORRETOR.creci].filter(Boolean).join(' · '), 34, 638);
   doc.text(`${pg} / ${tot}`, 886, 638, { align: 'right' });
 }
 function capaParecerPDF(doc, p, r, foto) {
@@ -2418,10 +2442,10 @@ function capaParecerPDF(doc, p, r, foto) {
   }
   // cartão do corretor no pé, igual ao do book
   doc.setDrawColor(228, 228, 228); doc.setLineWidth(.6); doc.line(x, pe - 44, x + w, pe - 44);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'tx'); doc.text(CORRETOR.nome, x, pe - 18, { charSpace: 2 });
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); pTx(doc, 'mu'); doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, pe - 2);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'tx'); doc.text(CORRETOR.nome, x, CORRETOR.creci ? pe - 18 : pe - 10, { charSpace: 2 });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); pTx(doc, 'mu'); if (CORRETOR.creci) doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, pe - 2);
   doc.setFontSize(10); doc.setTextColor(56, 56, 56);
-  [[CORRETOR.insta, 'insta', pe - 18], [CORRETOR.whats, 'wa', pe - 2]].forEach(([t, ic, yy]) => {
+  [[CORRETOR.insta, 'insta', pe - 18], [CORRETOR.whats, 'wa', pe - 2]].filter(([t]) => t).forEach(([t, ic, yy]) => {
     doc.text(t, x + w, yy, { align: 'right' });
     doc.addImage(iconePDF(ic, '#383838'), 'PNG', x + w - doc.getTextWidth(t) - 17, yy - 9, 11, 11);
   });
@@ -2577,8 +2601,8 @@ function filaParecerPDF(doc, p, r, pg, tot, assin) {
   const sy = 560;
   if (assin) doc.addImage(assin, 'PNG', rx - 8, sy - 62, 220, 66, undefined, 'FAST');
   pDraw(doc, 'tx'); doc.setLineWidth(.5); doc.line(rx, sy, rx + 200, sy);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'tx'); doc.text('Matheus Nickel', rx, sy + 16);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); pTx(doc, 'mu'); doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci} · Curitiba, ${hojeExtenso()}`, rx, sy + 30);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'tx'); doc.text(PERFIL.nome, rx, sy + 16);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); pTx(doc, 'mu'); doc.text([CORRETOR.creci ? `${CORRETOR.cargo} · ${CORRETOR.creci}` : '', `Curitiba, ${hojeExtenso()}`].filter(Boolean).join(' · '), rx, sy + 30);
 }
 async function pdfParecer(btn) {
   if (btn.dataset.busy) return;
@@ -2604,7 +2628,7 @@ async function pdfParecer(btn) {
     faixasParecerPDF(doc, p, r, 2, tot);
     compsParecerPDF(doc, p, r, fotos, 3, tot);
     filaParecerPDF(doc, p, r, tot, tot, assin);
-    const nome = `Parecer de mercado - ${tituloParecer(p)} - Matheus Nickel.pdf`.replace(/[\\/:*?"<>|]/g, '');
+    const nome = `Parecer de mercado - ${tituloParecer(p)} - ${PERFIL.nome}.pdf`.replace(/[\\/:*?"<>|]/g, '');
     const pdf = new File([doc.output('blob')], nome, { type: 'application/pdf' });
     const aviso = salvo ? '' : ' (sem internet: o parecer ficou como rascunho neste aparelho)';
     if (telaDeToque && navigator.canShare && navigator.canShare({ files: [pdf] })) {
@@ -2704,7 +2728,7 @@ const tituloImovel = i => [i.rot || i.t, i.b].filter(Boolean).join(' · ');
 function buscaVisita(c, q) {
   const palavras = norm(q).split(/\s+/).filter(Boolean); if (!palavras.length || !carregados) return [];
   const l = ESTOQUES.flatMap(e => estoque[e.id] ? estoque[e.id].imoveis : []).filter(i => {
-    const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, i.cp, i.bl, EST[i.src].nome, EST[i.src].parceiros ? i.ref : ''].join(' '));
+    const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, MASTER ? i.cp : '', MASTER ? i.bl : '',EST[i.src].nome, EST[i.src].parceiros ? i.ref : ''].join(' '));
     return palavras.every(p => t.includes(p));
   });
   return l.map(i => ({ i, env: envioDe(c, i) })).sort((a, b) => (!!b.env - !!a.env) || (b.i.p || 0) - (a.i.p || 0)).slice(0, 8);
@@ -3199,7 +3223,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-15b';
+const VERSAO = '2026-11-16a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
@@ -3225,14 +3249,21 @@ function startApp() {
   refresh();
   loadEstoques();
 }
-$('#lg-form').addEventListener('submit', e => {
+$('#lg-form').addEventListener('submit', async e => {
   e.preventDefault();
-  if ($('#lg-pass').value === SENHA) { lsSet(LS_AUTH, true); startApp(); }
-  else { $('#lg-err').textContent = 'Senha incorreta.'; $('#lg-pass').select(); }
+  const u = norm($('#lg-user').value).trim().replace(/\s+/g, ' '), id = Object.keys(PERFIS).find(k => PERFIS[k].usuarios.includes(u));
+  let ok = false;
+  if (id) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('carteira-nickel:' + $('#lg-pass').value)); ok = [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('') === PERFIS[id].hash; }
+  // o perfil decide a coleção e o estoque logo na carga da página: entra recarregando
+  if (ok) { lsSet(LS_AUTH, id); location.reload(); }
+  else { $('#lg-err').textContent = id ? 'Senha incorreta.' : 'Usuário não encontrado.'; (id ? $('#lg-pass') : $('#lg-user')).select(); }
 });
 if (TESTE) $('#teste-bar').classList.remove('hidden');
-if (lsGet(LS_AUTH, false) === true) startApp();
-else { $('#login').classList.remove('hidden'); setTimeout(() => $('#lg-pass').focus(), 50); }
+// o que muda por login: abas, iniciais do menu
+document.documentElement.classList.toggle('perfil-corretor', !MASTER);
+$('.top .avatar').textContent = PERFIL.nome.charAt(0);
+if (PERFIL_ID) startApp();
+else { $('#login').classList.remove('hidden'); setTimeout(() => $('#lg-user').focus(), 50); }
 </script>
 </body>
 </html>
