@@ -14,8 +14,8 @@
 // 09/11: V6 Imóveis (mesma plataforma da Entre, rua quase sempre sem número) depois da Urbanic.
 import { readFile, writeFile } from 'node:fs/promises';
 
-const ORDEM = ['j8', 'sis3', 'arya', 'gon', 'prates', 'entre', 'urbanic', 'v6', 'zireh', 'baltazzar', 'pilar'];
-const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', v6: 'v6', baltazzar: 'baltazzar' };
+const ORDEM = ['j8', 'sis3', 'arya', 'gon', 'prates', 'corretare', 'entre', 'urbanic', 'v6', 'zireh', 'baltazzar', 'pilar'];
+const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', v6: 'v6', baltazzar: 'baltazzar', corretare: 'corretare' };
 const OUT = new URL('../dados/repetidos.json', import.meta.url);
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();

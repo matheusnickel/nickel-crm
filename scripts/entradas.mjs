@@ -11,7 +11,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', v6: 'v6', baltazzar: 'baltazzar' };
+const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', v6: 'v6', baltazzar: 'baltazzar', corretare: 'corretare' };
 // 28/10: a J8 passou a vir inteira (antes eram só os exclusivos); os 533 que apareceram ali não eram imóveis novos no site
 const BASE_EXTRA = { j8: ['9a01bde'] };
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));

@@ -1162,7 +1162,9 @@ const ESTOQUES_TODOS = [
   // desde 09/11. V6 Imóveis (mesma plataforma): só prontos; mostra a rua, quase nunca o número, sem complemento
   { id: 'v6', nome: 'V6', arq: 'dados/v6.json', det: 'dados/v6/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   // Baltazzar (site da Loft, cadastro no Vista): não publica rua, número nem complemento
-  { id: 'baltazzar', nome: 'Baltazzar', arq: 'dados/baltazzar.json', det: 'dados/baltazzar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
+  { id: 'baltazzar', nome: 'Baltazzar', arq: 'dados/baltazzar.json', det: 'dados/baltazzar/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  // desde 16/11. Corretare (corretare.com.br, mesma plataforma da Arya): só prontos; rua quase sempre sem número, sem complemento
+  { id: 'corretare', nome: 'Corretare', arq: 'dados/corretare.json', det: 'dados/corretare/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
 // cada login vê só as imobiliárias dele (Felipe: só a J8)
 const ESTOQUES = ESTOQUES_TODOS.filter(e => !PERFIL.estoques || PERFIL.estoques.includes(e.id));
@@ -3357,7 +3359,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-16f';
+const VERSAO = '2026-11-16g';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
