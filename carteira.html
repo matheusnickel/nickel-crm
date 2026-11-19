@@ -1577,30 +1577,30 @@ function mensagemDoLink(c, d, url) {
   if (c.vagas && d.v >= c.vagas) pontos.push(`${d.v} ${d.v === 1 ? 'vaga' : 'vagas'}`);
   if (c.mobilia.includes('s') && (d.mob || d.mo === 's')) pontos.push('mobiliado');
   // valor: dentro da faixa dele, ou até 10% acima do teto (o cruzamento aceita): diz com franqueza
-  const dentro = d.p && c.valorMax && d.p <= c.valorMax, acima = d.p && c.valorMax && d.p > c.valorMax;
+  const dentro = d.p && c.valorMax && d.p <= c.valorMax;
   const abaixo = d.p && c.valorMax && d.p <= c.valorMax * .9; // 10% ou mais abaixo do teto dele
   const dif = diferenciais(d.itens, DIF_IMOVEL, 2), cond = diferenciais(d.condItens, DIF_COND, 2);
   const nome = nomeProprio(firstName(c.nome)), tipo = tipoDeRua(d) || d.rot || 'Imóvel';
   const dn = diasNovo(IMOVEL.get(d.k) || d);
   // "bate em tudo" só quando ele deu pelo menos 3 critérios além de tipo e bairro (e o imóvel cumpre todos, no valor também)
   const criterios = [c.quartos, c.vagas, c.areaMin, c.terrenoMin, c.mobilia.length, c.valorMax].filter(Boolean).length;
-  // 19/11 (pedido dele): a 1ª linha é um GANCHO, na voz dele (curto, concreto, nada que o dado não sustente).
-  // Ordem: passa do teto (franqueza prende) · acabou de entrar · bate em tudo · o diferencial mais forte · simples
-  let gancho, faixa = dentro ? (abaixo ? 'Abaixo do seu teto.' : 'Dentro da sua faixa.') : '';
-  if (acima) { gancho = `${nome}, essa passa um pouco do seu teto.`; faixa = 'Mas vale olhar antes de descartar.'; }
-  else if (dn !== null && dn <= 7) gancho = `${nome}, essa ${dn <= 3 ? 'acabou de entrar' : 'entrou essa semana'}.`;
-  else if (criterios >= 3 && dentro) { gancho = `${nome}, essa bate em tudo que você me pediu.`; }
-  else if (dif.length) { gancho = `${nome}, ${minusc(dif.shift())} ${onde}.`; }
-  else gancho = `${nome}, separei essa pra você.`;
-  const jaDisseOnde = gancho.endsWith(onde + '.'); // "Felipe, piscina aquecida no Bigorrilho." -> "Apartamento com 3 quartos (1 suíte)."
+  // 19/11 (pedido dele): a 1ª linha é um GANCHO na pegada "lembrei de você" (o cliente sente que foi lembrado, não
+  // que recebeu mais um anúncio). Muda pelo que é verdade: acabou de entrar · bate em tudo que ele pediu · o bairro.
+  // Acima do teto NÃO se fala (pedido dele): a linha da faixa só aparece quando está dentro.
+  const faixa = dentro ? (abaixo ? 'Abaixo do seu teto.' : 'Dentro da sua faixa.') : '';
+  let gancho;
+  if (dn !== null && dn <= 7) gancho = `${nome}, essa ${dn <= 3 ? 'acabou de entrar' : 'entrou essa semana'} e lembrei de você na hora.`;
+  else if (criterios >= 3 && dentro) gancho = `${nome}, quando vi essa lembrei de você. Bate em tudo que você me pediu.`;
+  else gancho = `${nome}, vi essa ${onde} e lembrei de você.`;
+  const jaDisseOnde = gancho.endsWith(onde + ' e lembrei de você.'); // aí a linha de baixo não repete o bairro
   const linhas = [gancho,
     jaDisseOnde ? `${tipo}${pontos.length ? ' com ' + listaPt(pontos.slice(0, 3)) : ''}.`
       : `${tipo} ${onde}.${pontos.length ? ' ' + listaPt(pontos.slice(0, 3)).replace(/^./, s => s.toUpperCase()) + '.' : ''}`,
     dif.length ? `Tem ${listaPt(dif.map(minusc))}.` : cond.length ? `No condomínio, ${listaPt(cond.map(minusc))}.` : '',
     faixa].filter(Boolean);
   // o CTA que ele já usa (o mesmo do descritivo: "Essa casa está dentro do que você está buscando?"); quente puxa para a visita
+  // (o standby também usa o dele: o "lembrei de você" agora está no gancho)
   const pergunta = ['cqq', 'visita', 'proposta'].includes(c.etapa) ? 'Consigo te levar lá essa semana. Qual dia fica melhor pra você?'
-    : emStandby(c) ? 'Lembrei de você quando vi. Ainda está procurando?'
     : descritivoPartes(d)[4];
   return [linhas.join('\n'), url, pergunta].join('\n\n');
 }
@@ -3564,7 +3564,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19e';
+const VERSAO = '2026-11-19f';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
