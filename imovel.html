@@ -17,8 +17,8 @@
   O link (imovel.html?l=<id>) é criado na Carteira ("Link para cliente"): lá fica gravada uma foto do imóvel naquele
   momento (título, ficha, diferenciais, fotos, para quem é e quem assina). Esta página só lê isso — não mostra
   imobiliária, link do anúncio nem complemento — e anota no próprio link a hora em que o cliente abriu
-  (19/11, pedido dele: "mais completo, como a página da imobiliária": condomínio, IPTU, texto do anúncio limpo de
-  qualquer menção à imobiliária, e endereço com "Ver no mapa" — rua e número, como no book)
+  (19/11, pedido dele: "mais completo": ficha completa, valor do condomínio e endereço com "Ver no mapa" — rua e
+  número, como no book. Texto do anúncio da imobiliária e IPTU NÃO entram, também pedido dele)
   (a Carteira mostra "abriu o link"). Quem está logado na Carteira neste aparelho vê como prévia, sem contar abertura.
   1ª letra do id: m = Matheus, f = Felipe Moreira; &t=1 = base de teste.
 -->
@@ -59,7 +59,6 @@ h1{font-size:clamp(30px,7vw,44px);line-height:1.12;font-weight:300;letter-spacin
 .vals{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:12px;font-size:16px;font-variant-numeric:tabular-nums}
 .vals span{display:flex;flex-direction:column}
 .vals small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.desc{display:flex;flex-direction:column;gap:12px;font-size:16px;line-height:1.7;color:var(--text2);max-width:66ch}
 .loc{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;padding:16px 18px;border:1px solid var(--line2);border-radius:10px}
 .loc div{display:flex;flex-direction:column;min-width:0}
 .loc b{font-size:16.5px;font-weight:600}
@@ -209,11 +208,10 @@ function desenha() {
       <h1>${esc(L.titulo)}</h1>
       <p class="sub">${esc(L.sub)}</p>
       <div class="preco"><small>${L.loc ? 'Valor do aluguel' : 'Valor de venda'}</small><b>${L.preco ? reais(L.preco) + (L.loc ? '/mês' : '') : 'Sob consulta'}</b></div>
-      ${L.valCond || L.valIptu ? `<div class="vals">${L.valCond ? `<span><small>Condomínio</small>${reais(L.valCond)}/mês</span>` : ''}${L.valIptu ? `<span><small>IPTU</small>${reais(L.valIptu)}</span>` : ''}</div>` : ''}
+      ${L.valCond ? `<div class="vals"><span><small>Condomínio</small>${reais(L.valCond)}/mês</span></div>` : ''}
       ${L.texto ? `<p class="texto">${esc(L.texto)}</p>` : ''}
     </div>
     ${(L.ficha || []).length ? `<section class="sec"><h2>Ficha técnica</h2><div class="ficha">${L.ficha.map(x => `<div><span>${esc(x.r)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></section>` : ''}
-    ${L.descricao ? `<section class="sec"><h2>Sobre o imóvel</h2><div class="desc">${L.descricao.split('\n').map(p => `<p>${esc(p)}</p>`).join('')}</div></section>` : ''}
     ${(L.dif || []).length ? `<section class="sec"><h2>Diferenciais</h2><ul class="difs">${L.dif.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
     ${(L.cond || []).length ? `<section class="sec"><h2>No condomínio</h2><ul class="difs">${L.cond.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
     ${L.endereco || L.bairro ? `<section class="sec"><h2>Localização</h2><div class="loc"><div><b>${esc(L.endereco || L.bairro)}</b><span>${esc([L.endereco ? L.bairro : '', L.cidade || 'Curitiba'].filter(Boolean).join(' · '))}</span></div>${L.endereco ? `<a class="mapa" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([L.endereco, L.bairro, L.cidade || 'Curitiba', 'PR'].filter(Boolean).join(', '))}" target="_blank" rel="noopener">${PINO}Ver no mapa</a>` : ''}</div></section>` : ''}

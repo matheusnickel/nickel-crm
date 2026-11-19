@@ -1535,10 +1535,10 @@ function fotoDoLink(d) {
     ficha: fichaCompleta(d).map(([r, v]) => ({ r, v: String(v) })), // o Firestore não guarda lista dentro de lista
     dif: diferenciais(d.itens, DIF_IMOVEL, 30), cond: diferenciais(d.condItens, DIF_COND, 20),
     fotos: fotosDoBook(d).slice(0, 80),
-    // 19/11 (pedido dele: "mais completo, como a página da imobiliária, até endereço, valor de condomínio"):
-    // condomínio e IPTU, endereço (rua e número, como no book; o complemento NUNCA vai) e o texto do anúncio, limpo
-    valCond: d.cond || 0, valIptu: d.iptu || 0, endereco: enDe(d), bairro: d.b || '', cidade: d.ci || 'Curitiba',
-    descricao: descricaoLimpa(d)
+    // 19/11 (pedido dele: "mais completo, até endereço, valor de condomínio"): condomínio e endereço (rua e número, como
+    // no book; o complemento NUNCA vai). SEM o texto do anúncio ("casa bonita na região…": ele não quer o texto da
+    // imobiliária) e SEM IPTU — pedidos dele no mesmo dia.
+    valCond: d.cond || 0, endereco: enDe(d), bairro: d.b || '', cidade: d.ci || 'Curitiba'
   };
 }
 // ficha sem o limite de 8 do book: todas as áreas da regra dele, cômodos, banheiros, vagas, ano, por andar, mobília
@@ -1559,22 +1559,6 @@ function fichaCompleta(d) {
   const mob = d.mob ? 'Mobiliado' : { s: 'Mobiliado', m: 'Semi-mobiliado' }[d.mo];
   if (mob) l.push(['Mobília', mob]);
   return l;
-}
-// o texto do anúncio sem nada que leve o cliente à imobiliária: frase que cita imobiliária, telefone, e-mail, site,
-// CRECI, código/referência do anúncio ou "agende com nossos corretores" sai inteira (o resto do texto fica como está)
-const AG_TXT = /\b(j8|jota ?8|gon[çc]alves|sis ?3|zireh|arya|casa prates|prates|pilar|entre im[óo]veis|urbanic|v6|corretare|my ?broker|imobili[áa]ria)\b/i;
-const RUIDO_TXT = /\(?\b\d{2}\)?\s?9?\s?\d{4}\s?[-.]?\s?\d{4}\b|\b\d{4,5}\s?[-.]\s?\d{4}\b|telefone|\bfone\b|\btel\b|@|https?:|www\.|\.com\b|creci|\bc[óo]d(igo|\.)|\bref(\.|er[êe]ncia)?\s*:?\s*\d|agend|entre em contato|corretor|consultor|nossa equipe|nosso time|whats|ligue|fale conosco|visite nosso|galeria de im[óo]veis/i;
-function descricaoLimpa(d) {
-  const bruto = d.descricao || [d.intro, ...(Array.isArray(d.texto) ? d.texto : [d.texto])].filter(Boolean).join('\n\n');
-  // códigos de HTML que algumas imobiliárias mandam ("m&sup2;") e, na My Broker, pedaço do código do site no lugar do texto
-  // (o textarea decodifica todos os códigos — &Ecirc;, &rsquo;, &sup2;… — sem rodar nada do texto)
-  const dec = s => { const ta = document.createElement('textarea'); ta.innerHTML = s.replace(/</g, '&lt;'); return ta.value; };
-  // hashtags ("#MyBrokerImoveis") saem todas
-  const pars = dec(String(bruto || '')).replace(/\r/g, '').replace(/#[\p{L}\d_]+/gu, '').split(/\n+/).map(p => p.trim()).filter(p => p && !/\{"|":|\$L\d|\\"/.test(p))
-    .map(p => p.split(/(?<=[.!?])\s+/).filter(f => !AG_TXT.test(f) && !RUIDO_TXT.test(f)).join(' ').trim()).filter(p => p.length > 1);
-  let out = '', n = 0;
-  for (const p of pars) { if (n + p.length > 2600) break; out += (out ? '\n' : '') + p; n += p.length; }
-  return out;
 }
 // 1º toque prepara o imóvel (se ainda não carregou); com ele pronto, copia o link no mesmo toque e grava em seguida
 function linkParaCliente(btn, k, cliId) {
@@ -3594,7 +3578,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19i';
+const VERSAO = '2026-11-19j';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
