@@ -1549,12 +1549,44 @@ function linkParaCliente(btn, k, cliId) {
   const url = new URL(`i/${previaId(k)}.html?l=${id}${TESTE ? '&t=1' : ''}`, location.href).href;
   const doc = Object.assign({ k, cli: cl ? cl.id : '', para: cl ? nomeProprio(cl.nome) : '', criadoEm: new Date().toISOString(), corretor: CORRETOR, vistos: [] }, fotoDoLink(d));
   const nome = cl ? nomeProprio(firstName(cl.nome)) : '';
-  copiarTexto(url).then(() => toast(`Link copiado. É só colar no WhatsApp${nome ? ' de ' + nome : ''}.${cl ? ' Quando abrir, aparece aqui na Carteira.' : ''}`),
+  // com cliente: a mensagem direcionada com o link no meio (sem cliente, só o link)
+  const txt = cl ? mensagemDoLink(cl, d, url) : url;
+  copiarTexto(txt).then(() => toast(cl ? `Mensagem copiada. Ajuste a 1ª linha com o que só você sabe do ${nome} e cole no WhatsApp.` :'Link copiado. É só colar no WhatsApp.'),
     // sem permissão para copiar: abre o compartilhar do celular ou mostra o link para copiar à mão
-    () => { if (navigator.share && telaDeToque) navigator.share({ url }).catch(() => {}); else window.prompt('Copie o link do imóvel:', url); });
+    () => { if (navigator.share && telaDeToque) navigator.share({ text: txt }).catch(() => {}); else window.prompt('Copie o link do imóvel:', url); });
   fetch(`${FB_ROOT}/${COLL}/${id}?key=${FB_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(doc) }) })
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); if (cl) registrarContatoJ8(cl.id, d, id); })
     .catch(() => toast('Sem conexão: o link não foi criado. Copie de novo quando a internet voltar.'));
+}
+// 19/11 (ideia dele): "o texto precisa ser direcionado, o link complementa". O texto diz por que o imóvel é para ESTE
+// cliente — o que bate com a busca dele (cômodos, vagas, metragem, terreno, mobília, faixa de valor) e 1 ou 2 diferenciais —
+// sem endereço e sem repetir a ficha (a prévia do link já mostra). A pergunta do fim muda com a temperatura.
+// É um rascunho: o que o cliente falou na conversa só o Matheus sabe (o aviso pede para ajustar a 1ª linha).
+const minusc = s => s.charAt(0).toLowerCase() + s.slice(1);
+function mensagemDoLink(c, d, url) {
+  const g = GRUPO[d.tc] || '', casa = g === 'Casa', apto = g === 'Apartamento' || g === 'Cobertura';
+  const nomeImovel = { Apartamento: 'esse apartamento', Cobertura: 'essa cobertura', Casa: 'essa casa', Terreno: 'esse terreno', Comercial: 'esse imóvel' }[g] || 'esse imóvel';
+  const onde = `${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`;
+  const aq = d.aq || (IMOVEL.get(d.k) || {}).aq || 0, at = d.at || 0;
+  const pontos = [];
+  if (casa || apto) {
+    if (d.s && d.s >= d.q) pontos.push(`${d.s} ${d.s === 1 ? 'suíte' : 'suítes'}`);
+    else if (d.q) pontos.push(`${d.q} ${d.q === 1 ? 'quarto' : 'quartos'}${d.s ? ` (${d.s} ${d.s === 1 ? 'suíte' : 'suítes'})` : ''}`);
+  }
+  if (c.areaMin && aq >= c.areaMin) pontos.push(`${m2(aq)} ${casa ? 'construídos' : apto ? 'privativos' : ''}`.trim());
+  if (c.terrenoMin && at >= c.terrenoMin) pontos.push(`terreno de ${m2(at)}`);
+  if (c.vagas && d.v >= c.vagas) pontos.push(`${d.v} ${d.v === 1 ? 'vaga' : 'vagas'}`);
+  if (c.mobilia.includes('s') && (d.mob || d.mo === 's')) pontos.push('mobiliado');
+  // valor: dentro da faixa dele, ou até 10% acima do teto (o cruzamento aceita): diz com franqueza
+  const dentro = d.p && c.valorMax && d.p <= c.valorMax, acima = d.p && c.valorMax && d.p > c.valorMax;
+  const l1 = `${nomeProprio(firstName(c.nome))}, separei ${nomeImovel} ${onde}` + (pontos.length ? `: ${listaPt(pontos.slice(0, 3))}${dentro ? ', dentro da sua faixa' : ''}.` : dentro ? ', dentro da sua faixa.' : '.');
+  const dif = diferenciais(d.itens, DIF_IMOVEL, 2).map(minusc), cond = diferenciais(d.condItens, DIF_COND, 2).map(minusc);
+  const l2 = [dif.length ? `Ainda tem ${listaPt(dif)}.` : cond.length ? `E o condomínio tem ${listaPt(cond)}.` : '',
+    acima ? 'Fica um pouco acima do seu teto, mas acho que vale olhar.' : ''].filter(Boolean).join(' ');
+  const pergunta = ['cqq', 'visita', 'proposta'].includes(c.etapa) ? 'Consigo te levar lá essa semana. Qual dia fica melhor pra você?'
+    : emStandby(c) ? 'Lembrei de você quando vi. Ainda está procurando?'
+    : 'Faz sentido pra você ou ainda está longe do que imagina?';
+  return [l1 + (l2 ? ' ' + l2 : ''), url, pergunta].join('\n\n');
 }
 // links abertos nos últimos LINK_DIAS (consulta pelo campo ultimaVez, que só existe depois da 1ª abertura)
 async function carregaLinks() {
@@ -3516,7 +3548,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19c';
+const VERSAO = '2026-11-19d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
