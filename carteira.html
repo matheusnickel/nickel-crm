@@ -1558,51 +1558,23 @@ function linkParaCliente(btn, k, cliId) {
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); if (cl) registrarContatoJ8(cl.id, d, id); })
     .catch(() => toast('Sem conexão: o link não foi criado. Copie de novo quando a internet voltar.'));
 }
-// 19/11 (ideia dele): "o texto precisa ser direcionado, o link complementa". O texto diz por que o imóvel é para ESTE
-// cliente — o que bate com a busca dele (cômodos, vagas, metragem, terreno, mobília, faixa de valor) e 1 ou 2 diferenciais —
-// sem endereço e sem repetir a ficha (a prévia do link já mostra). A pergunta do fim muda com a temperatura.
-// É um rascunho: o que o cliente falou na conversa só o Matheus sabe (o aviso pede para ajustar a 1ª linha).
-const minusc = s => s.charAt(0).toLowerCase() + s.slice(1);
+// 19/11, ajustado com ele ao longo do dia: a mensagem é CURTA. Só o gancho na pegada "lembrei de você", o link (a prévia
+// já mostra tipo, bairro, cômodos, metragem e valor) e o CTA dele. Nada de ficha no texto, nada de endereço e NUNCA
+// falar de valor/teto ("Abaixo do seu teto", "acima do teto": ele não quer esse tipo de comunicação).
 function mensagemDoLink(c, d, url) {
-  const g = GRUPO[d.tc] || '', casa = g === 'Casa', apto = g === 'Apartamento' || g === 'Cobertura';
   const onde = `${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`;
-  const aq = d.aq || (IMOVEL.get(d.k) || {}).aq || 0, at = d.at || 0;
-  const pontos = [];
-  if (casa || apto) {
-    if (d.s && d.s >= d.q) pontos.push(`${d.s} ${d.s === 1 ? 'suíte' : 'suítes'}`);
-    else if (d.q) pontos.push(`${d.q} ${d.q === 1 ? 'quarto' : 'quartos'}${d.s ? ` (${d.s} ${d.s === 1 ? 'suíte' : 'suítes'})` : ''}`);
-  }
-  if (c.areaMin && aq >= c.areaMin) pontos.push(`${m2(aq)} ${casa ? 'construídos' : apto ? 'privativos' : ''}`.trim());
-  if (c.terrenoMin && at >= c.terrenoMin) pontos.push(`terreno de ${m2(at)}`);
-  if (c.vagas && d.v >= c.vagas) pontos.push(`${d.v} ${d.v === 1 ? 'vaga' : 'vagas'}`);
-  if (c.mobilia.includes('s') && (d.mob || d.mo === 's')) pontos.push('mobiliado');
-  // valor: dentro da faixa dele, ou até 10% acima do teto (o cruzamento aceita): diz com franqueza
-  const dentro = d.p && c.valorMax && d.p <= c.valorMax;
-  const abaixo = d.p && c.valorMax && d.p <= c.valorMax * .9; // 10% ou mais abaixo do teto dele
-  const dif = diferenciais(d.itens, DIF_IMOVEL, 2), cond = diferenciais(d.condItens, DIF_COND, 2);
-  const nome = nomeProprio(firstName(c.nome)), tipo = tipoDeRua(d) || d.rot || 'Imóvel';
+  const nome = nomeProprio(firstName(c.nome));
   const dn = diasNovo(IMOVEL.get(d.k) || d);
-  // "bate em tudo" só quando ele deu pelo menos 3 critérios além de tipo e bairro (e o imóvel cumpre todos, no valor também)
+  // "bate em tudo" só quando ele deu pelo menos 3 critérios além de tipo e bairro e o imóvel cumpre todos (valor até o teto)
   const criterios = [c.quartos, c.vagas, c.areaMin, c.terrenoMin, c.mobilia.length, c.valorMax].filter(Boolean).length;
-  // 19/11 (pedido dele): a 1ª linha é um GANCHO na pegada "lembrei de você" (o cliente sente que foi lembrado, não
-  // que recebeu mais um anúncio). Muda pelo que é verdade: acabou de entrar · bate em tudo que ele pediu · o bairro.
-  // Acima do teto NÃO se fala (pedido dele): a linha da faixa só aparece quando está dentro.
-  const faixa = dentro ? (abaixo ? 'Abaixo do seu teto.' : 'Dentro da sua faixa.') : '';
-  let gancho;
-  if (dn !== null && dn <= 7) gancho = `${nome}, essa ${dn <= 3 ? 'acabou de entrar' : 'entrou essa semana'} e lembrei de você na hora.`;
-  else if (criterios >= 3 && dentro) gancho = `${nome}, quando vi essa lembrei de você. Bate em tudo que você me pediu.`;
-  else gancho = `${nome}, vi essa ${onde} e lembrei de você.`;
-  const jaDisseOnde = gancho.endsWith(onde + ' e lembrei de você.'); // aí a linha de baixo não repete o bairro
-  const linhas = [gancho,
-    jaDisseOnde ? `${tipo}${pontos.length ? ' com ' + listaPt(pontos.slice(0, 3)) : ''}.`
-      : `${tipo} ${onde}.${pontos.length ? ' ' + listaPt(pontos.slice(0, 3)).replace(/^./, s => s.toUpperCase()) + '.' : ''}`,
-    dif.length ? `Tem ${listaPt(dif.map(minusc))}.` : cond.length ? `No condomínio, ${listaPt(cond.map(minusc))}.` : '',
-    faixa].filter(Boolean);
+  const cumpre = d.p && c.valorMax && d.p <= c.valorMax;
+  const gancho = dn !== null && dn <= 7 ? `${nome}, essa ${dn <= 3 ? 'acabou de entrar' : 'entrou essa semana'} e lembrei de você na hora.`
+    : criterios >= 3 && cumpre ? `${nome}, quando vi essa lembrei de você. Bate em tudo que você me pediu.`
+    : `${nome}, vi essa ${onde} e lembrei de você.`;
   // o CTA que ele já usa (o mesmo do descritivo: "Essa casa está dentro do que você está buscando?"); quente puxa para a visita
-  // (o standby também usa o dele: o "lembrei de você" agora está no gancho)
   const pergunta = ['cqq', 'visita', 'proposta'].includes(c.etapa) ? 'Consigo te levar lá essa semana. Qual dia fica melhor pra você?'
     : descritivoPartes(d)[4];
-  return [linhas.join('\n'), url, pergunta].join('\n\n');
+  return [gancho, url, pergunta].join('\n\n');
 }
 // links abertos nos últimos LINK_DIAS (consulta pelo campo ultimaVez, que só existe depois da 1ª abertura)
 async function carregaLinks() {
@@ -3564,7 +3536,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19f';
+const VERSAO = '2026-11-19g';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
