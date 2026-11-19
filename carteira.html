@@ -217,7 +217,6 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .j8c .selos{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
 .j8c .selos span{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--tq2);background:var(--tqbg);border-radius:99px;padding:2px 9px}
 .j8act{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:8px;padding:12px;border-top:1px solid var(--line)}
-.j8act .desc{grid-column:1 / -1}
 .j8c .cpl{display:flex;flex-direction:column;justify-content:center;min-height:40px;padding:6px 11px;background:var(--bg);border-radius:8px;font-size:14px;color:var(--text);line-height:1.3;min-width:0;overflow-wrap:anywhere}
 .j8c .cpl span{font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
 .j8c .cpl b{font-weight:600}
@@ -272,6 +271,12 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .env-i .d{font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;padding-top:1px}
 .env-i .w{flex:1;min-width:0}
 .env-i a{color:var(--tq2);word-break:break-all;font-size:13px}
+.abriu{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:12.5px;color:var(--muted)}
+.abriu.ok{color:var(--tq2);font-weight:600}
+.abriu svg{width:14px;height:14px;flex-shrink:0}
+.lkb{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--tq2);background:var(--tqbg);border-radius:99px;padding:3px 9px;white-space:nowrap}
+.lkb svg{width:13px;height:13px}
+.kcard .lkb{align-self:flex-start}
 .env-i .rm{color:var(--faint);font-size:18px;line-height:1;width:24px;height:24px;border-radius:50%}
 .env-i .rm:hover{color:var(--red);background:var(--redbg)}
 /* visitas (12/11) */
@@ -1074,6 +1079,7 @@ async function refresh(silent) {
     if (!silent) toast('Sem conexão. Mostrando os dados salvos neste aparelho.');
   }
   renderAll(); flushPending(); updateSync();
+  carregaLinks(); // quem abriu os links de imóvel (19/11)
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('#app') && !$('#app').classList.contains('hidden')) refresh(true); });
 
@@ -1432,6 +1438,7 @@ function j8Match(c, fonte = 'todas') {
 // ── FOTOS E INFORMAÇÕES DO IMÓVEL (J8 ou Gonçalves) ──
 const ICON_MSG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.6A8 8 0 1 1 21 12z"/><path d="M9 11h6M9 14.5h4"/></svg>';
 const ICON_DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
+const ICON_LINK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>';
 const j8Det = new Map();
 // k = "j8:12345" ou "gon:12345"
 function j8Detalhe(k) {
@@ -1484,14 +1491,106 @@ const tamanhoImg = src => new Promise((ok, err) => { const im = new Image(); im.
 const pdfsProntos = new Map(); // celular: o PDF fica pronto e o 2º toque abre "Salvar / Enviar"
 // Baixar o PDF de um imóvel para um cliente conta como contato com ele (fica no histórico e zera os "dias sem falar").
 // Uma vez por imóvel por dia, para não duplicar se baixar de novo.
-function registrarContatoJ8(cliId, d) {
+function registrarContatoJ8(cliId, d, lk) {
   const cl = cliId && byId(cliId); if (!cl) return null;
   const hoje = nowLocal().slice(0, 10);
-  if (cl.envios.some(e => e.ref === refDe(d) && String(e.data).slice(0, 10) === hoje)) return cl;
-  const e = { id: newId('e'), data: nowLocal(), tipo: d.tc || '', bairro: d.b || '', valor: d.p || 0, link: d.u || '', ref: refDe(d), via: 'PDF ' + EST[d.src].nome };
+  const ja = cl.envios.find(e => e.ref === refDe(d) && String(e.data).slice(0, 10) === hoje);
+  // link do imóvel (19/11): se o PDF já tinha sido registrado hoje, o envio de hoje guarda o link (para saber se ele abriu)
+  if (ja) return lk && !ja.lk ? saveClient(Object.assign({}, cl, { envios: cl.envios.map(e => e === ja ? Object.assign({}, e, { lk }) : e) })) : cl;
+  const e = Object.assign({ id: newId('e'), data: nowLocal(), tipo: d.tc || '', bairro: d.b || '', valor: d.p || 0, link: d.u || '', ref: refDe(d), via: (lk ? 'Link ' : 'PDF ') + EST[d.src].nome }, lk ? { lk } : {});
   // o primeiro imóvel enviado tira o cliente de Qualificando e leva para Conversa qualificada
   const sobe = cl.etapa === 'qual' ? { etapa: 'cq', etapaEm: nowLocal() } : {};
   return saveClient(Object.assign({}, cl, { envios: cl.envios.concat([e]) }, sobe));
+}
+
+// ── LINK DO IMÓVEL PARA O CLIENTE (19/11) ──
+// Pedido dele: além do book, uma página do imóvel para mandar no WhatsApp (imovel.html?l=<id>). Ao copiar o link, a
+// Carteira grava no Firebase uma "foto" do imóvel naquele momento (título, ficha, diferenciais, fotos com a capa escolhida,
+// para quem é e quem assina) — a página lê só isso: não mostra imobiliária, link do anúncio, rua nem complemento.
+// Quando o cliente abre, a página anota a hora no próprio link (vistos/ultimaVez) e a Carteira mostra "abriu" no envio,
+// na lista de clientes e na triagem. Aberturas no aparelho de quem está logado na Carteira não contam (prévia).
+const COLL = PERFIL.col.replace('clientes', 'links') + (TESTE ? '_TESTE_CLAUDE' : '');
+const LK_PERFIL = { matheus: 'm', felipe: 'f' }; // 1ª letra do id = de quem é o link (a página escolhe a coleção por ela)
+const LINKS = new Map(); // id do link -> { vistos: [ISO...], ultimaVez, titulo } (só os abertos nos últimos LINK_DIAS)
+const LINK_DIAS = 60;
+function fotoDoLink(d) {
+  const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
+  const tipo = d.rot || 'Imóvel';
+  return {
+    titulo: emp || `${tipoDeRua(d) || tipo} ${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`,
+    sub: emp ? `${tipo} · ${d.b}` : `${d.b} · ${d.ci || 'Curitiba'}`,
+    texto: descritivoPartes(d)[1] || '', preco: d.p || 0, loc: ehLocacao(d),
+    ficha: fichaPDF(d).map(([r, v]) => ({ r, v: String(v) })), // o Firestore não guarda lista dentro de lista
+    dif: diferenciais(d.itens, DIF_IMOVEL, 12), cond: diferenciais(d.condItens, DIF_COND, 10),
+    fotos: fotosDoBook(d).slice(0, 80)
+  };
+}
+// 1º toque prepara o imóvel (se ainda não carregou); com ele pronto, copia o link no mesmo toque e grava em seguida
+function linkParaCliente(btn, k, cliId) {
+  const d = j8Det.get(k);
+  if (!d || d instanceof Promise) {
+    const original = btn.innerHTML; btn.innerHTML = 'Preparando…';
+    j8Detalhe(k).then(() => { btn.innerHTML = original; toast('Pronto. Toque de novo em “Link para cliente” para copiar.'); },
+      () => { btn.innerHTML = original; toast('Não consegui preparar o link agora.'); });
+    return;
+  }
+  const cl = cliId && byId(cliId);
+  const id = (LK_PERFIL[PERFIL_ID] || 'm') + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+  const url = new URL(`imovel.html?l=${id}${TESTE ? '&t=1' : ''}`, location.href).href;
+  const doc = Object.assign({ k, cli: cl ? cl.id : '', para: cl ? nomeProprio(cl.nome) : '', criadoEm: new Date().toISOString(), corretor: CORRETOR, vistos: [] }, fotoDoLink(d));
+  const nome = cl ? nomeProprio(firstName(cl.nome)) : '';
+  copiarTexto(url).then(() => toast(`Link copiado. É só colar no WhatsApp${nome ? ' de ' + nome : ''}.${cl ? ' Quando abrir, aparece aqui na Carteira.' : ''}`),
+    // sem permissão para copiar: abre o compartilhar do celular ou mostra o link para copiar à mão
+    () => { if (navigator.share && telaDeToque) navigator.share({ url }).catch(() => {}); else window.prompt('Copie o link do imóvel:', url); });
+  fetch(`${FB_ROOT}/${COLL}/${id}?key=${FB_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(doc) }) })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); if (cl) registrarContatoJ8(cl.id, d, id); })
+    .catch(() => toast('Sem conexão: o link não foi criado. Copie de novo quando a internet voltar.'));
+}
+// links abertos nos últimos LINK_DIAS (consulta pelo campo ultimaVez, que só existe depois da 1ª abertura)
+async function carregaLinks() {
+  try {
+    const desde = new Date(Date.now() - LINK_DIAS * 864e5).toISOString();
+    const r = await fetch(`${FB_ROOT}:runQuery?key=${FB_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ structuredQuery: {
+      from: [{ collectionId: COLL }], select: { fields: ['cli', 'titulo', 'vistos', 'ultimaVez'].map(fieldPath => ({ fieldPath })) },
+      where: { fieldFilter: { field: { fieldPath: 'ultimaVez' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: desde } } } } }) });
+    if (!r.ok) return;
+    LINKS.clear();
+    for (const x of await r.json()) if (x.document) { const o = fromFs({ mapValue: { fields: x.document.fields || {} } }); LINKS.set(x.document.name.split('/').pop(), o); }
+    avisaAberturas(); renderAll();
+  } catch (e) {}
+}
+// aviso de quem abriu desde a última vez que a Carteira olhou (neste aparelho)
+function avisaAberturas() {
+  const LS = 'carteira_links_visto_' + COLL, antes = lsGet(LS, ''), agora = new Date().toISOString();
+  lsSet(LS, agora);
+  if (!antes) return; // 1ª vez neste aparelho: não avisa o histórico todo
+  const novos = [...LINKS.values()].filter(o => o.ultimaVez > antes && byId(o.cli));
+  if (!novos.length) return;
+  const nomes = [...new Set(novos.map(o => nomeProprio(firstName(byId(o.cli).nome))))];
+  toast(novos.length === 1 ? `${nomes[0]} abriu o link: ${novos[0].titulo}.` : `${listaPt(nomes)} ${nomes.length === 1 ? 'abriu' : 'abriram'} links de imóveis.`);
+}
+// o envio feito por link: quantas vezes o cliente abriu e quando foi a última
+const abriuDe = e => e && e.lk ? LINKS.get(e.lk) || null : null;
+// a abertura mais recente de qualquer link do cliente: { quando, titulo, vezes }
+function ultimaAbertura(c) {
+  let m = null;
+  c.envios.forEach(e => { const o = abriuDe(e); if (o && o.ultimaVez && (!m || o.ultimaVez > m.quando)) m = { quando: o.ultimaVez, titulo: o.titulo, vezes: (o.vistos || []).length }; });
+  return m;
+}
+// no histórico de envios da ficha: "Abriu o link 3 vezes · a última hoje às 21:03" ou "Link ainda não aberto"
+function abriuTxt(e) {
+  if (!e.lk) return '';
+  const o = abriuDe(e), n = o ? (o.vistos || []).length : 0;
+  if (o && o.ultimaVez) return `<span class="abriu ok">${ICON_OLHO}Abriu o link ${n > 1 ? `${n} vezes · a última ` : ''}${quandoAbriu(o.ultimaVez)}</span>`;
+  return (daysSince(e.data) ?? 99) <= LINK_DIAS ? `<span class="abriu">Link enviado, ainda não abriu</span>` : '';
+}
+const ICON_OLHO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+// "hoje às 21:03", "ontem às 9:40", "18/11 às 14:02"
+function quandoAbriu(iso) {
+  const d = new Date(iso); if (isNaN(d)) return '';
+  const dia = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, h = `${d.getHours()}:${pad(d.getMinutes())}`;
+  const n = daysSince(dia);
+  return (n === 0 ? 'hoje' : n === 1 ? 'ontem' : fmtDate(dia).slice(0, 5)) + ' às ' + h;
 }
 // quem assina o book (capa e rodapé)
 // do login (16/11): no do Felipe, só o nome dele (sem CRECI, Instagram e WhatsApp, pedido do Matheus)
@@ -1683,7 +1782,9 @@ const listaPt = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + 
 const tipoDeRua = d => ({ Casa: 'Casa de rua', Sobrado: 'Casa de rua' })[d.tc] || '';
 // endereço (rua e número) vem do resumo do estoque; o arquivo de detalhes de algumas imobiliárias não traz
 const enDe = d => String(d.en || (IMOVEL.get(d.k) || {}).en || '').trim();
-function descritivo(d) {
+// as partes do descritivo, na ordem: título, cômodos, mobília, valor e pergunta ('' quando não há); o link do imóvel usa os cômodos
+const descritivo = d => descritivoPartes(d).filter(Boolean).join('\n\n');
+function descritivoPartes(d) {
   const tipo = d.rot || 'Imóvel';
   const grupo = GRUPO[d.tc] || '';
   const ehCasa = grupo === 'Casa', ehApto = grupo === 'Apartamento' || grupo === 'Cobertura';
@@ -1713,7 +1814,7 @@ function descritivo(d) {
   const linha = partes.length ? (abre + listaPt(partes) + '.').replace(/,\.$/, '.') : '';
   const valor = `${ehLocacao(d) ? 'Valor do aluguel' : 'Valor de venda'}: ${d.p ? 'R$ ' + Math.round(d.p).toLocaleString('pt-BR') : 'sob consulta'}`;
   const pergunta = `${fem ? 'Essa' : 'Esse'} ${nome} está dentro do que você está buscando?`;
-  return [titulo, linha, d.mob ? 'Totalmente mobiliado.' : '', valor, pergunta].filter(Boolean).join('\n\n');
+  return [titulo, linha, d.mob ? 'Totalmente mobiliado.' : '', valor, pergunta];
 }
 function copiarTexto(txt) {
   if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(txt);
@@ -1762,7 +1863,8 @@ function j8Card(i, c) {
       ${MASTER ? `<div class="cpl${unid ? '' : ' vazio'}"><span>Complemento ${deQue}</span>${unid || 'Não informado'}</div>` : ''}
       <button class="cpl capa${MASTER ? '' : ' so'}" data-act="j8-capa" data-c="${esc(i.k)}"><span>Foto da capa</span><b><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i>Trocar</b></button>
       <button class="bk pdf${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
-      <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo para cliente</button>
+      <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo</button>
+      <button class="bk ghost lnk" data-act="j8-link" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_LINK}Link para cliente</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
     </div>${!c && ehNovo(i) ? paraQuem(i) : ''}${ui.capaDe === i.k ? escolheCapa(i) : ''}</div>`;
 }
@@ -1934,6 +2036,7 @@ function quadroClientes(rows) {
     return `<button class="kcard${fichaAberta() === c.id ? ' sel' : ''}" draggable="true" data-act="ficha" data-id="${c.id}">
       <span class="kn np">${esc(nomeProprio(c.nome))}</span><span class="km">${esc(meta)}</span>
       <span class="kf"><span class="ctt ${cor}"><span class="dot"></span>${frase}</span>${tot ? `<span class="kt">${tot} ${plural(tot, 'compatível', 'compatíveis')}</span>` : ''}${nn ? `<span class="nvb">${nn} ${plural(nn, 'novo', 'novos')}</span>` : ''}</span>
+      ${(() => { const ab = ultimaAbertura(c); return ab && Date.now() - new Date(ab.quando) < 3 * 864e5 ? `<span class="lkb" title="${esc(ab.titulo)}">${ICON_OLHO}Abriu o link ${quandoAbriu(ab.quando)}</span>` : ''; })()}
       ${(() => { const uv = [...c.visitas].sort((a, b) => a.data < b.data ? 1 : -1)[0]; return uv ? `<span class="kv2">${uv.data > hojeISO() ? 'Visita agendada' : 'Visitou'} ${fmtDate(uv.data).slice(0, 5)}: ${esc(uv.k ? uv.nome || [uv.tipo, uv.bairro].filter(Boolean).join(' · ') : uv.txt)}</span>` : ''; })()}
       ${d !== null ? `<span class="kd">Na etapa ${d <= 0 ? 'desde hoje' : 'há ' + d + plural(d, ' dia', ' dias')}</span>` : ''}</button>`;
   };
@@ -1976,7 +2079,9 @@ function renderClientes() {
     const [cor, frase] = contatoTxt(c);
     const dSt = c.status === 'ativo' && emStandby(c) ? daysSince(etapaDesde(c)) : null;
     const nn = novosPara(c).length; // novos (últimos 30 dias) que servem e ele ainda não recebeu
+    const ab = ultimaAbertura(c), abRec = ab && (Date.now() - new Date(ab.quando)) < 3 * 864e5; // abriu um link nos últimos 3 dias
     const side = (tot ? `<span class="est"><b>${tot} ${plural(tot, 'imóvel compatível', 'imóveis compatíveis')}</b></span>` : '')
+      + (abRec ? `<span class="lkb" title="${esc(ab.titulo)}">${ICON_OLHO}Abriu o link ${quandoAbriu(ab.quando)}</span>` : '')
       + (nn ? `<span class="nvb">${nn} ${plural(nn, 'novo', 'novos')} para enviar</span>` : '')
       + (dSt !== null ? `<span class="ctt warn"><span class="dot"></span>${c.retomar ? (c.retomar <= hojeISO() ? 'Retomar agora' : 'Retomar em ' + fmtDate(c.retomar)) : 'Em standby ' + (dSt <= 0 ? 'desde hoje' : 'há ' + dSt + plural(dSt, ' dia', ' dias'))}${c.motivoSt ? ' · ' + esc(c.motivoSt) : ''}</span>`
         : c.status === 'ativo' ? `<span class="ctt ${cor}"><span class="dot"></span>${frase}</span>` : '');
@@ -2950,6 +3055,8 @@ function filaTriagem() {
 function sugereTemp(c) {
   const env14 = c.envios.filter(e => (daysSince(e.data) ?? 99) <= 14).length, sem = diasSemEnvio(c), cad = daysSince(c.criadoEm) ?? 0;
   if (c.visitas.length) return ['cqq', 'Tem visita registrada'];
+  const ab = ultimaAbertura(c); // 19/11: abriu um link de imóvel na última semana = está olhando
+  if (ab && Date.now() - new Date(ab.quando) < 7 * 864e5) return ['cqq', `Abriu o link de um imóvel ${quandoAbriu(ab.quando)}`];
   if (c.etapa === 'cqq') return ['cqq', 'Já estava em CQ quente'];
   if (env14 >= 3) return ['cqq', `Recebeu ${env14} imóveis nas últimas 2 semanas`];
   if (c.etapa === 'standby') return ['standby', 'Já estava em standby'];
@@ -3008,6 +3115,7 @@ function renderTriagem() {
       <dl class="info">
         <dt>Cadastro</dt><dd>${c.criadoEm ? fmtDate(c.criadoEm) + (cad !== null ? ` · há ${cad} ${plural(cad, 'dia', 'dias')}` : '') : '—'}</dd>
         <dt>Imóveis enviados</dt><dd>${envs.length ? `${envs.length} · o último ${sem === 0 ? 'hoje' : 'há ' + sem + plural(sem, ' dia', ' dias')}` : 'Nenhum ainda'}${envs.length ? `<div class="tri-env">${envs.slice(0, 3).map(e => `<span>${fmtShort(e.data)} · ${esc([e.tipo, e.bairro].filter(Boolean).join(' · ') || 'Imóvel')}${e.valor ? ' · ' + fmtValor(e.valor) : ''}</span>`).join('')}</div>` : ''}</dd>
+        ${(() => { const ab = ultimaAbertura(c); return ab ? `<dt>Link aberto</dt><dd><span class="abriu ok" style="margin:0">${ICON_OLHO}${quandoAbriu(ab.quando)}${ab.vezes > 1 ? ` · ${ab.vezes} vezes` : ''}</span><small class="muted">${esc(ab.titulo)}</small></dd>` : ''; })()}
         ${c.visitas.length ? `<dt>Visitas</dt><dd>${c.visitas.map(v => `${fmtDate(v.data).slice(0, 5)} · ${esc(v.k ? v.nome || [v.tipo, v.bairro].filter(Boolean).join(' · ') : v.txt)}`).join('<br>')}</dd>` : ''}
         ${c.obs ? `<dt>Observações</dt><dd>${esc(c.obs)}</dd>` : ''}
         ${c.revisadoEm ? `<dt>Última revisão</dt><dd>${fmtDate(c.revisadoEm)}</dd>` : ''}
@@ -3072,7 +3180,7 @@ function renderFicha(id, confirmDel) {
       </dl>
     </div>
     <div><span class="lbl">Imóveis enviados · ${envios.length}</span>
-      ${envios.length ? `<div class="env">${envios.map(e => `<div class="env-i"><span class="d">${fmtShort(e.data)}</span><div class="w">${esc([e.tipo, e.bairro].filter(Boolean).join(' · ') || 'Imóvel')}${e.valor ? ' · ' + fmtValor(e.valor) : ''}${e.link ? `<br><a href="${esc(/^https?:/i.test(e.link) ? e.link : 'https://' + e.link)}" target="_blank" rel="noopener">${esc(e.link)}</a>` : ''}</div><button class="rm" data-act="env-del" data-id="${c.id}" data-e="${esc(e.id)}" aria-label="Remover envio">×</button></div>`).join('')}</div>`
+      ${envios.length ? `<div class="env">${envios.map(e => `<div class="env-i"><span class="d">${fmtShort(e.data)}</span><div class="w">${esc([e.tipo, e.bairro].filter(Boolean).join(' · ') || 'Imóvel')}${e.valor ? ' · ' + fmtValor(e.valor) : ''}${abriuTxt(e)}${e.link ? `<br><a href="${esc(/^https?:/i.test(e.link) ? e.link : 'https://' + e.link)}" target="_blank" rel="noopener">${esc(e.link)}</a>` : ''}</div><button class="rm" data-act="env-del" data-id="${c.id}" data-e="${esc(e.id)}" aria-label="Remover envio">×</button></div>`).join('')}</div>`
         : `<p class="muted" style="font-size:14px">Nenhum imóvel enviado ainda. Baixar o PDF de um imóvel acima já registra o envio.</p>`}
     </div>
     <div class="fimficha">${c.status === 'ativo'
@@ -3338,6 +3446,7 @@ document.addEventListener('click', e => {
     case 'j8-mais': ui.j8Mais[id] = (ui.j8Mais[id] || 5) + 5; renderFicha(id); break;
     case 'fonte': ui.fonte = v; lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
     case 'j8-desc': copiarDescritivo(el, el.dataset.c); break;
+    case 'j8-link': linkParaCliente(el, el.dataset.c, el.dataset.cli); break;
     case 'j8-capa': ui.capaDe = ui.capaDe === el.dataset.c ? null : el.dataset.c; redesenhaCartoes(); break;
     case 'capa-pick': {
       capas[el.dataset.c] = el.dataset.u; lsSet('carteira_capas', capas);
@@ -3397,7 +3506,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19a';
+const VERSAO = '2026-11-19b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
