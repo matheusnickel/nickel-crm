@@ -409,6 +409,14 @@ button.hb-l:hover .hb-r{color:var(--tq2)}
 .tri-n small{flex-basis:100%;font-size:13px;color:var(--muted)}
 .tri-env{display:flex;flex-direction:column;gap:1px;margin-top:3px;font-size:12.5px;color:var(--muted)}
 .tri-wa{justify-content:center}
+.tri-nv{display:flex;flex-direction:column;gap:10px}
+.tri-nvh{display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:13px;color:var(--muted)}
+.tri-nvh b{font-size:14px;font-weight:600;color:var(--text2)}
+.tri-nvh.on{border-color:var(--orline);background:var(--orbg)}
+.tri-nvh.on b{color:var(--or2);font-weight:700}
+.tri-nvh.ok{border-color:var(--tq);background:var(--tqbg)}
+.tri-nvh.ok b{color:var(--tq2)}
+.tri-ant{align-self:flex-start;font-size:13.5px}
 .tri-sug{font-size:13.5px;color:var(--text2);padding:2px 2px 0}
 .tri-sug b{color:var(--text)}
 .tri-bs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -1255,6 +1263,8 @@ setInterval(() => {
 }, 15000);
 // imóveis novos que servem para o cliente e ele ainda não recebeu (ou recebeu há menos de 5 min), do que entrou por último
 const novosPara = c => carregados && c.status === 'ativo' ? j8Match(c).todos.filter(i => ehNovo(i) && !saiDosNovos(c, i)).sort((a, b) => b.ent.localeCompare(a.ent)) : [];
+// só os que entraram na última atualização (a triagem mostra estes primeiro: ele envia e depois classifica)
+const novosUltima = c => ULTIMA_ENT ? novosPara(c).filter(i => i.ent === ULTIMA_ENT) : [];
 // para quem enviar um imóvel: clientes ativos com esse perfil que ainda não receberam; CQ quente e quem está mais adiante primeiro
 const ET_PRIO = ['cqq', 'proposta', 'visita', 'cq', 'qual', 'standby'];
 function quemQuer(i) {
@@ -1366,6 +1376,7 @@ async function loadEstoques() {
   if (ui.tab === 'metricas') renderMetricas();
   if (ui.tab === 'imoveis' || naLocacao()) renderImoveis();
   if (ui.sheet && ui.sheet.kind === 'ficha') renderFicha(ui.sheet.id);
+  if (ui.sheet && ui.sheet.kind === 'triagem') renderTriagem();
   if (ui.sheet && ui.sheet.kind === 'parecer') renderParComps();
 }
 // "na J8, na A. Gonçalves e na SIS3" (os textos acompanham a lista de imobiliárias)
@@ -1865,6 +1876,7 @@ function renderImoveisLista() {
 // cartões de imóvel aparecem na ficha e na aba Imóveis: redesenha onde estiverem
 function redesenhaCartoes() {
   if (fichaAberta()) renderFicha(fichaAberta());
+  if (ui.sheet && ui.sheet.kind === 'triagem') renderTriagem();
   if (ui.tab === 'imoveis' || naLocacao()) renderImoveisLista();
 }
 
@@ -1943,9 +1955,11 @@ function renderClientes() {
   $('#c-filtros').innerHTML = FILTROS.filter(f => !f[3]).map(([k, l, fn]) => `<button class="chip${ui.c.f === k ? ' on' : ''}${k === 'standby' ? ' drop-st' : ''}" data-act="c-f" data-v="${k}"${k === 'standby' ? ' data-etapa="standby"' : ''}>${l}<span class="n">${clientes.filter(fn).length}</span></button>`).join('')
     + `<div class="modo">${[['quadro', 'Etapas'], ['lista', 'Lista']].map(([k, l]) => `<button class="${ui.c.modo === k ? 'on' : ''}" data-act="c-modo" data-v="${k}">${l}</button>`).join('')}</div>`;
   // avisos em cima dos botões: clientes a revisar (triagem da temperatura) e standby com a data de retomar vencida
-  // 16/11: o aviso "Revisar temperatura" saiu a pedido dele (classifica à mão, pelo quadro e pela ficha); a triagem fica no código, sem botão
-  // o aviso dos standby a retomar virou cartão do painel (16/11); a faixa de avisos fica vazia
-  $('#c-avisos').innerHTML = '';
+  // 16/11: o aviso "Revisar temperatura" saiu a pedido dele (classifica à mão, pelo quadro e pela ficha); 19/11 voltou (abaixo)
+  // o aviso dos standby a retomar virou cartão do painel (16/11)
+  // 19/11 (pedido dele): a triagem voltou, como botão, para organizar os leads em Quente, Fria e Standby; some quando a fila acaba
+  const fTri = filaTriagem(), nTri = fTri.length, nTriNv = carregados ? fTri.filter(c => novosUltima(c).length).length : 0;
+  $('#c-avisos').innerHTML = nTri ? `<button class="aviso tri" data-act="tri-abrir"><b>Triagem dos leads</b><span>${nTri} ${plural(nTri, 'cliente', 'clientes')} para classificar em Quente, Fria ou Standby${nTriNv ? ` · ${nTriNv} com imóvel novo da última atualização para enviar antes` : ''}</span></button>` : '';
   const fn = (FILTROS.find(f => f[0] === ui.c.f) || FILTROS[0])[2];
   let rows = clientes.filter(c => fn(c) && matchQ(c, q));
   if (quadro && clientes.length) { $('#c-list').innerHTML = quadroClientes(rows); return; }
@@ -2973,7 +2987,9 @@ function renderTriagem() {
   const fila = filaTriagem();
   if (!t.atual || !byId(t.atual)) t.atual = fila.length ? fila[0].id : null;
   const c = t.atual && byId(t.atual), resta = fila.filter(x => x.id !== t.atual).length + (c ? 1 : 0);
-  const topo = `<div class="sh-h"><div style="min-width:0"><div class="kick">Revisar temperatura</div><h2>${c ? `Faltam ${resta}` : 'Tudo revisado'}</h2><div class="muted" style="font-size:13.5px;margin-top:3px">${t.feitos} ${plural(t.feitos, 'classificado', 'classificados')} agora · abra a conversa no WhatsApp e escolha</div></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>`;
+  const sb = $('#sheet .sh-b'), rolou = sb && t.rolou === t.atual ? sb.scrollTop : 0; // redesenho (PDF pronto, envio) não volta ao topo
+  t.rolou = t.atual;
+  const topo = `<div class="sh-h"><div style="min-width:0"><div class="kick">Triagem dos leads</div><h2>${c ? `Faltam ${resta}` : 'Tudo revisado'}</h2><div class="muted" style="font-size:13.5px;margin-top:3px">${t.feitos} ${plural(t.feitos, 'classificado', 'classificados')} agora · abra a conversa no WhatsApp e escolha</div></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>`;
   if (!c) {
     const n = k => clientes.filter(x => x.status === 'ativo' && x.etapa === k).length;
     const np = t.pulados.length;
@@ -2998,11 +3014,28 @@ function renderTriagem() {
       </dl>
       ${wa ? `<a class="btn-or tri-wa" href="${esc(waLink(c))}" target="_blank" rel="noopener">${WA_ICON.replace('<svg', '<svg width="18" height="18"')}Abrir conversa no WhatsApp</a>` : ''}
     </div>
+    ${triNovos(c)}
     <div class="tri-sug">Sugestão: <b>${TEMP[sug][0]}</b> · ${esc(porque)}</div>
     <div class="tri-bs">${btn('cqq')}${btn('cq')}${btn('standby')}</div>
     ${t.st ? stPicker(t.st, 'tri') : ''}
     <div class="tri-nav">${t.hist.length ? '<button class="link" data-act="tri-voltar">← Voltar ao anterior</button>' : '<span></span>'}<button class="link" data-act="tri-pular">Pular (ainda não sei)</button></div>
   </div>`;
+  const nb = $('#sheet .sh-b'); if (nb && rolou) nb.scrollTop = rolou;
+}
+// 19/11 (pedido dele): no cartão da triagem, os imóveis novos da última atualização que servem para o cliente e ele ainda
+// não recebeu — ele envia antes (PDF ou descritivo, como na ficha) e depois classifica. Os das atualizações anteriores
+// (até 30 dias) ficam num botão, para não encher a tela.
+function triNovos(c) {
+  if (!carregados) return '<div class="tri-nv"><p class="muted" style="font-size:13.5px">Carregando os imóveis novos…</p></div>';
+  const ult = novosUltima(c), ant = novosPara(c).filter(i => i.ent !== ULTIMA_ENT), abre = ui.tri.antigos === c.id;
+  const dia = ULTIMA_ENT ? fmtDate(ULTIMA_ENT).slice(0, 5) + (ULTIMA_ENT === hojeISO() ? ', hoje' : '') : '';
+  // o enviado agora fica 5 minutos na lista (como nos Novos), com o ✓ de enviado
+  const falta = ult.filter(i => !recebeu(c, i)).length, nome = esc(nomeProprio(firstName(c.nome)));
+  const cab = !ult.length ? `<div class="tri-nvh"><b>Nada novo para ${nome} na última atualização${dia ? ` (${dia})` : ''}</b></div>`
+    : falta ? `<div class="tri-nvh on"><b>${falta} ${plural(falta, 'imóvel novo', 'imóveis novos')} para ${nome}</b><span>${plural(falta, 'Entrou', 'Entraram')} na última atualização (${dia}) e ainda não ${plural(falta, 'foi enviado', 'foram enviados')}. Envie antes de classificar.</span></div>`
+    : `<div class="tri-nvh ok"><b>✓ Novos da última atualização enviados</b><span>Agora é só classificar ${nome}.</span></div>`;
+  const outros = ant.length ? `<button class="link tri-ant" data-act="tri-ant">${abre ? 'Esconder' : 'Ver'} ${ant.length} ${plural(ant.length, 'novo', 'novos')} de atualizações anteriores (últimos ${NOVO_DIAS} dias)</button>` : '';
+  return `<div class="tri-nv">${cab}${ult.length ? `<div class="j8l">${ult.map(i => j8Card(i, c)).join('')}</div>` : ''}${outros}${abre && ant.length ? `<div class="j8l">${porAtualizacao(ant, i => j8Card(i, c), contaPorEnt(ant))}</div>` : ''}</div>`;
 }
 // depois de classificar: guarda quem foi (para "Voltar") e passa para o próximo da fila
 function triProximo(id) { const t = ui.tri; t.hist.push(id); t.feitos++; t.atual = null; t.st = null; renderTriagem(); const b = $('#sheet .sh-b'); if (b) b.scrollTop = 0; }
@@ -3257,6 +3290,7 @@ document.addEventListener('click', e => {
     case 'tri-ret': if (ui.tri && ui.tri.st) { ui.tri.st.retomar = v; renderTriagem(); } break;
     case 'tri-cancel': if (ui.tri) { ui.tri.st = null; renderTriagem(); } break;
     case 'tri-ok': { const c = ui.tri && byId(ui.tri.atual); if (c && ui.tri.st) { classifica(c, 'standby', ui.tri.st); toast(`${nomeProprio(firstName(c.nome))}: Standby${ui.tri.st.retomar ? ', retomar em ' + fmtDate(ui.tri.st.retomar) : ''}.`); triProximo(c.id); } break; }
+    case 'tri-ant': if (ui.tri) { ui.tri.antigos = ui.tri.antigos === ui.tri.atual ? null : ui.tri.atual; renderTriagem(); } break;
     case 'tri-pular': if (ui.tri && ui.tri.atual) { ui.tri.pulados.push(ui.tri.atual); ui.tri.atual = null; ui.tri.st = null; renderTriagem(); } break;
     case 'tri-voltar': if (ui.tri && ui.tri.hist.length) { ui.tri.atual = ui.tri.hist.pop(); ui.tri.feitos = Math.max(0, ui.tri.feitos - 1); ui.tri.st = null; renderTriagem(); } break;
     // standby pela ficha: data de retomar e motivo
@@ -3363,7 +3397,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-18b';
+const VERSAO = '2026-11-19a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
