@@ -1565,7 +1565,6 @@ function linkParaCliente(btn, k, cliId) {
 const minusc = s => s.charAt(0).toLowerCase() + s.slice(1);
 function mensagemDoLink(c, d, url) {
   const g = GRUPO[d.tc] || '', casa = g === 'Casa', apto = g === 'Apartamento' || g === 'Cobertura';
-  const nomeImovel = { Apartamento: 'esse apartamento', Cobertura: 'essa cobertura', Casa: 'essa casa', Terreno: 'esse terreno', Comercial: 'esse imóvel' }[g] || 'esse imóvel';
   const onde = `${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`;
   const aq = d.aq || (IMOVEL.get(d.k) || {}).aq || 0, at = d.at || 0;
   const pontos = [];
@@ -1579,14 +1578,31 @@ function mensagemDoLink(c, d, url) {
   if (c.mobilia.includes('s') && (d.mob || d.mo === 's')) pontos.push('mobiliado');
   // valor: dentro da faixa dele, ou até 10% acima do teto (o cruzamento aceita): diz com franqueza
   const dentro = d.p && c.valorMax && d.p <= c.valorMax, acima = d.p && c.valorMax && d.p > c.valorMax;
-  const l1 = `${nomeProprio(firstName(c.nome))}, separei ${nomeImovel} ${onde}` + (pontos.length ? `: ${listaPt(pontos.slice(0, 3))}${dentro ? ', dentro da sua faixa' : ''}.` : dentro ? ', dentro da sua faixa.' : '.');
-  const dif = diferenciais(d.itens, DIF_IMOVEL, 2).map(minusc), cond = diferenciais(d.condItens, DIF_COND, 2).map(minusc);
-  const l2 = [dif.length ? `Ainda tem ${listaPt(dif)}.` : cond.length ? `E o condomínio tem ${listaPt(cond)}.` : '',
-    acima ? 'Fica um pouco acima do seu teto, mas acho que vale olhar.' : ''].filter(Boolean).join(' ');
+  const abaixo = d.p && c.valorMax && d.p <= c.valorMax * .9; // 10% ou mais abaixo do teto dele
+  const dif = diferenciais(d.itens, DIF_IMOVEL, 2), cond = diferenciais(d.condItens, DIF_COND, 2);
+  const nome = nomeProprio(firstName(c.nome)), tipo = tipoDeRua(d) || d.rot || 'Imóvel';
+  const dn = diasNovo(IMOVEL.get(d.k) || d);
+  // "bate em tudo" só quando ele deu pelo menos 3 critérios além de tipo e bairro (e o imóvel cumpre todos, no valor também)
+  const criterios = [c.quartos, c.vagas, c.areaMin, c.terrenoMin, c.mobilia.length, c.valorMax].filter(Boolean).length;
+  // 19/11 (pedido dele): a 1ª linha é um GANCHO, na voz dele (curto, concreto, nada que o dado não sustente).
+  // Ordem: passa do teto (franqueza prende) · acabou de entrar · bate em tudo · o diferencial mais forte · simples
+  let gancho, faixa = dentro ? (abaixo ? 'Abaixo do seu teto.' : 'Dentro da sua faixa.') : '';
+  if (acima) { gancho = `${nome}, essa passa um pouco do seu teto.`; faixa = 'Mas vale olhar antes de descartar.'; }
+  else if (dn !== null && dn <= 7) gancho = `${nome}, essa ${dn <= 3 ? 'acabou de entrar' : 'entrou essa semana'}.`;
+  else if (criterios >= 3 && dentro) { gancho = `${nome}, essa bate em tudo que você me pediu.`; }
+  else if (dif.length) { gancho = `${nome}, ${minusc(dif.shift())} ${onde}.`; }
+  else gancho = `${nome}, separei essa pra você.`;
+  const jaDisseOnde = gancho.endsWith(onde + '.'); // "Felipe, piscina aquecida no Bigorrilho." -> "Apartamento com 3 quartos (1 suíte)."
+  const linhas = [gancho,
+    jaDisseOnde ? `${tipo}${pontos.length ? ' com ' + listaPt(pontos.slice(0, 3)) : ''}.`
+      : `${tipo} ${onde}.${pontos.length ? ' ' + listaPt(pontos.slice(0, 3)).replace(/^./, s => s.toUpperCase()) + '.' : ''}`,
+    dif.length ? `Tem ${listaPt(dif.map(minusc))}.` : cond.length ? `No condomínio, ${listaPt(cond.map(minusc))}.` : '',
+    faixa].filter(Boolean);
+  // o CTA que ele já usa (o mesmo do descritivo: "Essa casa está dentro do que você está buscando?"); quente puxa para a visita
   const pergunta = ['cqq', 'visita', 'proposta'].includes(c.etapa) ? 'Consigo te levar lá essa semana. Qual dia fica melhor pra você?'
     : emStandby(c) ? 'Lembrei de você quando vi. Ainda está procurando?'
-    : 'Faz sentido pra você ou ainda está longe do que imagina?';
-  return [l1 + (l2 ? ' ' + l2 : ''), url, pergunta].join('\n\n');
+    : descritivoPartes(d)[4];
+  return [linhas.join('\n'), url, pergunta].join('\n\n');
 }
 // links abertos nos últimos LINK_DIAS (consulta pelo campo ultimaVez, que só existe depois da 1ª abertura)
 async function carregaLinks() {
@@ -3548,7 +3564,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19d';
+const VERSAO = '2026-11-19e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
