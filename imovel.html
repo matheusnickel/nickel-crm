@@ -170,23 +170,37 @@ async function carrega() {
     L = fromFs({ mapValue: { fields: d.fields || {} } });
     if (!L || !L.titulo) return erro();
     desenha();
-    anotaAbertura(L.vistos || []);
+    anotaAbertura(L.vistos || [], L.aberturas || []);
   } catch (e) { erro(true); }
 }
 function erro(rede) {
   document.title = 'Link indisponível';
   $('#app').innerHTML = `<div class="msg"><div class="kick">Seleção exclusiva</div><h1>${rede ? 'Não foi possível abrir agora' : 'Este link não está mais disponível'}</h1><p>${rede ? 'Verifique a internet e tente de novo.' : 'Peça um novo link ao seu corretor.'}</p></div>`;
 }
-// uma abertura por visita (recarregar a página não conta de novo)
-async function anotaAbertura(vistos) {
+// uma abertura por visita (recarregar a página não conta de novo).
+// 19/11 (pergunta dele: "se encaminhou e outra pessoa abriu, consigo saber?"): não dá para saber QUEM abriu, então cada
+// abertura guarda a hora, o tipo de aparelho (iPhone, Android, Windows…) e um número aleatório do aparelho, guardado só
+// neste navegador. A Carteira mostra "aberto 4 vezes em 2 aparelhos": aparelho novo = encaminhado ou aberto em outro lugar.
+function aparelho() {
+  let id = '';
+  try { id = localStorage.getItem('nickel_ap') || ''; if (!id) { id = Math.random().toString(36).slice(2, 10); localStorage.setItem('nickel_ap', id); } }
+  catch (e) { id = 'x' + Math.random().toString(36).slice(2, 9); }
+  const ua = navigator.userAgent;
+  const disp = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? 'iPad'
+    : /Android/.test(ua) ? (/Mobile/.test(ua) ? 'Android' : 'Tablet Android') : /Windows/.test(ua) ? 'Windows' : /Macintosh/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Outro';
+  return { ap: id, disp };
+}
+async function anotaAbertura(vistos, aberturas) {
   if (PREVIA) return;
   const chave = 'aberto_' + ID;
   try { if (sessionStorage.getItem(chave)) return; sessionStorage.setItem(chave, '1'); } catch (e) {}
   const agora = new Date().toISOString(), lista = vistos.concat([agora]).slice(-200);
+  const ab = aberturas.concat([Object.assign({ em: agora }, aparelho())]).slice(-200);
+  const mapa = o => ({ mapValue: { fields: { em: { stringValue: o.em || '' }, ap: { stringValue: o.ap || '' }, disp: { stringValue: o.disp || '' } } } });
   try {
-    await fetch(`${FB_ROOT}/${COL}/${ID}?key=${FB_KEY}&updateMask.fieldPaths=vistos&updateMask.fieldPaths=ultimaVez&currentDocument.exists=true`, {
+    await fetch(`${FB_ROOT}/${COL}/${ID}?key=${FB_KEY}&updateMask.fieldPaths=vistos&updateMask.fieldPaths=aberturas&updateMask.fieldPaths=ultimaVez&currentDocument.exists=true`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, keepalive: true,
-      body: JSON.stringify({ fields: { vistos: { arrayValue: { values: lista.map(s => ({ stringValue: s })) } }, ultimaVez: { stringValue: agora } } })
+      body: JSON.stringify({ fields: { vistos: { arrayValue: { values: lista.map(s => ({ stringValue: s })) } }, aberturas: { arrayValue: { values: ab.map(mapa) } }, ultimaVez: { stringValue: agora } } })
     });
   } catch (e) {}
 }
@@ -212,8 +226,8 @@ function desenha() {
       ${L.texto ? `<p class="texto">${esc(L.texto)}</p>` : ''}
     </div>
     ${(L.ficha || []).length ? `<section class="sec"><h2>Ficha técnica</h2><div class="ficha">${L.ficha.map(x => `<div><span>${esc(x.r)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></section>` : ''}
-    ${(L.dif || []).length ? `<section class="sec"><h2>Diferenciais</h2><ul class="difs">${L.dif.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
-    ${(L.cond || []).length ? `<section class="sec"><h2>No condomínio</h2><ul class="difs">${L.cond.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
+    ${(L.dif || []).length ? `<section class="sec"><h2>Características do imóvel</h2><ul class="difs">${L.dif.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
+    ${(L.cond || []).length ? `<section class="sec"><h2>Características do condomínio</h2><ul class="difs">${L.cond.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
     ${L.endereco || L.bairro ? `<section class="sec"><h2>Localização</h2><div class="loc"><div><b>${esc(L.endereco || L.bairro)}</b><span>${esc([L.endereco ? L.bairro : '', L.cidade || 'Curitiba'].filter(Boolean).join(' · '))}</span></div>${L.endereco ? `<a class="mapa" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([L.endereco, L.bairro, L.cidade || 'Curitiba', 'PR'].filter(Boolean).join(', '))}" target="_blank" rel="noopener">${PINO}Ver no mapa</a>` : ''}</div></section>` : ''}
     ${fotos.length > 1 ? `<section class="sec"><h2>Fotos · ${fotos.length}</h2><div class="gal">${fotos.map((u, i) => `<button data-f="${i}" aria-label="Abrir foto ${i + 1}"><img loading="lazy" src="${esc(foto(u, 640, 480))}" alt=""></button>`).join('')}</div></section>` : ''}
     <section class="corr">

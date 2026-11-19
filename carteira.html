@@ -277,6 +277,14 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .abriu{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:12.5px;color:var(--muted)}
 .abriu.ok{color:var(--tq2);font-weight:600}
 .abriu svg{width:14px;height:14px;flex-shrink:0}
+.abriu-d{margin-top:3px}
+.abriu-d summary{cursor:pointer;list-style:none;margin-top:0}
+.abriu-d summary::-webkit-details-marker{display:none}
+.abriu-d summary::after{content:'▾';font-size:10px;margin-left:2px}
+.abriu-d[open] summary::after{content:'▴'}
+.abriu-d ul{list-style:none;margin:6px 0 0 19px;display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--text2)}
+.abriu-d small{color:var(--muted)}
+.abriu-d p{margin:6px 0 0 19px;font-size:12px;color:var(--muted)}
 .lkb{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--tq2);background:var(--tqbg);border-radius:99px;padding:3px 9px;white-space:nowrap}
 .lkb svg{width:13px;height:13px}
 .kcard .lkb{align-self:flex-start}
@@ -1533,13 +1541,21 @@ function fotoDoLink(d) {
     sub: emp ? `${tipo} · ${d.b}` : `${d.b} · ${d.ci || 'Curitiba'}`,
     texto: descritivoPartes(d)[1] || '', preco: d.p || 0, loc: ehLocacao(d),
     ficha: fichaCompleta(d).map(([r, v]) => ({ r, v: String(v) })), // o Firestore não guarda lista dentro de lista
-    dif: diferenciais(d.itens, DIF_IMOVEL, 30), cond: diferenciais(d.condItens, DIF_COND, 20),
+    // TODAS as características que a imobiliária marcou (como na página da J8), as mais fortes primeiro (19/11, pedido dele)
+    dif: todosItens(d.itens, DIF_IMOVEL), cond: todosItens(d.condItens, DIF_COND),
     fotos: fotosDoBook(d).slice(0, 80),
     // 19/11 (pedido dele: "mais completo, até endereço, valor de condomínio"): condomínio e endereço (rua e número, como
     // no book; o complemento NUNCA vai). SEM o texto do anúncio ("casa bonita na região…": ele não quer o texto da
     // imobiliária) e SEM IPTU — pedidos dele no mesmo dia.
     valCond: d.cond || 0, endereco: enDe(d), bairro: d.b || '', cidade: d.ci || 'Curitiba'
   };
+}
+// lista inteira, sem cortar: primeiro na ordem de força do book (piscina aquecida, elevador privativo…), depois o resto
+// em ordem alfabética (lavabo, área de serviço, despensa, gerador, coworking…)
+function todosItens(lista, ordem) {
+  const tem = [...new Set(lista || [])];
+  if (tem.includes('Piscina aquecida')) tem.splice(tem.indexOf('Piscina'), tem.includes('Piscina') ? 1 : 0);
+  return ordem.filter(x => tem.includes(x)).concat(tem.filter(x => !ordem.includes(x)).sort((a, b) => a.localeCompare(b, 'pt-BR')));
 }
 // ficha sem o limite de 8 do book: todas as áreas da regra dele, cômodos, banheiros, vagas, ano, por andar, mobília
 function fichaCompleta(d) {
@@ -1558,6 +1574,7 @@ function fichaCompleta(d) {
   if (ehApto && d.apa > 0) l.push(['Por andar', d.apa === 1 ? '1 apartamento' : d.apa + ' apartamentos']);
   const mob = d.mob ? 'Mobiliado' : { s: 'Mobiliado', m: 'Semi-mobiliado' }[d.mo];
   if (mob) l.push(['Mobília', mob]);
+  l.push(['Situação', d.ob === 'p' ? 'Na planta' : 'Pronto para morar']);
   return l;
 }
 // 1º toque prepara o imóvel (se ainda não carregou); com ele pronto, copia o link no mesmo toque e grava em seguida
@@ -1621,7 +1638,7 @@ async function carregaLinks() {
   try {
     const desde = new Date(Date.now() - LINK_DIAS * 864e5).toISOString();
     const r = await fetch(`${FB_ROOT}:runQuery?key=${FB_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ structuredQuery: {
-      from: [{ collectionId: COLL }], select: { fields: ['cli', 'titulo', 'vistos', 'ultimaVez'].map(fieldPath => ({ fieldPath })) },
+      from: [{ collectionId: COLL }], select: { fields: ['cli', 'titulo', 'vistos', 'aberturas', 'ultimaVez'].map(fieldPath => ({ fieldPath })) },
       where: { fieldFilter: { field: { fieldPath: 'ultimaVez' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: desde } } } } }) });
     if (!r.ok) return;
     LINKS.clear();
@@ -1644,15 +1661,22 @@ const abriuDe = e => e && e.lk ? LINKS.get(e.lk) || null : null;
 // a abertura mais recente de qualquer link do cliente: { quando, titulo, vezes }
 function ultimaAbertura(c) {
   let m = null;
-  c.envios.forEach(e => { const o = abriuDe(e); if (o && o.ultimaVez && (!m || o.ultimaVez > m.quando)) m = { quando: o.ultimaVez, titulo: o.titulo, vezes: (o.vistos || []).length }; });
+  c.envios.forEach(e => { const o = abriuDe(e); if (o && o.ultimaVez && (!m || o.ultimaVez > m.quando)) m = { quando: o.ultimaVez, titulo: o.titulo, vezes: (o.vistos || []).length, aparelhos: aparelhosDe(o).length }; });
   return m;
 }
-// no histórico de envios da ficha: "Abriu o link 3 vezes · a última hoje às 21:03" ou "Link ainda não aberto"
+// aparelhos que abriram o link, na ordem em que apareceram (links de antes de 19/11 à tarde só têm as horas)
+const aparelhosDe = o => [...new Set((o.aberturas || []).map(a => a.ap).filter(Boolean))];
+// no histórico de envios da ficha: "Aberto 4 vezes em 2 aparelhos · o último hoje às 21:03", que abre a lista de cada
+// abertura (hora · aparelho). Não dá para saber QUEM abriu: aparelho novo = encaminhado ou aberto em outro lugar.
 function abriuTxt(e) {
   if (!e.lk) return '';
-  const o = abriuDe(e), n = o ? (o.vistos || []).length : 0;
-  if (o && o.ultimaVez) return `<span class="abriu ok">${ICON_OLHO}Abriu o link ${n > 1 ? `${n} vezes · a última ` : ''}${quandoAbriu(o.ultimaVez)}</span>`;
-  return (daysSince(e.data) ?? 99) <= LINK_DIAS ? `<span class="abriu">Link enviado, ainda não abriu</span>` : '';
+  const o = abriuDe(e);
+  if (!o || !o.ultimaVez) return (daysSince(e.data) ?? 99) <= LINK_DIAS ? `<span class="abriu">Link enviado, ainda não abriu</span>` : '';
+  const n = (o.vistos || []).length || 1, aps = aparelhosDe(o), ab = (o.aberturas || []).slice().reverse();
+  const resumo = `${ICON_OLHO}${n > 1 ? `Aberto ${n} vezes` : 'Abriu o link'}${aps.length > 1 ? ` em ${aps.length} aparelhos` : ''} · ${n > 1 ? 'o último ' : ''}${quandoAbriu(o.ultimaVez)}`;
+  if (!ab.length) return `<span class="abriu ok">${resumo}</span>`;
+  const linha = a => `<li>${quandoAbriu(a.em)} · ${esc(a.disp || 'aparelho')}${aps.length > 1 ? ` <small>(aparelho ${aps.indexOf(a.ap) + 1})</small>` : ''}</li>`;
+  return `<details class="abriu-d"><summary class="abriu ok">${resumo}</summary><ul>${ab.slice(0, 12).map(linha).join('')}</ul>${aps.length > 1 ? '<p>Mais de um aparelho: o link foi encaminhado ou aberto em outro celular/computador.</p>' : ''}</details>`;
 }
 const ICON_OLHO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 // "hoje às 21:03", "ontem às 9:40", "18/11 às 14:02"
@@ -3186,7 +3210,7 @@ function renderTriagem() {
       <dl class="info">
         <dt>Cadastro</dt><dd>${c.criadoEm ? fmtDate(c.criadoEm) + (cad !== null ? ` · há ${cad} ${plural(cad, 'dia', 'dias')}` : '') : '—'}</dd>
         <dt>Imóveis enviados</dt><dd>${envs.length ? `${envs.length} · o último ${sem === 0 ? 'hoje' : 'há ' + sem + plural(sem, ' dia', ' dias')}` : 'Nenhum ainda'}${envs.length ? `<div class="tri-env">${envs.slice(0, 3).map(e => `<span>${fmtShort(e.data)} · ${esc([e.tipo, e.bairro].filter(Boolean).join(' · ') || 'Imóvel')}${e.valor ? ' · ' + fmtValor(e.valor) : ''}</span>`).join('')}</div>` : ''}</dd>
-        ${(() => { const ab = ultimaAbertura(c); return ab ? `<dt>Link aberto</dt><dd><span class="abriu ok" style="margin:0">${ICON_OLHO}${quandoAbriu(ab.quando)}${ab.vezes > 1 ? ` · ${ab.vezes} vezes` : ''}</span><small class="muted">${esc(ab.titulo)}</small></dd>` : ''; })()}
+        ${(() => { const ab = ultimaAbertura(c); return ab ? `<dt>Link aberto</dt><dd><span class="abriu ok" style="margin:0">${ICON_OLHO}${quandoAbriu(ab.quando)}${ab.vezes > 1 ? ` · ${ab.vezes} vezes` : ''}${ab.aparelhos > 1 ? ` em ${ab.aparelhos} aparelhos` : ''}</span><small class="muted">${esc(ab.titulo)}</small></dd>` : ''; })()}
         ${c.visitas.length ? `<dt>Visitas</dt><dd>${c.visitas.map(v => `${fmtDate(v.data).slice(0, 5)} · ${esc(v.k ? v.nome || [v.tipo, v.bairro].filter(Boolean).join(' · ') : v.txt)}`).join('<br>')}</dd>` : ''}
         ${c.obs ? `<dt>Observações</dt><dd>${esc(c.obs)}</dd>` : ''}
         ${c.revisadoEm ? `<dt>Última revisão</dt><dd>${fmtDate(c.revisadoEm)}</dd>` : ''}
@@ -3578,7 +3602,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19j';
+const VERSAO = '2026-11-19k';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
