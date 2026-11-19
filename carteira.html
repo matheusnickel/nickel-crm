@@ -1513,6 +1513,14 @@ const COLL = PERFIL.col.replace('clientes', 'links') + (TESTE ? '_TESTE_CLAUDE' 
 const LK_PERFIL = { matheus: 'm', felipe: 'f' }; // 1ª letra do id = de quem é o link (a página escolhe a coleção por ela)
 const LINKS = new Map(); // id do link -> { vistos: [ISO...], ultimaVez, titulo } (só os abertos nos últimos LINK_DIAS)
 const LINK_DIAS = 60;
+// o mesmo hash do scripts/previas.mjs (cyrb53): "j8:78585" -> nome do arquivo da prévia do WhatsApp
+function previaId(k) {
+  const str = 'nickel:' + k; let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0, ch; i < str.length; i++) { ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507); h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507); h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
 function fotoDoLink(d) {
   const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
   const tipo = d.rot || 'Imóvel';
@@ -1536,7 +1544,9 @@ function linkParaCliente(btn, k, cliId) {
   }
   const cl = cliId && byId(cliId);
   const id = (LK_PERFIL[PERFIL_ID] || 'm') + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
-  const url = new URL(`imovel.html?l=${id}${TESTE ? '&t=1' : ''}`, location.href).href;
+  // 19/11: o link vai pelo arquivo de prévia do imóvel (i/<hash>.html, gerado por scripts/previas.mjs a cada atualização):
+  // o WhatsApp mostra "Seleção exclusiva · Casa Malbec, Campo Comprido", os detalhes e a foto; quem abre cai em imovel.html
+  const url = new URL(`i/${previaId(k)}.html?l=${id}${TESTE ? '&t=1' : ''}`, location.href).href;
   const doc = Object.assign({ k, cli: cl ? cl.id : '', para: cl ? nomeProprio(cl.nome) : '', criadoEm: new Date().toISOString(), corretor: CORRETOR, vistos: [] }, fotoDoLink(d));
   const nome = cl ? nomeProprio(firstName(cl.nome)) : '';
   copiarTexto(url).then(() => toast(`Link copiado. É só colar no WhatsApp${nome ? ' de ' + nome : ''}.${cl ? ' Quando abrir, aparece aqui na Carteira.' : ''}`),
@@ -3506,7 +3516,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19b';
+const VERSAO = '2026-11-19c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
