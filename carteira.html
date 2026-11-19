@@ -234,7 +234,10 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .j8c .go svg,.j8c .bk svg{width:15px;height:15px}
 .j8c .src{display:inline-block;white-space:nowrap;margin-left:8px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;vertical-align:2px;background:var(--orbg);color:var(--or2)}
 .j8box .fontes{margin:2px 0 14px}
-.j8act .pdf{grid-column:1 / -1}
+/* 19/11: dois pares lado a lado — Baixar PDF + Descritivo PDF; Link para cliente + Descritivo link */
+.j8act .bk{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.j8act .bk svg{flex-shrink:0}
+@media (max-width:400px){.j8act .bk{padding:10px 8px;gap:6px;font-size:13px}}
 .j8c .capa{text-align:left;cursor:pointer;transition:background .15s}
 .j8c .capa:hover{background:var(--tqbg)}
 .j8c .capa b{display:flex;align-items:center;gap:8px;color:var(--tq2)}
@@ -1549,11 +1552,10 @@ function linkParaCliente(btn, k, cliId) {
   const url = new URL(`i/${previaId(k)}.html?l=${id}${TESTE ? '&t=1' : ''}`, location.href).href;
   const doc = Object.assign({ k, cli: cl ? cl.id : '', para: cl ? nomeProprio(cl.nome) : '', criadoEm: new Date().toISOString(), corretor: CORRETOR, vistos: [] }, fotoDoLink(d));
   const nome = cl ? nomeProprio(firstName(cl.nome)) : '';
-  // com cliente: a mensagem direcionada com o link no meio (sem cliente, só o link)
-  const txt = cl ? mensagemDoLink(cl, d, url) : url;
-  copiarTexto(txt).then(() => toast(cl ? `Mensagem copiada. Ajuste a 1ª linha com o que só você sabe do ${nome} e cole no WhatsApp.` :'Link copiado. É só colar no WhatsApp.'),
+  // só o link (19/11, pedido dele); a mensagem tem o botão "Descritivo link"
+  copiarTexto(url).then(() => toast(`Link copiado. É só colar no WhatsApp${nome ? ' de ' + nome : ''}.${cl ? ' Quando abrir, aparece aqui na Carteira.' : ''}`),
     // sem permissão para copiar: abre o compartilhar do celular ou mostra o link para copiar à mão
-    () => { if (navigator.share && telaDeToque) navigator.share({ text: txt }).catch(() => {}); else window.prompt('Copie o link do imóvel:', url); });
+    () => { if (navigator.share && telaDeToque) navigator.share({ url }).catch(() => {}); else window.prompt('Copie o link do imóvel:', url); });
   fetch(`${FB_ROOT}/${COLL}/${id}?key=${FB_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(doc) }) })
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); if (cl) registrarContatoJ8(cl.id, d, id); })
     .catch(() => toast('Sem conexão: o link não foi criado. Copie de novo quando a internet voltar.'));
@@ -1561,8 +1563,11 @@ function linkParaCliente(btn, k, cliId) {
 // 19/11, ajustado com ele ao longo do dia: a mensagem é CURTA. Só o gancho na pegada "lembrei de você", o link (a prévia
 // já mostra tipo, bairro, cômodos, metragem e valor) e o CTA dele. Nada de ficha no texto, nada de endereço e NUNCA
 // falar de valor/teto ("Abaixo do seu teto", "acima do teto": ele não quer esse tipo de comunicação).
-function mensagemDoLink(c, d, url) {
+// 19/11 (pedido dele): o link é copiado sozinho; esta mensagem tem botão próprio ("Descritivo link"), sem o link no meio.
+// Sem cliente (aba Imóveis): sem o nome e com o CTA de sempre.
+function mensagemDoLink(c, d) {
   const onde = `${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`;
+  if (!c) return [`Vi essa ${onde} e lembrei de você.`, descritivoPartes(d)[4]].join('\n\n');
   const nome = nomeProprio(firstName(c.nome));
   const dn = diasNovo(IMOVEL.get(d.k) || d);
   // "bate em tudo" só quando ele deu pelo menos 3 critérios além de tipo e bairro e o imóvel cumpre todos (valor até o teto)
@@ -1574,7 +1579,18 @@ function mensagemDoLink(c, d, url) {
   // o CTA que ele já usa (o mesmo do descritivo: "Essa casa está dentro do que você está buscando?"); quente puxa para a visita
   const pergunta = ['cqq', 'visita', 'proposta'].includes(c.etapa) ? 'Consigo te levar lá essa semana. Qual dia fica melhor pra você?'
     : descritivoPartes(d)[4];
-  return [gancho, url, pergunta].join('\n\n');
+  return [gancho, pergunta].join('\n\n');
+}
+// botão "Descritivo link": como o descritivo do PDF, o 1º toque prepara o imóvel se ainda não carregou
+function copiarMsgLink(btn, k, cliId) {
+  const d = j8Det.get(k);
+  if (!d || d instanceof Promise) {
+    const original = btn.innerHTML; btn.innerHTML = 'Preparando…';
+    j8Detalhe(k).then(() => { btn.innerHTML = original; toast('Pronto. Toque de novo em “Descritivo link” para copiar.'); },
+      () => { btn.innerHTML = original; toast('Não consegui preparar o texto agora.'); });
+    return;
+  }
+  copiarTexto(mensagemDoLink(cliId && byId(cliId), d)).then(() => toast('Descritivo do link copiado. É só colar no WhatsApp.'), () => toast('Não consegui copiar. Tente de novo.'));
 }
 // links abertos nos últimos LINK_DIAS (consulta pelo campo ultimaVez, que só existe depois da 1ª abertura)
 async function carregaLinks() {
@@ -1860,7 +1876,7 @@ async function copiarDescritivo(btn, c) {
     return;
   }
   const original = btn.innerHTML; btn.innerHTML = 'Preparando…';
-  try { await j8Detalhe(c); btn.innerHTML = original; toast('Pronto. Toque de novo em “Descritivo para cliente” para copiar.'); }
+  try { await j8Detalhe(c); btn.innerHTML = original; toast('Pronto. Toque de novo em “Descritivo PDF” para copiar.'); }
   catch (e) { btn.innerHTML = original; toast('Não consegui preparar o descritivo agora.'); }
 }
 
@@ -1893,8 +1909,9 @@ function j8Card(i, c) {
       ${MASTER ? `<div class="cpl${unid ? '' : ' vazio'}"><span>Complemento ${deQue}</span>${unid || 'Não informado'}</div>` : ''}
       <button class="cpl capa${MASTER ? '' : ' so'}" data-act="j8-capa" data-c="${esc(i.k)}"><span>Foto da capa</span><b><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i>Trocar</b></button>
       <button class="bk pdf${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
-      <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo</button>
-      <button class="bk ghost lnk" data-act="j8-link" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_LINK}Link para cliente</button>
+      <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo PDF</button>
+      <button class="bk lnk" data-act="j8-link" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_LINK}Link para cliente</button>
+      <button class="bk ghost msgl" data-act="j8-msgl" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_MSG}Descritivo link</button>
       <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
     </div>${!c && ehNovo(i) ? paraQuem(i) : ''}${ui.capaDe === i.k ? escolheCapa(i) : ''}</div>`;
 }
@@ -3211,7 +3228,7 @@ function renderFicha(id, confirmDel) {
     </div>
     <div><span class="lbl">Imóveis enviados · ${envios.length}</span>
       ${envios.length ? `<div class="env">${envios.map(e => `<div class="env-i"><span class="d">${fmtShort(e.data)}</span><div class="w">${esc([e.tipo, e.bairro].filter(Boolean).join(' · ') || 'Imóvel')}${e.valor ? ' · ' + fmtValor(e.valor) : ''}${abriuTxt(e)}${e.link ? `<br><a href="${esc(/^https?:/i.test(e.link) ? e.link : 'https://' + e.link)}" target="_blank" rel="noopener">${esc(e.link)}</a>` : ''}</div><button class="rm" data-act="env-del" data-id="${c.id}" data-e="${esc(e.id)}" aria-label="Remover envio">×</button></div>`).join('')}</div>`
-        : `<p class="muted" style="font-size:14px">Nenhum imóvel enviado ainda. Baixar o PDF de um imóvel acima já registra o envio.</p>`}
+        : `<p class="muted" style="font-size:14px">Nenhum imóvel enviado ainda. Baixar o PDF ou copiar o link de um imóvel acima já registra o envio.</p>`}
     </div>
     <div class="fimficha">${c.status === 'ativo'
       ? `<button class="btn-ghost" data-act="arquivar" data-id="${c.id}">Arquivar cliente</button>`
@@ -3477,6 +3494,7 @@ document.addEventListener('click', e => {
     case 'fonte': ui.fonte = v; lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
     case 'j8-desc': copiarDescritivo(el, el.dataset.c); break;
     case 'j8-link': linkParaCliente(el, el.dataset.c, el.dataset.cli); break;
+    case 'j8-msgl': copiarMsgLink(el, el.dataset.c, el.dataset.cli); break;
     case 'j8-capa': ui.capaDe = ui.capaDe === el.dataset.c ? null : el.dataset.c; redesenhaCartoes(); break;
     case 'capa-pick': {
       capas[el.dataset.c] = el.dataset.u; lsSet('carteira_capas', capas);
@@ -3536,7 +3554,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19g';
+const VERSAO = '2026-11-19h';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
