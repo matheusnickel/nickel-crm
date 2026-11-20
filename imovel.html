@@ -59,6 +59,7 @@ h1{font-size:clamp(30px,7vw,44px);line-height:1.12;font-weight:300;letter-spacin
 .vals{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:12px;font-size:16px;font-variant-numeric:tabular-nums}
 .vals span{display:flex;flex-direction:column}
 .vals small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.desc{display:flex;flex-direction:column;gap:12px;font-size:16px;line-height:1.7;color:var(--text2);max-width:66ch}
 .loc{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 20px;padding:16px 18px;border:1px solid var(--line2);border-radius:10px}
 .loc div{display:flex;flex-direction:column;min-width:0}
 .loc b{font-size:16.5px;font-weight:600}
@@ -169,10 +170,29 @@ async function carrega() {
     const d = await r.json();
     L = fromFs({ mapValue: { fields: d.fields || {} } });
     if (!L || !L.titulo) return erro();
+    await fotosNickel();
     desenha();
     anotaAbertura(L.vistos || [], L.aberturas || []);
   } catch (e) { erro(true); }
 }
+// 20/11: imóveis Nickel (do próprio Matheus) guardam as fotos no Firebase ("nf:<id>"): m = 720 px (galeria), g = 1600 px
+// (capa e tela cheia). As outras continuam vindo do anúncio pelo serviço de imagens.
+const NF_COL = 'nickel_fotos' + (q.get('t') === '1' ? '_TESTE_CLAUDE' : '');
+const NF = new Map(); // "nf:id:m" / "nf:id:g" -> data URL
+function nfPega(ref, campo) {
+  const k = ref + ':' + campo; if (NF.has(k)) return NF.get(k);
+  const p = fetch(`${FB_ROOT}/${NF_COL}/${ref.slice(3)}?key=${FB_KEY}&mask.fieldPaths=${campo}`).then(r => r.ok ? r.json() : null)
+    .then(j => (j && j.fields && j.fields[campo] && j.fields[campo].stringValue) || '').catch(() => '');
+  NF.set(k, p); return p;
+}
+async function fotosNickel() {
+  const nf = (L.fotos || []).filter(u => /^nf:/.test(u)); if (!nf.length) return;
+  const [capa] = await Promise.all([nfPega(nf[0], 'g'), ...nf.map(u => nfPega(u, 'm'))]);
+  for (const u of nf) NF.set(u + ':m!', await nfPega(u, 'm'));
+  NF.set(nf[0] + ':g!', capa);
+}
+// o endereço de cada foto no tamanho certo (nf: já carregada; as outras pelo serviço de imagens)
+const src = (u, w, h) => /^nf:/.test(u) ? (w >= 1200 && NF.get(u + ':g!')) || NF.get(u + ':m!') || '' : foto(u, w, h);
 function erro(rede) {
   document.title = 'Link indisponível';
   $('#app').innerHTML = `<div class="msg"><div class="kick">Seleção exclusiva</div><h1>${rede ? 'Não foi possível abrir agora' : 'Este link não está mais disponível'}</h1><p>${rede ? 'Verifique a internet e tente de novo.' : 'Peça um novo link ao seu corretor.'}</p></div>`;
@@ -214,7 +234,7 @@ function desenha() {
   $('#app').innerHTML = `
   ${PREVIA ? '<div class="prev">Prévia: você está logado na Carteira, esta abertura não conta</div>' : ''}
   <header class="top"><i></i><b>${esc(c.nome || '')}</b></header>
-  ${fotos.length ? `<div class="hero"><img src="${esc(foto(fotos[0], 1600))}" alt="${esc(L.titulo)}" fetchpriority="high">${fotos.length > 1 ? `<button class="vf" data-f="0">${ICON_FOTOS}Ver as ${fotos.length} fotos</button>` : ''}</div>` : ''}
+  ${fotos.length ? `<div class="hero"><img src="${esc(src(fotos[0], 1600))}" alt="${esc(L.titulo)}" fetchpriority="high">${fotos.length > 1 ? `<button class="vf" data-f="0">${ICON_FOTOS}Ver as ${fotos.length} fotos</button>` : ''}</div>` : ''}
   <main class="wrap">
     <div class="intro">
       <div class="kick">Seleção exclusiva</div>
@@ -226,10 +246,11 @@ function desenha() {
       ${L.texto ? `<p class="texto">${esc(L.texto)}</p>` : ''}
     </div>
     ${(L.ficha || []).length ? `<section class="sec"><h2>Ficha técnica</h2><div class="ficha">${L.ficha.map(x => `<div><span>${esc(x.r)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></section>` : ''}
+    ${L.descricao ? `<section class="sec"><h2>Sobre o imóvel</h2><div class="desc">${L.descricao.split(/\n+/).map(p => `<p>${esc(p)}</p>`).join('')}</div></section>` : ''}
     ${(L.dif || []).length ? `<section class="sec"><h2>Características do imóvel</h2><ul class="difs">${L.dif.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
     ${(L.cond || []).length ? `<section class="sec"><h2>Características do condomínio</h2><ul class="difs">${L.cond.map(x => `<li>${esc(x)}</li>`).join('')}</ul></section>` : ''}
     ${L.endereco || L.bairro ? `<section class="sec"><h2>Localização</h2><div class="loc"><div><b>${esc(L.endereco || L.bairro)}</b><span>${esc([L.endereco ? L.bairro : '', L.cidade || 'Curitiba'].filter(Boolean).join(' · '))}</span></div>${L.endereco ? `<a class="mapa" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([L.endereco, L.bairro, L.cidade || 'Curitiba', 'PR'].filter(Boolean).join(', '))}" target="_blank" rel="noopener">${PINO}Ver no mapa</a>` : ''}</div></section>` : ''}
-    ${fotos.length > 1 ? `<section class="sec"><h2>Fotos · ${fotos.length}</h2><div class="gal">${fotos.map((u, i) => `<button data-f="${i}" aria-label="Abrir foto ${i + 1}"><img loading="lazy" src="${esc(foto(u, 640, 480))}" alt=""></button>`).join('')}</div></section>` : ''}
+    ${fotos.length > 1 ? `<section class="sec"><h2>Fotos · ${fotos.length}</h2><div class="gal">${fotos.map((u, i) => `<button data-f="${i}" aria-label="Abrir foto ${i + 1}"><img loading="lazy" src="${esc(src(u, 640, 480))}" alt=""></button>`).join('')}</div></section>` : ''}
     <section class="corr">
       <span class="nm">${esc(c.nome || '')}</span>
       ${c.creci ? `<span class="cg">${esc(c.cargo || 'Corretor de Imóveis')} · ${esc(c.creci)}</span>` : ''}
@@ -246,10 +267,13 @@ function desenha() {
 function abreFoto(i) {
   const fotos = L.fotos || []; if (!fotos.length) return;
   atual = (i + fotos.length) % fotos.length;
-  $('#lb-img').src = foto(fotos[atual], 1800);
+  const u0 = fotos[atual];
+  $('#lb-img').src = src(u0, 1800);
+  // foto Nickel: mostra a de 720 px na hora e troca pela de 1600 px quando chegar
+  if (/^nf:/.test(u0) && !NF.get(u0 + ':g!')) nfPega(u0, 'g').then(s => { if (s) { NF.set(u0 + ':g!', s); if (fotos[atual] === u0) $('#lb-img').src = s; } });
   $('#lb-ct').textContent = `${atual + 1} / ${fotos.length}`;
   $('#lb').classList.remove('hidden'); document.body.style.overflow = 'hidden';
-  [atual + 1, atual - 1].forEach(k => { const u = fotos[(k + fotos.length) % fotos.length]; if (u) new Image().src = foto(u, 1800); });
+  [atual + 1, atual - 1].forEach(k => { const u = fotos[(k + fotos.length) % fotos.length]; if (u && !/^nf:/.test(u)) new Image().src = foto(u, 1800); });
 }
 function fechaFoto() { $('#lb').classList.add('hidden'); document.body.style.overflow = ''; }
 document.addEventListener('click', e => {

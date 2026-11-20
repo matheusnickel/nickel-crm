@@ -511,6 +511,46 @@ select:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,193,186,.2)}
 .pgrid.q4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .pgrid .full{grid-column:1 / -1}
 .pgrid .lbl{margin-bottom:7px}
+/* Nickel Imóveis (20/11) */
+.nkrow{width:100%;text-align:left;display:flex;align-items:center;gap:14px;padding:12px 16px 12px 12px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh1);transition:border-color .15s,transform .15s}
+.nkrow:hover{border-color:var(--line2);transform:translateY(-1px)}
+.nkrow > i{width:92px;height:70px;border-radius:9px;background:var(--bg2) center/cover no-repeat;flex-shrink:0}
+.nkrow .pm{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.nkrow .pm b{font-size:16px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.nkrow .pm span{font-size:13px;color:var(--muted)}
+.nkrow .nkq{font-size:12px;color:var(--or2);font-weight:600}
+.nkrow .pv{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.nkrow .pv b{font-weight:300;font-size:20px;line-height:1.2;white-space:nowrap}
+.nkst{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:99px;padding:3px 9px;white-space:nowrap}
+.nkst.ativo{background:var(--okbg);color:var(--ok)}.nkst.pend{background:var(--warnbg);color:var(--warn)}.nkst.paus{background:var(--bg2);color:var(--muted)}.nkst.vend{background:var(--redbg);color:var(--red)}
+.chip.nkp:not(.on){border-color:#e0b25a;color:var(--warn);background:var(--warnbg)}
+.tbadge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 5px;margin-left:6px;border-radius:99px;background:var(--red);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:0;vertical-align:1px}
+.bnav button{position:relative}.bnav .tbadge{position:absolute;top:0;left:calc(50% + 6px);margin:0}
+.nkform{display:flex;flex-direction:column;gap:20px}
+.nkform .lbl{margin-bottom:8px}
+.nkaviso{padding:11px 14px;border-radius:10px;background:var(--bg);font-size:13.5px;color:var(--text2)}
+.nkaviso.or{background:var(--orbg);color:var(--or2);font-weight:600}
+.nk2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.nk4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.nkf{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.nkft{position:relative;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:var(--bg2)}
+.nkft img{width:100%;height:100%;object-fit:cover;display:block}
+.nkft.capa{outline:2px solid var(--or);outline-offset:-2px}
+.nkft em{position:absolute;left:6px;top:6px;font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--or);color:#fff;border-radius:99px;padding:2px 7px}
+.nkfa{position:absolute;right:4px;bottom:4px;display:flex;gap:3px}
+.nkfa button{width:26px;height:26px;border-radius:50%;background:rgba(20,20,22,.62);color:#fff;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center}
+.nkfa button:hover{background:rgba(20,20,22,.85)}
+.nkadd{display:inline-flex;margin-top:10px;cursor:pointer}
+.nkadd.busy{opacity:.7;pointer-events:none}
+.nkoutro{margin-top:8px;max-width:420px}
+.nkaut{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.nkchk{display:inline-flex;align-items:center;gap:8px;font-size:14.5px;color:var(--text2)}
+.nkchk input[type=checkbox]{width:18px;height:18px;accent-color:var(--tq2)}
+.nkchk input[type=date]{width:auto;padding:8px 10px;font-size:14.5px}
+.nkacoes .chips{gap:6px}
+.j8c .src.nickel{background:var(--ink);color:var(--onink)}
+@media (max-width:640px){.nk4{grid-template-columns:repeat(2,minmax(0,1fr))}.nkrow > i{width:76px;height:60px}.nkrow .pv b{font-size:17px}}
+@media (max-width:420px){.nk2{grid-template-columns:1fr}}
 .prow{width:100%;text-align:left;display:flex;align-items:center;gap:16px;padding:16px 18px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh1);transition:border-color .15s,transform .15s}
 .prow:hover{border-color:var(--line2);transform:translateY(-1px)}
 .prow .pm{flex:1;min-width:0}
@@ -719,6 +759,7 @@ button.pcs:hover{border-color:var(--tq)}
       <button data-tab="locacao">Locação</button>
       <button data-tab="metricas">Métricas</button>
       <button data-tab="pareceres">Parecer</button>
+      <button data-tab="nickel">Nickel</button>
     </nav>
     <div class="top-r">
       <span id="sync" class="sync"><span class="t">Carregando…</span></span>
@@ -761,6 +802,14 @@ button.pcs:hover{border-color:var(--tq)}
       <div id="p-list" class="list" style="margin-top:20px"></div>
     </section>
 
+    <!-- NICKEL IMÓVEIS (20/11): os imóveis do próprio Matheus, que entram na Carteira como a imobiliária "Nickel" -->
+    <section id="v-nickel" class="hidden">
+      <div class="phd"><div class="ttl"><span class="kick">Seus imóveis</span><h1>Nickel Imóveis</h1></div><button class="btn-or sm" data-act="nk-novo" style="margin-left:auto">+ Imóvel</button></div>
+      <p class="pintro">Os imóveis que você cadastra aqui entram na Carteira como "Nickel", ao lado da J8 e das outras: cruzam com os clientes, aparecem nos Novos e na triagem, e saem no PDF e no link para o cliente. Os cadastrados pelo Felipe só valem depois da sua validação.</p>
+      <div class="chips sm" id="nk-filtros" style="margin-top:18px"></div>
+      <div id="nk-list" class="list" style="margin-top:16px"></div>
+    </section>
+
     <!-- CLIENTES -->
     <section id="v-clientes">
       <div class="phd"><div class="ttl"><span class="kick" id="c-hoje"></span><h1>Clientes</h1></div><span class="cnt" id="c-title"></span></div>
@@ -780,6 +829,7 @@ button.pcs:hover{border-color:var(--tq)}
     <button data-tab="locacao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8L20 3M16 7l3 3M13.5 9.5l2 2"/></svg>Locação</button>
     <button data-tab="metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</button>
     <button data-tab="pareceres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M9 17v-3M12 17v-5M15 17v-2"/></svg>Parecer</button>
+    <button data-tab="nickel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 9-9 9-9-9z"/><path d="M12 8l4 4-4 4-4-4z"/></svg>Nickel</button>
   </nav>
   <button class="fab" data-act="novo" aria-label="Novo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 </div>
@@ -1091,6 +1141,8 @@ async function refresh(silent) {
   }
   renderAll(); flushPending(); updateSync();
   carregaLinks(); // quem abriu os links de imóvel (19/11)
+  // imóveis Nickel (20/11): publicados ou aprovados em outro aparelho aparecem ao voltar para a Carteira
+  if (carregados) carregaNickel().then(ok => { if (ok) nkAtualizaTudo(); });
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('#app') && !$('#app').classList.contains('hidden')) refresh(true); });
 
@@ -1170,6 +1222,8 @@ const waLink = (c, msg) => `https://wa.me/${TESTE ? '' : waNumber(c.whats)}` + (
 // dados/<arquivo>.json é atualizado quando o Matheus pede (scripts/j8-import.mjs e scripts/goncalves-import.mjs).
 // Cada imóvel ganha: src (de qual imobiliária), tc (tipo da Carteira), rot (nome do tipo) e k (chave única "src:código").
 const ESTOQUES_TODOS = [
+  // 20/11: os imóveis do próprio Matheus (aba Nickel), lidos do Firebase; só os publicados (status "ativo") entram aqui
+  { id: 'nickel', nome: 'Nickel', proprio: true, tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   { id: 'j8', nome: 'J8', arq: 'dados/j8.json', det: 'dados/j8/', tipo: t => J8_TIPO[t] || '', rotulo: t => J8_ROTULO[t] || t },
   { id: 'gon', nome: 'A. Gonçalves', arq: 'dados/goncalves.json', det: 'dados/goncalves/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   { id: 'sis3', nome: 'SIS3', arq: 'dados/sis3.json', det: 'dados/sis3/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
@@ -1240,6 +1294,7 @@ async function carregaEntradas() {
     if (r.ok) { const j = await r.json(); for (const [src, por] of Object.entries(j.por || {})) for (const [d, cods] of Object.entries(por)) cods.forEach(c => ENTRADA.set(src + ':' + c, d)); }
   } catch (e) {}
   IMOVEL.forEach(i => { const ds = [i.k, ...(i.irmaos || [])].map(k => ENTRADA.get(k)); i.ent = ds.every(Boolean) ? ds.sort()[0] : ''; });
+  IMOVEL.forEach(i => { if (i.src === 'nickel') i.ent = i.aprov || ''; }); // Nickel: "entrou" no dia em que foi publicado
   // dia da última atualização dos estoques (se ela não trouxe nada novo, nenhum grupo leva o nome de "última")
   ULTIMA_ENT = ESTOQUES.map(e => estoque[e.id] && estoque[e.id].atualizadoEm ? new Date(estoque[e.id].atualizadoEm) : null).filter(d => d && !isNaN(d))
     .map(d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`).reduce((m, d) => d > m ? d : m, '');
@@ -1281,7 +1336,8 @@ setInterval(() => {
 // imóveis novos que servem para o cliente e ele ainda não recebeu (ou recebeu há menos de 5 min), do que entrou por último
 const novosPara = c => carregados && c.status === 'ativo' ? j8Match(c).todos.filter(i => ehNovo(i) && !saiDosNovos(c, i)).sort((a, b) => b.ent.localeCompare(a.ent)) : [];
 // só os que entraram na última atualização (a triagem mostra estes primeiro: ele envia e depois classifica)
-const novosUltima = c => ULTIMA_ENT ? novosPara(c).filter(i => i.ent === ULTIMA_ENT) : [];
+// (os imóveis Nickel publicados nos últimos 7 dias também contam: são dele, ele quer mandar logo)
+const novosUltima = c => novosPara(c).filter(i => (ULTIMA_ENT && i.ent === ULTIMA_ENT) || (i.src === 'nickel' && (diasNovo(i) ?? 99) <= 7));
 // para quem enviar um imóvel: clientes ativos com esse perfil que ainda não receberam; CQ quente e quem está mais adiante primeiro
 const ET_PRIO = ['cqq', 'proposta', 'visita', 'cq', 'qual', 'standby'];
 function quemQuer(i) {
@@ -1382,6 +1438,7 @@ function notaHTML(i) {
 }
 async function loadEstoques() {
   await Promise.all(ESTOQUES.concat(LOCACAO).map(async e => {
+    if (e.proprio) { await carregaNickel(); return; } // Nickel: Firebase (preenche estoque.nickel)
     try { const r = await fetch(e.arq, { cache: 'no-cache' }); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); j.imoveis.forEach(i => prepara(e, i)); estoque[e.id] = j; }
     catch (er) { estoqueErr[e.id] = true; }
   }));
@@ -1454,11 +1511,16 @@ const j8Det = new Map();
 // k = "j8:12345" ou "gon:12345"
 function j8Detalhe(k) {
   const [src, c] = k.split(':'), e = EST[src];
+  // Nickel: os detalhes já estão no cadastro (Firebase); as fotos ficam como "nf:<id>" e vêm sob demanda (fotoNickel)
+  if (e && e.proprio) {
+    if (!j8Det.has(k)) { const d = detalheNickel(c); if (!d) return Promise.reject(new Error('imóvel Nickel não encontrado')); prepara(e, d); j8Det.set(k, d); }
+    return Promise.resolve(j8Det.get(k));
+  }
   if (!j8Det.has(k)) j8Det.set(k, fetch(`${e.det}${c}.json`, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then(d => { prepara(e, d); j8Det.set(k, d); return d; }, er => { j8Det.delete(k); throw er; }));
   return Promise.resolve(j8Det.get(k));
 }
 // miniatura nítida e leve para o card (a do anúncio tem só 96 px)
-const miniatura = f => 'https://images.weserv.nl/?url=' + encodeURIComponent(f.replace(/_p(\.\w+)$/, '$1').replace(/^https?:\/\//, '')) + '&w=320&h=320&fit=cover&q=80';
+const miniatura = f => /^data:/.test(f || '') ? f : 'https://images.weserv.nl/?url=' + encodeURIComponent(f.replace(/_p(\.\w+)$/, '$1').replace(/^https?:\/\//, '')) + '&w=320&h=320&fit=cover&q=80';
 // baixa as fotos 6 por vez (anúncio pode ter 30, 60, 90 fotos); devolve no formato do Promise.allSettled, na ordem do anúncio
 async function emLotes(lista, fn, n = 6) {
   const out = new Array(lista.length); let k = 0;
@@ -1479,6 +1541,7 @@ const nomeFoto = u => String(u || '').split('/').pop().replace(/_p(\.\w+)$/, '$1
 const capas = lsGet('carteira_capas', {}); // "j8:12345" -> endereço da foto escolhida
 const fotoCapa = d => nomeFoto(capas[d.k] || d.f);
 function fotosDoBook(d) {
+  if (EST[d.src] && EST[d.src].proprio) return (d.fotos || []).slice(); // Nickel: a ordem do cadastro (a 1ª é a capa)
   const fotos = (d.fotos || []).slice(), alvo = fotoCapa(d);
   const k = alvo ? fotos.findIndex(u => nomeFoto(u) === alvo) : -1;
   if (k > 0) fotos.unshift(fotos.splice(k, 1)[0]);
@@ -1497,6 +1560,12 @@ function carregaJsPDF() {
 // PDF de fotos no padrão do Matheus ("Casa Portão - Mateus Nickel.pdf"): uma foto por página, fundo branco,
 // página 920×660 pt (em pé, 660×920, quando a foto é vertical), foto inteira centralizada e rodapé com nome e Instagram.
 const fotoPDF = u => 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) + '&w=1840&h=1840&fit=inside&we&q=86&output=jpg';
+// a foto pronta para o PDF: das imobiliárias pelo serviço de imagens; as da Nickel direto do Firebase (1600 px)
+async function fotoDU(u) {
+  if (/^nf:/.test(u)) return fotoNickel(u, 'g');
+  const r = await fetch(fotoPDF(u)); if (!r.ok) throw new Error('HTTP ' + r.status);
+  return paraDataURL(await r.blob());
+}
 const paraDataURL = b => new Promise((ok, err) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = err; r.readAsDataURL(b); });
 const tamanhoImg = src => new Promise((ok, err) => { const im = new Image(); im.onload = () => ok([im.naturalWidth, im.naturalHeight]); im.onerror = err; im.src = src; });
 const pdfsProntos = new Map(); // celular: o PDF fica pronto e o 2º toque abre "Salvar / Enviar"
@@ -1547,7 +1616,9 @@ function fotoDoLink(d) {
     // 19/11 (pedido dele: "mais completo, até endereço, valor de condomínio"): condomínio e endereço (rua e número, como
     // no book; o complemento NUNCA vai). SEM o texto do anúncio ("casa bonita na região…": ele não quer o texto da
     // imobiliária) e SEM IPTU — pedidos dele no mesmo dia.
-    valCond: d.cond || 0, endereco: enDe(d), bairro: d.b || '', cidade: d.ci || 'Curitiba'
+    valCond: d.cond || 0, endereco: enDe(d), bairro: d.b || '', cidade: d.ci || 'Curitiba',
+    // 20/11: nos imóveis Nickel a descrição é dele (escrita no cadastro), então entra; das imobiliárias, nunca
+    descricao: EST[d.src] && EST[d.src].proprio ? String(d.descricao || '').trim() : ''
   };
 }
 // lista inteira, sem cortar: primeiro na ordem de força do book (piscina aquecida, elevador privativo…), depois o resto
@@ -1590,7 +1661,9 @@ function linkParaCliente(btn, k, cliId) {
   const id = (LK_PERFIL[PERFIL_ID] || 'm') + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
   // 19/11: o link vai pelo arquivo de prévia do imóvel (i/<hash>.html, gerado por scripts/previas.mjs a cada atualização):
   // o WhatsApp mostra "Seleção exclusiva · Casa Malbec, Campo Comprido", os detalhes e a foto; quem abre cai em imovel.html
-  const url = new URL(`i/${previaId(k)}.html?l=${id}${TESTE ? '&t=1' : ''}`, location.href).href;
+  // (imóvel Nickel ainda sem arquivo de prévia — ele é gerado na atualização dos estoques — vai direto para a página)
+  const comPrevia = !(EST[d.src] && EST[d.src].proprio) || nkPrevias.has(d.c);
+  const url = new URL(`${comPrevia ? `i/${previaId(k)}.html` : 'imovel.html'}?l=${id}${TESTE ? '&t=1' : ''}`, location.href).href;
   const doc = Object.assign({ k, cli: cl ? cl.id : '', para: cl ? nomeProprio(cl.nome) : '', criadoEm: new Date().toISOString(), corretor: CORRETOR, vistos: [] }, fotoDoLink(d));
   const nome = cl ? nomeProprio(firstName(cl.nome)) : '';
   // só o link (19/11, pedido dele); a mensagem tem o botão "Descritivo link"
@@ -1834,8 +1907,7 @@ async function baixarPDF(btn, c, cli) {
     let n = 0;
     btn.innerHTML = `Montando 0/${fotos.length}…`;
     const imgs = (await emLotes(fotos, async u => {
-      const r = await fetch(fotoPDF(u)); if (!r.ok) throw new Error('HTTP ' + r.status);
-      const du = await paraDataURL(await r.blob());
+      const du = await fotoDU(u);
       const [w, h] = await tamanhoImg(du);
       btn.innerHTML = `Montando ${++n}/${fotos.length}…`;
       return { du, w, h };
@@ -1939,7 +2011,8 @@ function j8Card(i, c) {
   // complemento e bloco: só no login master (Matheus); no do Felipe a caixa nem aparece
   return `<div class="j8c">
     <div class="j8top">
-      <a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>
+      ${EST[i.src].proprio ? `<button class="ph" data-act="nk-abrir" data-id="${esc(i.c)}" style="background-image:url('${esc(miniatura(i.f))}')" aria-label="Abrir o cadastro do imóvel"></button>`
+        : `<a class="ph" href="${esc(i.u)}" target="_blank" rel="noopener" style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')" aria-label="Abrir anúncio na ${EST[i.src].nome}"></a>`}
       <div class="bd"><div class="t1">${esc(tipo)} · ${esc(i.b)}<span class="src ${i.src}">${EST[i.src].nome}</span></div>${i.e ? `<div class="t2">${esc(i.e)}</div>` : ''}<div class="sp">${esc(spec)}</div>${EST[i.src].parceiros && i.ref ? `<div class="sp">Imobiliária: ${esc(i.ref)}</div>` : ''}${(() => {
         // enviado por esta imobiliária ou por outra que anuncia o mesmo imóvel
         const refs = new Map([[refDe(i), i]].concat((i.irmaos || []).map(k => IMOVEL.get(k)).filter(Boolean).map(x => [refDe(x), x])));
@@ -1955,12 +2028,13 @@ function j8Card(i, c) {
     <div class="j8act">
       <div class="cpl end${i.en ? '' : ' vazio'}"><span>Endereço</span>${i.en ? `<b>${esc(i.en)}</b>` : 'Não informado'}</div>
       ${MASTER ? `<div class="cpl${unid ? '' : ' vazio'}"><span>Complemento ${deQue}</span>${unid || 'Não informado'}</div>` : ''}
-      <button class="cpl capa${MASTER ? '' : ' so'}" data-act="j8-capa" data-c="${esc(i.k)}"><span>Foto da capa</span><b><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i>Trocar</b></button>
+      ${EST[i.src].proprio ? `<button class="cpl capa${MASTER ? '' : ' so'}" data-act="nk-abrir" data-id="${esc(i.c)}"><span>Fotos e cadastro</span><b><i style="background-image:url('${esc(miniatura(i.f))}')"></i>Abrir</b></button>`
+        : `<button class="cpl capa${MASTER ? '' : ' so'}" data-act="j8-capa" data-c="${esc(i.k)}"><span>Foto da capa</span><b><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i>Trocar</b></button>`}
       <button class="bk pdf${pdfsProntos.has(i.k) ? ' ready' : ''}" data-act="j8-pdf" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_DOC}${pdfsProntos.has(i.k) ? 'Salvar PDF' : 'Baixar PDF'}</button>
       <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo PDF</button>
       <button class="bk lnk" data-act="j8-link" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_LINK}Link para cliente</button>
       <button class="bk ghost msgl" data-act="j8-msgl" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_MSG}Descritivo link</button>
-      <a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>
+      ${EST[i.src].proprio ? `<button class="go" data-act="nk-abrir" data-id="${esc(i.c)}">Ver cadastro</button>` : `<a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>`}
     </div>${!c && ehNovo(i) ? paraQuem(i) : ''}${ui.capaDe === i.k ? escolheCapa(i) : ''}</div>`;
 }
 // na aba Imóveis, embaixo de cada imóvel novo: os clientes com esse perfil que ainda não receberam (tocar abre a ficha)
@@ -3013,6 +3087,380 @@ document.addEventListener('change', async e => {
   }
 });
 
+// ── NICKEL IMÓVEIS (20/11) ──
+// Pedido dele: uma aba para cadastrar os imóveis dele (fotos, ficha, descrição), que entram na Carteira como mais uma
+// imobiliária ("Nickel", ao lado da J8 e das outras): cruzam com os clientes, aparecem nos Novos, na triagem, no PDF, nos
+// descritivos e no link para o cliente. O Felipe também cadastra, mas o imóvel dele só vale depois que o Matheus aprovar
+// ("Aguardando validação" -> "Publicado"); se o Felipe mexe num publicado, volta para a validação.
+// Fotos: reduzidas no aparelho e guardadas no Firebase (nickel_fotos), uma por documento: g = até 1600 px (PDF e tela
+// cheia), m = até 720 px (galeria e miniaturas). O imóvel guarda a ordem (a 1ª é a capa) e uma capa pequena para os cartões.
+// A vitrine pública (site com os imóveis Nickel) fica para depois (precisa de CRECI-J para usar nome de imobiliária).
+const NK_COL = 'nickel_imoveis' + (TESTE ? '_TESTE_CLAUDE' : ''), NK_FOTOS = 'nickel_fotos' + (TESTE ? '_TESTE_CLAUDE' : '');
+const NK_STATUS = { pendente: ['Aguardando validação', 'pend'], ativo: ['Publicado', 'ativo'], pausado: ['Pausado', 'paus'], vendido: ['Vendido', 'vend'] };
+const NK_ITENS = DIF_IMOVEL.concat(['Lavabo', 'Área de serviço', 'Despensa', 'Sala de estar', 'Sala de jantar', 'Copa/cozinha', 'Cozinha planejada', 'Dependência de empregada', 'Banheira', 'Vista panorâmica']);
+const NK_COND = DIF_COND.concat(['Elevador', 'Guarita', 'Gerador', 'Coworking', 'Quadra de areia', 'Bicicletário', 'Espaço kids']);
+let NICKEL = [];             // todos os cadastros (inclusive pendentes, pausados e vendidos)
+let nkPrevias = new Set();   // imóveis Nickel que já têm prévia do WhatsApp (i/nickel.json, gerado por scripts/previas.mjs)
+let nk = null;               // cadastro aberto
+const nkNum = v => Math.max(0, Math.round(Number(String(v ?? '').replace(',', '.')) || 0));
+function nkLimpo(o) {
+  o = o || {};
+  const arr = a => Array.isArray(a) ? a.filter(Boolean).map(String) : [];
+  return {
+    id: o.id, status: NK_STATUS[o.status] ? o.status : 'pendente', criadoPor: String(o.criadoPor || 'matheus'), criadoEm: String(o.criadoEm || ''),
+    atualizadoEm: String(o.atualizadoEm || ''), atualizadoPor: String(o.atualizadoPor || ''), aprovadoEm: String(o.aprovadoEm || ''), aprovadoPor: String(o.aprovadoPor || ''),
+    t: TIPOS.includes(o.t) ? o.t : '', b: String(o.b || ''), ci: String(o.ci || 'Curitiba'), e: String(o.e || ''), en: String(o.en || ''), cp: String(o.cp || ''),
+    ap: nkNum(o.ap), ac: nkNum(o.ac), atot: nkNum(o.atot), at: nkNum(o.at), q: nkNum(o.q), s: nkNum(o.s), bh: nkNum(o.bh), v: nkNum(o.v), apa: nkNum(o.apa), ano: nkNum(o.ano),
+    mo: ['s', 'm', 'n'].includes(o.mo) ? o.mo : 'n', ob: o.ob === 'p' ? 'p' : 'r', p: nkNum(o.p), cond: nkNum(o.cond),
+    itens: arr(o.itens), condItens: arr(o.condItens), descricao: String(o.descricao || ''), fotos: arr(o.fotos), capaMini: String(o.capaMini || ''),
+    autOk: !!o.autOk, autAte: /^\d{4}-\d{2}-\d{2}$/.test(o.autAte || '') ? o.autAte : ''
+  };
+}
+// a área da conta (regra dele): apartamento = privativa; casa = construída; terreno = terreno; nunca a total
+function nkAreaConta(n) {
+  const g = GRUPO[n.t] || '';
+  return g === 'Terreno' ? n.at : g === 'Casa' ? (n.ac || n.ap) : g === 'Apartamento' || g === 'Cobertura' ? n.ap : (n.ap || n.ac || n.atot);
+}
+// o cadastro no formato do estoque das imobiliárias (o cruzamento com os clientes e os cartões usam este)
+function nkResumo(n) {
+  const g = GRUPO[n.t] || '', aq = nkAreaConta(n) || 0;
+  return { c: n.id, t: n.t, ti: '', b: n.b, ci: n.ci, q: n.q, s: n.s, v: n.v, a: aq || n.atot, at: g === 'Casa' || g === 'Terreno' ? n.at : 0, aq,
+    mo: n.mo, ob: n.ob, p: n.p, f: n.capaMini, e: n.e, cp: n.cp, bl: '', en: n.en, u: '', du: n.atualizadoEm.slice(0, 10), aprov: n.aprovadoEm.slice(0, 10) };
+}
+function detalheNickel(c) {
+  const n = NICKEL.find(x => x.id === c); if (!n) return null;
+  return Object.assign(nkResumo(n), { cond: n.cond, iptu: 0, bh: n.bh, ap: n.ap, atot: n.atot, ac: n.ac, apa: n.apa, ano: n.ano, mob: n.mo === 's',
+    itens: n.itens, condItens: n.condItens, descricao: n.descricao, fotos: n.fotos.map(id => 'nf:' + id) });
+}
+const nkTitulo = n => { const emp = n.e ? (/[a-zà-ú]/.test(n.e) ? n.e : n.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : ''; return emp || `${n.t || 'Imóvel'} ${/^(Vila|Cidade)\b/.test(n.b) ? 'na' : 'no'} ${n.b || '—'}`; };
+const nkVeE = n => MASTER || n.status === 'ativo' || n.criadoPor === PERFIL_ID;      // o Felipe vê os publicados e os dele
+const nkPodeEditar = n => MASTER || !n.id || n.criadoPor === PERFIL_ID;            // e só mexe nos dele
+const nkNomeDe = p => (PERFIS[p] || {}).nome || p;
+
+// ── Firebase ──
+const fsUrl = (col, id, q = '') => `${FB_ROOT}/${col}/${encodeURIComponent(id)}?key=${FB_KEY}${q}`;
+async function fsSalva(col, id, obj) {
+  const r = await fetch(fsUrl(col, id), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(obj) }) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+}
+async function fsApaga(col, id) { const r = await fetch(fsUrl(col, id), { method: 'DELETE' }); if (!r.ok && r.status !== 404) throw new Error('HTTP ' + r.status); }
+async function carregaNickel() {
+  const out = []; let tok = '';
+  try {
+    do {
+      const r = await fetch(`${FB_ROOT}/${NK_COL}?key=${FB_KEY}&pageSize=300` + (tok ? '&pageToken=' + encodeURIComponent(tok) : ''));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      (j.documents || []).forEach(d => { const o = fromFs({ mapValue: { fields: d.fields || {} } }); o.id = d.name.split('/').pop(); out.push(nkLimpo(o)); });
+      tok = j.nextPageToken || '';
+    } while (tok);
+  } catch (e) { estoqueErr.nickel = true; if (!estoque.nickel) estoque.nickel = { imoveis: [] }; return false; }
+  NICKEL = out; delete estoqueErr.nickel;
+  try { const r = await fetch('i/nickel.json', { cache: 'no-cache' }); if (r.ok) nkPrevias = new Set(await r.json()); } catch (e) {}
+  montaEstoqueNickel();
+  return true;
+}
+// os publicados viram o estoque "Nickel" (e entram no mapa de imóveis, com a data de publicação como "entrou")
+function montaEstoqueNickel() {
+  const e = EST.nickel; if (!e) return;
+  [...IMOVEL.keys()].filter(k => k.startsWith('nickel:')).forEach(k => IMOVEL.delete(k));
+  [...j8Det.keys()].filter(k => k.startsWith('nickel:')).forEach(k => j8Det.delete(k));
+  const imoveis = NICKEL.filter(n => n.status === 'ativo' && n.t).map(n => prepara(e, nkResumo(n)));
+  imoveis.forEach(i => { i.rep = ''; i.irmaos = []; i.ent = i.aprov || ''; IMOVEL.set(i.k, i); });
+  estoque.nickel = { fonte: 'Nickel Imóveis', imoveis, total: imoveis.length };
+  j8Cache.clear();
+}
+// depois de salvar, aprovar ou mudar o status: a Carteira inteira enxerga na hora
+function nkAtualizaTudo() {
+  montaEstoqueNickel();
+  renderNickel(); renderClientes(); redesenhaCartoes();
+  if (ui.sheet && ui.sheet.kind === 'triagem') renderTriagem();
+}
+
+// ── Fotos ──
+const nkFotoCache = new Map();
+function fotoNickel(ref, campo = 'm') {
+  const id = String(ref).replace(/^nf:/, ''), key = id + ':' + campo;
+  if (!nkFotoCache.has(key)) nkFotoCache.set(key, fetch(fsUrl(NK_FOTOS, id, '&mask.fieldPaths=' + campo)).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(j => { const v = j.fields && j.fields[campo] && j.fields[campo].stringValue; if (!v) throw new Error('sem foto'); return v; })
+    .catch(er => { nkFotoCache.delete(key); throw er; }));
+  return nkFotoCache.get(key);
+}
+const carregaImg = src => new Promise((ok, err) => { const im = new Image(); im.onload = () => ok(im); im.onerror = err; im.src = src; });
+// redimensiona e comprime (JPEG); se passar do limite do Firebase, baixa a qualidade até caber
+function jpegDe(im, max, q, lim) {
+  const k = Math.min(1, max / Math.max(im.naturalWidth, im.naturalHeight));
+  const cv = document.createElement('canvas'); cv.width = Math.round(im.naturalWidth * k); cv.height = Math.round(im.naturalHeight * k);
+  const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(im, 0, 0, cv.width, cv.height);
+  let s = cv.toDataURL('image/jpeg', q);
+  while (s.length > lim && q > .35) { q -= .08; s = cv.toDataURL('image/jpeg', q); }
+  return s;
+}
+async function preparaFotoNk(file) {
+  const url = URL.createObjectURL(file);
+  try { const im = await carregaImg(url); return { g: jpegDe(im, 1600, .8, 900000), m: jpegDe(im, 720, .74, 220000) }; }
+  finally { URL.revokeObjectURL(url); }
+}
+const miniDe = async src => jpegDe(await carregaImg(src), 360, .72, 60000);
+
+// ── Aba ──
+function renderNickel() {
+  const el = $('#nk-list'); if (!el) return;
+  nkBadge();
+  const vis = NICKEL.filter(nkVeE);
+  const cont = k => vis.filter(n => n.status === k).length;
+  if (!ui.nkF) ui.nkF = MASTER && cont('pendente') ? 'pendente' : 'ativo';
+  $('#nk-filtros').innerHTML = [['ativo', 'Publicados'], ['pendente', 'Aguardando validação'], ['pausado', 'Pausados'], ['vendido', 'Vendidos']]
+    .filter(([k]) => k === 'ativo' || k === 'pendente' || cont(k))
+    .map(([k, l]) => `<button class="chip${ui.nkF === k ? ' on' : ''}${k === 'pendente' && cont(k) ? ' nkp' : ''}" data-act="nk-f" data-v="${k}">${l}<span class="n">${cont(k)}</span></button>`).join('');
+  const l = vis.filter(n => n.status === ui.nkF).sort((a, b) => (b.atualizadoEm || '').localeCompare(a.atualizadoEm || ''));
+  if (estoqueErr.nickel && !NICKEL.length) { el.innerHTML = '<div class="empty"><h3>Sem conexão</h3><p>Não consegui carregar os imóveis agora.</p></div>'; return; }
+  if (!l.length) {
+    el.innerHTML = ui.nkF === 'ativo' && !vis.length
+      ? `<div class="empty"><h3>Nenhum imóvel cadastrado</h3><p>Cadastre um imóvel seu: ele entra na Carteira como "Nickel", ao lado da J8 e das outras, e cruza com os seus clientes.</p><button class="btn-or" data-act="nk-novo">+ Cadastrar imóvel</button></div>`
+      : `<div class="empty"><h3>Nada aqui</h3><p>${ui.nkF === 'pendente' ? 'Nenhum imóvel aguardando validação.' : 'Nenhum imóvel com esse status.'}</p></div>`;
+    return;
+  }
+  el.innerHTML = l.map(n => {
+    const r = nkResumo(n), g = GRUPO[n.t] || '';
+    const spec = [r.aq ? r.aq + ' m²' + (g === 'Casa' ? ' construídos' : g === 'Terreno' ? ' de terreno' : '') : '', g !== 'Terreno' && g !== 'Comercial' && n.q ? n.q + plural(n.q, ' quarto', ' quartos') + (n.s ? ` (${n.s} ${plural(n.s, 'suíte', 'suítes')})` : '') : '', n.v ? n.v + plural(n.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
+    const quem = n.criadoPor !== 'matheus' ? `<small class="nkq">por ${esc(nkNomeDe(n.criadoPor))}</small>` : '';
+    return `<button class="nkrow" data-act="nk-abrir" data-id="${esc(n.id)}"><i style="${n.capaMini ? `background-image:url('${n.capaMini}')` : ''}"></i>
+      <div class="pm"><b>${esc(nkTitulo(n))}</b><span>${esc([n.e ? n.t : '', n.b].filter(Boolean).join(' · '))}</span><span>${esc(spec)}</span>${quem}</div>
+      <div class="pv"><b>${n.p ? fmtValor(n.p) : '—'}</b><span class="nkst ${NK_STATUS[n.status][1]}">${NK_STATUS[n.status][0]}</span></div></button>`;
+  }).join('');
+}
+// bolinha na aba (só no login do Matheus): quantos imóveis do Felipe esperam a validação
+function nkBadge() {
+  const n = MASTER ? NICKEL.filter(x => x.status === 'pendente').length : 0;
+  document.querySelectorAll('[data-tab="nickel"]').forEach(b => { let s = b.querySelector('.tbadge'); if (!n) { if (s) s.remove(); return; } if (!s) { s = document.createElement('span'); s.className = 'tbadge'; b.appendChild(s); } s.textContent = n; });
+}
+
+// ── Cadastro ──
+function abreNickel(id) {
+  const n = id ? NICKEL.find(x => x.id === id) : null;
+  if (id && !n) { toast('Esse imóvel não está mais cadastrado.'); return; }
+  const doc = n ? JSON.parse(JSON.stringify(n)) : nkLimpo({ criadoPor: PERFIL_ID, status: MASTER ? 'ativo' : 'pendente' });
+  nk = { doc, novo: !n, fotos: doc.fotos.map(fid => ({ id: fid, m: '' })), removidas: [], edita: nkPodeEditar(doc), del: false, salvando: false };
+  if (ui.sheet && ui.sheet.kind !== 'nickel') closeSheet();
+  openSheet('', { kind: 'nickel', id: id || null });
+  renderNkForm();
+  nk.fotos.forEach(f => fotoNickel(f.id, 'm').then(s => { f.m = s; const im = document.querySelector(`.nkf [data-fid="${f.id}"] img`); if (im) im.src = s; }).catch(() => {}));
+}
+const nkCampo = (id, rot, val, ext = '') => `<div class="fl"><label class="lbl" for="${id}">${rot}</label><input id="${id}" value="${esc(val)}" autocomplete="off" ${ext}></div>`;
+const nkNumCampo = (id, rot, val, ph = '') => nkCampo(id, rot, val || '', `inputmode="numeric" placeholder="${ph}"`);
+function renderNkForm() {
+  const d = nk.doc, ed = nk.edita, st = NK_STATUS[d.status];
+  const so = ed ? '' : ' disabled';
+  const verCp = MASTER || d.criadoPor === PERFIL_ID;
+  const cab = nk.novo ? '<h2>Novo imóvel</h2>' : `<h2>${esc(nkTitulo(d))}</h2><div class="muted" style="font-size:13.5px;margin-top:4px"><span class="nkst ${st[1]}">${st[0]}</span> · cadastrado por ${esc(nkNomeDe(d.criadoPor))}${d.criadoEm ? ' em ' + fmtDate(d.criadoEm.slice(0, 10)) : ''}</div>`;
+  const aviso = !ed ? '<div class="nkaviso">Imóvel cadastrado pelo Matheus: você pode ver e enviar aos clientes, mas não alterar.</div>'
+    : !MASTER && d.status === 'ativo' ? '<div class="nkaviso">Este imóvel está publicado. Se você alterar, ele sai do ar até o Matheus validar de novo.</div>'
+    : !MASTER ? '<div class="nkaviso">Depois de enviar, o imóvel só aparece na Carteira quando o Matheus validar.</div>'
+    : d.status === 'pendente' && !nk.novo ? `<div class="nkaviso or">Cadastrado por ${esc(nkNomeDe(d.criadoPor))}: confira tudo e aprove para publicar.</div>` : '';
+  const pe = { Casa: 'Área construída (m²) *', Apartamento: 'Área privativa (m²) *', Cobertura: 'Área privativa (m²) *', Terreno: 'Área do terreno (m²) *', Comercial: 'Área privativa (m²) *' };
+  $('#sheet').innerHTML = `
+  <div class="sh-h"><div style="min-width:0"><div class="kick">Nickel Imóveis</div>${cab}</div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="sh-b nkform">
+    ${aviso}
+    <div><span class="lbl">Fotos *<span class="hint">a 1ª é a capa · até 40</span></span><div class="nkf" id="nk-fotos"></div>
+      ${ed ? `<label class="btn-ghost nkadd"><input type="file" id="nk-file" accept="image/*" multiple hidden>+ Adicionar fotos</label>` : ''}</div>
+    <div><span class="lbl">Tipo *</span><div class="chips" id="nk-tipo"></div></div>
+    <div class="nk2">
+      ${nkCampo('nk-e', 'Empreendimento / condomínio', d.e, 'placeholder="Opcional"' + so)}
+      <div class="fl"><label class="lbl" for="nk-b">Bairro *</label><div class="ta"><input id="nk-b" value="${esc(d.b)}" placeholder="Digite e escolha" autocomplete="off"${so}><div class="dd hidden" id="nk-b-dd"></div></div></div>
+      ${nkCampo('nk-en', 'Endereço (rua e número)', d.en, 'placeholder="Ex.: Rua Padre Anchieta, 1200"' + so)}
+      ${verCp ? nkCampo('nk-cp', 'Complemento <span class="hint">só você vê</span>', d.cp, 'placeholder="Apto, bloco, casa…"' + so) : ''}
+    </div>
+    <div class="nk2" id="nk-areas">
+      <div data-g="ap">${nkNumCampo('nk-ap', 'Área privativa (m²)', d.ap)}</div>
+      <div data-g="ac">${nkNumCampo('nk-ac', 'Área construída (m²)', d.ac)}</div>
+      <div data-g="atot">${nkNumCampo('nk-atot', 'Área total (m²)', d.atot)}</div>
+      <div data-g="at">${nkNumCampo('nk-at', 'Terreno (m²)', d.at)}</div>
+    </div>
+    <div class="nk4" id="nk-comodos">
+      ${nkNumCampo('nk-q', 'Quartos', d.q)}${nkNumCampo('nk-s', 'Suítes', d.s)}${nkNumCampo('nk-bh', 'Banheiros', d.bh)}${nkNumCampo('nk-v', 'Vagas', d.v)}
+      <div data-g="apa">${nkNumCampo('nk-apa', 'Aptos por andar', d.apa)}</div>${nkNumCampo('nk-ano', 'Ano de construção', d.ano, 'Ex.: 2018')}
+    </div>
+    <div class="nk2">
+      ${nkCampo('nk-p', 'Valor de venda *', d.p ? 'R$ ' + d.p.toLocaleString('pt-BR') : '', 'inputmode="numeric" placeholder="R$"' + so)}
+      ${nkCampo('nk-cond', 'Condomínio (por mês)', d.cond ? 'R$ ' + d.cond.toLocaleString('pt-BR') : '', 'inputmode="numeric" placeholder="R$ (opcional)"' + so)}
+    </div>
+    <div><span class="lbl">Situação</span><div class="chips sm" id="nk-ob"></div></div>
+    <div><span class="lbl">Mobília</span><div class="chips sm" id="nk-mo"></div></div>
+    <div><span class="lbl">Características do imóvel</span><div class="chips sm" id="nk-itens"></div>${ed ? '<div class="nkoutro"><input id="nk-item-add" placeholder="Outra característica (Enter para incluir)" autocomplete="off"></div>' : ''}</div>
+    <div><span class="lbl">Características do condomínio</span><div class="chips sm" id="nk-cond-itens"></div>${ed ? '<div class="nkoutro"><input id="nk-cond-add" placeholder="Outra característica (Enter para incluir)" autocomplete="off"></div>' : ''}</div>
+    <div class="fl"><label class="lbl" for="nk-desc">Descrição<span class="hint">o seu texto; aparece na página do link</span></label><textarea id="nk-desc" rows="5" placeholder="Opcional"${so}>${esc(d.descricao)}</textarea></div>
+    ${MASTER || d.criadoPor === PERFIL_ID ? `<div><span class="lbl">Autorização de venda</span><div class="nkaut"><label class="nkchk"><input type="checkbox" id="nk-aut"${d.autOk ? ' checked' : ''}${so}> Assinada pelo proprietário</label><label class="nkchk">válida até <input type="date" id="nk-autv" value="${esc(d.autAte)}"${so}></label></div></div>` : ''}
+    ${!nk.novo && MASTER ? `<div class="nkacoes"><span class="lbl">Status</span><div class="chips sm">
+      ${d.status !== 'ativo' && d.status !== 'pendente' ? '<button class="chip" data-act="nk-st" data-v="ativo">Publicar de novo</button>' : ''}
+      ${d.status === 'ativo' ? '<button class="chip" data-act="nk-st" data-v="pausado">Pausar</button>' : ''}
+      ${d.status !== 'vendido' ? '<button class="chip" data-act="nk-st" data-v="vendido">Marcar como vendido</button>' : ''}</div></div>` : ''}
+    ${!nk.novo && ed && (MASTER || d.status !== 'ativo') ? (nk.del
+      ? `<div class="confirm"><span>Excluir este imóvel e as fotos de vez?</span><button class="btn-del" data-act="nk-del-sim">Sim, excluir</button><button class="link" data-act="nk-del-nao">Cancelar</button></div>`
+      : '<button class="danger" data-act="nk-del" style="align-self:flex-start">Excluir imóvel</button>') : ''}
+  </div>
+  <div class="sh-f">${!ed ? '<button class="btn-ghost" data-act="close">Fechar</button>'
+    : `<button class="btn-ghost" data-act="close">Cancelar</button>${MASTER
+      ? (nk.novo ? '<button class="btn-or" data-act="nk-salva" data-v="publicar">Publicar</button>'
+        : d.status === 'pendente' ? '<button class="btn-or" data-act="nk-salva" data-v="publicar">Aprovar e publicar</button>'
+        : '<button class="btn-or" data-act="nk-salva" data-v="salvar">Salvar alterações</button>')
+      : '<button class="btn-or" data-act="nk-salva" data-v="enviar">Enviar para validação</button>'}`}</div>`;
+  renderNkFotos(); renderNkChips();
+  if (ed) {
+    ['nk-p', 'nk-cond'].forEach(i => $('#' + i).addEventListener('input', e => maskMoney(e.target)));
+    typeahead($('#nk-b'), $('#nk-b-dd'), { exclude: () => [], onPick: b => { $('#nk-b').value = spell(b); return false; } });
+    [['nk-item-add', 'itens'], ['nk-cond-add', 'condItens']].forEach(([i, campo]) => $('#' + i).addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return; e.preventDefault();
+      const v = e.target.value.trim().replace(/^./, s => s.toUpperCase()); if (!v) return;
+      if (!nk.doc[campo].some(x => norm(x) === norm(v))) nk.doc[campo].push(v);
+      e.target.value = ''; renderNkChips();
+    }));
+  } else $('#sheet .nkform').querySelectorAll('input,textarea').forEach(x => { x.disabled = true; });
+}
+function renderNkFotos() {
+  const el = $('#nk-fotos'); if (!el) return;
+  const ed = nk.edita, n = nk.fotos.length;
+  el.innerHTML = n ? nk.fotos.map((f, i) => `<div class="nkft${i === 0 ? ' capa' : ''}" data-fid="${esc(f.id || 'nova' + i)}"><img src="${f.m || ''}" alt="">${i === 0 ? '<em>Capa</em>' : ''}
+    ${ed ? `<div class="nkfa">${i ? `<button data-act="nk-foto-capa" data-v="${i}" title="Usar como capa">★</button><button data-act="nk-foto-mv" data-v="${i}" data-d="-1" title="Mover para a esquerda">‹</button>` : ''}${i < n - 1 ? `<button data-act="nk-foto-mv" data-v="${i}" data-d="1" title="Mover para a direita">›</button>` : ''}<button data-act="nk-foto-rm" data-v="${i}" title="Tirar a foto">×</button></div>` : ''}</div>`).join('')
+    : `<p class="muted" style="font-size:13.5px">${ed ? 'Nenhuma foto ainda.' : 'Sem fotos.'}</p>`;
+}
+function renderNkChips() {
+  const d = nk.doc, ed = nk.edita ? '' : ' disabled';
+  $('#nk-tipo').innerHTML = TIPOS.map(t => `<button class="chip${d.t === t ? ' on' : ''}" data-act="nk-tipo" data-v="${t}"${ed}>${t}</button>`).join('');
+  $('#nk-ob').innerHTML = [['r', 'Pronto para morar'], ['p', 'Na planta']].map(([k, l]) => `<button class="chip${d.ob === k ? ' on' : ''}" data-act="nk-ob" data-v="${k}"${ed}>${l}</button>`).join('');
+  $('#nk-mo').innerHTML = [['n', 'Sem mobília'], ['m', 'Semi-mobiliado'], ['s', 'Mobiliado']].map(([k, l]) => `<button class="chip${d.mo === k ? ' on' : ''}" data-act="nk-mo" data-v="${k}"${ed}>${l}</button>`).join('');
+  const lista = (base, marcados) => base.concat(marcados.filter(x => !base.includes(x)));
+  $('#nk-itens').innerHTML = lista(NK_ITENS, d.itens).map(x => `<button class="chip${d.itens.includes(x) ? ' on' : ''}" data-act="nk-item" data-v="${esc(x)}"${ed}>${esc(x)}</button>`).join('');
+  $('#nk-cond-itens').innerHTML = lista(NK_COND, d.condItens).map(x => `<button class="chip${d.condItens.includes(x) ? ' on' : ''}" data-act="nk-citem" data-v="${esc(x)}"${ed}>${esc(x)}</button>`).join('');
+  // campos de área e "por andar" conforme o tipo (apartamento: privativa e total; casa: construída e terreno; terreno: terreno)
+  const g = GRUPO[d.t] || '', apto = g === 'Apartamento' || g === 'Cobertura';
+  const mostra = { ap: apto || g === 'Comercial' || !g, ac: g === 'Casa' || g === 'Comercial', atot: apto || g === 'Comercial', at: g === 'Casa' || g === 'Terreno', apa: apto };
+  document.querySelectorAll('#nk-areas [data-g], #nk-comodos [data-g]').forEach(x => x.classList.toggle('hidden', !mostra[x.dataset.g]));
+  const rot = { ap: 'Área privativa (m²)', ac: 'Área construída (m²)', at: 'Terreno (m²)' }, obrig = apto || g === 'Comercial' ? 'ap' : g === 'Casa' ? 'ac' : g === 'Terreno' ? 'at' : '';
+  Object.entries(rot).forEach(([k, l]) => { const lb = document.querySelector(`label[for="nk-${k}"]`); if (lb) lb.textContent = l + (k === obrig ? ' *' : ''); });
+  $('#nk-comodos').classList.toggle('hidden', g === 'Terreno');
+}
+// o que está digitado nos campos vai para o cadastro (antes de salvar)
+function nkLeCampos() {
+  const d = nk.doc, val = id => { const x = $('#' + id); return x ? x.value : undefined; };
+  const txt = (id, campo) => { const v = val(id); if (v !== undefined) d[campo] = v.trim(); };
+  const num = (id, campo) => { const v = val(id); if (v !== undefined) d[campo] = nkNum(v); };
+  txt('nk-e', 'e'); txt('nk-b', 'b'); txt('nk-en', 'en'); txt('nk-cp', 'cp'); txt('nk-desc', 'descricao');
+  ['ap', 'ac', 'atot', 'at', 'q', 's', 'bh', 'v', 'apa', 'ano'].forEach(k => num('nk-' + k, k));
+  if (val('nk-p') !== undefined) d.p = parseMoney(val('nk-p'));
+  if (val('nk-cond') !== undefined) d.cond = parseMoney(val('nk-cond'));
+  if ($('#nk-aut')) { d.autOk = $('#nk-aut').checked; d.autAte = val('nk-autv') || ''; }
+  if (d.b) d.b = spell(d.b);
+  // campos que não valem para o tipo escolhido não ficam guardados
+  const g = GRUPO[d.t] || '', apto = g === 'Apartamento' || g === 'Cobertura';
+  if (g === 'Casa') { d.atot = 0; d.apa = 0; } if (apto) { d.ac = 0; d.at = 0; } if (g === 'Terreno') { d.ap = 0; d.ac = 0; d.atot = 0; d.q = 0; d.s = 0; d.bh = 0; d.v = 0; d.apa = 0; d.ano = 0; }
+  if (g !== 'Casa' && g !== 'Terreno') d.at = apto ? 0 : d.at;
+}
+function nkFalta(d) {
+  const f = [];
+  if (!nk.fotos.length) f.push('ao menos uma foto');
+  if (!d.t) f.push('o tipo'); if (!d.b) f.push('o bairro'); if (!d.p) f.push('o valor de venda');
+  if (d.t && !nkAreaConta(d)) f.push('a ' + ({ Casa: 'área construída', Terreno: 'área do terreno' }[GRUPO[d.t]] || 'área privativa'));
+  return f.length ? 'Falta ' + listaPt(f) + '.' : '';
+}
+async function nkSalvar(acao) {
+  if (!nk || nk.salvando || !nk.edita) return;
+  nkLeCampos();
+  const d = nk.doc, falta = nkFalta(d); if (falta) { toast(falta); return; }
+  nk.salvando = true;
+  const btn = document.querySelector('[data-act="nk-salva"]'), orig = btn ? btn.innerHTML : '';
+  try {
+    if (nk.novo) d.id = newId('n');
+    // fotos novas primeiro (cada uma num documento), depois o imóvel com a ordem
+    let k = 0; const novas = nk.fotos.filter(f => f.nova);
+    for (const f of novas) {
+      if (btn) btn.innerHTML = `Enviando fotos ${++k}/${novas.length}…`;
+      const fid = newId('f'); await fsSalva(NK_FOTOS, fid, { imovel: d.id, g: f.g, m: f.m });
+      nkFotoCache.set(fid + ':m', Promise.resolve(f.m)); nkFotoCache.set(fid + ':g', Promise.resolve(f.g));
+      f.id = fid; f.nova = false; delete f.g;
+    }
+    if (btn) btn.innerHTML = 'Salvando…';
+    d.fotos = nk.fotos.map(f => f.id);
+    d.capaMini = nk.fotos[0] ? await miniDe(nk.fotos[0].m || await fotoNickel(nk.fotos[0].id, 'm')) : '';
+    const agora = new Date().toISOString();
+    if (nk.novo) { d.criadoEm = agora; d.criadoPor = PERFIL_ID; }
+    d.atualizadoEm = agora; d.atualizadoPor = PERFIL_ID;
+    if (!MASTER) d.status = 'pendente';
+    else if (acao === 'publicar') { d.status = 'ativo'; if (!d.aprovadoEm) d.aprovadoEm = agora; d.aprovadoPor = PERFIL_ID; }
+    const salvo = nkLimpo(d);
+    await fsSalva(NK_COL, salvo.id, salvo);
+    for (const fid of nk.removidas) await fsApaga(NK_FOTOS, fid).catch(() => {});
+    const i = NICKEL.findIndex(x => x.id === salvo.id); if (i >= 0) NICKEL[i] = salvo; else NICKEL.push(salvo);
+    ui.nkF = salvo.status;
+    nk = null; closeSheet(); nkAtualizaTudo();
+    toast(!MASTER ? 'Enviado para validação do Matheus.' : acao === 'publicar' ? 'Imóvel publicado: já aparece na Carteira como Nickel.' : 'Alterações salvas.');
+  } catch (er) {
+    if (btn) btn.innerHTML = orig;
+    toast('Não consegui salvar agora. Confira a internet e tente de novo.');
+  } finally { if (nk) nk.salvando = false; }
+}
+async function nkMudaStatus(status) {
+  if (!nk || !MASTER || nk.novo) return;
+  const d = nk.doc, agora = new Date().toISOString();
+  const campos = { status, atualizadoEm: agora, atualizadoPor: PERFIL_ID };
+  if (status === 'ativo' && !d.aprovadoEm) { campos.aprovadoEm = agora; campos.aprovadoPor = PERFIL_ID; }
+  try {
+    const q = Object.keys(campos).map(k => '&updateMask.fieldPaths=' + k).join('') + '&currentDocument.exists=true';
+    const r = await fetch(fsUrl(NK_COL, d.id, q), { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(campos) }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const n = NICKEL.find(x => x.id === d.id); Object.assign(n, campos);
+    ui.nkF = status; nk = null; closeSheet(); nkAtualizaTudo();
+    toast({ ativo: 'Publicado de novo.', pausado: 'Pausado: saiu da Carteira até você publicar de novo.', vendido: 'Marcado como vendido.' }[status]);
+  } catch (er) { toast('Não consegui mudar o status agora.'); }
+}
+async function nkExcluir() {
+  if (!nk || nk.novo) return;
+  const d = nk.doc;
+  try {
+    await fsApaga(NK_COL, d.id);
+    for (const fid of d.fotos) await fsApaga(NK_FOTOS, fid).catch(() => {});
+    NICKEL = NICKEL.filter(x => x.id !== d.id);
+    nk = null; closeSheet(); nkAtualizaTudo(); toast('Imóvel excluído.');
+  } catch (er) { toast('Não consegui excluir agora.'); }
+}
+function nkAcao(a, el) {
+  const v = el.dataset.v;
+  if (a === 'nk-novo') return abreNickel();
+  if (a === 'nk-abrir') return abreNickel(el.dataset.id);
+  if (a === 'nk-f') { ui.nkF = v; return renderNickel(); }
+  if (!nk) return;
+  const d = nk.doc;
+  switch (a) {
+    case 'nk-salva': nkSalvar(v); break;
+    case 'nk-st': nkMudaStatus(v); break;
+    case 'nk-del': nk.del = true; nkLeCampos(); renderNkForm(); break;
+    case 'nk-del-nao': nk.del = false; nkLeCampos(); renderNkForm(); break;
+    case 'nk-del-sim': nkExcluir(); break;
+    case 'nk-tipo': if (!nk.edita) break; nkLeCampos(); d.t = v; renderNkChips(); break;
+    case 'nk-ob': if (nk.edita) { d.ob = v; renderNkChips(); } break;
+    case 'nk-mo': if (nk.edita) { d.mo = v; renderNkChips(); } break;
+    case 'nk-item': case 'nk-citem': { if (!nk.edita) break; const l = d[a === 'nk-item' ? 'itens' : 'condItens'], i = l.indexOf(v); if (i >= 0) l.splice(i, 1); else l.push(v); renderNkChips(); break; }
+    case 'nk-foto-capa': { const i = +v; nk.fotos.unshift(nk.fotos.splice(i, 1)[0]); renderNkFotos(); break; }
+    case 'nk-foto-mv': { const i = +v, j = i + +el.dataset.d; if (j < 0 || j >= nk.fotos.length) break; [nk.fotos[i], nk.fotos[j]] = [nk.fotos[j], nk.fotos[i]]; renderNkFotos(); break; }
+    case 'nk-foto-rm': { const f = nk.fotos.splice(+v, 1)[0]; if (f && f.id && !f.nova) nk.removidas.push(f.id); renderNkFotos(); break; }
+  }
+}
+// fotos escolhidas no celular/computador: reduzidas aqui mesmo, antes de subir
+document.addEventListener('change', async e => {
+  if (e.target.id !== 'nk-file' || !nk) return;
+  const files = [...(e.target.files || [])].slice(0, Math.max(0, 40 - nk.fotos.length)); e.target.value = '';
+  if (!files.length) { toast('O limite é de 40 fotos por imóvel.'); return; }
+  const lb = document.querySelector('.nkadd'); if (lb) lb.classList.add('busy');
+  let ok = 0;
+  for (const [k, file] of files.entries()) {
+    if (lb) lb.lastChild.textContent = `Preparando ${k + 1}/${files.length}…`;
+    try { const p = await preparaFotoNk(file); nk.fotos.push(Object.assign({ nova: true }, p)); ok++; renderNkFotos(); } catch (er) {}
+  }
+  if (lb) { lb.classList.remove('busy'); lb.lastChild.textContent = '+ Adicionar fotos'; }
+  if (ok < files.length) toast(`${files.length - ok} ${plural(files.length - ok, 'foto não abriu', 'fotos não abriram')}. Tente outra.`);
+});
+
 function renderAll() {
   notaCache.clear(); // a liquidez da nota conta os clientes, que podem ter mudado
   renderClientes();
@@ -3025,8 +3473,11 @@ function renderAll() {
 // ── NAVEGAÇÃO ──
 function go(tab) {
   ui.tab = tab;
-  ['clientes', 'imoveis', 'metricas', 'pareceres'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== (tab === 'locacao' ? 'imoveis' : tab)));
+  ['clientes', 'imoveis', 'metricas', 'pareceres', 'nickel'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== (tab === 'locacao' ? 'imoveis' : tab)));
   if (tab === 'metricas') renderMetricas();
+  if (tab === 'nickel') { renderNickel(); carregaNickel().then(ok => { if (ok && ui.tab === 'nickel') nkAtualizaTudo(); }); }
+  // o "+" flutuante do celular: na aba Nickel cadastra imóvel; nas outras, cliente
+  const fab = $('.fab'); if (fab) { fab.dataset.act = tab === 'nickel' ? 'nk-novo' : 'novo'; fab.setAttribute('aria-label', tab === 'nickel' ? 'Novo imóvel' : 'Novo cliente'); }
   if (tab === 'pareceres') { renderPareceres(); carregaPareceres(); }
   if (tab === 'imoveis' || tab === 'locacao') renderImoveis();
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
@@ -3051,7 +3502,7 @@ function openSheet(html, state) {
   encaixa();
 }
 function closeSheet() {
-  ui.vis = null; ui.stF = null; ui.tri = null; // visita/standby começados e não salvos somem ao fechar
+  ui.vis = null; ui.stF = null; ui.tri = null; nk = null; // visita/standby começados e não salvos somem ao fechar
   // parecer fechado sem salvar: fica como rascunho neste aparelho (aviso na aba Parecer)
   if (ui.sheet && ui.sheet.kind === 'parecer') {
     if (par && par.dirty) { guardaRascunho(); toast('O parecer não foi salvo. Ficou como rascunho na aba Parecer.'); }
@@ -3462,6 +3913,7 @@ document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if (!el) return;
   const a = el.dataset.act, id = el.dataset.id, v = el.dataset.v;
   if (a.startsWith('pm-')) { if (par) parAcao(a, el); return; }
+  if (a.startsWith('nk-')) { nkAcao(a, el); return; }
   switch (a) {
     case 'p-novo': editaParecer(limpaParecer({})); break;
     case 'p-abre': abreParecer(id); break;
@@ -3605,7 +4057,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-20a';
+const VERSAO = '2026-11-20c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

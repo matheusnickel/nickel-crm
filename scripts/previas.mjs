@@ -77,3 +77,38 @@ for (const [src, arq] of Object.entries(ARQ)) {
   }
 }
 console.log(`Prévias do WhatsApp: ${total} imóveis (${escritos} gravadas, ${iguais} sem mudança).`);
+
+// 20/11: os imóveis Nickel (do próprio Matheus, cadastrados na aba Nickel da Carteira) ficam no Firebase, com as fotos
+// em documentos (data URL). O WhatsApp só mostra foto de um endereço público, então a capa vira i/<id>.jpg aqui.
+// i/nickel.json = os códigos que já têm prévia (a Carteira usa o link com prévia só para esses).
+const FB = 'https://firestore.googleapis.com/v1/projects/nickel-crm/databases/(default)/documents', KEY = 'AIzaSyAV1IBBj0usYroywP0i-SLFSHVJh8_S2-g';
+const SITE = 'https://matheusnickel.github.io/nickel-crm/';
+const val = f => f == null ? null : 'stringValue' in f ? f.stringValue : 'integerValue' in f ? +f.integerValue : 'doubleValue' in f ? f.doubleValue
+  : 'arrayValue' in f ? (f.arrayValue.values || []).map(val) : null;
+const comPrevia = [], SUF = process.env.NK_TESTE ? '_TESTE_CLAUDE' : ''; // NK_TESTE=1: lê a base de teste (para conferir)
+try {
+  const r = await fetch(`${FB}/nickel_imoveis${SUF}?key=${KEY}&pageSize=300`);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const docs = (await r.json()).documents || [];
+  for (const d of docs) {
+    const o = Object.fromEntries(Object.entries(d.fields || {}).map(([k, v]) => [k, val(v)])), id = d.name.split('/').pop();
+    if (o.status !== 'ativo' || !o.t) continue;
+    const g = GRUPO(o.t), area = g === 'Terreno' ? o.at : g === 'Casa' ? (o.ac || o.ap) : g === 'Comercial' ? (o.ap || o.ac || o.atot) : o.ap;
+    const i = { c: id, t: o.t, b: o.b, e: o.e, q: o.q, s: o.s, v: o.v, aq: area, p: o.p, f: '' };
+    const nome = previaId('nickel:' + id);
+    let img = '';
+    const capa = (o.fotos || [])[0];
+    if (capa) {
+      const rf = await fetch(`${FB}/nickel_fotos${SUF}/${capa}?key=${KEY}&mask.fieldPaths=g`);
+      const s = rf.ok ? (((await rf.json()).fields || {}).g || {}).stringValue : '';
+      if (s && s.startsWith('data:image/jpeg;base64,')) { await writeFile(new URL(nome + '.jpg', DIR), Buffer.from(s.slice(23), 'base64')); img = SITE + 'i/' + nome + '.jpg'; }
+    }
+    // o mesmo arquivo das imobiliárias, com a foto daqui (Nickel: tipo das categorias da Carteira, não da J8)
+    let html = previa('nickel', i); if (!html) continue;
+    html = img ? html.replace(/<meta property="og:image"[\s\S]*?summary_large_image">\n?/, '') .replace('<script>', `<meta property="og:image" content="${img}">\n<meta name="twitter:card" content="summary_large_image">\n<script>`) : html;
+    await writeFile(new URL(nome + '.html', DIR), html);
+    comPrevia.push(id);
+  }
+  await writeFile(new URL('nickel.json', DIR), JSON.stringify(comPrevia));
+  console.log(`Prévias Nickel: ${comPrevia.length} imóveis publicados.`);
+} catch (e) { console.log('Prévias Nickel: não consegui ler o Firebase (' + e.message + '); i/nickel.json ficou como estava.'); }
