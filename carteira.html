@@ -864,12 +864,22 @@ const PERFIS = {
   // aprova os imóveis Nickel do Felipe), MAS com a carteira de clientes própria: os clientes do Matheus não aparecem para ele
   gabriel: { nome: 'Gabriel Gomes', usuarios: ['gabriel', 'gabriel gomes'], hash: 'ca17a55dfc13791364501bf8f3e5adb20337c2c62275d00297802bf9691f3992', master: true, estoques: null, col: 'carteira_clientes_gabriel',
     corretor: { nome: 'GABRIEL GOMES' } },
-  felipe: { nome: 'Felipe Moreira', usuarios: ['felipe', 'felipe moreira'], hash: 'dd54a2717986878f618599759b1ec209b4e36c855fca9177768b84c1a030c535', master: false, estoques: null /* desde 16/11 à noite: todas as imobiliárias (antes só J8) */, col: 'carteira_clientes_felipe',
+  felipe: { nome: 'Felipe Moreira', usuarios: ['felipe', 'felipe moreira'], hash: 'ba9f36c449a262653d632ea1cefbd90a062af02d7b5d3620a260515ee23896a6' /* senha trocada em 20/11 */, master: false, estoques: null /* desde 16/11 à noite: todas as imobiliárias (antes só J8) */, col: 'carteira_clientes_felipe',
     corretor: { nome: 'FELIPE MOREIRA' } }
 };
 const LS_AUTH = 'carteira_auth';
 // sessão guardada no aparelho: o id do perfil (o "true" de antes de 16/11 era o login do Matheus)
-const PERFIL_ID = (() => { try { const s = JSON.parse(localStorage.getItem(LS_AUTH)); return s === true ? 'matheus' : PERFIS[s] ? s : null; } catch (e) { return null; } })();
+// 20/11: a sessão guarda também um pedaço do hash da senha ({ p: perfil, h }): se a senha daquele login mudar, o aparelho
+// que entrou com a antiga volta para a tela de entrada. Sessões antigas (só o id) valem para Matheus e Gabriel; a do Felipe
+// não (a senha dele foi trocada em 20/11, então ele entra de novo com a nova).
+const PERFIL_ID = (() => {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS_AUTH));
+    if (s === true) return 'matheus';
+    if (s && typeof s === 'object') return PERFIS[s.p] && PERFIS[s.p].hash.slice(0, 12) === s.h ? s.p : null;
+    return PERFIS[s] && s !== 'felipe' ? s : null;
+  } catch (e) { return null; }
+})();
 const PERFIL = PERFIS[PERFIL_ID || 'matheus'], MASTER = PERFIL.master;
 const COL = PERFIL.col + (TESTE ? '_TESTE_CLAUDE' : '');
 const LS_CACHE = 'carteira_cache_' + COL, LS_PEND = 'carteira_pending_' + COL;
@@ -4070,7 +4080,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-20d';
+const VERSAO = '2026-11-20e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
@@ -4114,7 +4124,7 @@ $('#lg-form').addEventListener('submit', async e => {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('carteira-nickel:' + $('#lg-pass').value));
   const ok = [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('') === PERFIS[id].hash;
   // o perfil decide a coleção e o estoque logo na carga da página: entra recarregando
-  if (ok) { lsSet(LS_AUTH, id); lsSet('carteira_ultimo_login', id); location.reload(); }
+  if (ok) { lsSet(LS_AUTH, { p: id, h: PERFIS[id].hash.slice(0, 12) }); lsSet('carteira_ultimo_login', id); location.reload(); }
   else { $('#lg-err').textContent = 'Senha incorreta.'; $('#lg-pass').select(); }
 });
 renderLgNomes();
