@@ -47,7 +47,13 @@ for (const [src, arq] of Object.entries(ARQ)) {
   const quando = diaLocal(j.atualizadoEm) || hoje;
   const primeira = !data[src]; // imobiliária nova: tudo o que veio é a base
   if (primeira) { data[src] = new Map(); base[src] = quando; }
-  for (const i of j.imoveis) { const c = String(i.c); if (!data[src].has(c)) { data[src].set(c, primeira ? '' : quando); if (!primeira) novos[src] = (novos[src] || 0) + 1; } }
+  for (const i of j.imoveis) {
+    const c = String(i.c); if (data[src].has(c)) continue;
+    // 20/11: anúncio que o site diz ter sido atualizado ANTES da 1ª importação daquela imobiliária já estava lá
+    // (a importação anterior é que não pegou — na My Broker, a busca não devolve sempre os mesmos): não é novo
+    const velho = !primeira && i.du && base[src] && String(i.du).slice(0, 10) < base[src];
+    data[src].set(c, primeira || velho ? '' : quando); if (!primeira && !velho) novos[src] = (novos[src] || 0) + 1;
+  }
 }
 
 const por = {};
