@@ -133,7 +133,7 @@ h1{font-size:clamp(30px,7vw,44px);line-height:1.12;font-weight:300;letter-spacin
 <script>
 const FB_KEY = 'AIzaSyAV1IBBj0usYroywP0i-SLFSHVJh8_S2-g';
 const FB_ROOT = 'https://firestore.googleapis.com/v1/projects/nickel-crm/databases/(default)/documents';
-const COLS = { m: 'carteira_links', f: 'carteira_links_felipe' };
+const COLS = { m: 'carteira_links', f: 'carteira_links_felipe', g: 'carteira_links_gabriel' };
 const q = new URLSearchParams(location.search), ID = (q.get('l') || '').replace(/[^a-z0-9]/gi, '');
 const COL = (COLS[ID[0]] || '') + (q.get('t') === '1' ? '_TESTE_CLAUDE' : '');
 const $ = s => document.querySelector(s);

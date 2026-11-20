@@ -652,6 +652,13 @@ button.pcs:hover{border-color:var(--tq)}
 .lg-card h1{font-weight:300;font-size:46px;line-height:1.08;margin:30px 0 12px}
 .lg-card p{color:var(--muted);margin-bottom:28px;font-size:12px;letter-spacing:.18em;text-transform:uppercase}
 .lg-card form{display:flex;flex-direction:column;gap:12px}
+.lg-nomes{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.lg-nome{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px;border-radius:12px;background:var(--card);border:1px solid var(--line2);font-size:16px;font-weight:600;color:var(--text);transition:border-color .15s,box-shadow .15s}
+.lg-nome i{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:14px;background:var(--bg2);color:var(--text2)}
+.lg-nome:hover{border-color:var(--tq)}
+.lg-nome.on{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,193,186,.2)}
+.lg-nome.on i{background:var(--tq);color:#fff}
+.lg-oculto{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 /* login de corretor (16/11): a foto da capa ocupa a linha do complemento */
 .j8c .cpl.capa.so{grid-column:1 / -1}
 
@@ -741,7 +748,9 @@ button.pcs:hover{border-color:var(--tq)}
     <h1>Quem procura <em>o quê, onde.</em></h1>
     <p>Matheus Nickel · Curitiba</p>
     <form id="lg-form" autocomplete="on">
-      <input type="text" id="lg-user" placeholder="Usuário (seu nome)" autocomplete="username" autocapitalize="words" aria-label="Usuário">
+      <!-- 20/11 (pedido dele): toca no nome e digita só a senha (o campo de usuário fica escondido para o gerenciador de senhas) -->
+      <div class="lg-nomes" id="lg-nomes" role="radiogroup" aria-label="Quem está entrando"></div>
+      <input type="text" id="lg-user" autocomplete="username" class="lg-oculto" tabindex="-1" aria-hidden="true">
       <input type="password" id="lg-pass" placeholder="Senha" autocomplete="current-password" aria-label="Senha">
       <button class="btn-or" type="submit">Entrar</button>
       <div class="err" id="lg-err"></div>
@@ -851,6 +860,10 @@ const TESTE = new URLSearchParams(location.search).get('base') === 'teste';
 const PERFIS = {
   matheus: { nome: 'Matheus Nickel', usuarios: ['matheus', 'matheus nickel'], hash: '18ad40b356ed78cf279f05bac632061e5cc24d842649fc99566bb98f7575ce23', master: true, estoques: null, col: 'carteira_clientes',
     corretor: { nome: 'MATHEUS NICKEL', cargo: 'Corretor de Imóveis', creci: 'CRECI-PR 53436', insta: '@matheus.nickel', whats: '(41) 98500-0305' } },
+  // 20/11 (pedido dele): Gabriel Gomes com o mesmo acesso do Matheus (master: complemento, todas as imobiliárias, Parecer,
+  // aprova os imóveis Nickel do Felipe), MAS com a carteira de clientes própria: os clientes do Matheus não aparecem para ele
+  gabriel: { nome: 'Gabriel Gomes', usuarios: ['gabriel', 'gabriel gomes'], hash: 'ca17a55dfc13791364501bf8f3e5adb20337c2c62275d00297802bf9691f3992', master: true, estoques: null, col: 'carteira_clientes_gabriel',
+    corretor: { nome: 'GABRIEL GOMES' } },
   felipe: { nome: 'Felipe Moreira', usuarios: ['felipe', 'felipe moreira'], hash: 'dd54a2717986878f618599759b1ec209b4e36c855fca9177768b84c1a030c535', master: false, estoques: null /* desde 16/11 à noite: todas as imobiliárias (antes só J8) */, col: 'carteira_clientes_felipe',
     corretor: { nome: 'FELIPE MOREIRA' } }
 };
@@ -1591,7 +1604,7 @@ function registrarContatoJ8(cliId, d, lk) {
 // Quando o cliente abre, a página anota a hora no próprio link (vistos/ultimaVez) e a Carteira mostra "abriu" no envio,
 // na lista de clientes e na triagem. Aberturas no aparelho de quem está logado na Carteira não contam (prévia).
 const COLL = PERFIL.col.replace('clientes', 'links') + (TESTE ? '_TESTE_CLAUDE' : '');
-const LK_PERFIL = { matheus: 'm', felipe: 'f' }; // 1ª letra do id = de quem é o link (a página escolhe a coleção por ela)
+const LK_PERFIL = { matheus: 'm', felipe: 'f', gabriel: 'g' }; // 1ª letra do id = de quem é o link (a página escolhe a coleção por ela)
 const LINKS = new Map(); // id do link -> { vistos: [ISO...], ultimaVez, titulo } (só os abertos nos últimos LINK_DIAS)
 const LINK_DIAS = 60;
 // o mesmo hash do scripts/previas.mjs (cyrb53): "j8:78585" -> nome do arquivo da prévia do WhatsApp
@@ -4057,7 +4070,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-20c';
+const VERSAO = '2026-11-20d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
@@ -4083,21 +4096,34 @@ function startApp() {
   refresh();
   loadEstoques();
 }
+// os nomes na tela de entrada, na ordem dele; o último que entrou neste aparelho já vem marcado
+const LG_ORDEM = ['matheus', 'gabriel', 'felipe'];
+let lgId = lsGet('carteira_ultimo_login', '');
+function renderLgNomes() {
+  $('#lg-nomes').innerHTML = LG_ORDEM.filter(k => PERFIS[k]).map(k => `<button type="button" class="lg-nome${lgId === k ? ' on' : ''}" data-lg="${k}" role="radio" aria-checked="${lgId === k}"><i>${PERFIS[k].nome.charAt(0)}</i>${PERFIS[k].nome}</button>`).join('');
+  $('#lg-user').value = lgId && PERFIS[lgId] ? PERFIS[lgId].nome : '';
+}
+$('#lg-nomes').addEventListener('click', e => {
+  const b = e.target.closest('[data-lg]'); if (!b) return;
+  lgId = b.dataset.lg; $('#lg-err').textContent = ''; renderLgNomes(); $('#lg-pass').focus();
+});
 $('#lg-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const u = norm($('#lg-user').value).trim().replace(/\s+/g, ' '), id = Object.keys(PERFIS).find(k => PERFIS[k].usuarios.includes(u));
-  let ok = false;
-  if (id) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('carteira-nickel:' + $('#lg-pass').value)); ok = [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('') === PERFIS[id].hash; }
+  const id = PERFIS[lgId] ? lgId : '';
+  if (!id) { $('#lg-err').textContent = 'Toque no seu nome.'; return; }
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('carteira-nickel:' + $('#lg-pass').value));
+  const ok = [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('') === PERFIS[id].hash;
   // o perfil decide a coleção e o estoque logo na carga da página: entra recarregando
-  if (ok) { lsSet(LS_AUTH, id); location.reload(); }
-  else { $('#lg-err').textContent = id ? 'Senha incorreta.' : 'Usuário não encontrado.'; (id ? $('#lg-pass') : $('#lg-user')).select(); }
+  if (ok) { lsSet(LS_AUTH, id); lsSet('carteira_ultimo_login', id); location.reload(); }
+  else { $('#lg-err').textContent = 'Senha incorreta.'; $('#lg-pass').select(); }
 });
+renderLgNomes();
 if (TESTE) $('#teste-bar').classList.remove('hidden');
 // o que muda por login: abas, iniciais do menu
 document.documentElement.classList.toggle('perfil-corretor', !MASTER);
 $('.top .avatar').textContent = PERFIL.nome.charAt(0);
 if (PERFIL_ID) startApp();
-else { $('#login').classList.remove('hidden'); setTimeout(() => $('#lg-user').focus(), 50); }
+else { $('#login').classList.remove('hidden'); if (lgId) setTimeout(() => $('#lg-pass').focus(), 50); }
 </script>
 </body>
 </html>
