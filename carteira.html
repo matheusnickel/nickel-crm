@@ -3138,13 +3138,16 @@ const TRI_ETAPAS = ['qual', 'cq', 'cqq', 'standby'];
 const TRI_REVISA = 30;
 function filaTriagem() {
   const h = hojeISO(), pul = (ui.tri && ui.tri.pulados) || [];
-  return clientes.filter(c => c.status === 'ativo' && TRI_ETAPAS.includes(c.etapa) && !pul.includes(c.id)
+  const l = clientes.filter(c => c.status === 'ativo' && TRI_ETAPAS.includes(c.etapa) && !pul.includes(c.id)
       // standby que chegou na data de retomar entra na fila na hora, mesmo revisado há pouco
-      && (!c.revisadoEm || daysSince(c.revisadoEm) >= TRI_REVISA || paraRetomar(c)) && !(c.etapa === 'standby' && c.retomar && c.retomar > h))
-    // CQ quente, CQ fria, Qualificando e por último o standby; dentro de cada um, quem recebeu imóvel mais recentemente
-    // primeiro (é a conversa que está no topo do WhatsApp)
-    .sort((a, b) => ['cqq', 'cq', 'qual', 'standby'].indexOf(a.etapa) - ['cqq', 'cq', 'qual', 'standby'].indexOf(b.etapa)
-      || ((diasSemEnvio(a) ?? 1e6) - (diasSemEnvio(b) ?? 1e6)));
+      && (!c.revisadoEm || daysSince(c.revisadoEm) >= TRI_REVISA || paraRetomar(c)) && !(c.etapa === 'standby' && c.retomar && c.retomar > h));
+  // 20/11 (pedido dele): quem tem imóvel novo da última atualização vem PRIMEIRO (envia e já classifica)
+  const nv = new Map(l.map(c => [c.id, carregados && novosUltima(c).length ? 0 : 1]));
+  // depois: CQ quente, CQ fria, Qualificando e por último o standby; dentro de cada um, quem recebeu imóvel mais
+  // recentemente primeiro (é a conversa que está no topo do WhatsApp)
+  return l.sort((a, b) => nv.get(a.id) - nv.get(b.id)
+    || ['cqq', 'cq', 'qual', 'standby'].indexOf(a.etapa) - ['cqq', 'cq', 'qual', 'standby'].indexOf(b.etapa)
+    || ((diasSemEnvio(a) ?? 1e6) - (diasSemEnvio(b) ?? 1e6)));
 }
 // sugestão pelos dados que existem (envios, visitas, cadastro); o que está no WhatsApp só ele sabe
 function sugereTemp(c) {
@@ -3602,7 +3605,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-19k';
+const VERSAO = '2026-11-20a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
