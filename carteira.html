@@ -3538,10 +3538,10 @@ const VZ_COMUNS = new Set(('casa casas apartamento apartamentos apto ape cobertu
   'grande pequena pequeno piscina churrasqueira sacada varanda mobiliado mobiliada semimobiliado planta pronto pronta aluguel alugar locacao venda comprar vender hoje ontem semana agora aqui ali la isso esse essa aquele aquela ' +
   'sobre ainda tambm tambem ja foi ser estou to ta esta estava cara pode poderia gostaria favor sala salas loja lojas comercial vista terraco jardim parque lado dia bem muito pouco todos todas tudo nada ver saber achar').split(' '));
 // como o celular costuma escrever (ou como se fala) alguns bairros
-const VZ_APELIDOS = { 'alto da 15': 'Alto da XV', 'alto da rua 15': 'Alto da XV', 'alto da rua xv': 'Alto da XV', 'champanhe': 'Champagnat', 'champagne': 'Champagnat', 'champanha': 'Champagnat', 'champanhat': 'Champagnat',
+const VZ_APELIDOS = { 'alto da 15': 'Alto da XV', 'alto da rua 15': 'Alto da XV', 'alto da rua xv': 'Alto da XV', 'bom dia tu vinha': 'Butiatuvinha', 'bom dia tuvinha': 'Butiatuvinha', 'butia tu vinha': 'Butiatuvinha', 'butia tuvinha': 'Butiatuvinha', 'botia tu vinha': 'Butiatuvinha', 'batia tu vinha': 'Butiatuvinha', 'champanhe': 'Champagnat', 'champagne': 'Champagnat', 'champanha': 'Champagnat', 'champanhat': 'Champagnat',
   'cidade industrial': 'CIC', 'hugo langue': 'Hugo Lange', 'hugo lang': 'Hugo Lange', 'sao bras': 'São Braz', 'vila isabel': 'Vila Izabel', 'jardim americas': 'Jardim das Américas', 'alfaville': 'Alphaville Graciosa', 'alphaville': 'Alphaville Graciosa', 'eco vila': 'Ecoville', 'eco vile': 'Ecoville', 'echo ville': 'Ecoville' };
 const VZ_GEN = new Set('edificio ed edif residencial residence residencia residences condominio cond horizontal fechado clube club predio empreendimento'.split(' '));
-const vzNorm = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[²]/g, '2').replace(/r\s*\$/g, ' ')
+const vzNorm = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[²]/g, '2').replace(/r\s*\$\s*(\d{1,2}(?:[.,]\d+)?)\s*m\b/g, '$1 milhoes').replace(/r\s*\$/g, ' ')
   .replace(/(\d)\.(?=\d{3}(?:\D|$))/g, '$1').replace(/(\d),(\d)/g, '$1.$2').replace(/[^a-z0-9.\s]/g, ' ').replace(/\.(?!\d)/g, ' ').replace(/(^|\D)\.(\d)/g, '$1 $2').replace(/\s+/g, ' ').trim();
 // "cento e sessenta e três metros" → "163 metros"; "três e quatrocentos" continua "3 e 400"; "um/uma" só vira 1 antes de unidade
 function vzNumeros(t) {
@@ -3583,9 +3583,9 @@ function vzQual(s, ini, fim) {
   if (/\b(acima de|a partir de|partir de|mais (?:de|que)|no minimo|minimo(?: de)?|pelo menos|maior que|de no minimo)(?: (?:uns|umas|de|os))* $/.test(antes) || /^ (?:pra cima|para cima|pra mais|para mais|ou mais|no minimo)/.test(depois)) return 'min';
   return 'perto';
 }
-function vzPrecos(s0) {
-  let s = s0; const L = [], poe = (v, ini, fim) => { if (v >= 1000) L.push({ v, ini, fim }); };
-  const NU = `(?! ?(?:\\.\\d|quartos?|dormitorios?|suites?|vagas?|garagens?|metros?|m2|banheiros?|anos?|andar|andares|milh))`;
+function vzPrecos(s0, loc) {
+  let s = s0; const mi = loc ? 1e3 : 1e6, mil = loc ? 1 : 1e3, L = [], poe = (v, ini, fim) => { if (v >= (loc ? 300 : 1000)) L.push({ v, ini, fim }); }; // aluguel: "até 8000" = R$ 8 mil, "3 e 400" = R$ 3.400
+  const NU = `(?! ?(?:\\.\\d|quartos?|dormitorios?|suites?|vagas?|garagens?|metros?|m2|m\\b|banheiros?|anos?|andar|andares|milh))`;
   const apaga = (ini, fim) => { s = s.slice(0, ini) + '#'.repeat(fim - ini) + s.slice(fim); };
   const varre = (rx, f) => { for (const m of [...s.matchAll(rx)]) { const v = f(m); if (v) { poe(v, m.index, m.index + m[0].length); apaga(m.index, m.index + m[0].length); } } };
   const varreDepois = (antes, num, f) => { for (const m of [...s.matchAll(new RegExp(`\\b(${antes}) (${num})\\b${NU}`, 'g'))]) { const v = f(m.slice(1)); const ini = m.index + m[1].length + 1; if (v) { poe(v, ini, m.index + m[0].length); apaga(ini, m.index + m[0].length); } } };
@@ -3597,20 +3597,21 @@ function vzPrecos(s0) {
     const k = m[5] === 'mil' ? 1e3 : 1e6, a = +m[2] * k, b = +m[4] * k; if (b <= a) continue;
     faixa = { min: a, max: b, ini: m.index, fim: m.index + m[0].length }; apaga(faixa.ini, faixa.fim); break;
   }
+  varre(/\b(\d{1,2}) ?(?:milhoes|milhao|mi) ?(?:e )?(\d{5,6})\b/g, m => +m[1] * 1e6 + +m[2]);
   varre(/\b(\d{6,9})\b(?: reais)?/g, m => +m[1]);
   varre(/\b(\d{1,2}(?:\.\d+)?) ?(?:milhoes|milhao|mi) e mei[oa]\b/g, m => (+m[1] + .5) * 1e6);
   varre(/\b(\d{1,2}) ?(?:milhoes|milhao|mi) ?(?:e )?(\d{1,3}) ?mil\b/g, m => +m[1] * 1e6 + +m[2] * 1e3);
   varre(new RegExp(`\\b(\\d{1,2}) ?(?:milhoes|milhao|mi) ?(?:e )?(\\d{3})\\b${NU}`, 'g'), m => +m[1] * 1e6 + +m[2] * 1e3);
   varre(/\b(\d{1,2}(?:\.\d+)?) ?(?:milhoes|milhao|mi)\b/g, m => +m[1] * 1e6);
   varre(/\bmeio milhao\b/g, () => 5e5);
-  varre(new RegExp(`\\b(\\d{1,2}) e (\\d{3})(?: mil)?\\b${NU}`, 'g'), m => +m[1] * 1e6 + +m[2] * 1e3);
+  varre(new RegExp(`\\b(\\d{1,2}) e (\\d{3})(?: mil)?\\b${NU}`, 'g'), m => +m[1] * mi + +m[2] * mil);
   varre(/\b(\d{1,4}) ?mil\b(?! (?:metros|m2))/g, m => +m[1] * 1e3);
-  varreDepois('ate|uns|de|por|e|valor|acho que e|faixa de|custa', '(\\d{1,2}) e mei[oa]', m => (+m[2] + .5) * 1e6);
-  varreDepois('ate|uns|por|valor|faixa de|custa|acho que e|de|e', '(\\d{1,2}) (\\d{3})', m => +m[2] * 1e6 + +m[3] * 1e3);
-  varreDepois('ate|uns|por|valor de|faixa de|custa|acho que e', '(\\d{3,4})', m => +m[2] * 1e3);
-  varreDepois('ate|uns|acho que e', '(\\d{1,2}\\.\\d{1,3})', m => +m[2] * 1e6);
-  varreDepois('de', '(\\d{4})', m => +m[2] >= 1950 && +m[2] <= 2035 ? 0 : +m[2] * 1e3);
-  if (!L.length && !faixa) varreDepois('ate|uns', '(\\d{1,2})(?! (?:e|ou|a) \\d)', m => +m[2] <= 40 ? +m[2] * 1e6 : 0);
+  varreDepois('ate|uns|de|por|e|valor|acho que e|faixa de|custa', '(\\d{1,2}) e mei[oa]', m => (+m[2] + .5) * mi);
+  varreDepois('ate|uns|por|valor|faixa de|custa|acho que e|de|e', '(\\d{1,2}) (\\d{3})', m => +m[2] * mi + +m[3] * mil);
+  varreDepois('ate|uns|por|valor de|faixa de|custa|acho que e', '(\\d{3,4})', m => +m[2] * mil);
+  varreDepois('ate|uns|acho que e', '(\\d{1,2}\\.\\d{1,3})', m => +m[2] * mi);
+  varreDepois('de', '(\\d{4})', m => !loc && +m[2] >= 1950 && +m[2] <= 2035 ? 0 : +m[2] * mil);
+  if (!L.length && !faixa) varreDepois('ate|uns', '(\\d{1,2})(?! (?:e|ou|a) \\d)', m => +m[2] <= 40 ? +m[2] * mi : 0);
   if (!L.length && !faixa) return null;
   if (faixa) return { min: faixa.min, max: faixa.max, spans: [[faixa.ini, faixa.fim]].concat(L.map(x => [x.ini, x.fim])) };
   L.sort((a, b) => a.ini - b.ini);
@@ -3632,11 +3633,11 @@ function vzPrecos(s0) {
 }
 function vzAreas(s, soTerreno) {
   const r = { spans: [] };
-  const fx = s.match(/\b(?:de |entre )?(\d{2,4}(?:\.\d+)?) (?:a|e|ate|ou) (\d{2,4}(?:\.\d+)?) ?(?:metros quadrados|metros|m2|mts)\b/);
+  const fx = s.match(/\b(?:de |entre )?(\d{2,4}(?:\.\d+)?) (?:a|e|ate|ou) (\d{2,4}(?:\.\d+)?) ?(?:metros quadrados|metros|m2|mts|m)\b/);
   const guarda = (o, terr) => { r[terr ? 'terreno' : 'area'] = Object.assign(r[terr ? 'terreno' : 'area'] || {}, o); };
   const ehTerr = (ini, fim) => !soTerreno && (/\b(?:terreno|lote)(?: \w+){0,3} $/.test(s.slice(Math.max(0, ini - 40), ini)) && !/\b(?:casa|construid|area|privativ|apartamento)\w*(?: \w+){0,2} $/.test(s.slice(Math.max(0, ini - 22), ini)) || /^ (?:de|do) (?:terreno|lote)/.test(s.slice(fim, fim + 14)));
   if (fx && +fx[2] > +fx[1]) { const ini = fx.index, fim = ini + fx[0].length; guarda({ min: +fx[1], max: +fx[2] }, ehTerr(ini, fim)); r.spans.push([ini, fim]); s = s.slice(0, ini) + '#'.repeat(fim - ini) + s.slice(fim); }
-  for (const m of [...s.matchAll(/\b(\d{2,5}(?:\.\d+)?) ?(?:metros quadrados|metros|metro|m2|mts)\b/g)]) {
+  for (const m of [...s.matchAll(/\b(\d{2,5}(?:\.\d+)?) ?(?:metros quadrados|metros|metro|m2|mts|m)\b/g)]) {
     const ini = m.index, fim = ini + m[0].length, terr = ehTerr(ini, fim), q = vzQual(s, ini, fim);
     if (!(r[terr ? 'terreno' : 'area'] || {}).min && !(r[terr ? 'terreno' : 'area'] || {}).perto) guarda({ [q]: +m[1] }, terr);
     r.spans.push([ini, fim]);
@@ -3670,7 +3671,7 @@ function vzEntende(texto, ctx) {
   const ar = vzAreas(s, soTerreno); ar.spans.forEach(([a, b]) => usa(a, b));
   if (ar.area) Q.area = ar.area; if (ar.terreno) Q.terreno = ar.terreno;
   const mascara = gasto.reduce((t, [a, b]) => t.slice(0, a) + '#'.repeat(b - a) + t.slice(b), s); // a metragem não pode virar preço
-  const pr = vzPrecos(mascara); if (pr) { pr.spans.forEach(([a, b]) => usa(a, b)); delete pr.spans; if (pr.min || pr.max || pr.perto) Q.preco = pr; }
+  const pr = vzPrecos(mascara, /\b(?:alugar|aluguel|locacao|alugo|alugad[oa])\b/.test(s)); if (pr) { pr.spans.forEach(([a, b]) => usa(a, b)); delete pr.spans; if (pr.min || pr.max || pr.perto) Q.preco = pr; }
 
   // 2) empreendimento, rua, bairro e cidade
   const pal = []; { const rx = /\S+/g; let m; while ((m = rx.exec(s))) pal.push({ w: m[0], ini: m.index, fim: m.index + m[0].length }); }
@@ -3866,6 +3867,10 @@ function vzBusca(Q) {
   const base = (Q.loc ? (estoque[LOCACAO.id] ? estoque[LOCACAO.id].imoveis : []) : ESTOQUES.flatMap(e => estoque[e.id] ? estoque[e.id].imoveis : [])).filter(i => i.tc);
   const K = vzCriterios(Q), passa = (folga = {}, sem = []) => base.filter(i => K.every(k => sem.includes(k) || VZ_TESTE[k](i, Q, folga[k])));
   let l = passa(), aviso = '';
+  if (K.includes('area') && Q.area.perto && l.length && l.length < 6) {
+    const n0 = l.length; for (const t of [.06, .1]) { const r = passa({ area: t }); if (r.length > l.length) l = r; if (l.length >= 6) break; }
+    if (l.length > n0) aviso = `${n0 === 1 ? 'Só 1 tem' : 'Só ' + n0 + ' têm'} praticamente essa metragem. Depois ${n0 === 1 ? 'dele' : 'deles'}, as parecidas (até 10% de diferença).`;
+  }
   if (!l.length && K.length) {
     const viz = Q.bairros.length ? [...new Set(Q.bairros.flatMap(b => [b].concat(vizinhosDe(b).filter(v => v[1] <= 3).map(v => v[0]))))] : null;
     const tenta = [
@@ -4056,6 +4061,8 @@ function vzOuvir() {
     else toast('Não ouvi nada. Toque no microfone e fale de novo.');
   };
   rec.onresult = e => { est.txt = vzJunta(e.results); const f = $('#vz-fala'); f.textContent = est.txt; f.classList.remove('dica'); arma(4000); };
+  // começou a falar e o texto ainda não veio: não encerra no meio da fala
+  rec.onspeechstart = () => { if (!est.txt) arma(25000); };
   rec.onerror = e => { est.erro = e.error || 'erro'; };
   rec.onend = termina;
   vzRec = { rec, est, termina };
@@ -4086,6 +4093,7 @@ function vzAcao(a, el) {
   }
 }
 function vzLiga() {
+  if (!MASTER) return;
   const t = $('#vz-in');
   $('#vz-form').addEventListener('submit', e => { e.preventDefault(); t.blur(); vzPergunta(t.value); });
   t.addEventListener('input', vzAltura);
@@ -4105,6 +4113,7 @@ function renderAll() {
 
 // ── NAVEGAÇÃO ──
 function go(tab) {
+  if (tab === 'voz' && !MASTER) tab = 'clientes'; // perguntar por voz: só Matheus e Gabriel (23/11, pedido do Matheus)
   ui.tab = tab;
   ['clientes', 'imoveis', 'metricas', 'pareceres', 'nickel', 'voz'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== (tab === 'locacao' ? 'imoveis' : tab)));
   if (tab === 'metricas') renderMetricas();
@@ -4548,7 +4557,7 @@ document.addEventListener('click', e => {
   const a = el.dataset.act, id = el.dataset.id, v = el.dataset.v;
   if (a.startsWith('pm-')) { if (par) parAcao(a, el); return; }
   if (a.startsWith('nk-')) { nkAcao(a, el); return; }
-  if (a.startsWith('vz-')) { vzAcao(a, el); return; }
+  if (a.startsWith('vz-')) { if (MASTER) vzAcao(a, el); return; }
   switch (a) {
     case 'p-novo': editaParecer(limpaParecer({})); break;
     case 'p-abre': abreParecer(id); break;
@@ -4692,7 +4701,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-23d';
+const VERSAO = '2026-11-23e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
@@ -4744,6 +4753,7 @@ renderLgNomes();
 if (TESTE) $('#teste-bar').classList.remove('hidden');
 // o que muda por login: abas, iniciais do menu
 document.documentElement.classList.toggle('perfil-corretor', !MASTER);
+if (!MASTER) document.querySelectorAll('.vztop, .vzfab, #v-voz > *, #vz-ov > *').forEach(x => x.remove()); // sem o botão de voz no login do Felipe
 $('.top .avatar').textContent = PERFIL.nome.charAt(0);
 if (PERFIL_ID) startApp();
 else { $('#login').classList.remove('hidden'); if (lgId) setTimeout(() => $('#lg-pass').focus(), 50); }
