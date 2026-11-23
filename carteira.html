@@ -1700,26 +1700,12 @@ function linkParaCliente(btn, k, cliId) {
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); if (cl) registrarContatoJ8(cl.id, d, id); })
     .catch(() => toast('Sem conexão: o link não foi criado. Copie de novo quando a internet voltar.'));
 }
-// 19/11, ajustado com ele ao longo do dia: a mensagem é CURTA. Só o gancho na pegada "lembrei de você", o link (a prévia
-// já mostra tipo, bairro, cômodos, metragem e valor) e o CTA dele. Nada de ficha no texto, nada de endereço e NUNCA
-// falar de valor/teto ("Abaixo do seu teto", "acima do teto": ele não quer esse tipo de comunicação).
-// 19/11 (pedido dele): o link é copiado sozinho; esta mensagem tem botão próprio ("Descritivo link"), sem o link no meio.
-// Sem cliente (aba Imóveis): sem o nome e com o CTA de sempre.
+// 23/11 (pedido dele): o texto do botão "Descritivo link" é UMA frase só, igual para todos: "Caroliny, essa casa está dentro do
+// que você busca?" (só mudam o nome e o tipo do imóvel; sem cliente, sem o nome). Saíram o gancho "lembrei de você" e as variações.
 function mensagemDoLink(c, d) {
-  const onde = `${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`;
-  if (!c) return [`Vi essa ${onde} e lembrei de você.`, descritivoPartes(d)[4]].join('\n\n');
-  const nome = nomeProprio(firstName(c.nome));
-  const dn = diasNovo(IMOVEL.get(d.k) || d);
-  // "bate em tudo" só quando ele deu pelo menos 3 critérios além de tipo e bairro e o imóvel cumpre todos (valor até o teto)
-  const criterios = [c.quartos, c.vagas, c.areaMin, c.terrenoMin, c.mobilia.length, c.valorMax].filter(Boolean).length;
-  const cumpre = d.p && c.valorMax && d.p <= c.valorMax;
-  const gancho = dn !== null && dn <= 7 ? `${nome}, essa ${dn <= 3 ? 'acabou de entrar' : 'entrou essa semana'} e lembrei de você na hora.`
-    : criterios >= 3 && cumpre ? `${nome}, quando vi essa lembrei de você. Bate em tudo que você me pediu.`
-    : `${nome}, vi essa ${onde} e lembrei de você.`;
-  // o CTA que ele já usa (o mesmo do descritivo: "Essa casa está dentro do que você está buscando?"); quente puxa para a visita
-  const pergunta = ['cqq', 'visita', 'proposta'].includes(c.etapa) ? 'Consigo te levar lá essa semana. Qual dia fica melhor pra você?'
-    : descritivoPartes(d)[4];
-  return [gancho, pergunta].join('\n\n');
+  const tipo = { Casa: 'essa casa', Apartamento: 'esse apartamento', Cobertura: 'essa cobertura', Terreno: 'esse terreno' }[GRUPO[d.tc]] || 'esse imóvel';
+  const frase = tipo + ' está dentro do que você busca?';
+  return c ? `${nomeProprio(firstName(c.nome))}, ${frase}` : frase.replace(/^./, x => x.toUpperCase());
 }
 // botão "Descritivo link": como o descritivo do PDF, o 1º toque prepara o imóvel se ainda não carregou
 function copiarMsgLink(btn, k, cliId) {
@@ -4083,7 +4069,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-23a';
+const VERSAO = '2026-11-23b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
