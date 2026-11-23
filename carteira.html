@@ -4224,7 +4224,7 @@ function vzCadastro(Q) {
     valorMin: p.min || 0, valorMax: p.max || p.perto || 0, quartos: Q.q || 0, vagas: Q.v || 0, areaMin: soTerra ? 0 : a.min || a.perto || 0, areaMax: soTerra ? 0 : a.max || 0, terrenoMin: t.min || t.perto || (soTerra ? a.min || a.perto || 0 : 0),
     mobilia: Q.mo ? Q.mo.slice() : [], situacao: Q.ob ? [Q.ob] : [], etapa: Q.etapas && ETAPA[Q.etapas[0]] ? Q.etapas[0] : 'qual' });
   d.obs = [Q.s ? Q.s + plural(Q.s, ' suíte', ' suítes') : '', ...Q.itens.map(x => x.rot.toLowerCase()), Q.fora.length ? 'menos ' + Q.fora.join(', ') : '', Q.loc ? 'quer alugar' : '', Q.cad.obs].filter(Boolean).join(', ');
-  const w = d.whats ? waNumber(d.whats) : '', dup = clientes.find(c => (w && digits(c.whats) && waNumber(c.whats) === w) || (d.nome && norm(c.nome) === norm(d.nome))) || null;
+  const w = d.whats ? waNumber(d.whats) : '', dup = clientes.find(c => (w && digits(c.whats) && waNumber(c.whats) === w) || (d.nome && norm(c.nome) === norm(d.nome) && c.criadoEm.length >= 16 && minutosDesde(c.criadoEm) < 30)) || null; // repetido = mesmo WhatsApp (pelo nome ele não quer aviso); o nome só conta se acabou de ser cadastrado (toque dobrado)
   return { d, falta: [!d.nome && 'nome', !d.valorMin && !d.valorMax && 'faixa de valor', !d.bairros.length && 'bairro'].filter(Boolean), dup: dup ? dup.id : '', semTipo: !Q.tipos.length, foneRuim: Q.cad.foneRuim, sobras: Q.sobras, id: '', desfeito: false };
 }
 function vzGravaCad() {
@@ -4262,7 +4262,7 @@ function vzRenderCad(res) {
   const dup = k.dup && byId(k.dup), falta = x => k.falta.includes(x), v = (t, x) => t ? esc(t) : x ? '<span class="vzfalta">Falta</span>' : '—';
   const linhas = [['Nome', v(d.nome && nomeProprio(d.nome), falta('nome'))], ['Faixa de valor', v(faixaValor(d, true), falta('faixa de valor'))], ['Bairros', v(d.bairros.join(', '), falta('bairro'))], ['Telefone', d.whats ? esc(fmtFone(d.whats)) : k.foneRuim ? 'Incompleto: ' + esc(k.foneRuim) : 'Sem telefone (opcional)'],
     ['Tipo', k.semTipo ? 'Casas, apartamentos e coberturas' : esc(tiposResumo(d.tipos).join(', '))], d.quartos && ['Quartos', d.quartos + ' ou mais'], d.vagas && ['Vagas', d.vagas + ' ou mais'], (d.areaMin || d.areaMax) && ['Metragem', d.areaMin && d.areaMax ? `${d.areaMin} a ${d.areaMax} m²` : d.areaMin ? `a partir de ${d.areaMin} m²` : `até ${d.areaMax} m²`], d.terrenoMin && ['Terreno', `a partir de ${d.terrenoMin} m²`], d.obs && ['Observações', esc(d.obs)]].filter(Boolean);
-  res.innerHTML = `<div class="vzcad pend"><div class="vzcadt"><b>${k.desfeito ? 'Cadastro desfeito' : dup ? 'Já existe um cliente assim' : 'Falta ' + listaPt(k.falta.map(x => x === 'bairro' ? 'pelo menos um bairro' : 'o nome|a faixa de valor'.split('|')[x === 'nome' ? 0 : 1]))}</b></div>
+  res.innerHTML = `<div class="vzcad pend"><div class="vzcadt"><b>${k.desfeito ? 'Cadastro desfeito' : dup ? (d.whats && waNumber(dup.whats) === waNumber(d.whats) ? 'Já existe um cliente com esse WhatsApp' : 'Você acabou de cadastrar esse cliente') : 'Falta ' + listaPt(k.falta.map(x => x === 'bairro' ? 'pelo menos um bairro' : 'o nome|a faixa de valor'.split('|')[x === 'nome' ? 0 : 1]))}</b></div>
     ${dup && !k.desfeito ? `<div class="list" style="margin-top:12px">${vzLinhaCliente(dup)}</div>` : ''}
     <div class="acts" style="margin-top:14px">${k.falta.length ? `<button class="btn-or" data-act="vz-mic-falta">${ICON_MIC.replace('<svg', '<svg width="18" height="18"')}Falar o que falta</button><button class="btn-ghost" data-act="vz-cad-form">Preencher no formulário</button>` : `<button class="btn-or" data-act="vz-cad-sim">${k.desfeito ? 'Cadastrar de novo' : 'Cadastrar mesmo assim'}</button>`}</div>
     <dl class="info" style="margin-top:16px">${linhas.map(([n, x]) => `<dt>${n}</dt><dd>${x}</dd>`).join('')}</dl></div>`;
@@ -5165,7 +5165,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-23f';
+const VERSAO = '2026-11-23g';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
