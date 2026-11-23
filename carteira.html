@@ -539,7 +539,11 @@ select:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,193,186,.2)}
 .vz-onda::after{animation-delay:.9s}.vz-onda{z-index:0}
 @keyframes vzpulsa{from{transform:scale(1);opacity:.4}to{transform:scale(1.75);opacity:0}}
 @media (prefers-reduced-motion:reduce){.vz-onda::before,.vz-onda::after{animation:none;opacity:0}}
-.vz-fala{font-size:20px;line-height:1.45;min-height:58px;max-height:38vh;overflow:auto;width:100%;text-wrap:balance}.vz-fala.dica{color:var(--muted);font-size:15.5px}
+.vz-fala{font-size:20px;line-height:1.45;min-height:58px;max-height:38vh;overflow:auto;width:100%;text-wrap:balance}.vz-fala.dica{color:var(--muted);font-size:15.5px}.vz-fala b{font-weight:600;color:var(--or2)}
+.vz-ov.ligando .vz-onda{opacity:.45}.vz-ov.ligando .vz-onda::before,.vz-ov.ligando .vz-onda::after{animation:none;opacity:0}
+.chip.vzou{border-style:dashed;border-color:var(--orline);color:var(--or2);font-size:13px;padding:4px 12px}
+.vzcad{background:var(--okbg,#e7f4ec);border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.5;margin-top:14px}.sh-b>.vzcad{margin-top:0}.vzcad p{margin:6px 0 0}.vzcad .chips{margin-top:8px}.vzcadt{display:flex;align-items:center;justify-content:space-between;gap:12px}.vzcad.pend{background:var(--card);border:1px solid var(--line2)}.vzcad.pend .vzcadt b{font-size:16px}.vzcad.pend .info{margin-top:8px}.vzfalta{color:var(--red);font-weight:600}
+.vzouvi{display:flex;gap:8px;align-items:flex-start;margin:12px 0 0;font-size:13.5px;line-height:1.45;color:var(--muted)}.vzouvi svg{width:16px;height:16px;flex-shrink:0;margin-top:2px;color:var(--ok)}
 .vz-bts{display:flex;gap:10px;width:100%;max-width:420px}.vz-bts button{flex:1;justify-content:center}
 @media (min-width:901px){.vz-ov{align-items:center}.vz-card{border-radius:24px}}
 @media (max-width:900px){.vzfab{display:flex}body.vz-on .vzfab{visibility:hidden}}
@@ -936,6 +940,8 @@ const GRUPO = { 'Casa': 'Casa', 'Casa em condomínio': 'Casa', 'Sobrado': 'Casa'
 // clientes cadastrados antes da divisão: "Casa" valia para casa, sobrado e condomínio; continua valendo
 const TIPOS_ANTIGOS = { Casa: ['Casa', 'Casa em condomínio', 'Sobrado', 'Sobrado em condomínio'], Apartamento: ['Apartamento', 'Apartamento garden'], Terreno: ['Terreno', 'Terreno em condomínio'] };
 const FAMILIAS = [['Casas', TIPOS_ANTIGOS.Casa], ['Apartamentos', TIPOS_ANTIGOS.Apartamento], ['Terrenos', TIPOS_ANTIGOS.Terreno]];
+// cliente cadastrado sem dizer o tipo: casas, apartamentos e coberturas (terreno e comercial só quando ele pede)
+const RESIDENCIAL = TIPOS.filter(t => !['Terreno', 'Terreno em condomínio', 'Comercial'].includes(t));
 // "Casa, Casa em condomínio, Sobrado, Sobrado em condomínio" vira "Casas" na lista
 function tiposResumo(tipos) {
   const out = [], usados = new Set();
@@ -1517,7 +1523,8 @@ async function loadEstoques() {
   zeraNotas();
   carregados = true; j8Cache.clear();
   renderClientes();
-  if (vz.txt) { const m = vz.modo === vz.q.intencao; vz.q = vzEntende(vz.txt, vzContexto()); if (m) vz.modo = vz.q.intencao; if (ui.tab === 'voz') { renderVoz(); vzAbreCliente(); } } // perguntou antes de o estoque chegar
+  vzRefaz(); // perguntou por voz antes de o estoque chegar
+  if (MASTER && VzSR) [() => vzContexto(), () => vzContexto().som('emp'), () => vzContexto().som('rua')].forEach((f, k) => setTimeout(() => { try { f(); } catch (e) {} }, 1500 + k * 700)); // deixa pronto para a primeira fala
   if (ui.tab === 'metricas') renderMetricas();
   if (ui.tab === 'imoveis' || naLocacao()) renderImoveis();
   if (ui.sheet && ui.sheet.kind === 'ficha') renderFicha(ui.sheet.id);
@@ -3524,7 +3531,10 @@ document.addEventListener('change', async e => {
 // queria casa em Santa Felicidade até 5 milhões?", "a casa do Campos do Jordão, acho que é 3 e 400", "tem imóvel novo para
 // o André Vilela?") e a Carteira traz os imóveis ou os clientes. O celular transforma a fala em texto; daqui para a frente é
 // tudo regra, dentro da própria página (não usa inteligência artificial de fora e não manda os dados da Carteira a ninguém).
-// vzEntende(texto, ctx) não depende da tela: ctx = { bairros, cidades, emps, clientes, chave } (ver vzContexto).
+// 23/11, 2ª parte: "quero que entenda e corrija, igual a Claude". O celular troca valor e nome próprio: "três e quatrocentos" vira
+// "13.400", "sete e meio" vira "7:30", "um e meio" vira "um e-mail", "Vivenda Tabor" vira "Vivenda Taylor". Aqui a frase é lida com o
+// que existe na Carteira (bairros, condomínios, ruas, clientes e valores dos estoques) e sai reescrita certa (Q.pecas / vzTexto).
+// vzEntende(texto, ctx) não depende da tela: ctx = vzMonta(imóveis…) + { clientes, primeiros, chave } (ver vzContexto).
 const VZ_NUMS = { um: 1, uma: 1, dois: 2, duas: 2, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10, onze: 11, doze: 12, treze: 13, quatorze: 14, catorze: 14,
   quinze: 15, dezesseis: 16, dezessete: 17, dezoito: 18, dezenove: 19, vinte: 20, trinta: 30, quarenta: 40, cinquenta: 50, sessenta: 60, setenta: 70, oitenta: 80, noventa: 90, cem: 100, cento: 100,
   duzentos: 200, duzentas: 200, trezentos: 300, trezentas: 300, quatrocentos: 400, quatrocentas: 400, quinhentos: 500, quinhentas: 500, seiscentos: 600, seiscentas: 600, setecentos: 700,
@@ -3536,27 +3546,69 @@ const VZ_COMUNS = new Set(('casa casas apartamento apartamentos apto ape cobertu
   'preciso quero queria quer procura procurava busca buscava pediu tem tinha tenho algum alguma alguns algumas novo novos nova novas mandar enviar manda mostra mostrar traz traga abre abrir ficha regiao bairro perto condominio ' +
   'fechado edificio predio residencial empreendimento rua avenida alameda link pdf descritivo opcao opcoes acho mais menos minimo maximo uns umas cerca volta torno entre partir acima abaixo alto alta padrao boa bom bonita ' +
   'grande pequena pequeno piscina churrasqueira sacada varanda mobiliado mobiliada semimobiliado planta pronto pronta aluguel alugar locacao venda comprar vender hoje ontem semana agora aqui ali la isso esse essa aquele aquela ' +
-  'sobre ainda tambm tambem ja foi ser estou to ta esta estava cara pode poderia gostaria favor sala salas loja lojas comercial vista terraco jardim parque lado dia bem muito pouco todos todas tudo nada ver saber achar').split(' '));
+  'sobre ainda tambm tambem ja foi ser estou to ta esta estava cara pode poderia gostaria favor sala salas loja lojas comercial vista terraco jardim parque lado dia bem muito pouco todos todas tudo nada ver saber achar ' +
+  'quartinho lavabo closet lareira elevador escritorio academia salao festa festas portaria lazer area areas privativa construida total andar andares terreo primeiro segundo terceiro ultimo duplex triplex studio loft flat garden kitnet ' +
+  'reforma reformado reformada antigo antiga lindo linda luxo simples barato barata caro desconto proposta visita visitar familia casal filho filha filhos esposa marido mae pai amigo amiga corretor imobiliaria construtora obra entrega ' +
+  'morar investir investimento comprador compradora pessoa pessoas pagar paga gastar custa custando vale valendo teto limite orcamento quase tipo tipos dessa desse desta deste dele dela meu minha seu sua nao sim entao assim mesmo ' +
+  'amanha manha tarde noite segunda terca quarta quinta sexta sabado domingo mes ano outro outra outros outras lembra lembrar queria estavam estao vou vai vamos ir tava atende atender atendendo chegou ligou falou falei disse nome nomes telefone celular whatsapp zap contato numero cadastrar cadastra cadastro cadastre observacao indicacao').split(' '));
 // como o celular costuma escrever (ou como se fala) alguns bairros
-const VZ_APELIDOS = { 'alto da 15': 'Alto da XV', 'alto da rua 15': 'Alto da XV', 'alto da rua xv': 'Alto da XV', 'bom dia tu vinha': 'Butiatuvinha', 'bom dia tuvinha': 'Butiatuvinha', 'butia tu vinha': 'Butiatuvinha', 'butia tuvinha': 'Butiatuvinha', 'botia tu vinha': 'Butiatuvinha', 'batia tu vinha': 'Butiatuvinha', 'champanhe': 'Champagnat', 'champagne': 'Champagnat', 'champanha': 'Champagnat', 'champanhat': 'Champagnat',
-  'cidade industrial': 'CIC', 'hugo langue': 'Hugo Lange', 'hugo lang': 'Hugo Lange', 'sao bras': 'São Braz', 'vila isabel': 'Vila Izabel', 'jardim americas': 'Jardim das Américas', 'alfaville': 'Alphaville Graciosa', 'alphaville': 'Alphaville Graciosa', 'eco vila': 'Ecoville', 'eco vile': 'Ecoville', 'echo ville': 'Ecoville' };
+const VZ_APELIDOS = { 'alto da 15': 'Alto da XV', 'alto da rua 15': 'Alto da XV', 'alto da rua xv': 'Alto da XV', 'alto 15': 'Alto da XV', 'alto da quinze': 'Alto da XV', 'bom dia tu vinha': 'Butiatuvinha', 'bom dia tuvinha': 'Butiatuvinha', 'butia tu vinha': 'Butiatuvinha', 'butia tuvinha': 'Butiatuvinha', 'botia tu vinha': 'Butiatuvinha', 'batia tu vinha': 'Butiatuvinha',
+  'bootia tu vinha': 'Butiatuvinha', 'boutia tu vinha': 'Butiatuvinha', 'champanhe': 'Champagnat', 'champagne': 'Champagnat', 'champanha': 'Champagnat', 'champanhat': 'Champagnat', 'champanha t': 'Champagnat', 'champ': 'Champagnat', 'vivo rio': 'Bigorrilho', 'bigo rio': 'Bigorrilho', 'big rio': 'Bigorrilho', 'uvv': 'Juvevê', 'uv v': 'Juvevê', 'mercedes': 'Mercês',
+  'ahu de baixo': 'Ahú', 'aul': 'Ahú', 'a hu': 'Ahú', 'ahul': 'Ahú', 'haul': 'Ahú', 'baca cheri': 'Bacacheri', 'bacaxeri': 'Bacacheri', 'pilar zinho': 'Pilarzinho', 'tingui': 'Tingui', 'rebolcas': 'Rebouças', 'capao da embuia': 'Capão da Imbuia',
+  'cidade industrial': 'CIC', 'hugo langue': 'Hugo Lange', 'hugo lang': 'Hugo Lange', 'hugo lanche': 'Hugo Lange', 'sao bras': 'São Braz', 'vila isabel': 'Vila Izabel', 'jardim americas': 'Jardim das Américas', 'alfaville': 'Alphaville Graciosa', 'alphaville': 'Alphaville Graciosa', 'eco vila': 'Ecoville', 'eco vile': 'Ecoville', 'echo ville': 'Ecoville', 'ecovile': 'Ecoville' };
 const VZ_GEN = new Set('edificio ed edif residencial residence residencia residences condominio cond horizontal fechado clube club predio empreendimento'.split(' '));
+// palavra certa, com acento, para o texto que aparece; e palavra que o celular ouve errado neste assunto
+const VZ_GRAFIA = { suite: 'suíte', suites: 'suítes', ate: 'até', milhao: 'milhão', milhoes: 'milhões', condominio: 'condomínio', condominios: 'condomínios', edificio: 'edifício', predio: 'prédio', predios: 'prédios', imovel: 'imóvel', imoveis: 'imóveis', regiao: 'região', area: 'área', tres: 'três',
+  voce: 'você', nao: 'não', ai: 'aí', tambem: 'também', opcao: 'opção', opcoes: 'opções', proximo: 'próximo', proxima: 'próxima', terreo: 'térreo', terraco: 'terraço', escritorio: 'escritório', locacao: 'locação', salao: 'salão', preco: 'preço', familia: 'família', lancamento: 'lançamento',
+  construcao: 'construção', padrao: 'padrão', maximo: 'máximo', minimo: 'mínimo', dormitorio: 'dormitório', dormitorios: 'dormitórios', ape: 'apê', balneario: 'balneário', to: 'tô', ultimo: 'último', ja: 'já', so: 'só', alguem: 'alguém', estao: 'estão', apto: 'apto' };
+const VZ_TROCA = { casar: 'casa', sweet: 'suíte', sweets: 'suítes', suits: 'suítes', suit: 'suíte', suites: '', gado: 'garden', gardem: 'garden', gardens: 'garden', apertamento: 'apartamento', aparamento: 'apartamento', cobertor: 'cobertura', sobrada: 'sobrado' };
 const vzNorm = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[²]/g, '2').replace(/r\s*\$\s*(\d{1,2}(?:[.,]\d+)?)\s*m\b/g, '$1 milhoes').replace(/r\s*\$/g, ' ')
   .replace(/(\d)\.(?=\d{3}(?:\D|$))/g, '$1').replace(/(\d),(\d)/g, '$1.$2').replace(/[^a-z0-9.\s]/g, ' ').replace(/\.(?!\d)/g, ' ').replace(/(^|\D)\.(\d)/g, '$1 $2').replace(/\s+/g, ' ').trim();
-// "cento e sessenta e três metros" → "163 metros"; "três e quatrocentos" continua "3 e 400"; "um/uma" só vira 1 antes de unidade
-function vzNumeros(t) {
-  const tk = t.split(' '), out = [], un = new RegExp('^' + VZ_UN + '$'), casa = v => v >= 100 ? 100 : v >= 20 ? 10 : 0;
-  for (let i = 0; i < tk.length;) {
-    const v0 = VZ_NUMS[tk[i]];
-    if (v0 === undefined || (v0 === 1 && !un.test(tk[i + 1] || ''))) { out.push(tk[i++]); continue; }
-    let v = v0, lim = casa(v0), j = i + 1;
-    while (tk[j] === 'e' && VZ_NUMS[tk[j + 1]] !== undefined && VZ_NUMS[tk[j + 1]] < lim) { const n = VZ_NUMS[tk[j + 1]]; v += n; lim = casa(n); j += 2; }
-    out.push(String(v)); i = j;
-  }
-  return out.join(' ')
-    .replace(/\b(?:(\d{1,2}) )?mil(?: e)? (\d{1,3}) (metros?|m2)\b/g, (m, a, b, u) => (+(a || 1) * 1000 + +b) + ' ' + u)
-    .replace(/\b(?:(\d{1,2}) )?mil (metros?|m2)\b/g, (m, a, u) => (+(a || 1) * 1000) + ' ' + u);
+// manias do reconhecedor: hora, fração e até "e-mail" no lugar do valor falado
+const VZ_POUCO = '(\\d{1,2}|um|dois|tr[eê]s|quatro|cinco|seis|sete|oito|nove|dez)';
+function vzConserta(t) {
+  return String(t || '').replace(/\s+/g, ' ').trim()
+    .replace(new RegExp('(^| )' + VZ_POUCO + ' e[- ]?mails?(?=[ .,;!?]|$)', 'gi'), '$1$2 e meio')
+    .replace(/(^| )(\d{1,2}) ?[:h] ?30(?=[ .,;!?]|$)(?! (?:da|de|horas|hs?)\b)/gi, (m, a, n, k, tudo) => /\b(?:[àa]s|desde as|horas?)$/i.test(tudo.slice(0, k).trim()) ? m : a + n + ' e meio')
+    .replace(/(^| )([1-9])\/4(?=[ .,;!?]|$)(?! quarto)/g, (m, a, n) => a + n + (n === '1' ? ' quarto' : ' quartos'))
+    .replace(/(\d) ?(?:½|1\/2)(?= ?mi)/g, '$1,5').replace(/(\d) ?½|(\d) 1\/2(?=[ .,;!?]|$)/g, (m, a, b) => (a || b) + ' e meio')
+    .replace(/¾/g, '3 quartos').replace(/(\d),00(?!\d)/g, '$1').replace(/(^| )(\d(?:[.,]\d{1,3})?) ?M(?=[ .,;!?]|$)/g, '$1$2 milhões')
+    .replace(/r\$ ?(\d{1,2}(?:[.,]\d+)?) ?m(?=[ .,;!?]|$)/gi, '$1 milhões');
 }
+// a frase em palavras, sabendo de onde veio cada uma (para reescrever sem perder o que ele falou): R = como veio, T = { w normalizada, a..b = palavras de R }
+// "cento e sessenta e três metros" → "163 metros"; "três e quatrocentos" → "3 e 400"; "um/uma" só vira 1 quando é número
+function vzLe(texto) {
+  const R = vzConserta(texto).split(' ').filter(Boolean);
+  let T = [];
+  R.forEach((r, k) => { const rs = /r\s*\$/i.test(r) || /^r\$$/i.test(R[k - 1] || ''), sep = /\d\.\d{3}(?!\d)/.test(r); vzNorm(r).split(' ').filter(Boolean).forEach(w => T.push({ w, a: k, b: k, rs, sep })); });
+  T = T.map(t => VZ_TROCA[t.w] ? Object.assign({}, t, { w: vzNorm(VZ_TROCA[t.w]), fix: VZ_TROCA[t.w] }) : t);
+  const W = k => (T[k] || {}).w || '', num = k => T[k] ? VZ_NUMS[T[k].w] : undefined, casa = v => v >= 100 ? 100 : v >= 20 ? 10 : 0, un = new RegExp('^' + VZ_UN + '$'), dig = x => /^\d{1,3}$/.test(x);
+  // "3 quatros" → "3 quartos"
+  T = T.map((t, k) => /^(quatros|quartas|quadros)$/.test(t.w) && (dig(W(k - 1)) || num(k - 1) !== undefined) ? Object.assign({}, t, { w: 'quartos', fix: 'quartos' }) : t);
+  const N = [];
+  for (let i = 0; i < T.length;) {
+    const v0 = num(i), umNum = v0 === 1 && W(i) === 'um' && ((W(i + 1) === 'e' && (/^(\d{3}|meio|meia|poucos?)$/.test(W(i + 2)) || num(i + 2) >= 100)) || (/^(virgula|ponto)$/.test(W(i + 1)) && (dig(W(i + 2)) || num(i + 2) !== undefined)));
+    if (v0 === undefined || (v0 === 1 && !un.test(W(i + 1)) && !umNum)) { N.push(T[i++]); continue; }
+    let v = v0, lim = casa(v0), j = i + 1;
+    while (W(j) === 'e' && num(j + 1) !== undefined && num(j + 1) < lim) { const n = num(j + 1); v += n; lim = casa(n); j += 2; }
+    N.push(Object.assign({}, T[i], { w: String(v), b: T[j - 1].b, ext: true })); i = j;
+  }
+  T = N; const O = [], nn = k => /^\d+$/.test(W(k)) ? +W(k) : -1, NAO = /^(?:mil|milhao|milhoes|mi|quartos?|dormitorios?|suites?|vagas?|garagens?|banheiros?|carros?|anos?)$/;
+  for (let i = 0; i < T.length;) {
+    // "um ponto dois", "3 vírgula 4"
+    if (nn(i) >= 0 && nn(i) < 100 && /^(virgula|ponto)$/.test(W(i + 1)) && nn(i + 2) >= 0) { O.push(Object.assign({}, T[i], { w: W(i) + '.' + W(i + 2), b: T[i + 2].b, ext: true })); i += 3; continue; }
+    // "mil e duzentos", "dois mil e quinhentos", "1 mil 200 metros", "mil metros"
+    const tem = nn(i) >= 0 && nn(i) <= 99 && W(i + 1) === 'mil' ? 1 : 0, k = i + tem, base = tem ? nn(i) : 1;
+    if (W(k) === 'mil' && (tem || !(nn(i - 1) >= 0)) && !(/^\d+(\.\d+)?$/.test((O[O.length - 1] || {}).w || '') && !tem)) {
+      const e = W(k + 1) === 'e' ? 1 : 0, n = nn(k + 1 + e), dep = W(k + 2 + e), m2 = /^(metros?|m2)$/.test(dep);
+      if (n > 0 && n <= 999 && (m2 || (e && !NAO.test(dep)))) { O.push(Object.assign({}, T[i], { w: String(base * 1000 + n), b: T[k + 1 + e].b, ext: true })); i = k + 2 + e; continue; }
+      if (/^(metros?|m2)$/.test(W(k + 1))) { O.push(Object.assign({}, T[i], { w: String(base * 1000), b: T[k].b, ext: true })); i = k + 1; continue; }
+    }
+    O.push(T[i++]);
+  }
+  return { R, T: O };
+}
+const vzNumeros = t => vzLe(t).T.map(x => x.w).join(' ');
 const vzFon = t => t.replace(/ph/g, 'f').replace(/th/g, 't').replace(/y/g, 'i').replace(/k/g, 'c').replace(/w/g, 'v').replace(/(.)\1+/g, '$1').replace(/^h/, '').replace(/z$/, 's').replace(/e$/, 'i');
 function vzLev(a, b, max) {
   if (Math.abs(a.length - b.length) > max) return max + 1;
@@ -3569,12 +3621,82 @@ function vzLev(a, b, max) {
   }
   return p[b.length];
 }
+// como a palavra soa (junta tudo): "Saint Victoria" → "saintvitoria", "kart" / "Quartier" → "kart" / "kuartier"
+const vzSom = t => vzNorm(t).replace(/[^a-z0-9]/g, '').replace(/ph/g, 'f').replace(/th/g, 't').replace(/[sc]h/g, 'x').replace(/lh/g, 'li').replace(/nh/g, 'ni').replace(/h/g, '').replace(/qu(?=[ei])/g, 'k').replace(/gu(?=[ei])/g, 'g')
+  .replace(/c(?=[eiy])/g, 's').replace(/g(?=[eiy])/g, 'j').replace(/[cq]/g, 'k').replace(/y/g, 'i').replace(/w/g, 'u').replace(/z/g, 's').replace(/[kp]t/g, 't').replace(/(.)\1+/g, '$1');
+const VZ_PERTO = (() => { const o = {}; 'td.35 pb.35 bv.4 fv.35 sx.4 xj.4 kg.35 lu.35 ei.25 ou.25 ae.5 ao.6 mn.25 rl.5 dj.45 gj.5 tx.5 ks.6'.split(' ').forEach(x => { const c = +x.slice(2); o[x.slice(0, 2)] = c; o[x[1] + x[0]] = c; }); return o; })();
+const vzVog = x => x === 'a' || x === 'e' || x === 'i' || x === 'o' || x === 'u';
+const vzSub = (x, y) => x === y ? 0 : VZ_PERTO[x + y] || (vzVog(x) && vzVog(y) ? .6 : 1), vzTirar = x => vzVog(x) ? .5 : x === 's' || x === 'r' || x === 'n' || x === 'm' || x === 'l' ? .7 : 1;
+// distância de som entre dois nomes: trocar t por d custa menos do que trocar t por a
+function vzDist(a, b, max) {
+  const n = b.length; let p = new Array(n + 1); p[0] = 0; for (let j = 1; j <= n; j++) p[j] = p[j - 1] + vzTirar(b[j - 1]);
+  for (let i = 1; i <= a.length; i++) {
+    const c = new Array(n + 1), da = vzTirar(a[i - 1]); c[0] = p[0] + da; let menor = c[0];
+    for (let j = 1; j <= n; j++) { c[j] = Math.min(p[j] + da, c[j - 1] + vzTirar(b[j - 1]), p[j - 1] + vzSub(a[i - 1], b[j - 1]) * (i === 1 && j === 1 ? 1.4 : 1)); if (c[j] < menor) menor = c[j]; }
+    if (menor > max) return max + 1;
+    p = c;
+  }
+  return p[n];
+}
+// o nome mais parecido da lista [[som, ref], …]; min = parecença mínima (0 a 1)
+const VZ_CLASSE = { t: 1, d: 1, p: 2, b: 2, f: 2, v: 2, k: 4, g: 4, s: 8, x: 8, j: 8, l: 16, r: 32, m: 64, n: 64 };
+const vzClasses = x => { let m = 0; for (const c of x) m |= VZ_CLASSE[c] || 0; return m; }, vzBits = n => { let c = 0; while (n) { n &= n - 1; c++; } return c; };
+function vzMaisParecido(som, lista, min) {
+  let r = null; const cl = vzClasses(som);
+  for (const [x, ref, cx] of lista) {
+    const med = (x.length + som.length) / 2, max = med * (1 - (r ? Math.max(min, r.sim - .06) : min));
+    if (Math.abs(x.length - som.length) * .5 > max || vzBits(cl ^ cx) > (med >= 10 ? 3 : 2)) continue;
+    const d = vzDist(som, x, max); if (d > max) continue;
+    const sim = 1 - d / med; if (!r || sim > r.sim) r = { ref, sim, seg: r ? r.sim : 0 }; else if (sim > r.seg) r.seg = sim;
+  }
+  return r;
+}
 // o nome do empreendimento sem as palavras genéricas das pontas: "Condomínio Horizontal Residencial Campos do Jordão" → "campos do jordao"
 function vzNucleo(e) {
   const tk = vzNorm(e).split(' ').filter(Boolean);
   while (tk.length > 1 && VZ_GEN.has(tk[0])) tk.shift();
   while (tk.length > 1 && (VZ_GEN.has(tk[tk.length - 1]) || /^(de|do|da)$/.test(tk[tk.length - 1]))) tk.pop();
   return tk.join(' ');
+}
+// nome próprio bem escrito: "CAMPOS DO JORDÃO" → "Campos do Jordão"; "west side ii" → "West Side II"
+const vzTit = s => String(s || '').trim().split(/\s+/).map((p, k) => {
+  const l = p.toLocaleLowerCase('pt-BR');
+  if (k && /^(da|de|do|das|dos|e|di|del|du|em|no|na)$/.test(l)) return l;
+  if (/^(ii|iii|iv|vi|vii|viii|ix|xv)$/.test(l)) return l.toUpperCase();
+  if (p !== l && p !== p.toLocaleUpperCase('pt-BR')) return p;
+  if (p.length <= 3 && p !== l && !/[aeiouà-ú]/i.test(p)) return p;
+  return l.replace(/(^|[-'’])(\p{L})/gu, (m, a, b) => a + b.toLocaleUpperCase('pt-BR'));
+}).join(' ');
+function vzRotulo(e) {
+  const tk = String(e || '').trim().split(/\s+/), n = x => vzNorm(x);
+  while (tk.length > 1 && VZ_GEN.has(n(tk[0]))) tk.shift();
+  while (tk.length > 1 && (VZ_GEN.has(n(tk[tk.length - 1])) || /^(de|do|da)$/.test(n(tk[tk.length - 1])))) tk.pop();
+  return vzTit(tk.join(' ')).replace(/[.,;]+$/, '');
+}
+const VZ_VIA = /^(?:rua|r|avenida|av|alameda|al|travessa|rodovia|estrada|praca)$/;
+// tudo o que existe nos estoques: bairros, cidades, empreendimentos e ruas, com o jeito certo de escrever e o som
+function vzMonta(imoveis, bairrosCwb, ehCwb) {
+  const lug = new Map(), emps = new Map(), graf = new Map(), empPal = new Map(), ruas = new Map(), ruaVia = new Map(), gr = new Map(), gv = new Map(), cid = new Map();
+  bairrosCwb.forEach(b => lug.set(vzNorm(b), { b }));
+  const conta = (m, k, v) => { const o = m.get(k) || m.set(k, new Map()).get(k); o.set(v, (o.get(v) || 0) + 1); };
+  const memo = f => { const m = new Map(); return x => { let r = m.get(x); if (r === undefined) m.set(x, r = f(x)); return r; }; };
+  const nor = memo(vzNorm), nuc = memo(vzNucleo), rotu = memo(vzRotulo), viaDe = memo(v => { const tk = v.split(/\s+/), via = tk.length > 1 && VZ_VIA.test(vzNorm(tk[0])) ? tk.shift() : '', r = tk.join(' '), n = vzNumeros(r); return n.length >= 4 && !/^\d+$/.test(n) ? [n, vzTit(r), via.length > 2 ? vzTit(via) : ''] : null; });
+  const melhor = o => [...o].sort((x, y) => (/[à-ÿ]/i.test(y[0]) - /[à-ÿ]/i.test(x[0])) || y[1] - x[1])[0][0];
+  imoveis.forEach(i => {
+    const k = nor(i.b || ''); if (ehCwb(i)) { if (i.b && !lug.has(k)) lug.set(k, { b: VZ_APELIDOS[k] || vzTit(i.b) }); } else if (i.ci) conta(cid, nor(i.ci), vzTit(i.ci));
+    if (i.e) { const n = nuc(i.e); if (n.length >= 3) { if (!emps.has(n)) emps.set(n, i.e); conta(graf, n, rotu(i.e)); } }
+    if (i.en) { const v = viaDe(String(i.en).split(/[,;]| - /)[0].replace(/\s+\d{2,}.*$/, '').trim()); if (v) { conta(gr, v[0], v[1]); if (v[2]) conta(gv, v[0], v[2]); } }
+  });
+  cid.forEach((o, k) => { if (!lug.has(k)) lug.set(k, { c: melhor(o) }); });
+  Object.entries(VZ_APELIDOS).forEach(([a, b]) => { if (!lug.has(a) || a === 'cidade industrial') lug.set(a, { b, ap: true }); });
+  for (const n of emps.keys()) new Set(n.split(' ')).forEach(w => empPal.set(w, (empPal.get(w) || 0) + 1));
+  gr.forEach((o, n) => ruas.set(n, melhor(o))); gv.forEach((o, n) => ruaVia.set(n, [...o].sort((x, y) => y[1] - x[1])[0][0]));
+  const empRot = new Map(); graf.forEach((o, n) => empRot.set(n, melhor(o)));
+  const sons = {}, lista = { lug: () => [...lug].filter(x => x[0].length >= 4), emp: () => [...emps.keys()].map(n => [n, n]), rua: () => [...ruas.keys()].map(n => [n, n]) }, menor = { lug: 3, emp: 4, rua: 6 };
+  const som = q => sons[q] || (sons[q] = lista[q]().map(([n, ref]) => { const x = vzSom(n); return [x, ref, vzClasses(x)]; }).filter(x => x[0].length >= menor[q])), guarda = new Map();
+  // o nome da lista que soa mais parecido (guarda as respostas: as hipóteses da mesma fala repetem quase tudo)
+  const parecido = (q, x, min) => { const k = q + min + x; let r = guarda.get(k); if (r === undefined) { if (guarda.size > 4000) guarda.clear(); guarda.set(k, r = vzMaisParecido(x, som(q), min)); } return r; };
+  return { lug, emps, empRot, empPal, ruas, ruaVia, som, parecido };
 }
 // qualificador do número: "até 5 milhões" (máximo), "a partir de" (mínimo), sem nada = perto disso
 function vzQual(s, ini, fim) {
@@ -3583,70 +3705,108 @@ function vzQual(s, ini, fim) {
   if (/\b(acima de|a partir de|partir de|mais (?:de|que)|no minimo|minimo(?: de)?|pelo menos|maior que|de no minimo)(?: (?:uns|umas|de|os))* $/.test(antes) || /^ (?:pra cima|para cima|pra mais|para mais|ou mais|no minimo)/.test(depois)) return 'min';
   return 'perto';
 }
-function vzPrecos(s0, loc) {
-  let s = s0; const mi = loc ? 1e3 : 1e6, mil = loc ? 1 : 1e3, L = [], poe = (v, ini, fim) => { if (v >= (loc ? 300 : 1000)) L.push({ v, ini, fim }); }; // aluguel: "até 8000" = R$ 8 mil, "3 e 400" = R$ 3.400
+const vzDec = x => String(Math.round(x * 1e3) / 1e3).replace('.', ',');
+const vzDin = v => v >= 1e6 ? `R$ ${vzDec(v / 1e6)} ${v < 2e6 ? 'milhão' : 'milhões'}` : v >= 1e3 && v % 1e3 === 0 ? `R$ ${v / 1e3} mil` : 'R$ ' + Math.round(v).toLocaleString('pt-BR');
+const vzDeci = t => { let x = '', e = 0; for (const c of String(t)) if (c === '.' && !e++) x += c; else if (c !== '.') x += c; return +x; };
+// valores da frase. Cada um pode ter outra leitura possível (alt): "três" e "treze", "dois" e "doze" soam igual, e "de oito" vira "dezoito"
+function vzPrecos(s0, loc, marca) {
+  let s = s0; const mi = loc ? 1e3 : 1e6, mil = loc ? 1 : 1e3, L = []; // aluguel: "até 8000" = R$ 8 mil, "3 e 400" = R$ 3.400
   const NU = `(?! ?(?:\\.\\d|quartos?|dormitorios?|suites?|vagas?|garagens?|metros?|m2|m\\b|banheiros?|anos?|andar|andares|milh))`;
-  const apaga = (ini, fim) => { s = s.slice(0, ini) + '#'.repeat(fim - ini) + s.slice(fim); };
-  const varre = (rx, f) => { for (const m of [...s.matchAll(rx)]) { const v = f(m); if (v) { poe(v, m.index, m.index + m[0].length); apaga(m.index, m.index + m[0].length); } } };
-  const varreDepois = (antes, num, f) => { for (const m of [...s.matchAll(new RegExp(`\\b(${antes}) (${num})\\b${NU}`, 'g'))]) { const v = f(m.slice(1)); const ini = m.index + m[1].length + 1; if (v) { poe(v, ini, m.index + m[0].length); apaga(ini, m.index + m[0].length); } } };
+  const ANTES = 'ate|uns|umas|por|pra|valor(?: de)?|preco(?: de)?|faixa d[eo]s?|custa|vale|e|era|acho que|volta d[eo]s?|torno d[eo]s?|perto d[eo]s?|cerca de|abaixo de|acima de|partir de|maximo(?: de)?|minimo(?: de)?|teto(?: de)?|orcamento(?: de)?|limite(?: de)?|(?:mais|menos) (?:de|que)|pagar?|gastar|quase|reais';
+  const outra = (v, n, seco, ini) => { // n = a parte inteira, em milhões (ou em mil, no aluguel)
+    const passo = 10 * mi, sem = !/(?:^| )(?:d[eo]s?|ate|uns|por|e|que|era|valor|entre|a|ou|quase|reais|paga|pagar|gastar|custa|vale|maximo|minimo|teto|limite|orcamento|preco|pra|para) $/.test(s0.slice(0, ini)) && ini > 0;
+    const p = n === 13 ? [.7, .22] : n === 12 ? [.5, .16] : n === 14 ? [.4, .08] : n >= 16 && n <= 19 ? (sem ? [.6, .5] : [.15, .03]) : null;
+    return p && v > passo ? { alt: v - passo, pa: p[seco ? 0 : 1], seco: !!seco } : {};
+  };
+  const poe = (r, ini, fim) => { const [v, n, seco] = [].concat(r); if (v >= (loc ? 300 : 1000)) L.push(Object.assign({ v, ini, fim }, n ? outra(v, n, seco, ini) : {})); };
+  const val = r => [].concat(r)[0], apaga = (ini, fim) => { s = s.slice(0, ini) + '#'.repeat(fim - ini) + s.slice(fim); };
+  const varre = (rx, f) => { for (const m of [...s.matchAll(rx)]) { const v = f(m); if (val(v)) { poe(v, m.index, m.index + m[0].length); apaga(m.index, m.index + m[0].length); } } };
+  const varreDepois = (antes, num, f) => { for (const m of [...s.matchAll(new RegExp(`\\b(${antes}) (${num})\\b${NU}`, 'g'))]) { const ini = m.index + m[1].length + 1, v = f(m.slice(1), ini); if (val(v)) { poe(v, ini, m.index + m[0].length); apaga(ini, m.index + m[0].length); } } };
+  const MI = '(?:milhoes|milhao|mi)';
   // faixa com a unidade só no fim: "de 2 a 3 milhões", "entre 800 e 900 mil", "2 ou 3 milhões"
   let faixa = null;
-  for (const m of [...s.matchAll(/\b(?:(entre|de) )?(\d{1,4}(?:\.\d+)?) (a|e|ate|ou) (\d{1,4}(?:\.\d+)?) ?(milhoes|milhao|mi|mil)\b(?! (?:metros|m2))/g)]) {
+  for (const m of [...s.matchAll(/\b(?:(entre|de|dos?) )?(\d{1,4}(?:\.\d+)?) (a|e|ate|ou|aos?) (\d{1,4}(?:\.\d+)?) ?(milhoes|milhao|mi|mil)\b(?! (?:metros|m2))/g)]) {
     if (m[3] === 'e' && m[1] !== 'entre') continue;
-    if (m[3] === 'a' && !m[1] && +m[2] > 100) continue;
+    if (m[3] === 'a' && !m[1] && +m[2] > 100 && !/(?:valor|faixa|preco|orcamento|investimento|investir) $/.test(s.slice(0, m.index))) continue;
     const k = m[5] === 'mil' ? 1e3 : 1e6, a = +m[2] * k, b = +m[4] * k; if (b <= a) continue;
-    faixa = { min: a, max: b, ini: m.index, fim: m.index + m[0].length }; apaga(faixa.ini, faixa.fim); break;
+    faixa = { min: a, max: b, ini: m.index, fim: m.index + m[0].length, txt: `${m[1] ? m[1] + ' ' : ''}R$ ${vzDec(+m[2])} ${m[3] === 'ate' ? 'até' : m[3]} ${vzDec(+m[4])} ${m[5] === 'mil' ? 'mil' : 'milhões'}` }; apaga(faixa.ini, faixa.fim); break;
   }
-  varre(/\b(\d{1,2}) ?(?:milhoes|milhao|mi) ?(?:e )?(\d{5,6})\b/g, m => +m[1] * 1e6 + +m[2]);
-  varre(/\b(\d{6,9})\b(?: reais)?/g, m => +m[1]);
-  varre(/\b(\d{1,2}(?:\.\d+)?) ?(?:milhoes|milhao|mi) e mei[oa]\b/g, m => (+m[1] + .5) * 1e6);
-  varre(/\b(\d{1,2}) ?(?:milhoes|milhao|mi) ?(?:e )?(\d{1,3}) ?mil\b/g, m => +m[1] * 1e6 + +m[2] * 1e3);
-  varre(new RegExp(`\\b(\\d{1,2}) ?(?:milhoes|milhao|mi) ?(?:e )?(\\d{3})\\b${NU}`, 'g'), m => +m[1] * 1e6 + +m[2] * 1e3);
-  varre(/\b(\d{1,2}(?:\.\d+)?) ?(?:milhoes|milhao|mi)\b/g, m => +m[1] * 1e6);
+  const poeFaixa = (a, b, ini, fim, txt) => { faixa = { min: a, max: b, ini, fim, txt }; apaga(ini, fim); };
+  if (!faixa) for (const m of [...s.matchAll(new RegExp(`\\b(\\d{2,4}) ?mil (a|ate|aos?) (\\d{2,3})\\b(?! ?(?:mil|milh))${NU}`, 'g'))]) if (+m[3] > +m[1]) { poeFaixa(+m[1] * 1e3, +m[3] * 1e3, m.index, m.index + m[0].length, `R$ ${m[1]} a ${m[3]} mil`); break; }
+  if (!faixa) for (const m of [...s.matchAll(new RegExp(`\\b(\\d{1,2}(?:\\.\\d+)?) ?${MI} (a|ate|aos?) (\\d{1,2}(?:\\.\\d+)?)\\b(?! ?(?:mil|milh|e \\d|e mei))${NU}`, 'g'))]) if (+m[3] > +m[1]) { poeFaixa(+m[1] * 1e6, +m[3] * 1e6, m.index, m.index + m[0].length, `R$ ${vzDec(+m[1])} a ${vzDec(+m[3])} milhões`); break; }
+  if (!faixa) for (const m of [...s.matchAll(new RegExp(`\\b(?:valor|faixa|preco|orcamento|investimento|investir)(?: \\w+){0,3}? (?:de |entre )?(\\d{1,3}(?:\\.\\d+)?) (a|e|ate|aos?) (\\d{1,3}(?:\\.\\d+)?)\\b(?! ?(?:mil|milh|e \\d|e mei))${NU}`, 'g'))]) {
+    const k = +m[1] >= 100 && +m[3] >= 100 ? mil : +m[1] <= 40 && +m[3] <= 40 ? mi : 0, p = m[0].lastIndexOf(m[1] + ' ' + m[2]); if (!k || +m[3] <= +m[1]) continue;
+    poeFaixa(+m[1] * k, +m[3] * k, m.index + p, m.index + m[0].length, k === mil && !loc ? `R$ ${m[1]} a ${m[3]} mil` : k === mi && !loc ? `R$ ${vzDec(+m[1])} a ${vzDec(+m[3])} milhões` : `${vzDin(+m[1] * k)} a ${vzDin(+m[3] * k)}`); break;
+  }
+  // "3 milhões e pouco", "uns 3 e pouco"
+  if (!faixa) for (const m of [...s.matchAll(new RegExp(`\\b(?:(\\d{1,2}(?:\\.\\d+)?) ?${MI}|(?:ate|uns|por|de|e) (\\d{1,2})) e (?:pouco|poucos|uns quebrados|quebrados|alguma coisa|tanto)\\b`, 'g'))]) {
+    const n = +(m[1] || m[2]); if (!n || n > 40) continue;
+    const p = m[1] ? 0 : m[0].indexOf(m[2]); faixa = { min: n * mi, max: Math.round(n * 1.2 * 10) / 10 * mi, ini: m.index + p, fim: m.index + m[0].length, txt: `${vzDin(n * mi)} e pouco` }; apaga(faixa.ini, faixa.fim); break;
+  }
+  varre(new RegExp(`\\b(\\d{1,2}) ?${MI} ?(?:e )?(\\d{5,6})\\b`, 'g'), m => [+m[1] * 1e6 + +m[2], +m[1]]);
+  varre(/\b(\d{6,9})\b(?:\.00?\b)?(?: reais)?/g, m => { const v = +m[1], r = v % 1e6; return [v >= 1e6 && r > 0 && r < 1000 ? v - r + r * 1e3 : v, Math.floor(v / 1e6)]; });
+  varre(new RegExp(`\\b(\\d{1,2}(?:\\.\\d+)?) ?${MI} e mei[oa]\\b`, 'g'), m => [(+m[1] + .5) * 1e6, Math.floor(+m[1])]);
+  varre(new RegExp(`\\b(\\d{1,2}) ?${MI} ?(?:e )?(\\d{1,3}) ?mil\\b`, 'g'), m => [+m[1] * 1e6 + +m[2] * 1e3, +m[1]]);
+  varre(new RegExp(`\\b(\\d{1,2}) ?${MI} ?(?:e )?(\\d{3})\\b${NU}`, 'g'), m => [+m[1] * 1e6 + +m[2] * 1e3, +m[1]]);
+  varre(new RegExp(`\\b(\\d{1,2}) ?${MI} e (\\d{2})\\b${NU}`, 'g'), m => [+m[1] * 1e6 + +m[2] * 1e3, +m[1]]); // "um milhão e cinquenta"
+  varre(new RegExp(`\\b(\\d{1,2}(?:\\.\\d+)?) ?${MI}\\b`, 'g'), m => [+m[1] * 1e6, Math.floor(+m[1])]);
   varre(/\bmeio milhao\b/g, () => 5e5);
-  varre(new RegExp(`\\b(\\d{1,2}) e (\\d{3})(?: mil)?\\b${NU}`, 'g'), m => +m[1] * mi + +m[2] * mil);
-  varre(/\b(\d{1,4}) ?mil\b(?! (?:metros|m2))/g, m => +m[1] * 1e3);
-  varreDepois('ate|uns|de|por|e|valor|acho que e|faixa de|custa', '(\\d{1,2}) e mei[oa]', m => (+m[2] + .5) * mi);
-  varreDepois('ate|uns|por|valor|faixa de|custa|acho que e|de|e', '(\\d{1,2}) (\\d{3})', m => +m[2] * mi + +m[3] * mil);
-  varreDepois('ate|uns|por|valor de|faixa de|custa|acho que e', '(\\d{3,4})', m => +m[2] * mil);
-  varreDepois('ate|uns|acho que e', '(\\d{1,2}\\.\\d{1,3})', m => +m[2] * mi);
-  varreDepois('de', '(\\d{4})', m => !loc && +m[2] >= 1950 && +m[2] <= 2035 ? 0 : +m[2] * mil);
-  if (!L.length && !faixa) varreDepois('ate|uns', '(\\d{1,2})(?! (?:e|ou|a) \\d)', m => +m[2] <= 40 ? +m[2] * mi : 0);
+  varre(new RegExp(`\\b(\\d{1,2}) e (\\d{3})(?: mil)?\\b${NU}`, 'g'), m => [+m[1] * mi + +m[2] * mil, +m[1], true]);
+  varre(/\b(\d{1,4}(?:\.\d)?) ?mil\b(?! (?:metros|m2))/g, m => [+m[1] * 1e3, loc ? +m[1] : 0]);
+  varreDepois(ANTES + '|de|a', '(\\d{1,2}) e mei[oa]', m => [(+m[2] + .5) * mi, +m[2]]);
+  varreDepois(ANTES + '|de', '(\\d{1,2}) (\\d{3})', m => [+m[2] * mi + +m[3] * mil, +m[2], true]);
+  varreDepois(ANTES + '|de', '(\\d{5})', m => [+m[2] * mil, Math.floor(+m[2] / 1e3), true]); // "13.400"
+  varreDepois('ate|uns|por|valor(?: de)?|faixa d[eo]s?|custa|acho que e|era|e|volta de|torno de|cerca de|(?:mais|menos) de|acima de|abaixo de|partir de|quase|teto de|maximo(?: de)?|minimo(?: de)?', '(\\d{3,4})', (m, ini) => /^(?:e|era)$/.test(m[0]) && +m[2] < 1000 && !marca(ini).rs ? 0 : +m[2] * mil);
+  varreDepois(ANTES, '(\\d{1,2}\\.\\d{1,3})', m => [+m[2] * mi, Math.floor(+m[2])]);
+  varreDepois('de', '(\\d{4})', (m, ini) => !loc && +m[2] >= 1950 && +m[2] <= 2035 && !marca(ini).rs && !marca(ini).sep ? 0 : +m[2] * mil);
+  for (const m of [...s.matchAll(new RegExp(`\\b(\\d{3,5})\\b${NU}`, 'g'))]) if (marca(m.index).rs) { poe([+m[1] * mil, +m[1] >= 1e4 ? Math.floor(+m[1] / 1e3) : 0, true], m.index, m.index + m[0].length); apaga(m.index, m.index + m[0].length); } // veio com "R$"
+  if (!L.length && !faixa) varreDepois('ate|uns', '(\\d{1,2})(?! (?:e|ou|a) \\d)', m => +m[2] <= 40 ? [+m[2] * mi, +m[2]] : 0);
   if (!L.length && !faixa) return null;
-  if (faixa) return { min: faixa.min, max: faixa.max, spans: [[faixa.ini, faixa.fim]].concat(L.map(x => [x.ini, x.fim])) };
+  const din = L.map(x => ({ ini: x.ini, fim: x.fim, txt: vzDin(x.v) }));
+  if (faixa) return { min: faixa.min, max: faixa.max, spans: [[faixa.ini, faixa.fim]].concat(L.map(x => [x.ini, x.fim])), marcas: [{ ini: faixa.ini, fim: faixa.fim, txt: faixa.txt }].concat(din) };
   L.sort((a, b) => a.ini - b.ini);
-  const r = { spans: L.map(x => [x.ini, x.fim]) };
+  const r = { spans: L.map(x => [x.ini, x.fim]), marcas: din }, semUn = (m, ini0, x) => { const p = ini0 + m[0].indexOf(m[1]), v = +m[1] * (+m[1] >= 100 ? 1e3 : 1e6); r.spans.push([ini0, x.ini]); r.marcas.push({ ini: p, fim: p + m[1].length, txt: vzDin(v) }); return v; };
   // dois valores ligados: "entre 2 milhões e 3 milhões", "de 800 mil a 1 milhão e 200"
   if (L.length >= 2 && /^ ?(?:a|e|ate|ou) ?(?:os )?$/.test(s0.slice(L[0].fim, L[1].ini)) && L[1].v > L[0].v) { r.min = L[0].v; r.max = L[1].v; return r; }
   for (const x of L.slice(0, 2)) {
     const q = vzQual(s0, x.ini, x.fim);
     if (q === 'max') { // "de 800 até 1 milhão"
-      const m = s0.slice(0, x.ini).match(/\b(?:de|entre) (\d{1,3}(?:\.\d+)?) (?:a|e|ate)(?: os)? $/); r.max = x.v; if (m) { r.min = +m[1] * (+m[1] >= 100 ? 1e3 : 1e6); r.spans.push([x.ini - m[0].length, x.ini]); }
+      const m = s0.slice(0, x.ini).match(/\b(?:de|entre) (\d{1,3}(?:\.\d+)?) (?:a|e|ate)(?: os)? $/); r.max = x.v; if (m) r.min = semUn(m, x.ini - m[0].length, x);
     } else if (q === 'min') r.min = x.v;
     else {
       const m = s0.slice(0, x.ini).match(/\b(?:de|entre) (\d{1,3}(?:\.\d+)?) (?:a|e) $/);
-      if (m) { r.max = x.v; r.min = +m[1] * (+m[1] >= 100 ? 1e3 : 1e6); } else if (!r.perto) r.perto = x.v;
+      if (m) { r.max = x.v; r.min = semUn(m, x.ini - m[0].length, x); } else if (!r.perto) r.perto = x.v;
     }
   }
   if (r.max || r.min) delete r.perto;
+  // "3 milhões, acho que é 3 e 400": o segundo é o mais preciso
+  if (r.perto && L.length >= 2 && Math.floor(L[0].v / 1e6) === Math.floor(L[1].v / 1e6) && L[0].v % 1e6 === 0 && L[1].v % 1e6) r.perto = L[1].v;
+  const x = L.find(y => y.v === (r.max || r.min || r.perto)); if (x && x.alt && !(r.max && r.min)) r.outra = { campo: r.max ? 'max' : r.min ? 'min' : 'perto', v: x.v, alt: x.alt, pa: x.pa, seco: x.seco, ini: x.ini, fim: x.fim };
+  if (x && !(r.max && r.min)) r.onde = { campo: r.max ? 'max' : r.min ? 'min' : 'perto', v: x.v, ini: x.ini, fim: x.fim };
   return r;
 }
 function vzAreas(s, soTerreno) {
-  const r = { spans: [] };
+  const r = { spans: [], marcas: [] }, f = x => vzDec(x).replace(/^(\d{1,3})(\d{3})(?=,|$)/, '$1.$2');
   const fx = s.match(/\b(?:de |entre )?(\d{2,4}(?:\.\d+)?) (?:a|e|ate|ou) (\d{2,4}(?:\.\d+)?) ?(?:metros quadrados|metros|m2|mts|m)\b/);
   const guarda = (o, terr) => { r[terr ? 'terreno' : 'area'] = Object.assign(r[terr ? 'terreno' : 'area'] || {}, o); };
   const ehTerr = (ini, fim) => !soTerreno && (/\b(?:terreno|lote)(?: \w+){0,3} $/.test(s.slice(Math.max(0, ini - 40), ini)) && !/\b(?:casa|construid|area|privativ|apartamento)\w*(?: \w+){0,2} $/.test(s.slice(Math.max(0, ini - 22), ini)) || /^ (?:de|do) (?:terreno|lote)/.test(s.slice(fim, fim + 14)));
-  if (fx && +fx[2] > +fx[1]) { const ini = fx.index, fim = ini + fx[0].length; guarda({ min: +fx[1], max: +fx[2] }, ehTerr(ini, fim)); r.spans.push([ini, fim]); s = s.slice(0, ini) + '#'.repeat(fim - ini) + s.slice(fim); }
+  if (fx && +fx[2] > +fx[1]) {
+    const ini = fx.index, fim = ini + fx[0].length; guarda({ min: +fx[1], max: +fx[2] }, ehTerr(ini, fim)); r.spans.push([ini, fim]);
+    const p = fx[0].lastIndexOf(fx[2]); r.marcas.push({ ini: ini + p, fim, txt: f(+fx[2]) + ' m²' }); s = s.slice(0, ini) + '#'.repeat(fim - ini) + s.slice(fim);
+  }
   for (const m of [...s.matchAll(/\b(\d{2,5}(?:\.\d+)?) ?(?:metros quadrados|metros|metro|m2|mts|m)\b/g)]) {
     const ini = m.index, fim = ini + m[0].length, terr = ehTerr(ini, fim), q = vzQual(s, ini, fim);
     if (!(r[terr ? 'terreno' : 'area'] || {}).min && !(r[terr ? 'terreno' : 'area'] || {}).perto) guarda({ [q]: +m[1] }, terr);
-    r.spans.push([ini, fim]);
+    r.spans.push([ini, fim]); r.marcas.push({ ini, fim, txt: f(+m[1]) + ' m²' });
   }
   return r;
 }
+const VZ_COMODO = [['quartos?|qtos?', 'quarto', 'quartos'], ['dormitorios?|dorms?', 'dormitório', 'dormitórios'], ['suites?', 'suíte', 'suítes'], ['vagas?', 'vaga', 'vagas'], ['garagens?', 'garagem', 'garagens'], ['carros?', 'carro', 'carros']];
 function vzConta(s, nome) {
-  const m = s.match(new RegExp(`\\b(\\d{1,2})(?: (?:ou|a|e) \\d{1,2})? ?(?:ou mais )?(?:${nome})\\b`));
-  return m ? { n: +m[1], ini: m.index, fim: m.index + m[0].length } : null;
+  const m = s.match(new RegExp(`\\b(\\d{1,2})(?: (?:ou|a|e) \\d{1,2})? ?(?:ou mais )?(${nome})\\b`));
+  if (!m) return null;
+  const c = VZ_COMODO.find(x => new RegExp(`^(?:${x[0]})$`).test(m[2])), simples = new RegExp(`^\\d{1,2} ?${m[2]}$`).test(m[0]);
+  return { n: +m[1], ini: m.index, fim: m.index + m[0].length, txt: c && simples ? `${+m[1]} ${+m[1] === 1 ? c[1] : c[2]}` : '' };
 }
 const VZ_ITENS = [['piscina', /\bpiscinas?\b/, 'Piscina'], ['churrasqueira', /\bchurrasqueiras?\b/, 'Churrasqueira'], ['lareira', /\blareiras?\b/, 'Lareira'], ['closet', /\bclosets?\b/, 'Closet'],
   ['escritorio', /\bescritorios?\b|\bhome office\b/, 'Escritório'], ['home theater', /\bhome theater\b|\bsala de cinema\b/, 'Home theater'], ['sauna', /\bsaunas?\b/, 'Sauna'], ['elevador', /\belevador(?:es)?\b/, 'Elevador'],
@@ -3654,62 +3814,171 @@ const VZ_ITENS = [['piscina', /\bpiscinas?\b/, 'Piscina'], ['churrasqueira', /\b
   ['portaria', /\bportaria\b/, 'Portaria'], ['playground', /\bplayground\b/, 'Playground'], ['quadra de tenis', /\bquadra de tenis\b/, 'Quadra de tênis'], ['espaco gourmet', /\b(?:espaco|area|varanda) gourmet\b/, 'Espaço gourmet', /gourmet/],
   ['piso aquecido', /\bpiso aquecido\b/, 'Piso aquecido'], ['adega', /\badega\b/, 'Adega'], ['lavabo', /\blavabo\b/, 'Lavabo'], ['edicula', /\bedicula\b/, 'Edícula'], ['ar condicionado', /\bar condicionado\b/, 'Ar-condicionado', /ar.condicionado|ar central|split/]];
 
+// ele se corrige no meio da fala: "até 3 milhões, não, 4 milhões", "no Batel, quer dizer, no Água Verde", "3 quartos, não, 4". Vale o último.
+function vzEmenda(T, lug) {
+  const w = k => (T[k] || {}).w || '', num = k => /^\d+(?:\.\d+)?$/.test(w(k)), UN = /^(?:quartos?|dormitorios?|dorms?|suites?|vagas?|garagens?|carros?|banheiros?)$/, MT = /^(?:metros?|m2|mts|m)$/, DIN = /^(?:milhoes|milhao|mi|mil)$/;
+  const PREP = /^(?:no|na|nos|nas|em|de|do|da|ate|uns|umas|por|com|la|e|a|o)$/;
+  const tipo = (a, b) => { const u = T.slice(a, b).map(x => x.w); if (!u.length) return ''; if (u.some(x => UN.test(x))) return 'u:' + u.find(x => UN.test(x)).slice(0, 4); if (u.some(x => MT.test(x))) return 'area'; if (u.every(x => /^\d/.test(x) || DIN.test(x) || /^(?:e|mei[oa])$/.test(x))) return u.some(x => DIN.test(x)) || u.length > 1 || +u[0] >= 100 || /\./.test(u[0]) ? 'din' : 'n'; return 'lug'; };
+  const numeroDepois = j => { let k = j; if (!num(k)) return k; k++; for (;;) { if (DIN.test(w(k)) || MT.test(w(k)) || UN.test(w(k))) { const fim = !DIN.test(w(k)); k++; if (fim) break; } else if (w(k) === 'e' && (num(k + 1) || /^mei[oa]$/.test(w(k + 1)))) k += 2; else if (num(k)) k++; else break; } return k; };
+  const numeroAntes = m => { let k = m; while (k > 0 && (num(k - 1) || DIN.test(w(k - 1)) || MT.test(w(k - 1)) || UN.test(w(k - 1)) || /^mei[oa]$/.test(w(k - 1)) || (w(k - 1) === 'e' && num(k - 2) && (num(k) || /^mei[oa]$/.test(w(k)))))) k--; while (k < m && !num(k)) k++; return k; };
+  const lugDepois = j => { for (let n = 5; n >= 1; n--) if (j + n <= T.length && lug.has(T.slice(j, j + n).map(x => x.w).join(' '))) return j + n; return j; };
+  const lugAntes = m => { for (let n = 5; n >= 1; n--) if (m - n >= 0 && lug.has(T.slice(m - n, m).map(x => x.w).join(' '))) return m - n; return m; };
+  for (let volta = 0; volta < 3; volta++) {
+    let mudou = false;
+    for (let m = 1; m < T.length && !mudou; m++) {
+      let f = m; // marcador: "não", "não não", "quer dizer", "ou melhor", "aliás", "digo", "desculpa"…
+      if (w(m) === 'quer' && w(m + 1) === 'dizer') f = m + 2; else if (w(m) === 'ou' && w(m + 1) === 'melhor') f = m + 2; else if (w(m) === 'melhor' && w(m + 1) === 'dizendo') f = m + 2; else if (w(m) === 'na' && w(m + 1) === 'verdade') f = m + 2;
+      else if (/^(?:alias|digo|desculpa|desculpe|perdao|corrigindo|minto|errei|nao)$/.test(w(m))) f = m + 1; else continue;
+      while (/^(?:nao|quer|dizer|alias|digo|desculpa|desculpe|perdao|corrigindo|minto|errei)$/.test(w(f))) f++;
+      let j = f; while (j < f + 3 && PREP.test(w(j)) && !num(j)) j++;
+      const fimN = numeroDepois(j), fimL = fimN > j ? j : lugDepois(j), fim = Math.max(fimN, fimL); if (fim <= j) continue;
+      const td = tipo(j, fim), ini = td === 'lug' ? lugAntes(m) : numeroAntes(m); if (ini >= m) continue;
+      const ta = td === 'lug' ? 'lug' : tipo(ini, m), temPrep = j > f;
+      if (td === ta || (ta === 'n' && td === 'din') || (ta === 'din' && td === 'din')) { let a = ini; if (temPrep) while (a > 0 && PREP.test(w(a - 1)) && a > ini - 2) a--; T = T.slice(0, a).concat(T.slice(f)); mudou = true; }
+      else if (td === 'n' && (ta.startsWith('u:') || ta === 'area' || ta === 'din') && num(ini)) { // "3 quartos, não, 4": só troca o número
+        const resto = T.slice(ini + 1, m).filter(x => UN.test(x.w) || MT.test(x.w) || DIN.test(x.w)).slice(0, 1); T = T.slice(0, ini).concat(T.slice(j, fim), resto, T.slice(fim)); mudou = true;
+      }
+    }
+    if (!mudou) break;
+  }
+  return T;
+}
+
+// ── cadastrar cliente falando (23/11, pedido dele): "cadastrar cliente Carlos Gomes, telefone 41 99853-3344, bairro Santa Felicidade, Cascatinha,
+// faixa de valor de 500 a 600 mil, 3 quartos, 3 vagas". Nome, faixa de valor e um bairro são obrigatórios; o resto é opcional.
+const VZ_CAD = /(?:\bcadastr(?:a|ar|e|o|em|ando|amos|ei)\b(?! (?:o |um |este |esse |meu |a |uma )?(?:imovel|imoveis)\b)|(?:^|^(?:e|um|uma|o|a) )nov[oa] cliente\b|\b(?:adicion|inclu|registr|cri|lanc|anot)\w+ (?:(?:ai|pra mim|para mim|aqui|por favor|o|a|um|uma|esse|essa|este|esta|novo|nova) )*(?:cliente|contato|lead)\b)/;
+const vzEhCadastro = s => VZ_CAD.test(s) && !/\b(?:qual|quais|quem|quantos|imove(?:l|is) nov[oa]s?|me (?:traz|mostra|manda)|o que tem)\b/.test(s);
+const VZ_FONE = /^(?:telefone|telefones|fone|celular|cel|whatsapp|whats|whatsap|wats|watsapp|zap|zapzap|contato)$/;
+// o telefone, por extenso ou em pedaços ("41 99853-3344", "nove nove oito meia…"); sem DDD = 41. ruim = número incompleto (não grava)
+function vzAchaFone(T) {
+  const W = k => (T[k] || {}).w || '', UNI = /^(?:quartos?|dormitorios?|suites?|vagas?|garagens?|carros?|milhoes|milhao|mi|mil|metros?|m2|m|reais|banheiros?)$/, val = w => /^\d+$/.test(w) ? w : w === 'zero' ? '0' : w === 'meia' ? '6' : w === 'um' || w === 'uma' ? '1' : '';
+  const junta = k => { let d = '', j = k, n = 0; for (;;) { const v = val(W(j)); if (!v) { if (d && /^(?:traco|hifen|ponto|espaco)$/.test(W(j)) && val(W(j + 1))) { j++; continue; } break; } if (UNI.test(W(j + 1)) || d.length + v.length > 13) break; d += v; j++; n++; if (d.length === 11 && !d.startsWith('55')) break; } return { d, j, n }; };
+  let i = T.findIndex(t => VZ_FONE.test(t.w)), r = null, ini = i;
+  if (i >= 0) { let k = i + 1; while (k < i + 6 && /^(?:e|eh|o|do|da|de|dele|dela|cliente|numero|celular|whatsapp|whats|ddd|com)$/.test(W(k))) k++; r = junta(k); if (!r.d) r = null; else r.k = k; }
+  if (!r) for (let k = 0; k < T.length && !r; k++) { if (val(W(k)) && !val(W(k - 1))) { const x = junta(k); if (x.d.length >= 10 && (x.n > 1 || x.d.length <= 13)) { r = x; r.k = k; ini = k; } } }
+  if (!r) return null;
+  let d = r.d.replace(/^0+/, ''); if (d.length === 8 || (d.length === 9 && d[0] === '9')) d = '41' + d;
+  const ok = d.length === 10 || d.length === 11 || ((d.length === 12 || d.length === 13) && d.startsWith('55')), b = d.replace(/^55(?=\d{10,11}$)/, '');
+  return { fone: ok ? d : '', ruim: ok ? '' : r.d, i: ini, k: r.k, j: r.j - 1, txt: ok ? (b.length === 11 ? `(${b.slice(0, 2)}) ${b.slice(2, 7)}-${b.slice(7)}` : `(${b.slice(0, 2)}) ${b.slice(2, 6)}-${b.slice(6)}`) : '' };
+}
+// o nome: o que vem depois de "cadastrar cliente" (ou de "nome"), até o telefone, o bairro, o valor…
+function vzAchaNome(T, R, ctx, s) {
+  const lug = ctx.lug, W = k => (T[k] || {}).w || '', m = s.match(VZ_CAD), kn = T.findIndex((t, k) => t.w === 'nome' && k > 0 ? true : t.w === 'nome');
+  let k = kn >= 0 ? kn + 1 : T.findIndex(t => t.ini >= m.index + m[0].length); if (k < 0) return null;
+  while (k < T.length && /^(?:o|a|um|uma|novo|nova|cliente|clientes|lead|contato|chamado|chamada|nome|completo|e|eh|se|chama|que|pra|mim|por|favor|ai|aqui|meu|minha|seu|dona|senhor|senhora|doutor|doutora|dr|dra|agora|esse|essa|este|esta|dele|dela|do|da|seguinte|carteira|crm|sistema)$/.test(W(k))) k++;
+  const PARA = /^(?:telefone|telefones|fone|celular|cel|whatsapp|whats|whatsap|zap|contato|numero|bairros?|regiao|faixa|valor|preco|orcamento|investimento|quer|queria|querendo|quero|procura|procurando|busca|buscando|interessad[oa]|interesse|precisa|precisando|que|ele|ela|eles|com|sem|ate|entre|no|na|nos|nas|em|para|pra|pro|por|a|o|as|os|partir|acima|abaixo|mora|como|tem|gosta|aceita|casas?|apartamentos?|aptos?|ape|coberturas?|terrenos?|sobrados?|lotes?|garden|cliente|quente|quentes|frio|fria|standby|stand|observacao|observacoes|obs|indicacao|indicad[oa]|quartos?|suites?|vagas?|reais|mil|milhao|milhoes|mobiliad[oa]|semimobiliad[oa]|condominio|minimo|maximo|uns|umas)$/;
+  const lugarEm = j => { for (let n = 5; n >= 1; n--) if (j + n <= T.length && lug.has(T.slice(j, j + n).map(x => x.w).join(' '))) return n; return 0; }, outroLugar = j => { for (let x = j; x < T.length; x++) if (lugarEm(x)) return true; return false; };
+  const i = k, l = [];
+  while (k < T.length && l.length < 6) {
+    const w = W(k); if (/\d/.test(w) || PARA.test(w)) break;
+    if (/^(?:de|da|do|dos|das|e)$/.test(w)) { const p = W(k + 1); if (!l.length || !p || /\d/.test(p) || PARA.test(p) || /^(?:de|da|do|e)$/.test(p) || lugarEm(k + 1) > 1) break; l.push(k++); continue; }
+    if (l.length && /[,;:.]$/.test(R[T[l[l.length - 1]].b])) break;
+    if (l.length && w.length >= 7 && ctx.parecido('lug', vzSom(w), .9)) break;
+    const n = lugarEm(k); if (n > 1 || (n === 1 && l.length && !outroLugar(k + 1))) break; // "João Cabral, bairro Boa Vista": Cabral é sobrenome; "João, Cabral, até 1 milhão": é o bairro
+    l.push(k++);
+  }
+  while (l.length && /^(?:de|da|do|dos|das|e)$/.test(W(l[l.length - 1]))) l.pop();
+  if (!l.length) return null;
+  return { i, j: l[l.length - 1], txt: vzTit([...new Set(l.map(x => T[x].a))].map(a => R[a].replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '')).join(' ')) };
+}
+
 function vzEntende(texto, ctx) {
-  let s = vzNumeros(vzNorm(texto));
-  const Q = { texto, norm: s, tipos: [], bairros: [], cidades: [], itens: [], intencao: 'imovel' };
+  const { R, T: T0 } = vzLe(texto); let T = vzEmenda(T0, ctx.lug), obs = '';
+  const cad = vzEhCadastro(T.map(t => t.w).join(' ')); // "observação: …" vai inteira para a ficha, sem virar critério
+  if (cad) { const k = T.findIndex(t => /^(?:observacao|observacoes|obs)$/.test(t.w)); if (k > 0) { obs = R.slice(T[k].b + 1).join(' ').replace(/^(?:é|e|que)\s+/i, '').replace(/\.+$/, ''); T = T.slice(0, k); } }
+  { let p = 0; T.forEach(t => { t.ini = p; t.fim = p + t.w.length; p = t.fim + 1; }); }
+  const s = T.map(t => t.w).join(' ');
+  const Q = { texto, norm: s, tipos: [], bairros: [], cidades: [], fora: [], itens: [], intencao: 'imovel', R, T, M: [], pts: 0, emendou: !obs && T.length !== T0.length };
   const gasto = []; // pedaços da frase já entendidos (para um nome de bairro não virar cliente, por exemplo)
   const usa = (ini, fim) => gasto.push([ini, fim]), livre = (ini, fim) => !gasto.some(([a, b]) => ini < b && fim > a);
+  // como este pedaço deve aparecer escrito (corr = o celular tinha ouvido outra coisa)
+  const escreve = (ini, fim, txt, corr, k) => { if (txt) Q.M.push({ ini, fim, txt, corr: !!corr, k }); }, noToken = ini => T.find(t => t.ini === ini) || {};
+
+  const fimLug = new Set(); // onde termina cada bairro já achado (e o nome, no cadastro): o que vem colado pode ser outro bairro
+  if (cad) {
+    Q.cad = { nome: '', fone: '', foneRuim: '', obs };
+    const f = vzAchaFone(T); if (f) { usa(T[f.i].ini, T[f.j].fim); Q.cad.fone = f.fone; Q.cad.foneRuim = f.ruim; escreve(T[f.k].ini, T[f.j].fim, f.txt, false, 'fone'); Q.pts += f.fone ? 1.5 : 0; }
+    const n = vzAchaNome(T, R, ctx, s); if (n) { usa(T[n.i].ini, T[n.j].fim); Q.cad.nome = n.txt; fimLug.add(T[n.j].fim); escreve(T[n.i].ini, T[n.j].fim, n.txt, false, 'nome'); Q.pts += 2; }
+  }
 
   // 1) números: metragem, cômodos e valor
   const q = vzConta(s, 'quartos?|dormitorios?|dorms?|qtos?'), su = vzConta(s, 'suites?'), vg = vzConta(s, 'vagas?|garagens?|carros?');
-  if (q) { Q.q = q.n; usa(q.ini, q.fim); }
-  if (su) { Q.s = su.n; usa(su.ini, su.fim); } else if (/\b(?:com|tem|tenha|uma) suite\b/.test(s)) Q.s = 1;
+  if (q) { Q.q = q.n; usa(q.ini, q.fim); escreve(q.ini, q.fim, q.txt); }
+  if (su) { Q.s = su.n; usa(su.ini, su.fim); escreve(su.ini, su.fim, su.txt); } else if (/\b(?:com|tem|tenha|uma) suite\b/.test(s)) Q.s = 1;
   if (Q.q && /\b(?:todos?|todas) (?:os quartos )?(?:com |sao |sendo )?suites?\b/.test(s)) Q.s = Q.q;
-  if (vg) { Q.v = vg.n; usa(vg.ini, vg.fim); }
+  if (vg) { Q.v = vg.n; usa(vg.ini, vg.fim); escreve(vg.ini, vg.fim, vg.txt); }
+  Q.pts += (q ? 1 : 0) + (su ? 1 : 0) + (vg ? 1 : 0);
   const temOutroTipo = /\b(casas?|sobrados?|apartamentos?|apto|aptos|ape|cobertura|coberturas)\b/.test(s);
   const soTerreno = !temOutroTipo && /\b(terrenos?|lotes?)\b/.test(s);
-  const ar = vzAreas(s, soTerreno); ar.spans.forEach(([a, b]) => usa(a, b));
-  if (ar.area) Q.area = ar.area; if (ar.terreno) Q.terreno = ar.terreno;
-  const mascara = gasto.reduce((t, [a, b]) => t.slice(0, a) + '#'.repeat(b - a) + t.slice(b), s); // a metragem não pode virar preço
-  const pr = vzPrecos(mascara, /\b(?:alugar|aluguel|locacao|alugo|alugad[oa])\b/.test(s)); if (pr) { pr.spans.forEach(([a, b]) => usa(a, b)); delete pr.spans; if (pr.min || pr.max || pr.perto) Q.preco = pr; }
+  const ar = vzAreas(s, soTerreno); ar.spans.forEach(([a, b]) => usa(a, b)); ar.marcas.forEach(m => escreve(m.ini, m.fim, m.txt));
+  if (ar.area) { Q.area = ar.area; Q.pts += 1.5; } if (ar.terreno) { Q.terreno = ar.terreno; Q.pts += 1.5; }
 
   // 2) empreendimento, rua, bairro e cidade
-  const pal = []; { const rx = /\S+/g; let m; while ((m = rx.exec(s))) pal.push({ w: m[0], ini: m.index, fim: m.index + m[0].length }); }
+  const pal = T.map(t => ({ w: t.w, ini: t.ini, fim: t.fim }));
   const vazias = /^(de|do|da|dos|das|no|na|nos|nas|o|a|os|as|e|em|com|que|um|uma|ao|pra|para|pro|por)$/, predial = /^(condominio|edificio|predio|empreendimento|residencial)$/;
   const colado = k => predial.test((pal[k - 1] || {}).w || ''), forte = k => colado(k) || (/^(de|do|da|dos|das|o|a)$/.test((pal[k - 1] || {}).w || '') && predial.test((pal[k - 2] || {}).w || ''));
   const tipoAntes = k => k === 0 || /^(casa|casas|apartamento|apartamentos|apto|ape|cobertura|garden|terreno|sobrado|link|pdf)$/.test((pal[k - 1] || {}).w || '');
-  const lug = new Map(); // lugares: bairros e cidades, pelo nome sem acento
-  ctx.bairros.forEach(b => lug.set(vzNorm(b), { b })); Object.entries(VZ_APELIDOS).forEach(([a, b]) => { if (!lug.has(a) || a === 'cidade industrial') lug.set(a, { b }); }); ctx.cidades.forEach(c => { if (!lug.has(vzNorm(c))) lug.set(vzNorm(c), { c }); });
-  const acharLugar = (fuzzy) => {
+  const lug = ctx.lug;
+  // o número da rua não é valor: "avenida Batel 1500"
+  const via = s.match(/\b(?:rua|avenida|av|alameda|travessa|rodovia|estrada|praca) /);
+  // valor (com a metragem e os cômodos já fora do caminho)
+  const numRua = s.match(/\b(?:rua|avenida|av|alameda|travessa) (?:(?!(?:com|ate|por|no|na|que|de \d{4})\b)[a-z]+ ){1,5}(?:numero )?(\d{1,5})\b(?! ?(?:quartos|suites|vagas|metros|milh|mil|de [a-z]))/);
+  if (numRua) { const p = numRua.index + numRua[0].length - numRua[1].length; gasto.push([p, p + numRua[1].length, 'rua']); }
+  const mascara = gasto.reduce((t, [a, b]) => t.slice(0, a) + '#'.repeat(b - a) + t.slice(b), s); // a metragem não pode virar preço
+  const pr = vzPrecos(mascara, /\b(?:alugar|aluguel|locacao|alugo|alugad[oa])\b/.test(s), noToken);
+  if (pr) { pr.spans.forEach(([a, b]) => usa(a, b)); pr.marcas.forEach(m => escreve(m.ini, m.fim, m.txt, false, 'din')); Q.outra = pr.outra; Q.ondePreco = pr.onde; const p = {}; ['min', 'max', 'perto'].forEach(k => { if (pr[k]) p[k] = pr[k]; }); if (p.min || p.max || p.perto) { Q.preco = p; Q.pts += 2; } }
+  for (let k = gasto.length - 1; k >= 0; k--) if (gasto[k][2] === 'rua') gasto.splice(k, 1);
+
+  const acharLugar = (parecido) => {
     const achados = [];
     for (let n = 5; n >= 1; n--) for (let k = 0; k + n <= pal.length; k++) {
-      const ini = pal[k].ini, fim = pal[k + n - 1].fim, f = pal.slice(k, k + n).map(x => x.w).join(' ');
+      const ini = pal[k].ini, fim = pal[k + n - 1].fim, ws = pal.slice(k, k + n), f = ws.map(x => x.w).join(' ');
       if (!livre(ini, fim) || vazias.test(pal[k].w) || vazias.test(pal[k + n - 1].w)) continue;
-      let l = null;
-      if (!fuzzy) l = lug.get(f);
-      else if (!pal.slice(k, k + n).some(x => VZ_COMUNS.has(x.w) || /\d/.test(x.w)) && f.length >= 5) {
-        const j = f.replace(/ /g, ''), tol = j.length >= 11 ? 2 : 1;
-        for (const [nome, x] of lug) { const nj = nome.replace(/ /g, ''); if (nj.length >= 5 && nj[0] === j[0] && !(ctx.primeiros && ctx.primeiros.has(j)) && vzLev(j, nj, tol) <= tol) { l = x; break; } }
+      let l = null, sim = 1;
+      if (!parecido) {
+        l = lug.get(f);
+        // "no Alto, dois quartos": o Ahú, que o celular escreve "Alto" (os bairros com Alto têm mais palavras)
+        if (!l && n === 1 && f === 'alto' && /^(no|ao)$/.test((pal[k - 1] || {}).w || '') && !/^(da|de|do|dos|das|sao|boqueirao|padrao|maracana|cajuru|tarum\w*)$/.test((pal[k + 1] || {}).w || '')) l = lug.get('ahu');
+      } else if (n <= 4 && !ws.some(x => VZ_COMUNS.has(x.w) || /\d/.test(x.w)) && f.length >= 5 && !(ctx.primeiros && ctx.primeiros.has(f))) {
+        const som = vzSom(f), antes = /^(no|na|em|do|da|de|pro|ou|bairro|bairros|regiao|e|nos|nas)$/.test((pal[k - 1] || {}).w || '') || tipoAntes(k) || (cad && k > 0 && fimLug.has(pal[k - 1].fim));
+        const r = antes && !(ctx.vivo && fim === s.length) && som.length >= 4 && ctx.parecido('lug', som, som.length <= 5 ? .84 : .78);
+        if (r) { l = r.ref; sim = r.sim; }
       }
-      if (l) achados.push({ l, ini, fim, k, n });
+      if (l) achados.push({ l, ini, fim, k, n, f, sim });
     }
+    if (parecido) achados.sort((x, y) => y.sim * (1 + y.n * .02) - x.sim * (1 + x.n * .02));
     return achados;
   };
   // "para a Maria Luiza", "ficha do Augusto Rovigo": nome e sobrenome de um cliente, depois de "para/ficha/cliente", vêm antes
   // de empreendimento e de bairro parecido (existe um Edifício Maria Luiza e um bairro Augusta)
   const reserva = [];
-  for (let k = 0; k + 1 < pal.length; k++) {
+  if (!cad) for (let k = 0; k + 1 < pal.length; k++) {
     let a = k - 1; while (a >= 0 && /^(o|a|ao|do|da|de|dona|seu)$/.test(pal[a].w)) a--;
     if (a < 0 || a === k || !/^(para|pra|pro|cliente|ficha|abre|abrir|abra|com)$/.test(pal[a].w) || !livre(pal[k].ini, pal[k].fim)) continue;
     let j = k + 1; while (pal[j] && /^(de|da|do|dos|das|e)$/.test(pal[j].w)) j++; if (!pal[j]) continue;
     const cs = ctx.clientes.filter(c => c.tk.length > 1 && vzFon(c.tk[0]) === vzFon(pal[k].w) && c.tk.slice(1).some(x => x.length > 1 && vzFon(x) === vzFon(pal[j].w)));
-    if (cs.length) { cs.forEach(c => reserva.push({ c, ini: pal[k].ini, fim: pal[j].fim, exato: true })); usa(pal[k].ini, pal[j].fim); }
+    if (cs.length) { cs.forEach(c => reserva.push({ c, ini: pal[k].ini, fim: pal[j].fim, k, j, exato: true })); usa(pal[k].ini, pal[j].fim); }
+  }
+  // 2b) rua: pelo nome das ruas dos estoques (certo ou parecido); se não existir nos estoques, o que vier depois de "rua"
+  const ruaPronta = (k0, n, chave, sim) => {
+    const rot = ctx.ruas.get(chave), nome = vzNorm(rot), ini = pal[k0].ini, fim = pal[k0 + n - 1].fim; let num = '', f = fim; const d = pal[k0 + n], e = pal[k0 + n + 1];
+    if (d && /^\d{1,5}$/.test(d.w) && !(e && /^(quartos?|suites?|vagas?|metros?|m2|milh\w+|mil|e)$/.test(e.w))) { num = d.w; f = d.fim; } else if (d && d.w === 'numero' && e && /^\d{1,5}$/.test(e.w)) { num = e.w; f = e.fim; }
+    Q.rua = { nome, num, rot: (ctx.ruaVia.get(chave) || 'Rua') + ' ' + rot }; usa(ini, f); escreve(ini, fim, rot, sim < 1, 'rua'); Q.pts += 3 * sim;
+  };
+  const kVia = cad ? -1 : pal.findIndex((x, k) => /^(rua|avenida|av|alameda|travessa|rodovia|estrada|praca)$/.test(x.w) && livre(x.ini, x.fim) && pal[k + 1]);
+  if (kVia >= 0) {
+    let k0 = kVia + 1; while (pal[k0] && /^(d[aeo]s?)$/.test(pal[k0].w)) k0++;
+    const para = /^(com|ate|por|no|na|que|numero|tem|entre|para|pra|perto)$/; let nmax = 0; while (nmax < 7 && pal[k0 + nmax] && !para.test(pal[k0 + nmax].w) && livre(pal[k0 + nmax].ini, pal[k0 + nmax].fim)) nmax++;
+    for (let n = nmax; n >= 1 && !Q.rua; n--) { const f = pal.slice(k0, k0 + n).map(x => x.w).join(' '); if (ctx.ruas.has(f)) ruaPronta(k0, n, f, 1); }
+    if (!Q.rua) { let b = null; for (let n = 1; n <= Math.min(nmax, 6); n++) { const som = vzSom(pal.slice(k0, k0 + n).map(x => x.w).join(' ')); if (som.length < 5) continue; const r = ctx.parecido('rua', som, .8); if (r && (!b || r.sim * som.length > b.sim * b.t)) b = Object.assign({ n, t: som.length }, r); } if (b) ruaPronta(k0, b.n, b.ref, b.sim); }
+    if (!Q.rua) { const rua = s.match(/\b(?:rua|avenida|av|alameda|travessa) ((?:(?!(?:com|ate|por|no|na|que|numero|de \d|e \d)\b)[a-z]+ ?){1,5})(?:(?:numero )?(\d{1,5})\b(?! ?(?:quartos|suites|vagas|metros|milh|mil)))?/);
+      if (rua && livre(rua.index, rua.index + rua[0].length)) { Q.rua = { nome: rua[1].trim(), num: rua[2] || '' }; usa(rua.index, rua.index + rua[0].trimEnd().length); const p = rua.index + rua[0].indexOf(rua[1]); escreve(p, p + rua[1].trim().length, vzTit(rua[1].trim())); Q.pts += 1.5; } }
   }
   // 2a) empreendimento (antes do bairro: "Reserva Ecoville" e "Vaz Batel" têm bairro no nome)
-  let melhor = null;
+  let melhor = null; const semNome = cad;
   const lugarExato = f => lug.has(f);
   const soGenerico = f => f.split(' ').every(w => VZ_COMUNS.has(w) || lug.has(w) || [...lug.keys()].some(x => x.split(' ').includes(w)));
-  for (let n = 6; n >= 1; n--) for (let k = 0; k + n <= pal.length; k++) {
+  if (!semNome) for (let n = 6; n >= 1; n--) for (let k = 0; k + n <= pal.length; k++) {
     const ini = pal[k].ini, fim = pal[k + n - 1].fim; if (!livre(ini, fim) || vazias.test(pal[k].w) || vazias.test(pal[k + n - 1].w)) continue;
     const f = pal.slice(k, k + n).map(x => x.w).join(' '), emp = ctx.emps.get(f); if (!emp || (lugarExato(f) && !colado(k))) continue;
     if (f.replace(/[ \d]/g, '').length < 4 && !forte(k)) continue;
@@ -3717,71 +3986,101 @@ function vzEntende(texto, ctx) {
     if (n === 1 && !forte(k) && !tipoAntes(k) && !vazias.test((pal[k - 1] || {}).w || '')) continue;
     if (n === 1 && !forte(k) && ctx.primeiros && ctx.primeiros.has(f)) continue; // "Dora" é cliente antes de ser prédio
     if (n > 1 && soGenerico(f) && !forte(k)) continue;
-    const pts = f.length + (forte(k) ? 20 : 0); if (!melhor || pts > melhor.pts) melhor = { f, emp, ini, fim, pts };
+    if (VZ_VIA.test((pal[k - 1] || {}).w || '')) continue; // "rua Buenos Aires" é rua
+    if (n === 1 && !forte(k) && /^(e|com|que)$/.test((pal[k - 1] || {}).w || '')) continue; // "Carolina e Andrade" não é o Edifício Andrade
+    const pts = f.length + (forte(k) ? 20 : 0); if (!melhor || pts > melhor.pts) melhor = { f, emp, ini, fim, pts, rot: ctx.empRot.get(f), sim: 1 };
   }
-  if (!melhor) for (let n = 1; n <= 5; n++) for (let k = 0; k + n <= pal.length; k++) {
-    const ini = pal[k].ini, fim = pal[k + n - 1].fim; if (!livre(ini, fim) || vazias.test(pal[k].w) || vazias.test(pal[k + n - 1].w)) continue;
-    const ws = pal.slice(k, k + n); if (ws.some(x => /^\d/.test(x.w) && n === 1) || (n === 1 && !forte(k))) continue;
-    if (ws.some(x => VZ_COMUNS.has(x.w) && !vazias.test(x.w))) continue;
-    const f = ws.map(x => x.w).join(' '), j = f.replace(/ /g, ''); if (j.length < (forte(k) ? 5 : 8) || lugarExato(f)) continue;
-    const tol = Math.max(1, Math.floor(j.length / 7));
-    for (const [nome, emp] of ctx.emps) {
-      const nj = nome.replace(/ /g, ''); if (Math.abs(nj.length - j.length) > tol || nj.length < 5 || lugarExato(nome)) continue;
-      const d = vzLev(j, nj, tol); if (d > tol) continue;
-      const pts = j.length - d * 4 + (forte(k) ? 20 : 0); if (!melhor || pts > melhor.pts) melhor = { f: nome, emp, ini, fim, pts, aprox: d > 0 };
+  // parecido no som: "Vivenda Taylor" → Vivenda Tabor, "draviano" → Trebbiano. Só onde cabe um nome, e nunca em cima de bairro, cliente ou palavra comum
+  if (!melhor && !semNome) {
+    const temLugar = acharLugar(false).length > 0;
+    for (let n = 1; n <= 4; n++) for (let k = 0; k + n <= pal.length; k++) {
+      const ini = pal[k].ini, fim = pal[k + n - 1].fim; if (!livre(ini, fim) || vazias.test(pal[k].w) || vazias.test(pal[k + n - 1].w)) continue;
+      const ws = pal.slice(k, k + n), fo = forte(k), ant = (pal[k - 1] || {}).w || ''; if (VZ_VIA.test(ant)) continue;
+      if (ws.some(x => (VZ_COMUNS.has(x.w) && !vazias.test(x.w)) || (n === 1 && /^\d/.test(x.w)))) continue;
+      if (ctx.vivo && fim === s.length) continue;
+      const f = ws.map(x => x.w).join(' '), som = vzSom(f); if (som.length < (fo ? 4 : 5) || lugarExato(f) || ws.some(x => lug.has(x.w)) || (n === 1 && ctx.primeiros && ctx.primeiros.has(f) && !fo)) continue;
+      const cabe = fo || tipoAntes(k) || /^(no|na|do|da|o|a|dos|das|nos|nas|ao)$/.test(ant); if (!cabe) continue;
+      if (n === 1 && !fo && /(?:mente|ando|endo|indo|cao|coes)$/.test(f)) continue;
+      const rara = n > 1 && ws.some(x => x.w.length >= 5 && (ctx.empPal.get(x.w) || 99) <= 4);
+      const min = fo ? (n === 1 ? .7 : .72) : (som.length <= 5 ? .88 : som.length <= 7 ? .84 : rara ? .76 : .8) + (temLugar ? .05 : 0);
+      let r = ctx.parecido('emp', som, min);
+      if (!r && som.length >= 7 && /^(no|na|do|da)$/.test(ant) && /^(casa|casas|apartamento|apartamentos|apto|ape|cobertura|sobrado|terreno|lote|link)$/.test((pal[k - 2] || {}).w || '')) { r = ctx.parecido('emp', som, .74); if (r && r.sim - r.seg < .05) r = null; }
+      // palavra que já é de um condomínio ("Vivenda …") só vira outro nome que também tenha essa palavra
+      const certas = ws.filter(x => x.w.length >= 4 && ctx.empPal.has(x.w)); if (r && certas.length && !certas.some(x => r.ref.split(' ').includes(x.w)) && r.sim < .93) r = null;
+      if (!r || lugarExato(r.ref)) continue;
+      const pts = r.sim * 60 + Math.min(som.length, 14) + (fo ? 20 : 0) + (rara ? 4 : 0); if (!melhor || pts > melhor.pts) melhor = { f: r.ref, emp: ctx.emps.get(r.ref), ini, fim, pts, aprox: r.sim < .999, sim: r.sim, rot: ctx.empRot.get(r.ref) };
     }
   }
   // só um pedaço do nome: "a casa do Tabor" (Vivenda Tabor); vale palavra rara, que não seja bairro, palavra comum nem nome de cliente
-  if (!melhor) for (let k = 0; k < pal.length; k++) {
+  if (!melhor && !semNome) for (let k = 0; k < pal.length; k++) {
     const w = pal[k].w; if (!livre(pal[k].ini, pal[k].fim) || w.length < 4 || /\d/.test(w) || VZ_COMUNS.has(w) || vazias.test(w) || (ctx.primeiros && ctx.primeiros.has(w) && !forte(k))) continue;
     if (!(tipoAntes(k) || forte(k) || vazias.test((pal[k - 1] || {}).w || '')) || [...lug.keys()].some(x => x.split(' ').includes(w) || vzFon(x) === vzFon(w))) continue;
-    const q = ctx.empPal && ctx.empPal.get(w); if (!q || q > 12) continue;
-    const pts = w.length + (forte(k) ? 20 : 0); if (!melhor || pts > melhor.pts) melhor = { f: w, emp: w.charAt(0).toUpperCase() + w.slice(1), ini: pal[k].ini, fim: pal[k].fim, pts };
+    if (VZ_VIA.test((pal[k - 1] || {}).w || '') || (/^(e|com|que)$/.test((pal[k - 1] || {}).w || '') && !forte(k))) continue;
+    const c = ctx.empPal.get(w); if (!c || c > 12) continue;
+    const pts = w.length + (forte(k) ? 20 : 0); if (!melhor || pts > melhor.pts) melhor = { f: w, emp: w.charAt(0).toUpperCase() + w.slice(1), ini: pal[k].ini, fim: pal[k].fim, pts, rot: vzTit(w), sim: .9, parte: true };
   }
-  if (melhor && melhor.aprox && acharLugar(true).some(x => x.ini <= melhor.ini && x.fim >= melhor.fim)) melhor = null; // era um bairro falado meio torto
-  if (melhor) { Q.emp = { nucleo: melhor.f, nome: melhor.emp }; usa(melhor.ini, melhor.fim); }
-  // 2b) rua
-  const rua = s.match(/\b(?:rua|avenida|av|alameda|travessa) ((?:(?!(?:com|ate|por|no|na|que|numero|de \d|e \d)\b)[a-z]+ ?){1,5})(?:(?:numero )?(\d{1,5})\b(?! ?(?:quartos|suites|vagas|metros|milh|mil)))?/);
-  if (rua && livre(rua.index, rua.index + rua[0].length) && !Q.emp) { Q.rua = { nome: rua[1].trim(), num: rua[2] || '' }; usa(rua.index, rua.index + rua[0].trimEnd().length); }
+  const bairroTorto = melhor && melhor.aprox ? acharLugar(true).filter(x => x.ini <= melhor.ini && x.fim >= melhor.fim)[0] : null;
+  if (bairroTorto && bairroTorto.sim >= melhor.sim - .06) melhor = null; // era um bairro falado meio torto
+  if (melhor) { Q.emp = { nucleo: melhor.f, nome: melhor.emp, rot: melhor.rot }; usa(melhor.ini, melhor.fim); escreve(melhor.ini, melhor.fim, melhor.rot, melhor.aprox, 'emp'); Q.pts += (melhor.parte ? .9 : melhor.aprox ? 1.3 : 1.5) * melhor.sim + Math.min(melhor.f.length, 14) * .13 * melhor.sim; }
   // 2c) bairros e cidades (exato; se não achou nenhum, aceita falado meio torto: "mosungue", "eco ville")
-  const lugares = acharLugar(false), vistos = new Set();
-  const poeLugar = x => { if (!livre(x.ini, x.fim)) return; usa(x.ini, x.fim); if (x.l.b) { const c = ctx.chave(x.l.b); if (!vistos.has(c)) { vistos.add(c); Q.bairros.push(x.l.b); } } else if (!Q.cidades.includes(x.l.c)) Q.cidades.push(x.l.c); };
+  const lugares = acharLugar(false), vistos = new Set(), falados = [];
+  const poeLugar = x => {
+    if (!livre(x.ini, x.fim)) return; usa(x.ini, x.fim); fimLug.add(x.fim); const nome = x.l.b || x.l.c, tirar = /\b(?:menos|exceto|tirando|fora|sem ser|nao (?:pode )?se(?:r|ja)|nao quero|nao)(?: (?:no|na|em|o|a|do|da|de|os|as))* $/.test(s.slice(Math.max(0, x.ini - 30), x.ini));
+    escreve(x.ini, x.fim, nome, vzNorm(nome) !== x.f, 'lug'); Q.pts += tirar ? 0 : x.sim < 1 ? 1.6 * x.sim : x.l.c && !x.l.b ? 2 : x.l.ap ? 2.5 : 3;
+    falados.push({ x, tirar }); (tirar ? Q.fora : x.l.b ? Q.bairros : Q.cidades).push(nome);
+  };
+  const ordena = () => { Q.bairros = []; Q.cidades = []; Q.fora = []; vistos.clear(); falados.sort((a, b) => a.x.ini - b.x.ini).forEach(({ x, tirar }) => { if (x.l.b) { const c = ctx.chave(x.l.b); if (!vistos.has(c)) { vistos.add(c); (tirar ? Q.fora : Q.bairros).push(x.l.b); } } else if (!tirar && !Q.cidades.includes(x.l.c)) Q.cidades.push(x.l.c); }); };
   lugares.forEach(poeLugar);
-  if (!Q.bairros.length && !Q.cidades.length) acharLugar(true).forEach(poeLugar);
+  // rua falada sem o "rua": "apartamento na Visconde de Guarapuava"
+  if (!cad && !Q.emp && !Q.rua && kVia < 0) for (let n = 6; n >= 2 && !Q.rua; n--) for (let k = 1; k + n <= pal.length; k++) {
+    if (!livre(pal[k].ini, pal[k + n - 1].fim) || !/^(na|da|pela)$/.test(pal[k - 1].w) || vazias.test(pal[k + n - 1].w)) continue;
+    const f = pal.slice(k, k + n).map(x => x.w).join(' '), r = ctx.ruas.has(f) ? f : f.length >= 12 ? [...ctx.ruas.keys()].find(x => x.startsWith(f + ' ')) : '';
+    if (r && !pal.slice(k, k + n).every(x => VZ_COMUNS.has(x.w))) { ruaPronta(k, n, r, 1); break; }
+  }
+  if (cad) acharLugar(true).forEach(x => { if (x.sim >= .84) poeLugar(x); });
+  else if (!Q.bairros.length && !Q.cidades.length && !Q.fora.length) acharLugar(true).forEach(x => { if ((!Q.bairros.length && !Q.rua && !Q.emp) || x.sim >= .86) poeLugar(x); });
+  ordena();
   if (Q.bairros.length && /\b(regiao|perto|proximo|proximidades|arredores|redondeza|ao redor)\b/.test(s)) Q.regiao = true;
 
   // 3) tipo, situação, mobília, características, novos, aluguel
   const livreDe = rx => { const m = [...s.matchAll(rx)].find(x => livre(x.index, x.index + x[0].length)); return m ? m[0] : ''; };
-  const T = (...l) => l.forEach(t => { if (!Q.tipos.includes(t)) Q.tipos.push(t); });
+  const Tp = (...l) => l.forEach(t => { if (!Q.tipos.includes(t)) Q.tipos.push(t); });
   const emCond = /\b(?:condominio fechado|(?:casas?|sobrados?|terrenos?|lotes?) (?:em|de|no|num) condominio|em condominio)\b/.test(s), deRua = /\b(?:casas?|sobrados?) de rua\b|\bfora de condominio\b|\bsem condominio\b/.test(s);
-  if (livreDe(/\bcasas?\b|\bresidencias?\b/g)) deRua ? T('Casa', 'Sobrado') : emCond ? T('Casa em condomínio', 'Sobrado em condomínio') : T('Casa', 'Casa em condomínio', 'Sobrado', 'Sobrado em condomínio');
-  if (livreDe(/\bsobrados?\b/g)) deRua ? T('Sobrado') : emCond ? T('Sobrado em condomínio') : T('Sobrado', 'Sobrado em condomínio');
-  if (livreDe(/\bgardens?\b/g)) T('Apartamento garden');
-  else if (livreDe(/\bapartamentos?\b|\baptos?\b|\bapes?\b|\bap\b|\bstudios?\b|\blofts?\b|\bflats?\b|\bkitnets?\b/g)) T('Apartamento', 'Apartamento garden');
-  if (livreDe(/\bcoberturas?\b/g)) T('Cobertura');
-  if (livreDe(/\bterrenos?\b|\blotes?\b/g) && (soTerreno || (!Q.terreno && !/\bterreno (?:grande|bom|amplo|maior|com|de)\b/.test(s)))) emCond && !temOutroTipo ? T('Terreno em condomínio') : T('Terreno', 'Terreno em condomínio');
-  if (livreDe(/\bsalas? comercia(?:l|is)\b|\blojas?\b|\bcomercia(?:l|is)\b|\bbarrac(?:ao|oes)\b|\bgalp(?:ao|oes)\b|\bconsultorios?\b|\bponto comercial\b/g)) T('Comercial');
-  if (/\bsemi ?mobiliad[oa]s?\b/.test(s)) Q.mo = ['m', 's']; else if (/\bmobiliad[oa]s?\b|\bporteira fechada\b/.test(s)) Q.mo = ['s'];
+  if (livreDe(/\bcasas?\b|\bresidencias?\b/g)) deRua ? Tp('Casa', 'Sobrado') : emCond ? Tp('Casa em condomínio', 'Sobrado em condomínio') : Tp('Casa', 'Casa em condomínio', 'Sobrado', 'Sobrado em condomínio');
+  if (livreDe(/\bsobrados?\b/g)) deRua ? Tp('Sobrado') : emCond ? Tp('Sobrado em condomínio') : Tp('Sobrado', 'Sobrado em condomínio');
+  if (livreDe(/\bgardens?\b/g)) Tp('Apartamento garden');
+  else if (livreDe(/\bapartamentos?\b|\baptos?\b|\bapes?\b|\bap\b|\bstudios?\b|\blofts?\b|\bflats?\b|\bkitnets?\b/g)) Tp('Apartamento', 'Apartamento garden');
+  if (livreDe(/\bcoberturas?\b/g)) Tp('Cobertura');
+  if (livreDe(/\bterrenos?\b|\blotes?\b/g) && (soTerreno || (!Q.terreno && !/\bterreno (?:grande|bom|amplo|maior|com|de)\b/.test(s)))) emCond && !temOutroTipo ? Tp('Terreno em condomínio') : Tp('Terreno', 'Terreno em condomínio');
+  if (livreDe(/\bsalas? comercia(?:l|is)\b|\blojas?\b|\bcomercia(?:l|is)\b|\bbarrac(?:ao|oes)\b|\bgalp(?:ao|oes)\b|\bconsultorios?\b|\bponto comercial\b/g)) Tp('Comercial');
+  if (Q.tipos.length) Q.pts += 1;
+  if (/\bsemi ?mobiliad[oa]s?\b/.test(s)) Q.mo = ['m', 's']; else if (/\bmobiliad[oa]s?\b|\bporteira fechada\b/.test(s) && !/\b(?:sem|nao) (?:ser )?mobili/.test(s)) Q.mo = ['s'];
   if (/\bna planta\b|\blancamentos?\b|\bem construcao\b/.test(s)) Q.ob = 'p'; else if (/\bpront[oa]s?\b/.test(s)) Q.ob = 'r';
   if (/\b(?:alugar|aluguel|locacao|alugo|alugad[oa])\b/.test(s)) Q.loc = true;
-  if (/\bimove(?:l|is) nov[oa]s?\b|\bnov[oa]s? imove(?:l|is)\b|\b(?:casas|apartamentos|coberturas|terrenos|sobrados) nov[oa]s\b|\bentr(?:ou|aram)\b|\bnovidades?\b|\bde novo (?:pra|para|pro)\b|\balgo novo\b|\balguma coisa nova\b|\bo que tem de novo\b|\bimovel (?:bom )?novo\b|\bnovos? (?:pra|para|pro) (?:mandar|enviar|mostrar)\b/.test(s)) Q.novos = true;
-  VZ_ITENS.forEach(([k, rx, rot, busca]) => { if (rx.test(s)) Q.itens.push({ k, rot, rx: busca || new RegExp(k) }); });
+  if (/\bimove(?:l|is) nov[oa]s?\b|\bnov[oa]s? imove(?:l|is)\b|\b(?:casas|apartamentos|coberturas|terrenos|sobrados) nov[oa]s\b|\bentr(?:ou|aram)\b|\bnovidades?\b|\bde novo (?:pra|para|pro)\b|\balgo novo\b|\balguma coisa nova\b|\bo que tem de novo\b|\bimovel (?:bom )?novo\b|\bmovel novo (?:pra|para|pro)\b|\bnovos? (?:pra|para|pro) (?:mandar|enviar|mostrar)\b/.test(s)) Q.novos = true;
+  // "sem piscina", "não precisa ter piscina": não vira exigência
+  VZ_ITENS.forEach(([k, rx, rot, busca]) => { const m = s.match(rx); if (m && !/\b(?:sem|nao (?:precisa|quer|quero|faz questao|tenha)(?: (?:de|ter|ser))*)(?: \w+){0,1} $/.test(s.slice(Math.max(0, m.index - 34), m.index))) Q.itens.push({ k, rot, rx: busca || new RegExp(k) }); });
 
   // 4) cliente citado pelo nome
   const nomes = ctx.clientes, strong = reserva, fraco = [];
   const igual = (a, b) => vzFon(a) === vzFon(b), pert = (a, b, m = 5) => igual(a, b) || (a.length >= m && b.length >= m && vzLev(vzFon(a), vzFon(b), 1) <= 1);
-  for (const c of nomes) {
+  if (!cad) for (const c of nomes) {
     const tk = c.tk; if (!tk.length || tk[0].length < 2) continue;
     for (let k = 0; k < pal.length; k++) {
       if (!livre(pal[k].ini, pal[k].fim) || VZ_COMUNS.has(pal[k].w) || !pert(pal[k].w, tk[0])) continue;
       let j = k + 1; while (pal[j] && /^(de|da|do|dos|das|e)$/.test(pal[j].w)) j++;
-      if (tk.length > 1 && pal[j] && tk.slice(1).some(x => x.length > 1 && pert(pal[j].w, x))) { strong.push({ c, ini: pal[k].ini, fim: pal[j].fim, exato: igual(pal[k].w, tk[0]) }); break; }
+      if (tk.length > 1 && pal[j] && tk.slice(1).some(x => x.length > 1 && pert(pal[j].w, x))) { strong.push({ c, ini: pal[k].ini, fim: pal[j].fim, k, j, exato: igual(pal[k].w, tk[0]) }); break; }
       const ant = (pal[k - 1] || {}).w || '';
-      if (pert(pal[k].w, tk[0], 6) && pal[k].w.length >= 3 && (/^(o|a|ao|pro|pra|para|do|da|com|cliente|de|dona|seu|senhor|senhora|doutor|dr)$/.test(ant) || pal.length <= 3)) { fraco.push({ c, ini: pal[k].ini, fim: pal[k].fim, exato: igual(pal[k].w, tk[0]) }); break; }
+      if (pert(pal[k].w, tk[0], 6) && pal[k].w.length >= 3 && (/^(o|a|ao|pro|pra|para|do|da|com|cliente|de|dona|seu|senhor|senhora|doutor|dr)$/.test(ant) || pal.length <= 3)) { fraco.push({ c, ini: pal[k].ini, fim: pal[k].fim, k, j: k, exato: igual(pal[k].w, tk[0]) }); break; }
     }
   }
   const limpa = l => l.some(x => x.exato) ? l.filter(x => x.exato) : l, achou = strong.length ? limpa(strong) : limpa(fraco);
-  if (achou.length) { Q.clientes = [...new Set(achou.map(x => x.c.id))]; achou.slice(0, 1).forEach(x => usa(x.ini, x.fim)); }
+  if (achou.length) {
+    Q.clientes = [...new Set(achou.map(x => x.c.id))]; const x = achou[0]; usa(x.ini, x.fim); Q.pts += (strong.length ? 3 : 2) * (x.exato ? 1 : .8);
+    // o nome como está no cadastro (se todos os achados escrevem igual)
+    const nm = (c, w) => { const p = (c.nm || []).find((y, i) => vzFon(c.tk[i] || '') === vzFon(w)) || (c.nm || []).find((y, i) => pert(w, c.tk[i] || '')); return p || ''; };
+    (x.j > x.k ? [x.k, x.j] : [x.k]).forEach(k => { const op = new Set(achou.map(y => nm(y.c, pal[k].w))); if (op.size === 1 && [...op][0]) escreve(pal[k].ini, pal[k].fim, [...op][0], vzNorm([...op][0]) !== pal[k].w, 'cli'); });
+  }
 
   // 5) etapa (para pergunta sobre clientes)
   if (/\bquentes?\b/.test(s)) Q.etapas = ['cqq']; else if (/\bfri[oa]s?\b/.test(s)) Q.etapas = ['cq']; else if (/\bstand ?by\b/.test(s)) Q.etapas = ['standby']; else if (/\barquivad[oa]s?\b/.test(s)) Q.etapas = ['arquivado'];
@@ -3792,40 +4091,117 @@ function vzEntende(texto, ctx) {
   const cliLembra = /\blembr\w*(?: \w+){0,4} (?:client\w*|quem)\b|\bquem (?:e )?(?:que )?era\b|\b(?:o|aquele|um) (?:cara|rapaz|casal|senhor) (?:que )?(?:queria|procurava|buscava|pediu)\b|\bcliente era\b/.test(s);
   const cliFraco = /\bclientes?(?: \w+){0,2} (?:quer|queri|procur|busc|pedi|precis|era)\w*/.test(s);
   const atendendo = /\b(?:to|estou|tou|tenho|atendendo|chegou)(?: \w+){0,2} cliente\b|\b(?:para|pra|pro) (?:um|uma|meu|minha|esse|essa|o|a)?\s?cliente\b/.test(s) || /\b(?:me traz|me traga|traga|traz|opcoes|opcao|preciso de|me mostra|me manda)\b/.test(s);
-  if (Q.clientes) Q.intencao = criterio && !/\b(?:ficha|abre|abrir|abra)\b/.test(s) ? 'imovel' : 'abrir';
+  if (cad) Q.intencao = 'cadastro';
+  else if (Q.clientes) Q.intencao = criterio && !/\b(?:ficha|abre|abrir|abra)\b/.test(s) ? 'imovel' : 'abrir';
   else if (cliForte || cliLembra || (cliFraco && !atendendo)) Q.intencao = 'clientes';
-  Q.criterio = criterio;
+  Q.criterio = criterio; if (cad) delete Q.novos;
+  // palavras que sobraram sem eu entender (para escolher entre as hipóteses do reconhecedor)
+  Q.sobras = pal.filter(x => livre(x.ini, x.fim) && x.w.length >= 3 && !/^\d/.test(x.w) && !VZ_COMUNS.has(x.w) && !vazias.test(x.w)).map(x => (R[(T.find(t => t.ini === x.ini) || {}).a] || x.w).replace(/[.,;:!?]+$/, '')); Q.sobra = Q.sobras.length;
+  Q.pecas = vzEscreve(Q);
   return Q;
+}
+// a frase reescrita, em pedaços [{ t, c }] (c = corrigido): o que foi entendido sai com a grafia certa; o resto fica como ele falou, com acento e pontuação
+function vzEscreve(Q) {
+  const { R, T, M } = Q, out = [], onde = M.map(m => ({ m, i: T.findIndex(t => t.ini >= m.ini), j: (() => { let j = -1; T.forEach((t, k) => { if (t.fim <= m.fim) j = k; }); return j; })() })).filter(x => x.i >= 0 && x.j >= x.i).sort((a, b) => a.i - b.i || b.j - a.j);
+  const ponta = r => (String(r || '').match(/[.,;:!?…"”)]+$/) || [''])[0].replace(/^\.(?=\d)/, '');
+  for (let k = 0; k < T.length;) {
+    const x = onde.find(o => o.i === k);
+    if (x) { const r = R[T[x.j].b]; out.push({ t: x.m.txt, p: ponta(r), c: x.m.corr || T.slice(x.i, x.j + 1).some(t => t.fix), k: x.m.k || 'n', num: /^(?:\d|R\$)/.test(x.m.txt) }); k = x.j + 1; continue; }
+    const t = T[k], r = R[t.a];
+    if (/^reais$/.test(t.w) && out.length && out[out.length - 1].k === 'din') { out[out.length - 1].p = out[out.length - 1].p || ponta(r); k++; continue; }
+    if (k && T[k - 1].a === t.a && T[k - 1].b === t.b && !(T[k - 1].ext)) { k++; continue; } // segunda parte da mesma palavra
+    if (t.fix) out.push({ t: t.fix, p: ponta(r), c: true });
+    else if (t.ext) out.push({ t: t.w.replace('.', ','), p: ponta(R[t.b]), c: false });
+    else { const p = ponta(r), nu = p ? r.slice(0, r.length - p.length) : r, g = VZ_GRAFIA[t.w]; out.push({ t: g && /^[\x20-\x7e]*$/.test(nu) ? (/^[A-Z]/.test(nu) ? g.charAt(0).toUpperCase() + g.slice(1) : g) : nu, p, c: false }); }
+    k++;
+  }
+  // palavra repetida por engano ("no no Batel") e vírgulas que ajudam a ler
+  for (let k = out.length - 1; k > 0; k--) if (!out[k].k && !out[k - 1].k && !out[k - 1].p && vzNorm(out[k].t) === vzNorm(out[k - 1].t) && !/^\d/.test(out[k].t)) out.splice(k - 1, 1);
+  out.forEach((o, k) => {
+    const a = out[k - 1]; if (!a || a.p) return;
+    if (o.k && a.k && !(o.k === 'cli' && a.k === 'cli')) a.p = ',';
+    else if (/^(?:eu acho|acho)$/i.test(o.t + (o.t.toLowerCase() === 'eu' && out[k + 1] ? ' ' + out[k + 1].t : '')) && k > 1 && !/^(?:que|e|mas|eu)$/i.test(a.t)) a.p = ',';
+    else if (/^mas$/i.test(o.t) || (Q.cad && k > 1 && ((a.k && /^(?:quer|ela|ele|até|de|casa|apartamento|cobertura|terreno|cliente|com)$/i.test(o.t)) || (a.k && o.t === 'a' && out[k + 1] && out[k + 1].t === 'partir') || (/^(?:telefone|celular|whatsapp|zap|bairros?|faixa|valor)$/i.test(o.t) && !/^(?:o|a|de|do|da|no|na|e|meu|seu|cliente)$/i.test(a.t))))) a.p = ',';
+  });
+  if (Q.cad && Q.cad.obs && out.length) { out[out.length - 1].p = '.'; out.push({ t: 'Observação:', p: '', c: false }, { t: Q.cad.obs, p: '', c: false }); }
+  if (out.length) { // maiúscula no começo e ponto no fim
+    out[0].t = out[0].t.charAt(0).toLocaleUpperCase('pt-BR') + out[0].t.slice(1);
+    const u = out[out.length - 1]; if (!/[.!?…]/.test(u.p) && out.length > 2) u.p = /^(?:qual|quais|quem|que cliente|tem|o que|pra quem|para quem|cad[eê]|onde|algum)\b/.test(Q.norm) || /\b(?:qual|quem)(?: \w+){1,3}(?: era)?$/.test(Q.norm) ? '?' : '.'; else if (/[,;]$/.test(u.p)) u.p = '.';
+  }
+  return out;
+}
+const vzTexto = Q => Q.pecas.map(p => p.t + (p.p || '')).join(' ');
+
+// ── a decisão: o reconhecedor manda até 8 hipóteses da mesma fala e erra "três"/"treze". Escolhe a que faz sentido na Carteira.
+// hips = [texto1, texto2…] do mais para o menos provável; pesa(Q, campo, valor) → 0..1 (quanto existe por perto desse valor)
+function vzDecide(hips, ctx, pesa, digitado) {
+  const vistas = new Set(), l = hips.map(h => String(h || '').trim()).filter(h => { const n = vzNorm(h); return n && !vistas.has(n) && vistas.add(n); }).slice(0, 10).map((h, k) => { const Q = vzEntende(h, ctx); return { h, k, Q, n: Q.pts - Q.sobra * .9 - k * .3 - (k ? .6 : 0) }; });
+  if (!l.length) return null;
+  const m = l.slice().sort((a, b) => b.n - a.n || a.k - b.k)[0], Q = m.Q; Q.cru = hips[0]; Q.trocouHip = m.k > 0;
+  if (!Q.preco || !Q.ondePreco) return Q;
+  // leituras possíveis do valor, com o peso de cada uma
+  let duvida = 0; const seco = Q.outra && Q.outra.seco ? { v: Q.outra.v, alt: Q.outra.alt } : null, campo = Q.ondePreco.campo, oferece = new Set(), val = new Map(), poe = (v, p) => { if (v) val.set(v, Math.max(val.get(v) || 0, p)); };
+  const ditos = new Set(l.map(x => x.Q.ondePreco && x.Q.ondePreco.v)); // valores que alguma hipótese disse com todas as letras
+  l.forEach(x => { if (x.n < m.n - 2.5 && x.k) return; const o = x.Q.ondePreco; if (!o || !x.Q.preco || o.campo !== campo) return; const w = x === m ? 1 : x.k === 0 ? .6 : Math.max(.12, .5 - x.k * .1), a = x === m && x.Q.outra && (x.Q.outra.seco || (!digitado && ditos.has(x.Q.outra.alt))) ? x.Q.outra : null; if (!a && x === m && x.Q.outra && !digitado) duvida = x.Q.outra.alt; poe(o.v, w * (a || (x.Q.outra && x.Q.outra.seco) ? 1 - x.Q.outra.pa : 1)); if (a) poe(a.alt, w * a.pa); if (x === m || x.k <= 1) { oferece.add(o.v); if (a) oferece.add(a.alt); } });
+  if (val.size > 1) {
+    const r = [...val].map(([v, p]) => ({ v, p, e: pesa(Q, campo, v) })).map(x => Object.assign(x, { n: x.p * (.08 + x.e) })).sort((a, b) => b.n - a.n), tot = r.reduce((t, x) => t + x.n, 0);
+    if (r[0].v !== Q.ondePreco.v) vzPoeValor(Q, r[0].v, true);
+    const o = r.find(x => x.v !== r[0].v && oferece.has(x.v) && x.e >= .5 && x.n / tot >= .1 && Math.abs(x.v / r[0].v - 1) > .04); if (o) Q.ouValor = o.v;
+  }
+  if (!Q.ouValor && seco && Q.ondePreco.v === seco.v) Q.ouValor = seco.alt; // ficou "13.500", mas "três e quinhentos" soa igual: pergunta
+  // "13 milhões" bem ouvido, mas não existe nada por perto e existe em 3: não troca, só pergunta
+  if (!Q.ouValor && duvida && duvida !== Q.ondePreco.v && pesa(Q, campo, Q.ondePreco.v) === 0 && pesa(Q, campo, duvida) >= .5) Q.ouValor = duvida;
+  return Q;
+}
+// troca o valor entendido (na busca e no texto)
+function vzPoeValor(Q, v, corr) {
+  const o = Q.ondePreco, velho = o.v; Q.preco[o.campo] = v; const m = Q.M.find(x => x.k === 'din' && x.ini === o.ini); if (m) { m.txt = vzDin(v); m.corr = !!corr; }
+  o.v = v; delete Q.outra; Q.pecas = vzEscreve(Q); return velho;
 }
 
 // ── PERGUNTAR POR VOZ: gravação, busca e tela ──
 const ICON_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>';
-let vz = { txt: '', q: null, modo: '', cli: '', n: 20, np: 10, ord: 'melhor', de: 'clientes', itens: null, abriu: '' };
+let vz = { txt: '', q: null, cad: null, comp: null, modo: '', cli: '', n: 20, np: 10, ord: 'melhor', de: 'clientes', itens: null, abriu: '' };
 const vzChaveB = b => bkey(VZ_APELIDOS[vzNorm(b)] || b); // "Sao Bras" no anúncio = "São Braz"
 const vzCwb = i => !i.ci || norm(i.ci) === 'curitiba';
 let vzBase = null;
 function vzContexto() {
-  if (!vzBase || vzBase.n !== IMOVEL.size) {
-    const bs = new Map(BAIRROS_CWB.map(b => [vzNorm(b), b])), cs = new Map(), emps = new Map(), empPal = new Map();
-    IMOVEL.forEach(i => {
-      if (vzCwb(i)) { if (i.b && !bs.has(vzNorm(i.b))) bs.set(vzNorm(i.b), i.b); } else if (!cs.has(vzNorm(i.ci))) cs.set(vzNorm(i.ci), nomeProprio(i.ci));
-      if (i.e) { const n = vzNucleo(i.e); if (n.length >= 3 && !emps.has(n)) emps.set(n, i.e); }
-    });
-    for (const n of emps.keys()) new Set(n.split(' ')).forEach(w => empPal.set(w, (empPal.get(w) || 0) + 1));
-    vzBase = { n: IMOVEL.size, bairros: [...bs.values()], cidades: [...cs.values()], emps, empPal };
-  }
-  const cl = clientes.map(c => ({ id: c.id, tk: vzNorm(c.nome).split(' ').filter(x => x && !/^(de|da|do|dos|das|e)$/.test(x)) }));
+  if (!vzBase || vzBase.n !== IMOVEL.size) { vzBase = vzMonta([...IMOVEL.values()], BAIRROS_CWB, vzCwb); vzBase.n = IMOVEL.size; }
+  const cl = clientes.map(c => { const o = { id: c.id, tk: [], nm: [] }; nomeProprio(c.nome).split(/\s+/).forEach(p => { const ws = vzNorm(p).split(' ').filter(x => x && !/^(de|da|do|dos|das|e)$/.test(x)); ws.forEach(w => { o.tk.push(w); o.nm.push(ws.length === 1 ? p.replace(/[.,;()]+/g, '') : nomeProprio(w)); }); }); return o; });
   return Object.assign({}, vzBase, { clientes: cl, primeiros: new Set(cl.map(c => c.tk[0])), chave: vzChaveB });
 }
-function vzPergunta(txt) {
+// quanto existe por perto de um valor com o resto do pedido (0 a 1): é o que separa "3 milhões" de "13 milhões", "3 e 400" de "13.400"
+function vzPesa(Q, campo, v) {
+  const [a, b] = campo === 'max' ? [v * .65, v * 1.1] : campo === 'min' ? [v * .9, v * 1.6] : [v * .9, v * 1.1], nota = n => n >= 3 ? 1 : n === 2 ? .85 : n ? .7 : 0;
+  const cs = (Q.clientes || []).map(byId).filter(c => c && c.valorMax); if (cs.length === 1 && cs[0].valorMax / v >= .7 && cs[0].valorMax / v <= 1.4) return 1; // o teto do cliente citado
+  if (Q.intencao === 'clientes' && !Q.emp && !Q.rua) return nota(clientes.filter(c => c.status === 'ativo' && c.valorMax >= v * .85 && c.valorMax <= v * 1.2 && (!Q.tipos.length || c.tipos.some(t => Q.tipos.includes(t))) && (!Q.bairros.length || c.bairros.some(y => Q.bairros.some(x => vzChaveB(x) === vzChaveB(y))))).length);
+  const K = vzCriterios(Q).filter(k => ['emp', 'rua', 'tipos', 'lugar', 'fora', 'q', 's', 'v'].includes(k)); let n = 0;
+  for (const e of Q.loc ? [LOCACAO] : ESTOQUES) for (const i of estoque[e.id] ? estoque[e.id].imoveis : []) if (i.tc && i.p >= a && i.p <= b && K.every(k => VZ_TESTE[k](i, Q)) && ++n >= 3) return 1;
+  if (n || !(Q.emp || Q.rua)) return nota(n);
+  // nenhum a 10%: o mais perto que existe naquele condomínio (ou rua)
+  let d = 9; for (const e of Q.loc ? [LOCACAO] : ESTOQUES) for (const i of estoque[e.id] ? estoque[e.id].imoveis : []) if (i.tc && i.p && K.every(k => VZ_TESTE[k](i, Q))) d = Math.min(d, Math.abs(i.p / v - 1));
+  return d < .25 ? .5 : d < .45 ? .2 : 0;
+}
+// hips = o que o reconhecedor ouviu, da mais para a menos provável (sem hips = texto digitado ou tocado no histórico, que vale ao pé da letra)
+function vzPergunta(txt, hips) {
   txt = String(txt || '').replace(/\s+/g, ' ').trim(); if (!txt) return;
-  const hist = [txt].concat(lsGet('carteira_voz_hist', []).filter(x => norm(x) !== norm(txt))).slice(0, 6); lsSet('carteira_voz_hist', hist);
-  const Q = vzEntende(txt, vzContexto());
-  vz = Object.assign(vz, { txt, q: Q, modo: Q.intencao, cli: Q.intencao === 'imovel' && Q.clientes && Q.clientes.length === 1 ? Q.clientes[0] : '', n: 20, np: 10, ord: 'melhor', itens: null, abriu: '' });
+  let l = hips && hips.length ? hips : [txt];
+  if (vz.comp) { const k = vz.comp; vz.comp = null; if (!vzEhCadastro(vzNorm(l[0]))) l = l.map(x => vzCompleta(k, x)); }
+  const Q = vzDecide(l, vzContexto(), vzPesa, !hips); if (!Q) return;
+  const limpo = vzTexto(Q), cad = Q.intencao === 'cadastro';
+  if (!cad) lsSet('carteira_voz_hist', [limpo].concat(lsGet('carteira_voz_hist', []).filter(x => norm(x) !== norm(limpo))).slice(0, 6));
+  vz = Object.assign(vz, { txt: limpo, cru: l[0], hips: l, dig: !hips, q: Q, modo: Q.intencao, cli: Q.intencao === 'imovel' && Q.clientes && Q.clientes.length === 1 ? Q.clientes[0] : '', n: 20, np: 10, ord: 'melhor', itens: null, abriu: '', cad: null });
   if (ui.sheet) closeSheet();
   if (ui.tab !== 'voz') vz.de = ui.tab;
+  if (cad) vz.cad = vzCadastro(Q);
   go('voz'); // o go desenha a página
-  vzAbreCliente();
+  if (cad) { if (!vz.cad.falta.length && !vz.cad.dup) vzGravaCad(); } else vzAbreCliente();
+}
+// o estoque chegou depois da pergunta: lê de novo, agora com os nomes e os valores que existem
+function vzRefaz() {
+  if (!vz.q || !vz.hips || vz.modo === 'cadastro') return;
+  const m = vz.modo === vz.q.intencao; vz.q = vzDecide(vz.hips, vzContexto(), vzPesa, vz.dig); vz.txt = vzTexto(vz.q); if (m) vz.modo = vz.q.intencao;
+  if (ui.tab === 'voz') { renderVoz(); vzAbreCliente(); }
 }
 // "tem imóvel novo para o André Vilela?": abre a ficha dele, nos Novos quando há
 function vzAbreCliente() {
@@ -3837,6 +4213,59 @@ function vzFicha(id) {
   const nv = novosPara(c).length; ui.fonte = nv && vz.modo === 'abrir' ? 'novos' : 'todas'; ui.j8Mais[id] = 5;
   if (vz.q && vz.q.novos && !nv) toast(`Nenhum imóvel novo para ${nomeProprio(firstName(c.nome))} agora.`);
   renderFicha(id);
+}
+
+// ── cadastrar cliente falando (23/11, pedido dele) ──
+// "Cadastrar cliente Carlos Gomes, telefone…, bairro Santa Felicidade, Cascatinha, faixa de valor de 500 a 600 mil, 3 quartos, 3 vagas":
+// com nome, faixa de valor e um bairro, grava na hora e abre a ficha (com Desfazer); faltando algum, pede só o que falta.
+function vzCadastro(Q) {
+  const p = Q.preco || {}, a = Q.area || {}, t = Q.terreno || {}, d = cleanClient({}), soTerra = Q.tipos.length && Q.tipos.every(x => GRUPO[x] === 'Terreno');
+  Object.assign(d, { nome: Q.cad.nome, whats: Q.cad.fone, tipos: Q.tipos.length ? Q.tipos.slice() : RESIDENCIAL.slice(), bairros: [...new Set(Q.bairros.map(spell).concat(Q.cidades))],
+    valorMin: p.min || 0, valorMax: p.max || p.perto || 0, quartos: Q.q || 0, vagas: Q.v || 0, areaMin: soTerra ? 0 : a.min || a.perto || 0, areaMax: soTerra ? 0 : a.max || 0, terrenoMin: t.min || t.perto || (soTerra ? a.min || a.perto || 0 : 0),
+    mobilia: Q.mo ? Q.mo.slice() : [], situacao: Q.ob ? [Q.ob] : [], etapa: Q.etapas && ETAPA[Q.etapas[0]] ? Q.etapas[0] : 'qual' });
+  d.obs = [Q.s ? Q.s + plural(Q.s, ' suíte', ' suítes') : '', ...Q.itens.map(x => x.rot.toLowerCase()), Q.fora.length ? 'menos ' + Q.fora.join(', ') : '', Q.loc ? 'quer alugar' : '', Q.cad.obs].filter(Boolean).join(', ');
+  const w = d.whats ? waNumber(d.whats) : '', dup = clientes.find(c => (w && digits(c.whats) && waNumber(c.whats) === w) || (d.nome && norm(c.nome) === norm(d.nome))) || null;
+  return { d, falta: [!d.nome && 'nome', !d.valorMin && !d.valorMax && 'faixa de valor', !d.bairros.length && 'bairro'].filter(Boolean), dup: dup ? dup.id : '', semTipo: !Q.tipos.length, foneRuim: Q.cad.foneRuim, sobras: Q.sobras, id: '', desfeito: false };
+}
+function vzGravaCad() {
+  const k = vz.cad; if (!k || k.id || k.falta.length) return;
+  k.dup = ''; k.desfeito = false; k.id = newId('c');
+  const c = saveClient(Object.assign(cleanClient({}), k.d, { id: k.id, criadoEm: nowLocal(), status: 'ativo', envios: [] }));
+  ui.fonte = carregados && novosPara(c).length ? 'novos' : 'todas'; renderVoz(); renderFicha(c.id);
+  toast(`${nomeProprio(firstName(c.nome))} entrou na carteira.`); setTimeout(vzAltura, 80);
+}
+function vzDesfazCad() {
+  const k = vz.cad; if (!k || !k.id) return; const id = k.id, c = byId(id);
+  if (c && c.envios.length) { toast('Esse cliente já recebeu imóvel. Para tirar, use Arquivar na ficha.'); return; }
+  if (ui.sheet && ui.sheet.id === id) closeSheet();
+  k.id = ''; k.desfeito = true; if (c) removeClient(id); toast('Cadastro desfeito.'); if (ui.tab === 'voz') renderVoz();
+}
+// "falar o que falta": junta a fala nova com o que já foi entendido
+function vzCompleta(k, x) {
+  const novo = x.replace(/[.?!,;]+$/, '').trim(), base = k.base.replace(/[.?!]+$/, ''), corpo = base.replace(/^.*?(?:cadastr\S*|nov[oa] cliente|adicion\S*|inclu\S*|registr\S*|anot\S*)(?:\s+(?:aí|ai|pra mim|para mim|o|a|um|uma|novo|nova|cliente))*[\s,:]*/i, '');
+  if (k.falta.includes('nome')) return 'cadastrar cliente ' + novo.replace(/^(?:(?:o|a)\s+)?(?:nome(?:\s+(?:dele|dela|do cliente|da cliente))?|cliente|(?:ele|ela)?\s*se chama|chama)(?:\s+(?:é|e|eh))?\s+/i, '') + ', ' + corpo;
+  const so = k.falta.length === 1 ? k.falta[0] : '', n = vzNorm(novo);
+  return base + ', ' + (so === 'faixa de valor' && !/\b(?:valor|faixa|ate|de|entre|partir)\b/.test(n) ? 'valor ' : so === 'bairro' && !/\bbairros?\b/.test(n) ? 'bairro ' : '') + novo;
+}
+// o que conferir no cadastro que acabou de entrar (aparece na ficha e na página)
+function vzAvisosCad(id) {
+  const k = vz.cad, c = k && k.id === id && byId(id); if (!c) return '';
+  const l = [];
+  if (k.foneRuim) l.push(`O telefone veio incompleto (${esc(k.foneRuim)}), então não gravei.`);
+  if (k.sobras.length) l.push(`Não entendi: ${k.sobras.map(x => '“' + esc(x) + '”').join(', ')}.`);
+  const FAM = [['Casas', TIPOS_ANTIGOS.Casa], ['Apartamentos', TIPOS_ANTIGOS.Apartamento], ['Coberturas', ['Cobertura']], ['Terrenos', TIPOS_ANTIGOS.Terreno]];
+  return `<div class="vzcad"><div class="vzcadt"><b>✓ Cadastrado por voz</b><button class="link" data-act="vz-cad-undo">Desfazer</button></div>${l.map(x => `<p>${x}</p>`).join('')}${k.semTipo ? `<p>Você não falou o tipo. Deixei casas, apartamentos e coberturas; toque para deixar só um:</p><div class="chips sm">${FAM.map(([n, t]) => `<button class="chip${c.tipos.length === t.length && t.every(x => c.tipos.includes(x)) ? ' on' : ''}" data-act="vz-cad-tipo" data-v="${n}">${n}</button>`).join('')}</div>` : ''}</div>`;
+}
+function vzRenderCad(res) {
+  const k = vz.cad, c = k.id && byId(k.id), d = k.d;
+  if (c) { res.innerHTML = `<div class="list" style="margin-top:18px">${vzLinhaCliente(c)}</div>${vzAvisosCad(c.id)}<div class="acts" style="margin-top:14px"><button class="btn-or" data-act="vz-ficha" data-id="${c.id}">Abrir ficha</button><button class="btn-ghost" data-act="edit" data-id="${c.id}">Editar</button></div>`; return; }
+  const dup = k.dup && byId(k.dup), falta = x => k.falta.includes(x), v = (t, x) => t ? esc(t) : x ? '<span class="vzfalta">Falta</span>' : '—';
+  const linhas = [['Nome', v(d.nome && nomeProprio(d.nome), falta('nome'))], ['Faixa de valor', v(faixaValor(d, true), falta('faixa de valor'))], ['Bairros', v(d.bairros.join(', '), falta('bairro'))], ['Telefone', d.whats ? esc(fmtFone(d.whats)) : k.foneRuim ? 'Incompleto: ' + esc(k.foneRuim) : 'Sem telefone (opcional)'],
+    ['Tipo', k.semTipo ? 'Casas, apartamentos e coberturas' : esc(tiposResumo(d.tipos).join(', '))], d.quartos && ['Quartos', d.quartos + ' ou mais'], d.vagas && ['Vagas', d.vagas + ' ou mais'], (d.areaMin || d.areaMax) && ['Metragem', d.areaMin && d.areaMax ? `${d.areaMin} a ${d.areaMax} m²` : d.areaMin ? `a partir de ${d.areaMin} m²` : `até ${d.areaMax} m²`], d.terrenoMin && ['Terreno', `a partir de ${d.terrenoMin} m²`], d.obs && ['Observações', esc(d.obs)]].filter(Boolean);
+  res.innerHTML = `<div class="vzcad pend"><div class="vzcadt"><b>${k.desfeito ? 'Cadastro desfeito' : dup ? 'Já existe um cliente assim' : 'Falta ' + listaPt(k.falta.map(x => x === 'bairro' ? 'pelo menos um bairro' : 'o nome|a faixa de valor'.split('|')[x === 'nome' ? 0 : 1]))}</b></div>
+    ${dup && !k.desfeito ? `<div class="list" style="margin-top:12px">${vzLinhaCliente(dup)}</div>` : ''}
+    <div class="acts" style="margin-top:14px">${k.falta.length ? `<button class="btn-or" data-act="vz-mic-falta">${ICON_MIC.replace('<svg', '<svg width="18" height="18"')}Falar o que falta</button><button class="btn-ghost" data-act="vz-cad-form">Preencher no formulário</button>` : `<button class="btn-or" data-act="vz-cad-sim">${k.desfeito ? 'Cadastrar de novo' : 'Cadastrar mesmo assim'}</button>`}</div>
+    <dl class="info" style="margin-top:16px">${linhas.map(([n, x]) => `<dt>${n}</dt><dd>${x}</dd>`).join('')}</dl></div>`;
 }
 
 // ── busca de imóveis ──
@@ -3852,11 +4281,12 @@ const VZ_TESTE = {
   preco: (i, Q, t = .1) => { const p = Q.preco; if (!i.p) return false; return p.perto ? Math.abs(i.p / p.perto - 1) <= t : (!p.max || i.p <= p.max * (1 + (Q.loc ? 0 : t))) && (!p.min || i.p >= p.min * (t > .1 ? 1 - t : 1)); },
   area: (i, Q, t = .03) => { const a = Q.area; if (!i.a) return false; return a.perto ? Math.abs(i.a - a.perto) <= Math.max(2, a.perto * t) : (!a.max || i.a <= a.max * (1 + t)) && (!a.min || i.a >= a.min * (1 - t)); },
   terreno: (i, Q, t = .1) => { const a = Q.terreno; if (!i.at) return false; return (!a.perto || i.at >= a.perto * (1 - t)) && (!a.max || i.at <= a.max * (1 + t)) && (!a.min || i.at >= a.min * (1 - t / 2)); },
-  mo: (i, Q) => Q.mo.includes(i.mo), ob: (i, Q) => i.ob === Q.ob, novos: i => ehNovo(i)
+  mo: (i, Q) => Q.mo.includes(i.mo), ob: (i, Q) => i.ob === Q.ob, novos: i => ehNovo(i),
+  fora: (i, Q) => !(i.b && Q.fora.some(b => vzChaveB(b) === vzChaveB(i.b)))
 };
 function vzCriterios(Q) {
   const k = [];
-  if (Q.emp) k.push('emp'); if (Q.rua) k.push('rua'); if (Q.tipos.length) k.push('tipos'); if (Q.bairros.length || Q.cidades.length) k.push('lugar');
+  if (Q.emp) k.push('emp'); if (Q.rua) k.push('rua'); if (Q.tipos.length) k.push('tipos'); if (Q.bairros.length || Q.cidades.length) k.push('lugar'); if (Q.fora.length) k.push('fora');
   ['q', 's', 'v'].forEach(x => { if (Q[x]) k.push(x); });
   // imóvel apontado pelo nome ou pela rua: o valor e a metragem "acho que é" só ordenam, não escondem
   if (Q.preco && !((Q.emp || Q.rua) && Q.preco.perto)) k.push('preco'); if (Q.area && !((Q.emp || Q.rua) && Q.area.perto)) k.push('area');
@@ -3947,10 +4377,10 @@ function vzBuscaClientes(Q) {
 
 // ── tela ──
 function vzChips(Q) {
-  const ch = [], din = p => p.min && p.max ? `de ${fmtValor(p.min)} a ${fmtValor(p.max)}` : p.max ? 'até ' + fmtValor(p.max) : p.min ? 'a partir de ' + fmtValor(p.min) : 'perto de ' + fmtValor(p.perto);
+  const fv = Q.loc ? vzDin : fmtValor, ch = [], din = p => p.min && p.max ? `de ${fv(p.min)} a ${fv(p.max)}` : p.max ? 'até ' + fv(p.max) : p.min ? 'a partir de ' + fv(p.min) : 'perto de ' + fv(p.perto);
   const met = (a, n) => (a.min && a.max ? `${a.min} a ${a.max} m²` : a.max ? `até ${a.max} m²` : a.min ? `a partir de ${a.min} m²` : `${a.perto} m²`) + n;
-  if (Q.emp) ch.push(['emp', Q.emp.nome]); if (Q.rua) ch.push(['rua', 'Rua ' + nomeProprio(Q.rua.nome) + (Q.rua.num ? ', ' + Q.rua.num : '')]);
-  if (Q.tipos.length) ch.push(['tipos', tiposResumo(Q.tipos).join(', ')]); if (Q.bairros.length || Q.cidades.length) ch.push(['lugar', Q.bairros.concat(Q.cidades).join(', ')]);
+  if (Q.emp) ch.push(['emp', Q.emp.rot || Q.emp.nome]); if (Q.rua) ch.push(['rua', (Q.rua.rot || 'Rua ' + nomeProprio(Q.rua.nome)) + (Q.rua.num ? ', ' + Q.rua.num : '')]);
+  if (Q.tipos.length) ch.push(['tipos', tiposResumo(Q.tipos).join(', ')]); if (Q.bairros.length || Q.cidades.length) ch.push(['lugar', Q.bairros.concat(Q.cidades).join(', ')]); if (Q.fora.length) ch.push(['fora', 'menos ' + Q.fora.join(', ')]);
   if (Q.q) ch.push(['q', Q.q + plural(Q.q, ' quarto', ' quartos') + ' ou mais']); if (Q.s) ch.push(['s', Q.s + plural(Q.s, ' suíte', ' suítes') + ' ou mais']); if (Q.v) ch.push(['v', Q.v + plural(Q.v, ' vaga', ' vagas') + ' ou mais']);
   if (Q.preco) ch.push(['preco', din(Q.preco) + (Q.loc ? '/mês' : '')]); if (Q.area) ch.push(['area', met(Q.area, '')]); if (Q.terreno) ch.push(['terreno', 'terreno ' + met(Q.terreno, '')]);
   if (Q.mo) ch.push(['mo', Q.mo.includes('m') ? 'Semi-mobiliado' : 'Mobiliado']); if (Q.ob) ch.push(['ob', Q.ob === 'p' ? 'Na planta' : 'Pronto']); if (Q.loc) ch.push(['loc', 'Para alugar']); if (Q.novos) ch.push(['novos', 'Só os novos']);
@@ -3959,10 +4389,11 @@ function vzChips(Q) {
 }
 function vzTira(k) {
   const Q = vz.q; if (!Q) return;
-  if (k === 'tipos') Q.tipos = []; else if (k === 'lugar') { Q.bairros = []; Q.cidades = []; } else if (/^it\d/.test(k)) Q.itens.splice(+k.slice(2), 1); else delete Q[k];
+  if (k === 'tipos') Q.tipos = []; else if (k === 'lugar') { Q.bairros = []; Q.cidades = []; } else if (k === 'fora') Q.fora = []; else if (/^it\d/.test(k)) Q.itens.splice(+k.slice(2), 1); else delete Q[k];
+  if (k === 'preco') delete Q.ouValor;
   vz.itens = null; vz.n = 20; renderVoz();
 }
-const VZ_EXEMPLOS = ['Casa com 3 quartos e 2 suítes na região do Santo Inácio', 'Apartamento de 163 metros no Ecoville', 'A casa do Campos do Jordão, acho que 3 milhões e 400', 'Qual cliente queria casa em Santa Felicidade até 5 milhões?', 'Tem imóvel novo para mandar para o …?', 'Casa em condomínio no Campo Comprido com piscina até 4 milhões'];
+const VZ_EXEMPLOS = ['Casa com 3 quartos e 2 suítes na região do Santo Inácio', 'Cadastrar cliente …', 'Apartamento de 163 metros no Ecoville', 'A casa do Campos do Jordão, acho que 3 milhões e 400', 'Qual cliente queria casa em Santa Felicidade até 5 milhões?', 'Tem imóvel novo para mandar para o …?', 'Casa em condomínio no Campo Comprido com piscina até 4 milhões'];
 function vzLinhaCliente(c, porque) {
   const nn = novosPara(c).length;
   return `<button class="crow vzc" data-act="vz-ficha" data-id="${c.id}">${avatar(c)}<div class="cm"><div class="nm np">${esc(nomeProprio(c.nome))}${c.status === 'arquivado' ? '<span class="pill arquivado">Arquivado</span>' : `<span class="pill et-${c.etapa}">${ETAPA[c.etapa][2]}</span>`}</div>
@@ -3978,13 +4409,19 @@ function renderVoz() {
     ent.innerHTML = ''; res.innerHTML = `${h.length ? `<span class="lbl" style="margin-top:22px">Últimas perguntas</span><div class="vzex">${h.map(x => `<button data-act="vz-ex" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}<span class="lbl" style="margin-top:22px">Pode perguntar assim</span><div class="vzex">${VZ_EXEMPLOS.map(x => `<button data-act="vz-ex" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
     return;
   }
+  if (vz.modo === 'cadastro' && vz.cad) { ent.innerHTML = vzOuvido(Q); return vzRenderCad(res); }
   const ch = vzChips(Q), nada = !ch.length && !(Q.clientes && Q.clientes.length);
-  ent.innerHTML = `<div class="vzent"><div class="chips sm">${[['imovel', 'Imóveis'], ['clientes', 'Clientes']].map(([k, l]) => `<button class="chip${vz.modo === k ? ' on' : ''}" data-act="vz-modo" data-v="${k}">${l}</button>`).join('')}</div>${ch.length ? `<div class="vzch"><span class="muted">Entendi:</span>${ch.map(([k, t]) => `<span class="chip tag">${esc(t)}<button class="rm" data-act="vz-tira" data-v="${k}" aria-label="Tirar ${esc(t)}">×</button></span>`).join('')}</div>` : ''}</div>`;
+  ent.innerHTML = `<div class="vzent"><div class="chips sm">${[['imovel', 'Imóveis'], ['clientes', 'Clientes']].map(([k, l]) => `<button class="chip${vz.modo === k ? ' on' : ''}" data-act="vz-modo" data-v="${k}">${l}</button>`).join('')}</div>${ch.length ? `<div class="vzch"><span class="muted">Entendi:</span>${ch.map(([k, t]) => `<span class="chip tag">${esc(t)}<button class="rm" data-act="vz-tira" data-v="${k}" aria-label="Tirar ${esc(t)}">×</button></span>${k === 'preco' && Q.ouValor ? `<button class="chip vzou" data-act="vz-valor" data-v="${Q.ouValor}">Era ${(Q.loc ? vzDin : fmtValor)(Q.ouValor)}?</button>` : ''}`).join('')}</div>` : ''}</div>${vzOuvido(Q)}`;
   if (nada) { res.innerHTML = `<div class="empty" style="margin-top:18px"><h3>Não entendi o pedido</h3><p>Fale o tipo de imóvel, o bairro, o valor, a metragem, o nome do condomínio ou o nome do cliente. Você também pode corrigir o texto acima e tocar em Buscar.</p></div>`; return; }
   if (!carregados) { res.innerHTML = '<p class="muted" style="margin-top:18px">Carregando os estoques…</p>'; return; }
   if (vz.modo === 'abrir') return vzRenderAbrir(Q, res);
   if (vz.modo === 'clientes') return vzRenderClientes(Q, res);
   vzRenderImoveis(Q, res);
+}
+// "Ouvi assim…": só quando o texto foi mesmo corrigido (palavra trocada, outra hipótese ou ele se corrigiu na fala)
+function vzOuvido(Q) {
+  if (!vz.cru || !(Q.trocouHip || Q.emendou || Q.pecas.some(p => p.c)) || vzNorm(vz.cru) === vzNorm(vz.txt)) return '';
+  return `<p class="vzouvi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg><span>${vz.dig ? 'Estava' : 'Ouvi'} “${esc(vz.cru)}” e corrigi.</span></p>`;
 }
 function vzRenderAbrir(Q, res) {
   const l = Q.clientes.map(byId).filter(Boolean);
@@ -4036,39 +4473,58 @@ function vzAltura() { const t = $('#vz-in'); if (!t) return; t.style.height = 'a
 const VzSR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let vzRec = null;
 // no Android os pedaços às vezes vêm repetidos e crescendo ("casa", "casa com", "casa com 3 quartos"): fica só o maior
-function vzJunta(rs) {
+function vzJunta(ts) {
   let acc = '';
-  for (let k = 0; k < rs.length; k++) {
-    const t = ((rs[k][0] || {}).transcript || '').trim(); if (!t) continue;
+  for (const x of ts) {
+    const t = String(x || '').trim(); if (!t) continue;
     const a = vzNorm(acc), b = vzNorm(t);
     if (a && b.startsWith(a)) acc = t; else if (a && b.length >= 8 && a.endsWith(b)) continue; else acc = acc ? acc + ' ' + t : t;
   }
   return acc;
 }
-function vzOuvir() {
+// a fala inteira em cada hipótese do reconhecedor, da mais para a menos provável
+function vzHips(rs) {
+  const ps = Array.from(rs, r => Array.from(r, a => ((a || {}).transcript || '').trim())), base = ps.map(p => p[0] || ''), out = [vzJunta(base)];
+  for (let r = 1; r < Math.max(1, ...ps.map(p => p.length)); r++) ps.forEach((p, k) => { if (p[r]) out.push(vzJunta(base.map((b, j) => j === k ? p[r] : b))); });
+  return [...new Set(out.filter(Boolean))].slice(0, 10);
+}
+// o texto vai aparecendo já corrigido (o que mudou sai em destaque); se a conta demorar no aparelho, atualiza com menos frequência
+function vzMostra(est) {
+  if (est.m) return;
+  est.m = setTimeout(() => {
+    est.m = 0; if (est.fim) return; const t0 = Date.now(), f = $('#vz-fala'); let h = esc(est.txt);
+    try { const Q = vzDecide(est.hips, est.ctx || (est.ctx = Object.assign(vzContexto(), { vivo: true })), vzPesa); if (Q) h = Q.pecas.map(p => (p.c ? `<b>${esc(p.t)}</b>` : esc(p.t)) + esc(p.p || '')).join(' ').replace(/\.$/, ''); } catch (e) {}
+    f.innerHTML = h; f.classList.remove('dica'); f.scrollTop = f.scrollHeight; est.um = t0; est.pausa = Math.min(900, Math.max(140, (Date.now() - t0) * 4));
+  }, Math.max(0, (est.pausa || 0) - (Date.now() - (est.um || 0))));
+}
+function vzOuvir(dica) {
   if (vzRec) return;
   if (!VzSR) { vzSemVoz('Este navegador não grava voz por aqui. Toque no campo e use o microfone do teclado, ou escreva.'); return; }
-  const est = { txt: '', erro: '', cancela: false, fim: false, t: 0 };
+  const est = { txt: '', hips: [], erro: '', cancela: false, fim: false, t: 0, pronto: false };
   let rec; try { rec = new VzSR(); } catch (e) { vzSemVoz('Não consegui ligar o microfone. Use o microfone do teclado, ou escreva.'); return; }
-  rec.lang = 'pt-BR'; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 1;
+  rec.lang = 'pt-BR'; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 8;
   const arma = ms => { clearTimeout(est.t); est.t = setTimeout(() => vzPara(), ms); };
   const termina = () => {
-    if (est.fim) return; est.fim = true; clearTimeout(est.t); vzRec = null; $('#vz-ov').classList.add('hidden'); document.body.classList.remove('vz-on');
-    if (est.cancela) return;
-    if (est.txt.trim()) { vzPergunta(est.txt); return; }
+    if (est.fim) return; est.fim = true; clearTimeout(est.t); clearTimeout(est.m); vzRec = null; $('#vz-ov').classList.add('hidden'); document.body.classList.remove('vz-on');
+    if (est.cancela) { vz.comp = null; return; }
+    if (est.txt.trim()) { vzPergunta(est.txt, est.hips); return; }
+    vz.comp = null;
     if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(est.erro)) vzSemVoz('O microfone não está liberado para a Carteira. Libere nas permissões do navegador, ou use o microfone do teclado.');
     else if (est.erro === 'network') vzSemVoz('A voz precisa de internet e não consegui conectar. Escreva o pedido, ou tente de novo.');
     else toast('Não ouvi nada. Toque no microfone e fale de novo.');
   };
-  rec.onresult = e => { est.txt = vzJunta(e.results); const f = $('#vz-fala'); f.textContent = est.txt; f.classList.remove('dica'); arma(4000); };
+  // só pede para falar quando o microfone está mesmo ligado: quem fala antes perde a primeira palavra
+  const pronto = () => { if (est.pronto || est.fim) return; est.pronto = true; $('#vz-ov .kick').textContent = 'Ouvindo'; $('#vz-ov').classList.remove('ligando'); if (!est.txt) $('#vz-fala').textContent = dica ? dica + '.' : 'Pode falar. Ex.: "casa com 3 quartos no Santo Inácio até 4 milhões" ou "cadastrar cliente…"'; if (navigator.vibrate) navigator.vibrate(12); arma(10000); };
+  rec.onstart = () => setTimeout(pronto, 900); rec.onaudiostart = pronto;
+  rec.onresult = e => { pronto(); est.hips = vzHips(e.results); est.txt = est.hips[0] || ''; if (est.txt) vzMostra(est); arma(4000); };
   // começou a falar e o texto ainda não veio: não encerra no meio da fala
   rec.onspeechstart = () => { if (!est.txt) arma(25000); };
   rec.onerror = e => { est.erro = e.error || 'erro'; };
   rec.onend = termina;
   vzRec = { rec, est, termina };
-  const f = $('#vz-fala'); f.textContent = 'Pode falar. Ex.: "casa com 3 quartos no Santo Inácio até 4 milhões"'; f.classList.add('dica');
-  $('#vz-ov').classList.remove('hidden'); document.body.classList.add('vz-on');
-  try { rec.start(); arma(10000); if (navigator.vibrate) navigator.vibrate(12); } catch (e) { est.erro = 'not-allowed'; termina(); }
+  const f = $('#vz-fala'); f.textContent = 'Ligando o microfone…'; f.classList.add('dica'); $('#vz-ov .kick').textContent = 'Um instante';
+  $('#vz-ov').classList.remove('hidden'); $('#vz-ov').classList.add('ligando'); document.body.classList.add('vz-on');
+  try { rec.start(); arma(12000); } catch (e) { est.erro = 'not-allowed'; termina(); }
 }
 function vzPara() { if (!vzRec) return; const r = vzRec; clearTimeout(r.est.t); try { r.rec.stop(); } catch (e) {} setTimeout(r.termina, 2500); /* se o navegador não avisar o fim, segue com o que ouviu */ }
 function vzCancela() { if (!vzRec) return; const r = vzRec; r.est.cancela = true; try { r.rec.abort(); } catch (e) {} r.termina(); }
@@ -4076,19 +4532,25 @@ function vzSemVoz(msg) { if (ui.tab !== 'voz') { vz.de = ui.tab; go('voz'); } to
 function vzAcao(a, el) {
   const v = el.dataset.v;
   switch (a) {
-    case 'vz-mic': vzOuvir(); break;
+    case 'vz-mic': vz.comp = null; vzOuvir(); break;
+    case 'vz-mic-falta': vz.comp = { base: vz.txt, falta: vz.cad.falta.slice() }; vzOuvir('Fale ' + listaPt(vz.cad.falta.map(x => x === 'nome' ? 'o nome' : x === 'bairro' ? 'o bairro' : 'a faixa de valor'))); break;
+    case 'vz-cad-sim': vz.cad.dup = ''; vzGravaCad(); break;
+    case 'vz-cad-undo': vzDesfazCad(); break;
+    case 'vz-cad-form': { const d = vz.cad.d; vz.q = null; vz.txt = ''; vz.cad = null; $('#vz-in').value = ''; renderVoz(); openForm(null, Object.assign({}, d, { id: undefined })); break; }
+    case 'vz-cad-tipo': { const c = vz.cad && byId(vz.cad.id), t = { Casas: TIPOS_ANTIGOS.Casa, Apartamentos: TIPOS_ANTIGOS.Apartamento, Coberturas: ['Cobertura'], Terrenos: TIPOS_ANTIGOS.Terreno }[v]; if (c && t) saveClient(Object.assign({}, c, { tipos: t.slice(), tiposV: 2 })); break; }
     case 'vz-parar': vzPara(); break;
     case 'vz-cancela': vzCancela(); break;
     case 'vz-escreve': vzCancela(); if (ui.tab !== 'voz') { vz.de = ui.tab; go('voz'); } $('#vz-in').focus(); break;
-    case 'vz-ex': if (/…/.test(v)) { const t = $('#vz-in'); t.value = v.replace(/…\?$/, ''); t.focus(); vzAltura(); } else vzPergunta(v); break;
+    case 'vz-ex': if (/…/.test(v)) { const t = $('#vz-in'); t.value = v.replace(/…\??$/, ''); t.focus(); vzAltura(); } else vzPergunta(v); break;
     case 'vz-modo': vz.modo = v; vz.n = 20; renderVoz(); break;
     case 'vz-tira': vzTira(v); break;
+    case 'vz-valor': { const Q = vz.q, velho = vzPoeValor(Q, +v, true); Q.ouValor = velho; vz.txt = vzTexto(Q); vz.itens = null; vz.n = 20; renderVoz(); break; }
     case 'vz-ord': vz.ord = v; vz.n = 20; renderVoz(); break;
     case 'vz-mais': vz.n += 20; renderVoz(); break;
     case 'vz-mais-perto': vz.np += 10; renderVoz(); break;
     case 'vz-cli-x': vz.cli = ''; renderVoz(); break;
     case 'vz-ficha': vzFicha(el.dataset.id); break;
-    case 'vz-nova': vz.q = null; vz.txt = ''; renderVoz(); $('#vz-in').value = ''; vzAltura(); break;
+    case 'vz-nova': vz.q = null; vz.txt = ''; vz.cad = null; vz.comp = null; renderVoz(); $('#vz-in').value = ''; vzAltura(); break;
     case 'vz-volta': go(vz.de || 'clientes'); break;
   }
 }
@@ -4347,6 +4809,7 @@ function renderFicha(id, confirmDel) {
   const html = `
   <div class="sh-h">${avatar(c, true)}<div style="min-width:0"><div class="kick">Ficha do cliente</div><h2 class="np">${esc(nomeProprio(c.nome))}</h2><div class="muted" style="font-size:14px;margin-top:3px">${wa ? 'WhatsApp ' + esc(fmtFone(c.whats)) : 'Sem WhatsApp cadastrado'}${c.criadoEm ? ' · desde ' + fmtDate(c.criadoEm) : ''}</div>${(() => { const [cor, frase] = contatoTxt(c); return `<div class="ultc${cor === 'ok' ? '' : ' warn'}"><span class="dot"></span>${frase}</div>`; })()}</div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
   <div class="sh-b">
+    ${vzAvisosCad(c.id)}
     <div class="acts">
       ${wa ? `<a class="btn-or" href="${esc(waLink(c))}" target="_blank" rel="noopener">${WA_ICON.replace('<svg', '<svg width="18" height="18"')}Abrir conversa</a>` : ''}
       <button class="btn-ghost" data-act="edit" data-id="${c.id}">Editar ficha</button>
@@ -4391,9 +4854,9 @@ function renderFicha(id, confirmDel) {
 
 // ── FORMULÁRIO ──
 let form = null;
-function openForm(id) {
+function openForm(id, base) {
   const c = id ? byId(id) : null;
-  form = c ? JSON.parse(JSON.stringify(c)) : cleanClient({});
+  form = c ? JSON.parse(JSON.stringify(c)) : cleanClient(base || {});
   form._dupOk = false;
   const f = form;
   openSheet(`
@@ -4401,10 +4864,10 @@ function openForm(id) {
   <div class="sh-b">
     <div class="fl"><label class="lbl" for="f-nome">Nome *</label><input id="f-nome" value="${esc(f.nome)}" placeholder="Nome do cliente" autocomplete="off"><div class="err" id="e-nome"></div></div>
     <div class="fl"><label class="lbl" for="f-whats">WhatsApp</label><input id="f-whats" type="tel" inputmode="tel" value="${esc(fmtFone(f.whats))}" placeholder="(41) 99999-9999" autocomplete="off"><div class="err" id="e-whats"></div><div id="e-dup"></div></div>
-    <div><span class="lbl">Tipo de imóvel *<span class="hint">pode marcar mais de um, como nos sites das imobiliárias</span></span><div class="chips" id="f-tipos"></div><div class="err" id="e-tipos"></div></div>
+    <div><span class="lbl">Tipo de imóvel<span class="hint">pode marcar mais de um · nenhum marcado = casas, apartamentos e coberturas</span></span><div class="chips" id="f-tipos"></div><div class="err" id="e-tipos"></div></div>
     <div><span class="lbl">Bairros *<span class="hint">todos que ele aceita</span></span><div class="chips" id="f-bairros" style="margin-bottom:10px"></div>
       <div class="ta"><input id="f-bairro" placeholder="Digite um bairro e escolha na lista" autocomplete="off" aria-label="Adicionar bairro"><div class="dd hidden" id="f-bairro-dd"></div></div><div class="err" id="e-bairros"></div></div>
-    <div><span class="lbl">Faixa de valor<span class="hint">de quanto a quanto ele investe</span></span>
+    <div><span class="lbl">Faixa de valor *<span class="hint">de quanto a quanto ele investe (pode ser só o “até”)</span></span>
       <div class="row-s" style="margin-top:0;flex-wrap:nowrap">
         <input id="f-vmin" inputmode="numeric" value="${f.valorMin ? 'R$ ' + f.valorMin.toLocaleString('pt-BR') : ''}" placeholder="De (opcional)" autocomplete="off" aria-label="Valor mínimo">
         <span class="muted">a</span>
@@ -4473,9 +4936,9 @@ function saveForm() {
   const err = (id, msg) => { $('#' + id).textContent = msg; if (msg && !bad) bad = id; };
   err('e-nome', f.nome ? '' : 'Coloque o nome do cliente.');
   err('e-whats', !f.whats || (f.whats.length >= 10 && f.whats.length <= 13) ? '' : 'Número incompleto. Use DDD + número, ex.: (41) 99999-9999.');
-  err('e-tipos', f.tipos.length ? '' : 'Marque pelo menos um tipo.');
+  // obrigatórios (23/11, pedido dele): nome, faixa de valor e pelo menos um bairro. Ficha antiga sem valor pode ser editada.
   err('e-bairros', f.bairros.length ? '' : 'Adicione pelo menos um bairro.');
-  err('e-valor', f.valorMin && f.valorMax && f.valorMax < f.valorMin ? 'O valor “até” está menor que o “de”.' : '');
+  err('e-valor', !f.id && !f.valorMin && !f.valorMax ? 'Coloque a faixa de valor. Pode ser só o “até”.' : f.valorMin && f.valorMax && f.valorMax < f.valorMin ? 'O valor “até” está menor que o “de”.' : '');
   err('e-area', f.areaMin && f.areaMax && f.areaMax < f.areaMin ? 'A metragem “até” está menor que a “de”.' : '');
   if (bad) { const el = $('#' + bad); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
   // repetido: o 1º toque em salvar só mostra o aviso (e leva a tela até ele); o 2º salva assim mesmo
@@ -4486,6 +4949,7 @@ function saveForm() {
   }
   const isNew = !f.id;
   const data = Object.assign({}, f); delete data._dupOk;
+  if (!data.tipos.length) data.tipos = RESIDENCIAL.slice();
   if (isNew) { data.id = newId('c'); data.criadoEm = nowLocal(); data.status = 'ativo'; data.envios = []; }
   else { const orig = byId(f.id); if (orig) { data.envios = orig.envios; data.status = orig.status; data.criadoEm = orig.criadoEm; } }
   const saved = saveClient(data);
@@ -4701,7 +5165,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-23e';
+const VERSAO = '2026-11-23f';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
