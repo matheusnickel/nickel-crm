@@ -8,7 +8,7 @@
 // Roda depois de cada atualização dos estoques (o repetidos.mjs chama no fim). À mão: node scripts/previas.mjs
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 
-const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', v6: 'v6', corretare: 'corretare', mybroker: 'mybroker', j8loc: 'j8-locacao' };
+const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', v6: 'v6', corretare: 'corretare', mybroker: 'mybroker', nn: 'nn', j8loc: 'j8-locacao' };
 const DIR = new URL('../i/', import.meta.url);
 const J8_TIPO = { 'APARTAMENTO': 'Apartamento', 'APARTAMENTO GARDEN': 'Apartamento garden', 'COBERTURA': 'Cobertura', 'CASA': 'Casa', 'CASA CONDOMINIO FECHADO': 'Casa em condomínio',
   'SOBRADO': 'Sobrado', 'SOBRADO CONDOMINIO FECHADO': 'Sobrado em condomínio', 'TERRENO': 'Terreno', 'TERRENO CONDOMINIO FECHADO': 'Terreno em condomínio', 'CONJUNTO/COMERCIAL/LOJA': 'Comercial' };

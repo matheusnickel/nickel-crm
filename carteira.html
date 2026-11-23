@@ -1270,7 +1270,10 @@ const ESTOQUES_TODOS = [
   { id: 'corretare', nome: 'Corretare', arq: 'dados/corretare.json', det: 'dados/corretare/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
   // desde 18/11. My Broker (mybroker.com.br): só prontos em Curitiba; rua sem número; o complemento deles é texto livre
   // (às vezes a unidade, às vezes um destaque), copiado como está; fotos com a marca d'água deles
-  { id: 'mybroker', nome: 'My Broker', arq: 'dados/mybroker.json', det: 'dados/mybroker/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
+  { id: 'mybroker', nome: 'My Broker', arq: 'dados/mybroker.json', det: 'dados/mybroker/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t },
+  // desde 23/11. NN Assessoria (nnassessoriaimobiliaria.com.br, site da Loft): só prontos à venda (as unidades de construtora
+  // ficam de fora); rua e número, sem complemento e sem o nome do empreendimento num campo
+  { id: 'nn', nome: 'NN Assessoria', arq: 'dados/nn.json', det: 'dados/nn/', tipo: t => TIPOS.includes(t) ? t : '', rotulo: t => t }
 ];
 // cada login vê só as imobiliárias dele (Felipe: só a J8)
 const ESTOQUES = ESTOQUES_TODOS.filter(e => !PERFIL.estoques || PERFIL.estoques.includes(e.id));
@@ -4080,7 +4083,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-20e';
+const VERSAO = '2026-11-23a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

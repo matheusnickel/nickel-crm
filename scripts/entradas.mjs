@@ -11,7 +11,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', v6: 'v6', corretare: 'corretare', mybroker: 'mybroker' };
+const ARQ = { j8: 'j8', gon: 'goncalves', sis3: 'sis3', zireh: 'zireh', arya: 'arya', prates: 'prates', pilar: 'pilar', entre: 'entre', urbanic: 'urbanic', v6: 'v6', corretare: 'corretare', mybroker: 'mybroker', nn: 'nn' };
 // 28/10: a J8 passou a vir inteira (antes eram só os exclusivos); os 533 que apareceram ali não eram imóveis novos no site
 const BASE_EXTRA = { j8: ['9a01bde'] };
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
@@ -51,7 +51,10 @@ for (const [src, arq] of Object.entries(ARQ)) {
     const c = String(i.c); if (data[src].has(c)) continue;
     // 20/11: anúncio que o site diz ter sido atualizado ANTES da 1ª importação daquela imobiliária já estava lá
     // (a importação anterior é que não pegou — na My Broker, a busca não devolve sempre os mesmos): não é novo
-    const velho = !primeira && i.du && base[src] && String(i.du).slice(0, 10) < base[src];
+    // (23/11: a Entre, a V6 e a Urbanic mandam a data em segundos, "1795035595"; antes disso a regra lia como texto e
+    // escondia os novos delas)
+    const du = /^\d{9,10}$/.test(String(i.du)) ? diaLocal(+i.du * 1000) : String(i.du || '').slice(0, 10);
+    const velho = !primeira && /^\d{4}-\d{2}-\d{2}$/.test(du) && base[src] && du < base[src];
     data[src].set(c, primeira || velho ? '' : quando); if (!primeira && !velho) novos[src] = (novos[src] || 0) + 1;
   }
 }
