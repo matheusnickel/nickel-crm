@@ -162,11 +162,19 @@ const PREVIA = (() => { try { return !!localStorage.getItem('carteira_auth'); } 
 
 let L = null, atual = 0;
 
+// 23/11: com a cota de leitura do Firebase estourada (429) o cliente via "link não está mais disponível". Gravar tem cota
+// separada, e a gravação devolve o documento: marca um campo sem importância (só se o link existir) e usa a resposta.
+async function leDoc(col, id, campo) {
+  const url = `${FB_ROOT}/${col}/${id}?key=${FB_KEY}`, masc = campo ? '&mask.fieldPaths=' + campo : '';
+  let r = null; try { r = await fetch(url + masc); } catch (e) {}
+  if (r && (r.ok || r.status === 404)) return r;
+  return fetch(url + masc + '&updateMask.fieldPaths=lidoEm&currentDocument.exists=true', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: { lidoEm: { stringValue: new Date().toISOString() } } }) });
+}
 async function carrega() {
   if (!ID || !COL.startsWith('carteira_')) return erro();
   try {
-    const r = await fetch(`${FB_ROOT}/${COL}/${ID}?key=${FB_KEY}`);
-    if (!r.ok) return erro();
+    const r = await leDoc(COL, ID);
+    if (!r.ok) return erro(r.status !== 404); // só diz que o link acabou quando ele não existe mesmo
     const d = await r.json();
     L = fromFs({ mapValue: { fields: d.fields || {} } });
     if (!L || !L.titulo) return erro();
@@ -181,7 +189,7 @@ const NF_COL = 'nickel_fotos' + (q.get('t') === '1' ? '_TESTE_CLAUDE' : '');
 const NF = new Map(); // "nf:id:m" / "nf:id:g" -> data URL
 function nfPega(ref, campo) {
   const k = ref + ':' + campo; if (NF.has(k)) return NF.get(k);
-  const p = fetch(`${FB_ROOT}/${NF_COL}/${ref.slice(3)}?key=${FB_KEY}&mask.fieldPaths=${campo}`).then(r => r.ok ? r.json() : null)
+  const p = leDoc(NF_COL, ref.slice(3), campo).then(r => r.ok ? r.json() : null)
     .then(j => (j && j.fields && j.fields[campo] && j.fields[campo].stringValue) || '').catch(() => '');
   NF.set(k, p); return p;
 }
@@ -195,7 +203,7 @@ async function fotosNickel() {
 const src = (u, w, h) => /^nf:/.test(u) ? (w >= 1200 && NF.get(u + ':g!')) || NF.get(u + ':m!') || '' : foto(u, w, h);
 function erro(rede) {
   document.title = 'Link indisponível';
-  $('#app').innerHTML = `<div class="msg"><div class="kick">Seleção exclusiva</div><h1>${rede ? 'Não foi possível abrir agora' : 'Este link não está mais disponível'}</h1><p>${rede ? 'Verifique a internet e tente de novo.' : 'Peça um novo link ao seu corretor.'}</p></div>`;
+  $('#app').innerHTML = `<div class="msg"><div class="kick">Seleção exclusiva</div><h1>${rede ? 'Não foi possível abrir agora' : 'Este link não está mais disponível'}</h1><p>${rede ? 'Tente de novo em alguns minutos.' : 'Peça um novo link ao seu corretor.'}</p></div>`;
 }
 // uma abertura por visita (recarregar a página não conta de novo).
 // 19/11 (pergunta dele: "se encaminhou e outra pessoa abriu, consigo saber?"): não dá para saber QUEM abriu, então cada
