@@ -542,7 +542,8 @@ select:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,193,186,.2)}
 .vz-fala{font-size:20px;line-height:1.45;min-height:58px;max-height:38vh;overflow:auto;width:100%;text-wrap:balance}.vz-fala.dica{color:var(--muted);font-size:15.5px}.vz-fala b{font-weight:600;color:var(--or2)}
 .vz-ov.ligando .vz-onda{opacity:.45}.vz-ov.ligando .vz-onda::before,.vz-ov.ligando .vz-onda::after{animation:none;opacity:0}
 .chip.vzou{border-style:dashed;border-color:var(--orline);color:var(--or2);font-size:13px;padding:4px 12px}
-.vzcad{background:var(--okbg,#e7f4ec);border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.5;margin-top:14px}.sh-b>.vzcad{margin-top:0}.vzcad p{margin:6px 0 0}.vzcad .chips{margin-top:8px}.vzcadt{display:flex;align-items:center;justify-content:space-between;gap:12px}.vzcad.pend{background:var(--card);border:1px solid var(--line2)}.vzcad.pend .vzcadt b{font-size:16px}.vzcad.pend .info{margin-top:8px}.vzfalta{color:var(--red);font-weight:600}
+.vzcad{background:var(--okbg,#e7f4ec);border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.5;margin-top:14px}.sh-b>.vzcad{margin-top:0}.vzcad p{margin:6px 0 0}.vzcad .chips{margin-top:8px}.vzcadt{display:flex;align-items:center;justify-content:space-between;gap:12px}.vzcad s{color:var(--muted);text-decoration-thickness:1px}.vzver{display:none}.vz-bar.mini{align-items:center}.vz-bar.mini textarea,.vz-bar.mini .btn-or,.vz-bar.mini .vzmic{display:none}.vz-bar.mini .vzver{display:inline-block}.vz-bar.hidden{display:none}
+.vzcad.pend{background:var(--card);border:1px solid var(--line2)}.vzcad.pend .vzcadt b{font-size:16px}.vzcad.pend .info{margin-top:8px}.vzfalta{color:var(--red);font-weight:600}
 .vzouvi{display:flex;gap:8px;align-items:flex-start;margin:12px 0 0;font-size:13.5px;line-height:1.45;color:var(--muted)}.vzouvi svg{width:16px;height:16px;flex-shrink:0;margin-top:2px;color:var(--ok)}
 .vz-bts{display:flex;gap:10px;width:100%;max-width:420px}.vz-bts button{flex:1;justify-content:center}
 @media (min-width:901px){.vz-ov{align-items:center}.vz-card{border-radius:24px}}
@@ -852,7 +853,7 @@ button.pcs:hover{border-color:var(--tq)}
     <!-- PERGUNTAR POR VOZ (23/11): a pergunta falada (ou escrita) e o resultado: imóveis ou clientes -->
     <section id="v-voz" class="hidden">
       <div class="phd"><div class="ttl"><span class="kick">Fale ou escreva</span><h1>Perguntar</h1></div><div class="vzh"><button class="link" data-act="vz-nova">Nova pergunta</button><button class="link" data-act="vz-volta">← Voltar</button></div></div>
-      <form class="vz-bar" id="vz-form"><button type="button" class="vzmic" data-act="vz-mic" aria-label="Gravar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></button><textarea id="vz-in" rows="1" placeholder="O que você procura?" aria-label="Sua pergunta" enterkeyhint="search"></textarea><button class="btn-or sm" type="submit">Buscar</button></form>
+      <form class="vz-bar" id="vz-form"><button type="button" class="vzmic" data-act="vz-mic" aria-label="Gravar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></button><textarea id="vz-in" rows="1" placeholder="O que você procura?" aria-label="Sua pergunta" enterkeyhint="search"></textarea><button class="btn-or sm" type="submit">Buscar</button><button type="button" class="link vzver" data-act="vz-edita">Ver ou corrigir o texto</button></form>
       <div id="vz-ent"></div>
       <div id="vz-res"></div>
     </section>
@@ -1130,7 +1131,10 @@ function cleanClient(o) {
 
 let clientes = [];
 const byId = id => clientes.find(c => c.id === id);
-const persistCache = () => lsSet(LS_CACHE, clientes);
+const LS_SYNC = 'carteira_sync_' + COL; // { full: quando leu tudo, vez: a última leitura }
+// se o aparelho não conseguiu guardar a cópia, esquece a marca: a próxima abertura lê tudo
+const persistCache = () => { try { localStorage.setItem(LS_CACHE, JSON.stringify(clientes)); return true; } catch (e) { try { localStorage.removeItem(LS_SYNC); } catch (e2) {} return false; } };
+const gravou = {}; // id -> quando este aparelho terminou de gravar (ou apagar): uma leitura que já estava andando não pode trazer a versão velha
 
 // Cada cliente grava em fila própria, sempre com a versão local mais recente.
 // O que não chegou ao Firebase fica pendente neste aparelho e é reenviado depois.
@@ -1148,8 +1152,9 @@ function queueWrite(id) {
     try {
       const r = cur.__del
         ? await fetch(url, { method: 'DELETE' })
-        : await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(cur) }) });
+        : await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(Object.assign({}, cur, { sy: new Date().toISOString() })) }) }); // sy = quando subiu: é por ele que os outros aparelhos leem só o que mudou
       if (!r.ok && !(cur.__del && r.status === 404)) throw new Error('HTTP ' + r.status);
+      gravou[id] = Date.now();
       if (my === seq[id]) { const p = lsGet(LS_PEND, {}); delete p[id]; lsSet(LS_PEND, p); }
       failing = false;
     } catch (e) {
@@ -1202,12 +1207,24 @@ async function fetchAll() {
   } while (tok);
   return out;
 }
-let loaded = false;
-async function refresh(silent) {
+// só os clientes gravados desde então (cada consulta custa as fichas que mudaram, e no mínimo 1 leitura)
+async function fetchMudou(desde) {
+  const r = await fetch(`${FB_ROOT}:runQuery?key=${FB_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ structuredQuery: {
+    from: [{ collectionId: COL }], where: { fieldFilter: { field: { fieldPath: 'sy' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: desde } } } } }) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return (await r.json()).filter(x => x.document).map(x => { const o = fromFs({ mapValue: { fields: x.document.fields || {} } }); o.id = x.document.name.split('/').pop(); return cleanClient(o); });
+}
+let loaded = false, ultRefresh = 0, nkVez = 0;
+const FULL_MS = 3 * 36e5; // de 3 em 3 horas lê tudo (pega cliente excluído em outro aparelho); "Recarregar" no menu também
+async function refresh(silent, tudo) {
+  const t0 = Date.now(), marca = lsGet(LS_SYNC, null), so = !tudo && !!marca && marca.full > 0 && clientes.length > 0 && t0 - marca.full < FULL_MS && t0 >= marca.vez; ultRefresh = t0;
   try {
-    const srv = await fetchAll();
-    clientes = applyPending(srv); // o Firebase manda; só o que ainda não subiu fica por cima
-    persistCache(); loaded = true; failing = false;
+    const srv = so ? await fetchMudou(new Date(marca.vez - 5 * 6e4).toISOString()) : await fetchAll(); // 5 min de folga entre os relógios
+    const meu = id => (gravou[id] || 0) >= t0, m = new Map(clientes.map(c => [c.id, c])); // gravado aqui enquanto a leitura andava: fica o daqui
+    if (so) { srv.forEach(c => { if (!meu(c.id)) m.set(c.id, c); }); clientes = applyPending([...m.values()]); }
+    else { const ids = new Set(srv.map(c => c.id)); clientes = applyPending(srv.filter(c => !meu(c.id) || m.has(c.id)).map(c => meu(c.id) ? m.get(c.id) : c).concat([...m.values()].filter(c => meu(c.id) && !ids.has(c.id)))); } // o Firebase manda; só o que ainda não subiu fica por cima
+    loaded = true; failing = false;
+    if (persistCache()) lsSet(LS_SYNC, { full: so ? marca.full : t0, vez: t0 });
   } catch (e) {
     failing = true;
     if (!silent) toast('Sem conexão. Mostrando os dados salvos neste aparelho.');
@@ -1215,9 +1232,9 @@ async function refresh(silent) {
   renderAll(); flushPending(); updateSync();
   carregaLinks(); // quem abriu os links de imóvel (19/11)
   // imóveis Nickel (20/11): publicados ou aprovados em outro aparelho aparecem ao voltar para a Carteira
-  if (carregados) carregaNickel().then(ok => { if (ok) nkAtualizaTudo(); });
+  if (carregados && t0 - nkVez > 5 * 6e4) { nkVez = t0; carregaNickel().then(ok => { if (ok) nkAtualizaTudo(); }); }
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('#app') && !$('#app').classList.contains('hidden')) refresh(true); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && $('#app') && !$('#app').classList.contains('hidden') && Date.now() - ultRefresh > 15000) refresh(true); });
 
 function updateSync() {
   const el = $('#sync'); if (!el) return;
@@ -1773,13 +1790,18 @@ function copiarMsgLink(btn, k, cliId) {
 // links abertos nos últimos LINK_DIAS (consulta pelo campo ultimaVez, que só existe depois da 1ª abertura)
 async function carregaLinks() {
   try {
-    const desde = new Date(Date.now() - LINK_DIAS * 864e5).toISOString();
+    // guarda no aparelho; consulta tudo 1 vez por dia e, no resto, só os abertos de 36 h para cá (o relógio é o do cliente)
+    const ini = new Date(Date.now() - LINK_DIAS * 864e5).toISOString(), LSL = 'carteira_links_cache_' + COLL, g = lsGet(LSL, null), todos = !g || !g.m || Date.now() - (g.full || 0) > 864e5;
+    if (!todos && !LINKS.size) Object.entries(g.m).forEach(([k, o]) => { if (o && o.ultimaVez >= ini) LINKS.set(k, o); });
+    const ult = todos ? '' : [...LINKS.values()].reduce((m, o) => o.ultimaVez > m ? o.ultimaVez : m, ''), rec = ult ? new Date(new Date(ult).getTime() - 36 * 36e5).toISOString() : '', desde = rec > ini ? rec : ini;
     const r = await fetch(`${FB_ROOT}:runQuery?key=${FB_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ structuredQuery: {
       from: [{ collectionId: COLL }], select: { fields: ['cli', 'titulo', 'vistos', 'aberturas', 'ultimaVez'].map(fieldPath => ({ fieldPath })) },
       where: { fieldFilter: { field: { fieldPath: 'ultimaVez' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: desde } } } } }) });
     if (!r.ok) return;
-    LINKS.clear();
-    for (const x of await r.json()) if (x.document) { const o = fromFs({ mapValue: { fields: x.document.fields || {} } }); LINKS.set(x.document.name.split('/').pop(), o); }
+    const lido = await r.json(); if (todos) LINKS.clear();
+    for (const x of lido) if (x.document) { const o = fromFs({ mapValue: { fields: x.document.fields || {} } }); LINKS.set(x.document.name.split('/').pop(), o); }
+    LINKS.forEach((o, k) => { if (!o || !(o.ultimaVez >= ini)) LINKS.delete(k); });
+    lsSet(LSL, { full: todos ? Date.now() : g.full, m: Object.fromEntries(LINKS) });
     avisaAberturas(); renderAll();
   } catch (e) {}
 }
@@ -3572,6 +3594,7 @@ function vzConserta(t) {
     .replace(/(^| )(\d{1,2}) ?[:h] ?30(?=[ .,;!?]|$)(?! (?:da|de|horas|hs?)\b)/gi, (m, a, n, k, tudo) => /\b(?:[àa]s|desde as|horas?)$/i.test(tudo.slice(0, k).trim()) ? m : a + n + ' e meio')
     .replace(/(^| )([1-9])\/4(?=[ .,;!?]|$)(?! quarto)/g, (m, a, n) => a + n + (n === '1' ? ' quarto' : ' quartos'))
     .replace(/(\d) ?(?:½|1\/2)(?= ?mi)/g, '$1,5').replace(/(\d) ?½|(\d) 1\/2(?=[ .,;!?]|$)/g, (m, a, b) => (a || b) + ' e meio')
+    .replace(/(^| )(um|dois|tr[eê]s|quatro|cinco|seis|sete|oito|nove|dez)(\d{1,2})(?=[ .,;!?]|$)/gi, '$1$3')
     .replace(/¾/g, '3 quartos').replace(/(\d),00(?!\d)/g, '$1').replace(/(^| )(\d(?:[.,]\d{1,3})?) ?M(?=[ .,;!?]|$)/g, '$1$2 milhões')
     .replace(/r\$ ?(\d{1,2}(?:[.,]\d+)?) ?m(?=[ .,;!?]|$)/gi, '$1 milhões');
 }
@@ -3727,7 +3750,7 @@ function vzPrecos(s0, loc, marca) {
   let faixa = null;
   for (const m of [...s.matchAll(/\b(?:(entre|de|dos?) )?(\d{1,4}(?:\.\d+)?) (a|e|ate|ou|aos?) (\d{1,4}(?:\.\d+)?) ?(milhoes|milhao|mi|mil)\b(?! (?:metros|m2))/g)]) {
     if (m[3] === 'e' && m[1] !== 'entre') continue;
-    if (m[3] === 'a' && !m[1] && +m[2] > 100 && !/(?:valor|faixa|preco|orcamento|investimento|investir) $/.test(s.slice(0, m.index))) continue;
+    if (m[3] === 'a' && !m[1] && +m[2] > 100 && !/(?:valor|faixa|preco|orcamento|investimento|investir|para|pra|pro|por|fica|ficou|agora|e|eh|quer|uns) $/.test(s.slice(0, m.index))) continue;
     const k = m[5] === 'mil' ? 1e3 : 1e6, a = +m[2] * k, b = +m[4] * k; if (b <= a) continue;
     faixa = { min: a, max: b, ini: m.index, fim: m.index + m[0].length, txt: `${m[1] ? m[1] + ' ' : ''}R$ ${vzDec(+m[2])} ${m[3] === 'ate' ? 'até' : m[3]} ${vzDec(+m[4])} ${m[5] === 'mil' ? 'mil' : 'milhões'}` }; apaga(faixa.ini, faixa.fim); break;
   }
@@ -3846,15 +3869,34 @@ function vzEmenda(T, lug) {
 
 // ── cadastrar cliente falando (23/11, pedido dele): "cadastrar cliente Carlos Gomes, telefone 41 99853-3344, bairro Santa Felicidade, Cascatinha,
 // faixa de valor de 500 a 600 mil, 3 quartos, 3 vagas". Nome, faixa de valor e um bairro são obrigatórios; o resto é opcional.
-const VZ_CAD = /(?:\bcadastr(?:a|ar|e|o|em|ando|amos|ei)\b(?! (?:o |um |este |esse |meu |a |uma )?(?:imovel|imoveis)\b)|(?:^|^(?:e|um|uma|o|a) )nov[oa] cliente\b|\b(?:adicion|inclu|registr|cri|lanc|anot)\w+ (?:(?:ai|pra mim|para mim|aqui|por favor|o|a|um|uma|esse|essa|este|esta|novo|nova) )*(?:cliente|contato|lead)\b)/;
-const vzEhCadastro = s => VZ_CAD.test(s) && !/\b(?:qual|quais|quem|quantos|imove(?:l|is) nov[oa]s?|me (?:traz|mostra|manda)|o que tem)\b/.test(s);
+const VZ_CAD = /(?:\bcadastr(?:a|ar|e|em|ando|amos|ei)\b(?! (?:o |um |este |esse |meu |a |uma )?(?:imovel|imoveis)\b)|\b(?:faz|fazer|faca|fazendo|cri[ae]r?|novo) (?:um |o |novo )*cadastro\b|(?:^|^(?:e|um|uma|o|a) )nov[oa] cliente\b|\b(?:adicion|inclu|registr|cri|lanc|anot)\w+ (?:(?:ai|pra mim|para mim|aqui|por favor|o|a|um|uma|esse|essa|este|esta|novo|nova) )*(?:cliente|contato|lead)\b)/;
+const vzEhCadastro = s => VZ_CAD.test(s) && !vzEhAlteracao(s) && !/\b(?:qual|quais|quem|quantos|imove(?:l|is) nov[oa]s?|me (?:traz|mostra|manda)|o que tem)\b/.test(s);
+// ── alterar o cadastro falando (23/11, pedido dele): "arrume o cadastro do Paulo Oliveira: 4 vagas, de 5 a 5,5 milhões", "coloca 4 vagas pro Paulo",
+// "tira o Batel do cadastro da Ana", "o telefone do Carlos é…", "passa o Paulo para quente". Só com verbo de alterar; sem ele, continua sendo busca.
+const VZ_V_MUDA = '(?:arrum(?:a|ar|e|em|ei)|ajust(?:a|ar|e|ei)|ajeit(?:a|ar|e|ei)|atualiz(?:a|ar|e|ei)|alter(?:a|ar|e|ei)|corrig(?:e|ir|i)|corrija|edit(?:a|ar|e|ei)|modifi(?:ca|car|que|quei)|mud(?:a|ar|e|ou|ei)|complet(?:ar|e|ei)|acert(?:a|ar|e|ei)|consert(?:a|ar|e|ei)|tro(?:ca|car|que|quei)|reti(?:fica|ficar|fique))';
+const VZ_V_POE = '(?:coloc(?:a|ar)|coloque|bot(?:a|ar|e)|poe|ponha|acrescent(?:a|ar|e)|adicion(?:a|ar|e)|inclui|incluir|inclua|anot(?:a|ar|e)|registr(?:a|ar|e)|lanc(?:a|ar|e)|salv(?:a|ar|e)|soma|some)';
+const VZ_V_TIRA = '(?:tir(?:a|ar|e)|remov(?:e|er)|remova|retir(?:a|ar|e)|exclui|excluir|exclua|apag(?:a|ar|ue))';
+const VZ_DADO = '(?:faixa|valor|valores|teto|preco|orcamento|bairros?|quartos?|dormitorios?|vagas?|garage(?:m|ns)|telefone|whatsapp|whats|celular|zap|metragem|area|tipo|etapa|temperatura|mobilia|observac(?:ao|oes)|terreno|nome)';
+const VZ_FICHA = '(?:cadastro|ficha|perfil|registro|dados)';
+const VZ_ETAPA = '(?:quente|fri[oa]|stand ?by|visita|proposta|qualificando)';
+const VZ_ALT = [
+  new RegExp('\\b' + VZ_V_MUDA + '\\b.*\\b' + VZ_FICHA + '\\b|\\b' + VZ_FICHA + ' d[aeo]\\b.*\\b' + VZ_V_MUDA + '\\b'), // arrume o cadastro do…
+  new RegExp('\\b(?:' + VZ_V_POE + '|' + VZ_V_TIRA + ')\\b.*\\b' + VZ_FICHA + ' d[aeo]\\b|\\bn[ao] ' + VZ_FICHA + ' d[aeo]\\b.*\\b(?:' + VZ_V_POE + '|' + VZ_V_TIRA + ')\\b'), // coloca no cadastro do…
+  new RegExp('\\b' + VZ_V_MUDA + '(?: \\w+){0,5} ' + VZ_DADO + '\\b'), // muda a faixa de valor do…
+  new RegExp('\\b' + VZ_V_TIRA + '\\b(?: \\w+){1,7} (?:d[aeo]|pr[ao]|para) '), // tira o Batel do…
+  new RegExp('\\b' + VZ_V_POE + '\\b(?: \\w+){1,14} (?:pr[ao]|para [oa]|n[ao]|d[ao]|como|de|em|para) '), // coloca 4 vagas pro… / bota o Paulo como quente
+  new RegExp('\\b(?:passa|passar|passe|move|mover|mova|deixa|deixar|deixe|classific(?:a|ar)|classifique|muda|mudar|mude)\\b(?: \\w+){1,6} ' + VZ_ETAPA + '\\b'), // passa o Paulo para quente
+  new RegExp('\\bfalt(?:a|ando|ou|am|aram)\\b.*\\b(?:' + VZ_FICHA + '|' + VZ_DADO + ')\\b') // está faltando a vaga no cadastro do…
+];
+const VZ_ALT_BUSCA = new RegExp('\\b(?:' + VZ_V_POE + '|' + VZ_V_TIRA + '|' + VZ_V_MUDA + ')\\b(?: \\w+){0,2} (?:apartamentos?|aptos?|casas?|imove(?:l|is)|coberturas?|terrenos?|sobrados?|opcoes|opcao|resultados?)\\b');
+const vzEhAlteracao = s => (VZ_ALT.slice(0, 2).some(rx => rx.test(s)) || (VZ_ALT.slice(2).some(rx => rx.test(s)) && !VZ_ALT_BUSCA.test(s))) && !/\b(?:qual|quais|quem|quantos|me (?:traz|mostra)|novo cliente|cliente novo)\b/.test(s);
 const VZ_FONE = /^(?:telefone|telefones|fone|celular|cel|whatsapp|whats|whatsap|wats|watsapp|zap|zapzap|contato)$/;
 // o telefone, por extenso ou em pedaços ("41 99853-3344", "nove nove oito meia…"); sem DDD = 41. ruim = número incompleto (não grava)
 function vzAchaFone(T) {
   const W = k => (T[k] || {}).w || '', UNI = /^(?:quartos?|dormitorios?|suites?|vagas?|garagens?|carros?|milhoes|milhao|mi|mil|metros?|m2|m|reais|banheiros?)$/, val = w => /^\d+$/.test(w) ? w : w === 'zero' ? '0' : w === 'meia' ? '6' : w === 'um' || w === 'uma' ? '1' : '';
   const junta = k => { let d = '', j = k, n = 0; for (;;) { const v = val(W(j)); if (!v) { if (d && /^(?:traco|hifen|ponto|espaco)$/.test(W(j)) && val(W(j + 1))) { j++; continue; } break; } if (UNI.test(W(j + 1)) || d.length + v.length > 13) break; d += v; j++; n++; if (d.length === 11 && !d.startsWith('55')) break; } return { d, j, n }; };
   let i = T.findIndex(t => VZ_FONE.test(t.w)), r = null, ini = i;
-  if (i >= 0) { let k = i + 1; while (k < i + 6 && /^(?:e|eh|o|do|da|de|dele|dela|cliente|numero|celular|whatsapp|whats|ddd|com)$/.test(W(k))) k++; r = junta(k); if (!r.d) r = null; else r.k = k; }
+  if (i >= 0) { let k = i + 1; while (k < i + 6 && /^(?:e|eh|o|do|da|de|dele|dela|cliente|numero|celular|whatsapp|whats|ddd|com)$/.test(W(k))) k++; r = junta(k); if (!r.d) r = null; else r.k = k; for (let j = i + 1; !r && j < Math.min(T.length, i + 9); j++) if (val(W(j)) && !val(W(j - 1))) { const x = junta(j); if (x.d.length >= 6) { r = x; r.k = j; ini = j; } } }
   if (!r) for (let k = 0; k < T.length && !r; k++) { if (val(W(k)) && !val(W(k - 1))) { const x = junta(k); if (x.d.length >= 10 && (x.n > 1 || x.d.length <= 13)) { r = x; r.k = k; ini = k; } } }
   if (!r) return null;
   let d = r.d.replace(/^0+/, ''); if (d.length === 8 || (d.length === 9 && d[0] === '9')) d = '41' + d;
@@ -3882,10 +3924,14 @@ function vzAchaNome(T, R, ctx, s) {
   return { i, j: l[l.length - 1], txt: vzTit([...new Set(l.map(x => T[x].a))].map(a => R[a].replace(/^[^\p{L}]+|[^\p{L}]+$/gu, '')).join(' ')) };
 }
 
-function vzEntende(texto, ctx) {
+function vzEntende(texto, ctx, semAlt) {
   const { R, T: T0 } = vzLe(texto); let T = vzEmenda(T0, ctx.lug), obs = '';
   const cad = vzEhCadastro(T.map(t => t.w).join(' ')); // "observação: …" vai inteira para a ficha, sem virar critério
-  if (cad) { const k = T.findIndex(t => /^(?:observacao|observacoes|obs)$/.test(t.w)); if (k > 0) { obs = R.slice(T[k].b + 1).join(' ').replace(/^(?:é|e|que)\s+/i, '').replace(/\.+$/, ''); T = T.slice(0, k); } }
+  let alt = !cad && !semAlt && vzEhAlteracao(T.map(t => t.w).join(' ')); const s0 = T.map(t => t.w).join(' '), temFicha = new RegExp('\\b' + VZ_FICHA + '\\b').test(s0);
+  // alterar precisa de um cliente da carteira na frase (ou falar em cadastro/ficha); senão é uma busca comum
+  if (alt && !temFicha) { const ns = new Set(T.map(t => vzFon(t.w))); if (!ctx.clientes.some(c => c.tk[0] && c.tk[0].length > 2 && ns.has(vzFon(c.tk[0])))) alt = false; }
+  const acao = cad || alt;
+  if (acao) { const k = T.findIndex(t => /^(?:observacao|observacoes|obs)$/.test(t.w)); if (k > 0) { obs = R.slice(T[k].b + 1).join(' ').replace(/^(?:é|e|que)\s+/i, '').replace(/\.+$/, ''); T = T.slice(0, k); } }
   { let p = 0; T.forEach(t => { t.ini = p; t.fim = p + t.w.length; p = t.fim + 1; }); }
   const s = T.map(t => t.w).join(' ');
   const Q = { texto, norm: s, tipos: [], bairros: [], cidades: [], fora: [], itens: [], intencao: 'imovel', R, T, M: [], pts: 0, emendou: !obs && T.length !== T0.length };
@@ -3895,6 +3941,10 @@ function vzEntende(texto, ctx) {
   const escreve = (ini, fim, txt, corr, k) => { if (txt) Q.M.push({ ini, fim, txt, corr: !!corr, k }); }, noToken = ini => T.find(t => t.ini === ini) || {};
 
   const fimLug = new Set(); // onde termina cada bairro já achado (e o nome, no cadastro): o que vem colado pode ser outro bairro
+  if (alt) {
+    Q.alt = { fone: '', foneRuim: '', obs, tira: [], so: /\b(?:so|somente|apenas|unicamente)\b/.test(s), soma: new RegExp('\\b(?:tambem|' + VZ_V_POE + ')\\b').test(s) };
+    const f = vzAchaFone(T); if (f) { usa(T[f.i].ini, T[f.j].fim); Q.alt.fone = f.fone; Q.alt.foneRuim = f.ruim; escreve(T[f.k].ini, T[f.j].fim, f.txt, false, 'fone'); Q.pts += f.fone ? 1.5 : 0; }
+  }
   if (cad) {
     Q.cad = { nome: '', fone: '', foneRuim: '', obs };
     const f = vzAchaFone(T); if (f) { usa(T[f.i].ini, T[f.j].fim); Q.cad.fone = f.fone; Q.cad.foneRuim = f.ruim; escreve(T[f.k].ini, T[f.j].fim, f.txt, false, 'fone'); Q.pts += f.fone ? 1.5 : 0; }
@@ -3965,7 +4015,7 @@ function vzEntende(texto, ctx) {
     if (d && /^\d{1,5}$/.test(d.w) && !(e && /^(quartos?|suites?|vagas?|metros?|m2|milh\w+|mil|e)$/.test(e.w))) { num = d.w; f = d.fim; } else if (d && d.w === 'numero' && e && /^\d{1,5}$/.test(e.w)) { num = e.w; f = e.fim; }
     Q.rua = { nome, num, rot: (ctx.ruaVia.get(chave) || 'Rua') + ' ' + rot }; usa(ini, f); escreve(ini, fim, rot, sim < 1, 'rua'); Q.pts += 3 * sim;
   };
-  const kVia = cad ? -1 : pal.findIndex((x, k) => /^(rua|avenida|av|alameda|travessa|rodovia|estrada|praca)$/.test(x.w) && livre(x.ini, x.fim) && pal[k + 1]);
+  const kVia = acao ? -1 : pal.findIndex((x, k) => /^(rua|avenida|av|alameda|travessa|rodovia|estrada|praca)$/.test(x.w) && livre(x.ini, x.fim) && pal[k + 1]);
   if (kVia >= 0) {
     let k0 = kVia + 1; while (pal[k0] && /^(d[aeo]s?)$/.test(pal[k0].w)) k0++;
     const para = /^(com|ate|por|no|na|que|numero|tem|entre|para|pra|perto)$/; let nmax = 0; while (nmax < 7 && pal[k0 + nmax] && !para.test(pal[k0 + nmax].w) && livre(pal[k0 + nmax].ini, pal[k0 + nmax].fim)) nmax++;
@@ -3975,7 +4025,7 @@ function vzEntende(texto, ctx) {
       if (rua && livre(rua.index, rua.index + rua[0].length)) { Q.rua = { nome: rua[1].trim(), num: rua[2] || '' }; usa(rua.index, rua.index + rua[0].trimEnd().length); const p = rua.index + rua[0].indexOf(rua[1]); escreve(p, p + rua[1].trim().length, vzTit(rua[1].trim())); Q.pts += 1.5; } }
   }
   // 2a) empreendimento (antes do bairro: "Reserva Ecoville" e "Vaz Batel" têm bairro no nome)
-  let melhor = null; const semNome = cad;
+  let melhor = null; const semNome = acao;
   const lugarExato = f => lug.has(f);
   const soGenerico = f => f.split(' ').every(w => VZ_COMUNS.has(w) || lug.has(w) || [...lug.keys()].some(x => x.split(' ').includes(w)));
   if (!semNome) for (let n = 6; n >= 1; n--) for (let k = 0; k + n <= pal.length; k++) {
@@ -4026,18 +4076,22 @@ function vzEntende(texto, ctx) {
   const lugares = acharLugar(false), vistos = new Set(), falados = [];
   const poeLugar = x => {
     if (!livre(x.ini, x.fim)) return; usa(x.ini, x.fim); fimLug.add(x.fim); const nome = x.l.b || x.l.c, tirar = /\b(?:menos|exceto|tirando|fora|sem ser|nao (?:pode )?se(?:r|ja)|nao quero|nao)(?: (?:no|na|em|o|a|do|da|de|os|as))* $/.test(s.slice(Math.max(0, x.ini - 30), x.ini));
+    if (tiraEm(x.ini, x.fim)) { if (!Q.alt.tira.includes(nome)) Q.alt.tira.push(nome); escreve(x.ini, x.fim, nome, vzNorm(nome) !== x.f, 'lug'); Q.pts += 2; return; }
     escreve(x.ini, x.fim, nome, vzNorm(nome) !== x.f, 'lug'); Q.pts += tirar ? 0 : x.sim < 1 ? 1.6 * x.sim : x.l.c && !x.l.b ? 2 : x.l.ap ? 2.5 : 3;
     falados.push({ x, tirar }); (tirar ? Q.fora : x.l.b ? Q.bairros : Q.cidades).push(nome);
   };
+  const rxOp = new RegExp('\\b(?:(' + VZ_V_TIRA + '|nao quer(?: mais)?|desistiu d[eoa]|menos)|' + VZ_V_POE + '|' + VZ_V_MUDA + '|quer|pediu|aceita|por|pelo|pela)\\b', 'g');
+  const tiraEm = (ini, fim) => { if (!alt) return false; const ms = [...s.slice(0, ini).matchAll(rxOp)], m = ms[ms.length - 1]; if (/^ (?:por|pelo|pela) /.test(s.slice(fim, fim + 7)) && /\btro(?:ca|car|que)\b/.test(s.slice(0, ini))) return true; return !!(m && m[1]); };
   const ordena = () => { Q.bairros = []; Q.cidades = []; Q.fora = []; vistos.clear(); falados.sort((a, b) => a.x.ini - b.x.ini).forEach(({ x, tirar }) => { if (x.l.b) { const c = ctx.chave(x.l.b); if (!vistos.has(c)) { vistos.add(c); (tirar ? Q.fora : Q.bairros).push(x.l.b); } } else if (!tirar && !Q.cidades.includes(x.l.c)) Q.cidades.push(x.l.c); }); };
   lugares.forEach(poeLugar);
   // rua falada sem o "rua": "apartamento na Visconde de Guarapuava"
-  if (!cad && !Q.emp && !Q.rua && kVia < 0) for (let n = 6; n >= 2 && !Q.rua; n--) for (let k = 1; k + n <= pal.length; k++) {
+  if (!acao && !Q.emp && !Q.rua && kVia < 0) for (let n = 6; n >= 2 && !Q.rua; n--) for (let k = 1; k + n <= pal.length; k++) {
     if (!livre(pal[k].ini, pal[k + n - 1].fim) || !/^(na|da|pela)$/.test(pal[k - 1].w) || vazias.test(pal[k + n - 1].w)) continue;
     const f = pal.slice(k, k + n).map(x => x.w).join(' '), r = ctx.ruas.has(f) ? f : f.length >= 12 ? [...ctx.ruas.keys()].find(x => x.startsWith(f + ' ')) : '';
     if (r && !pal.slice(k, k + n).every(x => VZ_COMUNS.has(x.w))) { ruaPronta(k, n, r, 1); break; }
   }
-  if (cad) acharLugar(true).forEach(x => { if (x.sim >= .84) poeLugar(x); });
+  if (cad || (alt && /\bbairros?\b/.test(s))) acharLugar(true).forEach(x => { if (x.sim >= .84) poeLugar(x); });
+  else if (alt) {}
   else if (!Q.bairros.length && !Q.cidades.length && !Q.fora.length) acharLugar(true).forEach(x => { if ((!Q.bairros.length && !Q.rua && !Q.emp) || x.sim >= .86) poeLugar(x); });
   ordena();
   if (Q.bairros.length && /\b(regiao|perto|proximo|proximidades|arredores|redondeza|ao redor)\b/.test(s)) Q.regiao = true;
@@ -4065,14 +4119,15 @@ function vzEntende(texto, ctx) {
   const nomes = ctx.clientes, strong = reserva, fraco = [];
   const igual = (a, b) => vzFon(a) === vzFon(b), pert = (a, b, m = 5) => igual(a, b) || (a.length >= m && b.length >= m && vzLev(vzFon(a), vzFon(b), 1) <= 1);
   if (!cad) for (const c of nomes) {
-    const tk = c.tk; if (!tk.length || tk[0].length < 2) continue;
+    const tk = c.tk; if (!tk.length || tk[0].length < 2) continue; let fr = null;
     for (let k = 0; k < pal.length; k++) {
       if (!livre(pal[k].ini, pal[k].fim) || VZ_COMUNS.has(pal[k].w) || !pert(pal[k].w, tk[0])) continue;
       let j = k + 1; while (pal[j] && /^(de|da|do|dos|das|e)$/.test(pal[j].w)) j++;
-      if (tk.length > 1 && pal[j] && tk.slice(1).some(x => x.length > 1 && pert(pal[j].w, x))) { strong.push({ c, ini: pal[k].ini, fim: pal[j].fim, k, j, exato: igual(pal[k].w, tk[0]) }); break; }
+      if (tk.length > 1 && pal[j] && tk.slice(1).some(x => x.length > 1 && pert(pal[j].w, x))) { strong.push({ c, ini: pal[k].ini, fim: pal[j].fim, k, j, exato: igual(pal[k].w, tk[0]) && tk.slice(1).some(x => igual(pal[j].w, x)) }); fr = null; break; }
       const ant = (pal[k - 1] || {}).w || '';
-      if (pert(pal[k].w, tk[0], 6) && pal[k].w.length >= 3 && (/^(o|a|ao|pro|pra|para|do|da|com|cliente|de|dona|seu|senhor|senhora|doutor|dr)$/.test(ant) || pal.length <= 3)) { fraco.push({ c, ini: pal[k].ini, fim: pal[k].fim, k, j: k, exato: igual(pal[k].w, tk[0]) }); break; }
+      if (pert(pal[k].w, tk[0], 6) && pal[k].w.length >= 3 && (/^(o|a|ao|pro|pra|para|do|da|com|cliente|de|dona|seu|senhor|senhora|doutor|dr)$/.test(ant) || pal.length <= 3)) { if (!fr) fr = { c, ini: pal[k].ini, fim: pal[k].fim, k, j: k, exato: igual(pal[k].w, tk[0]) }; }
     }
+    if (fr) fraco.push(fr);
   }
   const limpa = l => l.some(x => x.exato) ? l.filter(x => x.exato) : l, achou = strong.length ? limpa(strong) : limpa(fraco);
   if (achou.length) {
@@ -4085,6 +4140,8 @@ function vzEntende(texto, ctx) {
   // 5) etapa (para pergunta sobre clientes)
   if (/\bquentes?\b/.test(s)) Q.etapas = ['cqq']; else if (/\bfri[oa]s?\b/.test(s)) Q.etapas = ['cq']; else if (/\bstand ?by\b/.test(s)) Q.etapas = ['standby']; else if (/\barquivad[oa]s?\b/.test(s)) Q.etapas = ['arquivado'];
 
+  if (alt) { const e = [['quente', 'cqq'], ['fri[oa]', 'cq'], ['stand ?by', 'standby'], ['visita', 'visita'], ['proposta', 'proposta'], ['qualificando', 'qual']].find(([r]) => new RegExp('\\b(?:para|pra|pro|como|em|no|na|a|e) (?:o |a |cq |conversa qualificada |cliente )*' + r + '\\b|\\bcq ' + r + '\\b').test(s)); Q.etapas = e ? [e[1]] : null; if (!Q.etapas) delete Q.etapas; }
+
   // 6) o que ele quer: cliente aberto, lista de clientes ou imóveis
   const criterio = !!(Q.tipos.length || Q.bairros.length || Q.cidades.length || Q.q || Q.s || Q.preco || Q.area || Q.emp || Q.rua || Q.terreno);
   const cliForte = /\b(?:qual|quais|que|quem|algum|aquele|aquela)(?: \w+){0,2} (?:clientes?|compradores?|compradora|leads?|pessoas?)\b|\bquem (?:e que |e o |e a |ta |esta |que )?(?:quer|quis|procur|busc|pedi|precis|compr|tava|estava|queri|gost)\w*|\b(?:pra|para) quem\b|\bquem (?:posso|eu|mando|envio|se interessa)\b|\bclientes (?:com|que|para|pra|de|do|da|no|na|em|quentes?|fri[oa]s?|stand ?by|procur\w+|busc\w+|interessad\w+)\b/.test(s);
@@ -4092,9 +4149,12 @@ function vzEntende(texto, ctx) {
   const cliFraco = /\bclientes?(?: \w+){0,2} (?:quer|queri|procur|busc|pedi|precis|era)\w*/.test(s);
   const atendendo = /\b(?:to|estou|tou|tenho|atendendo|chegou)(?: \w+){0,2} cliente\b|\b(?:para|pra|pro) (?:um|uma|meu|minha|esse|essa|o|a)?\s?cliente\b/.test(s) || /\b(?:me traz|me traga|traga|traz|opcoes|opcao|preciso de|me mostra|me manda)\b/.test(s);
   if (cad) Q.intencao = 'cadastro';
+  else if (alt) { Q.intencao = 'alterar'; Q.pts += (Q.clientes ? 1.5 : 0) + (Q.etapas ? 1 : 0); }
   else if (Q.clientes) Q.intencao = criterio && !/\b(?:ficha|abre|abrir|abra)\b/.test(s) ? 'imovel' : 'abrir';
   else if (cliForte || cliLembra || (cliFraco && !atendendo)) Q.intencao = 'clientes';
-  Q.criterio = criterio; if (cad) delete Q.novos;
+  Q.criterio = criterio; if (acao) delete Q.novos;
+  // tinha jeito de alteração, mas sem cliente e sem falar em cadastro: lê de novo como busca
+  if (alt && !Q.clientes && !temFicha) return vzEntende(texto, ctx, true);
   // palavras que sobraram sem eu entender (para escolher entre as hipóteses do reconhecedor)
   Q.sobras = pal.filter(x => livre(x.ini, x.fim) && x.w.length >= 3 && !/^\d/.test(x.w) && !VZ_COMUNS.has(x.w) && !vazias.test(x.w)).map(x => (R[(T.find(t => t.ini === x.ini) || {}).a] || x.w).replace(/[.,;:!?]+$/, '')); Q.sobra = Q.sobras.length;
   Q.pecas = vzEscreve(Q);
@@ -4161,7 +4221,7 @@ function vzPoeValor(Q, v, corr) {
 
 // ── PERGUNTAR POR VOZ: gravação, busca e tela ──
 const ICON_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg>';
-let vz = { txt: '', q: null, cad: null, comp: null, modo: '', cli: '', n: 20, np: 10, ord: 'melhor', de: 'clientes', itens: null, abriu: '' };
+let vz = { txt: '', q: null, cad: null, alt: null, comp: null, edita: false, modo: '', cli: '', n: 20, np: 10, ord: 'melhor', de: 'clientes', itens: null, abriu: '' };
 const vzChaveB = b => bkey(VZ_APELIDOS[vzNorm(b)] || b); // "Sao Bras" no anúncio = "São Braz"
 const vzCwb = i => !i.ci || norm(i.ci) === 'curitiba';
 let vzBase = null;
@@ -4186,33 +4246,92 @@ function vzPesa(Q, campo, v) {
 function vzPergunta(txt, hips) {
   txt = String(txt || '').replace(/\s+/g, ' ').trim(); if (!txt) return;
   let l = hips && hips.length ? hips : [txt];
-  if (vz.comp) { const k = vz.comp; vz.comp = null; if (!vzEhCadastro(vzNorm(l[0]))) l = l.map(x => vzCompleta(k, x)); }
+  if (vz.comp) { const k = vz.comp; vz.comp = null; if (k.alt) l = l.map(x => 'arrume o cadastro de ' + k.alt + ', ' + x); else if (!vzEhCadastro(vzNorm(l[0]))) l = l.map(x => vzCompleta(k, x)); }
   const Q = vzDecide(l, vzContexto(), vzPesa, !hips); if (!Q) return;
-  const limpo = vzTexto(Q), cad = Q.intencao === 'cadastro';
-  if (!cad) lsSet('carteira_voz_hist', [limpo].concat(lsGet('carteira_voz_hist', []).filter(x => norm(x) !== norm(limpo))).slice(0, 6));
-  vz = Object.assign(vz, { txt: limpo, cru: l[0], hips: l, dig: !hips, q: Q, modo: Q.intencao, cli: Q.intencao === 'imovel' && Q.clientes && Q.clientes.length === 1 ? Q.clientes[0] : '', n: 20, np: 10, ord: 'melhor', itens: null, abriu: '', cad: null });
   if (ui.sheet) closeSheet();
+  // "só faça o que tem que ser feito" (23/11, pedido dele): cadastro completo, alteração e "abre a ficha" resolvem e mostram a ficha, sem página de busca e sem texto
+  const um = Q.clientes && Q.clientes.length === 1 ? byId(Q.clientes[0]) : null, k = Q.intencao === 'cadastro' ? vzCadastro(Q) : null;
+  if (k && !k.falta.length && !k.dup) { vz.cad = k; vz.alt = null; vzGravaCad(); return; }
+  if (Q.intencao === 'alterar' && um) { vzAltera(um, Q); return; }
+  if (Q.intencao === 'abrir' && um) { vzFechaPagina(); vzFicha(um.id, Q); return; }
+  const limpo = vzTexto(Q), acao = !!k || Q.intencao === 'alterar' || Q.intencao === 'abrir';
+  if (!acao) lsSet('carteira_voz_hist', [limpo].concat(lsGet('carteira_voz_hist', []).filter(x => norm(x) !== norm(limpo))).slice(0, 6));
+  vz = Object.assign(vz, { txt: limpo, cru: l[0], hips: l, dig: !hips, q: Q, modo: Q.intencao, cli: Q.intencao === 'imovel' && um ? um.id : '', n: 20, np: 10, ord: 'melhor', itens: null, cad: k, edita: false });
   if (ui.tab !== 'voz') vz.de = ui.tab;
-  if (cad) vz.cad = vzCadastro(Q);
   go('voz'); // o go desenha a página
-  if (cad) { if (!vz.cad.falta.length && !vz.cad.dup) vzGravaCad(); } else vzAbreCliente();
+}
+// terminou uma ação que estava na página de perguntar (faltava o valor, qual dos clientes…): volta de onde ele veio
+function vzFechaPagina() {
+  if (!['cadastro', 'alterar', 'abrir'].includes(vz.modo)) return;
+  vz.q = null; vz.txt = ''; vz.modo = ''; vz.edita = false; if (ui.tab === 'voz') go(vz.de || 'clientes');
 }
 // o estoque chegou depois da pergunta: lê de novo, agora com os nomes e os valores que existem
 function vzRefaz() {
-  if (!vz.q || !vz.hips || vz.modo === 'cadastro') return;
+  if (!vz.q || !vz.hips || ['cadastro', 'alterar'].includes(vz.modo)) return;
   const m = vz.modo === vz.q.intencao; vz.q = vzDecide(vz.hips, vzContexto(), vzPesa, vz.dig); vz.txt = vzTexto(vz.q); if (m) vz.modo = vz.q.intencao;
-  if (ui.tab === 'voz') { renderVoz(); vzAbreCliente(); }
+  if (ui.tab === 'voz') renderVoz();
 }
-// "tem imóvel novo para o André Vilela?": abre a ficha dele, nos Novos quando há
-function vzAbreCliente() {
-  const Q = vz.q; if (!Q || vz.modo !== 'abrir' || !carregados || !Q.clientes || Q.clientes.length !== 1 || vz.abriu === vz.txt) return;
-  vz.abriu = vz.txt; vzFicha(Q.clientes[0]);
-}
-function vzFicha(id) {
+// "tem imóvel novo para o André Vilela?": a ficha dele, nos Novos quando há
+function vzFicha(id, Q) {
   const c = byId(id); if (!c) return;
-  const nv = novosPara(c).length; ui.fonte = nv && vz.modo === 'abrir' ? 'novos' : 'todas'; ui.j8Mais[id] = 5;
-  if (vz.q && vz.q.novos && !nv) toast(`Nenhum imóvel novo para ${nomeProprio(firstName(c.nome))} agora.`);
+  const nv = novosPara(c).length; ui.fonte = nv && Q ? 'novos' : 'todas'; ui.j8Mais[id] = 5;
+  if (Q && Q.novos && carregados && !nv) toast(`Nenhum imóvel novo para ${nomeProprio(firstName(c.nome))} agora.`);
   renderFicha(id);
+}
+
+// ── alterar o cadastro falando (23/11, pedido dele) ──
+// "Arrume o cadastro do Paulo Oliveira: 4 vagas, de 5 a 5,5 milhões": grava e mostra a ficha com o que mudou (e Desfazer).
+function vzMuda(c, Q) {
+  const n = JSON.parse(JSON.stringify(c)), A = Q.alt, mud = [], p = Q.preco, a = Q.area, t = Q.terreno, poe = (rot, x, y) => { if (x !== y) mud.push([rot, x, y]); };
+  const val = x => faixaValor(x) || 'sem valor', ou = x => x ? x + ' ou mais' : 'tanto faz', met = x => x.areaMin && x.areaMax ? `de ${x.areaMin} a ${x.areaMax} m²` : x.areaMin ? `a partir de ${x.areaMin} m²` : x.areaMax ? `até ${x.areaMax} m²` : 'tanto faz';
+  if (p) {
+    if (p.min && p.max) { n.valorMin = p.min; n.valorMax = p.max; } else if (p.max || p.perto) { n.valorMax = p.max || p.perto; if (n.valorMin >= n.valorMax) n.valorMin = 0; } else { n.valorMin = p.min; if (n.valorMax && n.valorMax <= n.valorMin) n.valorMax = 0; }
+    poe('Faixa de valor', val(c), val(n));
+  }
+  if (Q.q) { n.quartos = Q.q; poe('Quartos', ou(c.quartos), ou(n.quartos)); }
+  if (Q.v) { n.vagas = Q.v; poe('Vagas', ou(c.vagas), ou(n.vagas)); }
+  const soTerra = (Q.tipos.length ? Q.tipos : c.tipos).length && (Q.tipos.length ? Q.tipos : c.tipos).every(x => GRUPO[x] === 'Terreno');
+  if (a && !soTerra) { if (a.min || a.perto) n.areaMin = a.min || a.perto; if (a.max) n.areaMax = a.max; if (n.areaMin && n.areaMax && n.areaMax <= n.areaMin) { if (a.max) n.areaMin = 0; else n.areaMax = 0; } poe('Metragem', met(c), met(n)); }
+  const tm = t ? t.min || t.perto : a && soTerra ? a.min || a.perto : 0; if (tm) { n.terrenoMin = tm; poe('Terreno', c.terrenoMin ? `a partir de ${c.terrenoMin} m²` : 'tanto faz', `a partir de ${tm} m²`); }
+  if (Q.tipos.length) { n.tipos = A.soma && !A.so ? TIPOS.filter(x => c.tipos.includes(x) || Q.tipos.includes(x)) : Q.tipos.slice(); poe('Tipo', tiposResumo(c.tipos).join(', ') || 'qualquer um', tiposResumo(n.tipos).join(', ')); }
+  const mais = [...new Set(Q.bairros.map(spell).concat(Q.cidades))], menos = A.tira.concat(Q.fora).map(spell), tem = (l, x) => l.some(y => bkey(y) === bkey(x));
+  if (mais.length || menos.length) {
+    let b = mais.length && A.so ? mais.slice() : c.bairros.concat(mais.filter(x => !tem(c.bairros, x))); b = b.filter(x => !tem(menos, x));
+    if (!b.length) mud.aviso = 'Precisa ficar pelo menos um bairro, então não tirei.'; else { n.bairros = b; poe('Bairros', c.bairros.join(', ') || 'nenhum', b.join(', ')); } // pelo menos um bairro tem de ficar
+  }
+  if (Q.mo) { n.mobilia = Q.mo.slice(); const m = x => MOBILIAS.filter(y => x.mobilia.includes(y[0])).map(y => y[1]).join(' ou ') || 'tanto faz'; poe('Mobília', m(c), m(n)); }
+  if (Q.ob) { n.situacao = [Q.ob]; const m = x => SITUACOES.filter(y => x.situacao.includes(y[0])).map(y => y[1]).join(' ou ') || 'tanto faz'; poe('Situação', m(c), m(n)); }
+  if (Q.etapas && ETAPA[Q.etapas[0]] && Q.etapas[0] !== c.etapa) { n.etapa = Q.etapas[0]; n.etapaEm = nowLocal(); poe('Etapa', ETAPA[c.etapa][1], ETAPA[n.etapa][1]); }
+  if (A.fone) { n.whats = A.fone; poe('WhatsApp', fmtFone(c.whats) || 'sem telefone', fmtFone(A.fone)); }
+  const extra = [Q.s ? Q.s + plural(Q.s, ' suíte', ' suítes') : '', ...Q.itens.map(x => x.rot.toLowerCase()), A.obs].filter(x => x && !norm(c.obs).includes(norm(x)));
+  if (extra.length) { const base = Q.s ? String(c.obs || '').split(', ').filter(x => !/^\d+ su[ií]tes?$/i.test(x)).join(', ') : c.obs; n.obs = [base, ...extra].filter(Boolean).join(', '); poe('Observações', c.obs || 'nenhuma', n.obs); }
+  return { n, mud };
+}
+function vzAltera(c, Q) {
+  const { n, mud } = vzMuda(c, Q), antes = {}; Object.keys(n).forEach(k => { if (JSON.stringify(n[k]) !== JSON.stringify(c[k])) antes[k] = c[k]; });
+  const disse = !!(Q.preco || Q.q || Q.v || Q.s || Q.area || Q.terreno || Q.tipos.length || Q.bairros.length || Q.cidades.length || Q.alt.tira.length || Q.fora.length || Q.mo || Q.ob || Q.etapas || Q.alt.fone || Q.alt.obs || Q.itens.length);
+  vz.cad = null; vz.alt = { id: c.id, mud, antes, disse, aviso: mud.aviso || '', foneRuim: Q.alt.foneRuim, desfeito: false };
+  vzFechaPagina(); if (mud.length) saveClient(n);
+  vzFicha(c.id); if (mud.length) toast(`Cadastro de ${nomeProprio(firstName(c.nome))} atualizado.`);
+}
+function vzDesfazAlt() {
+  const k = vz.alt, c = k && byId(k.id); if (!c || k.desfeito) return;
+  k.desfeito = true; saveClient(Object.assign({}, c, k.antes)); if (ui.sheet && ui.sheet.id === k.id) renderFicha(k.id); toast('Alteração desfeita.');
+}
+// na ficha, o que a voz acabou de mudar
+function vzAvisoAlt(id) {
+  const k = vz.alt; if (!k || k.id !== id) return '';
+  const fone = (k.foneRuim ? `<p>O telefone veio incompleto (${esc(k.foneRuim)}), então não mudei.</p>` : '') + (k.aviso ? `<p>${k.aviso}</p>` : '');
+  if (k.desfeito) return '<div class="vzcad"><div class="vzcadt"><b>Alteração desfeita</b></div></div>';
+  if (k.mud.length) return `<div class="vzcad"><div class="vzcadt"><b>✓ Cadastro atualizado por voz</b><button class="link" data-act="vz-alt-undo">Desfazer</button></div>${k.mud.map(([r, x, y]) => `<p><b>${r}:</b> <s>${esc(x)}</s> → ${esc(y)}</p>`).join('')}${fone}</div>`;
+  return `<div class="vzcad"><div class="vzcadt"><b>${k.aviso || k.foneRuim ? 'Nada mudou' : k.disse ? 'Nada mudou: o cadastro já estava assim' : 'Não entendi o que mudar'}</b><button class="link" data-act="vz-mic-alt">Falar de novo</button></div>${fone}${k.disse || k.foneRuim ? '' : '<p>Fale só o que muda. Ex.: “4 vagas, de 5 a 5,5 milhões”.</p>'}</div>`;
+}
+// "arrume o cadastro do…": não achou o cliente, ou há mais de um com esse nome
+function vzRenderAlt(Q, res) {
+  const l = (Q.clientes || []).map(byId).filter(Boolean);
+  res.innerHTML = l.length ? `<span class="lbl" style="margin-top:18px">Alterar o cadastro de qual deles?</span><div class="list">${l.map(c => vzLinhaCliente(c).replace('data-act="vz-ficha"', 'data-act="vz-alt-em"')).join('')}</div>`
+    : `<div class="vzcad pend"><div class="vzcadt"><b>Não achei esse cliente na carteira</b></div><p>Digite o nome e toque nele para alterar o cadastro.</p><div class="vzq"><div class="ta"><input id="vz-cli" placeholder="Nome do cliente" autocomplete="off" aria-label="Nome do cliente"><div class="dd hidden" id="vz-cli-dd"></div></div></div></div>`;
+  const ci = $('#vz-cli'); if (ci) vzEscolheCliente(ci, $('#vz-cli-dd'), id => vzAltera(byId(id), vz.q));
 }
 
 // ── cadastrar cliente falando (23/11, pedido dele) ──
@@ -4231,8 +4350,8 @@ function vzGravaCad() {
   const k = vz.cad; if (!k || k.id || k.falta.length) return;
   k.dup = ''; k.desfeito = false; k.id = newId('c');
   const c = saveClient(Object.assign(cleanClient({}), k.d, { id: k.id, criadoEm: nowLocal(), status: 'ativo', envios: [] }));
-  ui.fonte = carregados && novosPara(c).length ? 'novos' : 'todas'; renderVoz(); renderFicha(c.id);
-  toast(`${nomeProprio(firstName(c.nome))} entrou na carteira.`); setTimeout(vzAltura, 80);
+  vz.alt = null; vzFechaPagina(); ui.fonte = carregados && novosPara(c).length ? 'novos' : 'todas'; renderFicha(c.id);
+  toast(`${nomeProprio(firstName(c.nome))} entrou na carteira.`);
 }
 function vzDesfazCad() {
   const k = vz.cad; if (!k || !k.id) return; const id = k.id, c = byId(id);
@@ -4249,6 +4368,7 @@ function vzCompleta(k, x) {
 }
 // o que conferir no cadastro que acabou de entrar (aparece na ficha e na página)
 function vzAvisosCad(id) {
+  if (vz.alt && vz.alt.id === id) return vzAvisoAlt(id);
   const k = vz.cad, c = k && k.id === id && byId(id); if (!c) return '';
   const l = [];
   if (k.foneRuim) l.push(`O telefone veio incompleto (${esc(k.foneRuim)}), então não gravei.`);
@@ -4393,7 +4513,7 @@ function vzTira(k) {
   if (k === 'preco') delete Q.ouValor;
   vz.itens = null; vz.n = 20; renderVoz();
 }
-const VZ_EXEMPLOS = ['Casa com 3 quartos e 2 suítes na região do Santo Inácio', 'Cadastrar cliente …', 'Apartamento de 163 metros no Ecoville', 'A casa do Campos do Jordão, acho que 3 milhões e 400', 'Qual cliente queria casa em Santa Felicidade até 5 milhões?', 'Tem imóvel novo para mandar para o …?', 'Casa em condomínio no Campo Comprido com piscina até 4 milhões'];
+const VZ_EXEMPLOS = ['Casa com 3 quartos e 2 suítes na região do Santo Inácio', 'Cadastrar cliente …', 'Arrume o cadastro do …', 'Apartamento de 163 metros no Ecoville', 'A casa do Campos do Jordão, acho que 3 milhões e 400', 'Qual cliente queria casa em Santa Felicidade até 5 milhões?', 'Tem imóvel novo para mandar para o …?', 'Casa em condomínio no Campo Comprido com piscina até 4 milhões'];
 function vzLinhaCliente(c, porque) {
   const nn = novosPara(c).length;
   return `<button class="crow vzc" data-act="vz-ficha" data-id="${c.id}">${avatar(c)}<div class="cm"><div class="nm np">${esc(nomeProprio(c.nome))}${c.status === 'arquivado' ? '<span class="pill arquivado">Arquivado</span>' : `<span class="pill et-${c.etapa}">${ETAPA[c.etapa][2]}</span>`}</div>
@@ -4403,18 +4523,21 @@ function vzLinhaCliente(c, porque) {
 function renderVoz() {
   const inp = $('#vz-in'); if (!inp) return;
   if (document.activeElement !== inp) { inp.value = vz.txt; vzAltura(); }
-  const Q = vz.q, ent = $('#vz-ent'), res = $('#vz-res');
+  const Q = vz.q, ent = $('#vz-ent'), res = $('#vz-res'), acao = !!Q && ['cadastro', 'alterar', 'abrir'].includes(vz.modo), fm = $('#vz-form');
+  fm.classList.toggle('mini', !!Q && !acao && !vz.edita && !(vz.dig && matchMedia('(min-width:901px)').matches)); fm.classList.toggle('hidden', acao);
+  if (!fm.classList.contains('mini')) vzAltura();
   if (!Q) {
     const h = lsGet('carteira_voz_hist', []);
     ent.innerHTML = ''; res.innerHTML = `${h.length ? `<span class="lbl" style="margin-top:22px">Últimas perguntas</span><div class="vzex">${h.map(x => `<button data-act="vz-ex" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}<span class="lbl" style="margin-top:22px">Pode perguntar assim</span><div class="vzex">${VZ_EXEMPLOS.map(x => `<button data-act="vz-ex" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>`;
     return;
   }
-  if (vz.modo === 'cadastro' && vz.cad) { ent.innerHTML = vzOuvido(Q); return vzRenderCad(res); }
+  if (vz.modo === 'cadastro' && vz.cad) { ent.innerHTML = ''; return vzRenderCad(res); }
+  if (vz.modo === 'alterar') { ent.innerHTML = ''; return vzRenderAlt(Q, res); }
+  if (vz.modo === 'abrir') { ent.innerHTML = ''; return vzRenderAbrir(Q, res); }
   const ch = vzChips(Q), nada = !ch.length && !(Q.clientes && Q.clientes.length);
-  ent.innerHTML = `<div class="vzent"><div class="chips sm">${[['imovel', 'Imóveis'], ['clientes', 'Clientes']].map(([k, l]) => `<button class="chip${vz.modo === k ? ' on' : ''}" data-act="vz-modo" data-v="${k}">${l}</button>`).join('')}</div>${ch.length ? `<div class="vzch"><span class="muted">Entendi:</span>${ch.map(([k, t]) => `<span class="chip tag">${esc(t)}<button class="rm" data-act="vz-tira" data-v="${k}" aria-label="Tirar ${esc(t)}">×</button></span>${k === 'preco' && Q.ouValor ? `<button class="chip vzou" data-act="vz-valor" data-v="${Q.ouValor}">Era ${(Q.loc ? vzDin : fmtValor)(Q.ouValor)}?</button>` : ''}`).join('')}</div>` : ''}</div>${vzOuvido(Q)}`;
-  if (nada) { res.innerHTML = `<div class="empty" style="margin-top:18px"><h3>Não entendi o pedido</h3><p>Fale o tipo de imóvel, o bairro, o valor, a metragem, o nome do condomínio ou o nome do cliente. Você também pode corrigir o texto acima e tocar em Buscar.</p></div>`; return; }
+  ent.innerHTML = `<div class="vzent"><div class="chips sm">${[['imovel', 'Imóveis'], ['clientes', 'Clientes']].map(([k, l]) => `<button class="chip${vz.modo === k ? ' on' : ''}" data-act="vz-modo" data-v="${k}">${l}</button>`).join('')}</div>${ch.length ? `<div class="vzch"><span class="muted">Entendi:</span>${ch.map(([k, t]) => `<span class="chip tag">${esc(t)}<button class="rm" data-act="vz-tira" data-v="${k}" aria-label="Tirar ${esc(t)}">×</button></span>${k === 'preco' && Q.ouValor ? `<button class="chip vzou" data-act="vz-valor" data-v="${Q.ouValor}">Era ${(Q.loc ? vzDin : fmtValor)(Q.ouValor)}?</button>` : ''}`).join('')}</div>` : ''}</div>${vz.edita ? vzOuvido(Q) : ''}`;
+  if (nada) { res.innerHTML = `<div class="empty" style="margin-top:18px"><h3>Não entendi o pedido</h3><p>Fale o tipo de imóvel, o bairro, o valor, a metragem, o nome do condomínio ou o nome do cliente. Você também pode tocar em “Ver ou corrigir o texto”.</p></div>`; return; }
   if (!carregados) { res.innerHTML = '<p class="muted" style="margin-top:18px">Carregando os estoques…</p>'; return; }
-  if (vz.modo === 'abrir') return vzRenderAbrir(Q, res);
   if (vz.modo === 'clientes') return vzRenderClientes(Q, res);
   vzRenderImoveis(Q, res);
 }
@@ -4445,7 +4568,7 @@ function vzRenderImoveis(Q, res) {
   }
   const c = vz.cli && byId(vz.cli);
   // para quem: com o cliente escolhido, o PDF e o link já ficam registrados na ficha dele
-  const quem = `<div class="vzq">${c ? `<span>Enviar para <b class="np">${esc(nomeProprio(c.nome))}</b></span><button class="link" data-act="vz-cli-x">trocar</button><button class="link" data-act="vz-ficha" data-id="${c.id}">abrir ficha</button>` : `<div class="ta"><input id="vz-cli" placeholder="Enviar para qual cliente? (opcional)" autocomplete="off" aria-label="Enviar para qual cliente"><div class="dd hidden" id="vz-cli-dd"></div></div>`}</div>`;
+  const quem = `<div class="vzq">${c ? `<span>Enviar para <b class="np">${esc(nomeProprio(c.nome))}</b></span><button class="link" data-act="vz-cli-x">trocar</button><button class="link" data-act="vz-ficha" data-id="${c.id}">abrir ficha</button>${Q.clientes && Q.clientes.includes(c.id) && (Q.preco || Q.q || Q.v || Q.area || Q.tipos.length || Q.bairros.length) && !Q.emp && !Q.rua ? '<button class="link" data-act="vz-alt-busca">atualizar o cadastro com isso</button>' : ''}` : `<div class="ta"><input id="vz-cli" placeholder="Enviar para qual cliente? (opcional)" autocomplete="off" aria-label="Enviar para qual cliente"><div class="dd hidden" id="vz-cli-dd"></div></div>`}</div>`;
   const ord = l.length > 1 ? `<div class="chips sm" style="margin-top:12px">${[['melhor', 'Mais parecidos'], ['maior', 'Maior valor'], ['menor', 'Menor valor']].map(([k, t]) => `<button class="chip${vz.ord === k ? ' on' : ''}" data-act="vz-ord" data-v="${k}">${t}</button>`).join('')}</div>` : '';
   if (prog) { res.innerHTML = quem + prog; return; }
   const tela = l.slice(0, vz.n), resto = l.length - tela.length;
@@ -4456,7 +4579,7 @@ function vzRenderImoveis(Q, res) {
   if (l.length) carregaJsPDF().catch(() => {});
 }
 // campo "enviar para qual cliente": digita o nome e toca
-function vzEscolheCliente(inp, dd) {
+function vzEscolheCliente(inp, dd, pega) {
   const mostra = () => {
     const q = norm(inp.value); if (!q) { dd.classList.add('hidden'); return; }
     const l = clientes.filter(c => norm(c.nome).includes(q)).sort((a, b) => (a.status === 'arquivado') - (b.status === 'arquivado') || norm(a.nome).indexOf(q) - norm(b.nome).indexOf(q) || a.nome.localeCompare(b.nome, 'pt-BR')).slice(0, 6);
@@ -4464,7 +4587,7 @@ function vzEscolheCliente(inp, dd) {
     dd.classList.remove('hidden');
   };
   inp.addEventListener('input', mostra); inp.addEventListener('focus', mostra); inp.addEventListener('blur', () => setTimeout(() => dd.classList.add('hidden'), 180));
-  dd.addEventListener('mousedown', e => { const o = e.target.closest('[data-id]'); if (!o) return; e.preventDefault(); vz.cli = o.dataset.id; renderVoz(); });
+  dd.addEventListener('mousedown', e => { const o = e.target.closest('[data-id]'); if (!o) return; e.preventDefault(); if (pega) { pega(o.dataset.id); return; } vz.cli = o.dataset.id; renderVoz(); });
 }
 function vzAltura() { const t = $('#vz-in'); if (!t) return; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight + 2, 160) + 'px'; }
 
@@ -4514,7 +4637,7 @@ function vzOuvir(dica) {
     else toast('Não ouvi nada. Toque no microfone e fale de novo.');
   };
   // só pede para falar quando o microfone está mesmo ligado: quem fala antes perde a primeira palavra
-  const pronto = () => { if (est.pronto || est.fim) return; est.pronto = true; $('#vz-ov .kick').textContent = 'Ouvindo'; $('#vz-ov').classList.remove('ligando'); if (!est.txt) $('#vz-fala').textContent = dica ? dica + '.' : 'Pode falar. Ex.: "casa com 3 quartos no Santo Inácio até 4 milhões" ou "cadastrar cliente…"'; if (navigator.vibrate) navigator.vibrate(12); arma(10000); };
+  const pronto = () => { if (est.pronto || est.fim) return; est.pronto = true; $('#vz-ov .kick').textContent = 'Ouvindo'; $('#vz-ov').classList.remove('ligando'); if (!est.txt) $('#vz-fala').textContent = dica ? dica + '.' : 'Pode falar. Ex.: "casa com 3 quartos no Santo Inácio até 4 milhões" "cadastrar cliente…" ou "arrume o cadastro do…"'; if (navigator.vibrate) navigator.vibrate(12); arma(10000); };
   rec.onstart = () => setTimeout(pronto, 900); rec.onaudiostart = pronto;
   rec.onresult = e => { pronto(); est.hips = vzHips(e.results); est.txt = est.hips[0] || ''; if (est.txt) vzMostra(est); arma(4000); };
   // começou a falar e o texto ainda não veio: não encerra no meio da fala
@@ -4536,7 +4659,7 @@ function vzAcao(a, el) {
     case 'vz-mic-falta': vz.comp = { base: vz.txt, falta: vz.cad.falta.slice() }; vzOuvir('Fale ' + listaPt(vz.cad.falta.map(x => x === 'nome' ? 'o nome' : x === 'bairro' ? 'o bairro' : 'a faixa de valor'))); break;
     case 'vz-cad-sim': vz.cad.dup = ''; vzGravaCad(); break;
     case 'vz-cad-undo': vzDesfazCad(); break;
-    case 'vz-cad-form': { const d = vz.cad.d; vz.q = null; vz.txt = ''; vz.cad = null; $('#vz-in').value = ''; renderVoz(); openForm(null, Object.assign({}, d, { id: undefined })); break; }
+    case 'vz-cad-form': { const d = vz.cad.d; vz.cad = null; vzFechaPagina(); $('#vz-in').value = ''; openForm(null, Object.assign({}, d, { id: undefined })); break; }
     case 'vz-cad-tipo': { const c = vz.cad && byId(vz.cad.id), t = { Casas: TIPOS_ANTIGOS.Casa, Apartamentos: TIPOS_ANTIGOS.Apartamento, Coberturas: ['Cobertura'], Terrenos: TIPOS_ANTIGOS.Terreno }[v]; if (c && t) saveClient(Object.assign({}, c, { tipos: t.slice(), tiposV: 2 })); break; }
     case 'vz-parar': vzPara(); break;
     case 'vz-cancela': vzCancela(); break;
@@ -4549,8 +4672,13 @@ function vzAcao(a, el) {
     case 'vz-mais': vz.n += 20; renderVoz(); break;
     case 'vz-mais-perto': vz.np += 10; renderVoz(); break;
     case 'vz-cli-x': vz.cli = ''; renderVoz(); break;
-    case 'vz-ficha': vzFicha(el.dataset.id); break;
-    case 'vz-nova': vz.q = null; vz.txt = ''; vz.cad = null; vz.comp = null; renderVoz(); $('#vz-in').value = ''; vzAltura(); break;
+    case 'vz-ficha': vzFicha(el.dataset.id, vz.modo === 'abrir' ? vz.q : null); break;
+    case 'vz-alt-em': vzAltera(byId(el.dataset.id), vz.q); break;
+    case 'vz-alt-undo': vzDesfazAlt(); break;
+    case 'vz-mic-alt': { const c = vz.alt && byId(vz.alt.id); if (c) { vz.comp = { alt: c.nome }; vzOuvir('Fale o que muda no cadastro de ' + nomeProprio(firstName(c.nome))); } break; }
+    case 'vz-alt-busca': { const c = byId(vz.cli); if (c) vzAltera(c, Object.assign({}, vz.q, { alt: { fone: '', foneRuim: '', obs: '', tira: [], so: false, soma: false } })); break; }
+    case 'vz-edita': vz.edita = true; renderVoz(); { const t = $('#vz-in'); t.focus(); t.setSelectionRange(t.value.length, t.value.length); } break;
+    case 'vz-nova': vz.q = null; vz.txt = ''; vz.modo = ''; vz.edita = false; vz.cad = null; vz.comp = null; renderVoz(); $('#vz-in').value = ''; vzAltura(); break;
     case 'vz-volta': go(vz.de || 'clientes'); break;
   }
 }
@@ -5029,7 +5157,7 @@ document.addEventListener('click', e => {
     case 'p-rasc-x': try { localStorage.removeItem(LS_RASC); } catch (er) {} renderPareceres(); break;
     case 'novo': openForm(); break;
     case 'menu': menu.classList.toggle('hidden'); break;
-    case 'recarregar': menu.classList.add('hidden'); loaded = false; updateSync(); refresh(); break;
+    case 'recarregar': menu.classList.add('hidden'); loaded = false; updateSync(); refresh(false, true); break;
     case 'sair': try { localStorage.removeItem(LS_AUTH); } catch (er) {} location.reload(); break;
     case 'alimentar': ui.c.f = 'alimentar'; go('clientes'); renderClientes(); break;
     case 'ficha': if (ui.sheet && ui.sheet.kind === 'form') closeSheet(); renderFicha(id); break;
@@ -5165,7 +5293,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-23g';
+const VERSAO = '2026-11-23h';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
