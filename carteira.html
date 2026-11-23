@@ -863,7 +863,7 @@ const PERFIS = {
   // 20/11 (pedido dele): Gabriel Gomes com o mesmo acesso do Matheus (master: complemento, todas as imobiliárias, Parecer,
   // aprova os imóveis Nickel do Felipe), MAS com a carteira de clientes própria: os clientes do Matheus não aparecem para ele
   gabriel: { nome: 'Gabriel Gomes', usuarios: ['gabriel', 'gabriel gomes'], hash: 'ca17a55dfc13791364501bf8f3e5adb20337c2c62275d00297802bf9691f3992', master: true, estoques: null, col: 'carteira_clientes_gabriel',
-    corretor: { nome: 'GABRIEL GOMES' } },
+    corretor: { nome: 'GABRIEL GOMES', cargo: 'Corretor de Imóveis', creci: 'CRECI-PR F55340' /* 23/11: sem WhatsApp e Instagram, pedido do Matheus */ } },
   felipe: { nome: 'Felipe Moreira', usuarios: ['felipe', 'felipe moreira'], hash: 'ba9f36c449a262653d632ea1cefbd90a062af02d7b5d3620a260515ee23896a6' /* senha trocada em 20/11 */, master: false, estoques: null /* desde 16/11 à noite: todas as imobiliárias (antes só J8) */, col: 'carteira_clientes_felipe',
     corretor: { nome: 'FELIPE MOREIRA' } }
 };
@@ -1855,7 +1855,7 @@ function capaPDF(doc, d, foto, cl) {
   // só o nome (login do Felipe): no meio da faixa do cartão
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(44, 46, 51); doc.text(CORRETOR.nome, x, CORRETOR.creci ? pe - 18 : pe - 10, { charSpace: 2 });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(120, 120, 120);
-  if (CORRETOR.creci) doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, pe - 2);
+  if (CORRETOR.creci) doc.text([CORRETOR.cargo, CORRETOR.creci].filter(Boolean).join(' · '), x, pe - 2);
   doc.setFontSize(10); doc.setTextColor(56, 56, 56);
   [[CORRETOR.insta, 'insta', pe - 18], [CORRETOR.whats, 'wa', pe - 2]].filter(([t]) => t).forEach(([t, ic, yy]) => {
     doc.text(t, x + w, yy, { align: 'right' });
@@ -2864,7 +2864,7 @@ function capaParecerPDF(doc, p, r, foto) {
   // cartão do corretor no pé, igual ao do book
   doc.setDrawColor(228, 228, 228); doc.setLineWidth(.6); doc.line(x, pe - 44, x + w, pe - 44);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'tx'); doc.text(CORRETOR.nome, x, CORRETOR.creci ? pe - 18 : pe - 10, { charSpace: 2 });
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); pTx(doc, 'mu'); if (CORRETOR.creci) doc.text(`${CORRETOR.cargo} · ${CORRETOR.creci}`, x, pe - 2);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); pTx(doc, 'mu'); if (CORRETOR.creci) doc.text([CORRETOR.cargo, CORRETOR.creci].filter(Boolean).join(' · '), x, pe - 2);
   doc.setFontSize(10); doc.setTextColor(56, 56, 56);
   [[CORRETOR.insta, 'insta', pe - 18], [CORRETOR.whats, 'wa', pe - 2]].filter(([t]) => t).forEach(([t, ic, yy]) => {
     doc.text(t, x + w, yy, { align: 'right' });
@@ -3038,7 +3038,7 @@ function filaParecerPDF(doc, p, r, pg, tot, assin) {
   if (assin) doc.addImage(assin, 'PNG', rx - 8, sy - 62, 220, 66, undefined, 'FAST');
   pDraw(doc, 'tx'); doc.setLineWidth(.5); doc.line(rx, sy, rx + 200, sy);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); pTx(doc, 'tx'); doc.text(PERFIL.nome, rx, sy + 16);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); pTx(doc, 'mu'); doc.text([CORRETOR.creci ? `${CORRETOR.cargo} · ${CORRETOR.creci}` : '', `Curitiba, ${hojeExtenso()}`].filter(Boolean).join(' · '), rx, sy + 30);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); pTx(doc, 'mu'); doc.text([CORRETOR.cargo || '', CORRETOR.creci || '', `Curitiba, ${hojeExtenso()}`].filter(Boolean).join(' · '), rx, sy + 30);
 }
 async function pdfParecer(btn) {
   if (btn.dataset.busy) return;
@@ -4069,7 +4069,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-23b';
+const VERSAO = '2026-11-23c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

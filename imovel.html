@@ -253,7 +253,7 @@ function desenha() {
     ${fotos.length > 1 ? `<section class="sec"><h2>Fotos · ${fotos.length}</h2><div class="gal">${fotos.map((u, i) => `<button data-f="${i}" aria-label="Abrir foto ${i + 1}"><img loading="lazy" src="${esc(src(u, 640, 480))}" alt=""></button>`).join('')}</div></section>` : ''}
     <section class="corr">
       <span class="nm">${esc(c.nome || '')}</span>
-      ${c.creci ? `<span class="cg">${esc(c.cargo || 'Corretor de Imóveis')} · ${esc(c.creci)}</span>` : ''}
+      ${c.creci ? `<span class="cg">${esc([c.cargo, c.creci].filter(Boolean).join(' · '))}</span>` : ''}
       ${ig ? `<a class="ig" href="https://instagram.com/${esc(ig)}" target="_blank" rel="noopener">@${esc(ig)} no Instagram</a>` : ''}
     </section>
     <p class="aviso">Valores e disponibilidade sujeitos a confirmação.</p>
