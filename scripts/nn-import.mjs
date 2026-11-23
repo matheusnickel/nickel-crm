@@ -101,7 +101,7 @@ function ficha(html, c, u) {
   const i = {
     c, t, cat: m[3], ti: titulo, b: bairro, ci: cid.replace(/\s*-\s*[A-Z]{2}$/, '') || 'Curitiba',
     q: +attr('bedrooms') || num('Dormitório'), s: num('Suíte'), v: num('Vaga'), a: Math.round(area), at: terreno ? Math.round(area) : 0, aq: Math.round(area),
-    mo: mob ? 's' : semi ? 'm' : 'n', ob: 'r', p: preco, f: fotos[0] || attr('image'), e: '', en: partes.filter((x, k) => x && !(k < partes.length - 1 && /^n[º°o.]*s*d+$/i.test(x))).join(', '), // sem pedaço vazio nem "Nº 29, 29"
+    mo: mob ? 's' : semi ? 'm' : 'n', ob: 'r', p: preco, f: fotos[0] || attr('image'), e: '', en: partes.filter((x, k) => x && !(k < partes.length - 1 && /^n[º°o.]*\s*\d+$/i.test(x))).join(', '), // sem pedaço vazio nem "Nº 29, 29"
     cp: '', bl: '', ref: '', u, du: ''
   };
   const detalhe = Object.assign({}, i, {
