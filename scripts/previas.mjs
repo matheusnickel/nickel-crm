@@ -38,7 +38,7 @@ function previa(src, i) {
   const g = GRUPO(tipo), b = i.b || 'Curitiba', loc = src === 'j8loc';
   const deRua = { Casa: 'Casa de rua', Sobrado: 'Casa de rua' }[tipo] || '';
   const emp = empDe(i.e);
-  const titulo = emp ? `${emp}, ${b}` : `${deRua || tipo} ${/^(Vila|Cidade)\b/.test(b) ? 'na' : 'no'} ${b}`;
+  const titulo = emp ? `${emp}, ${b}` : `${deRua || tipo} ${/^Santa\b/.test(b) ? 'em' : /^(Vila|Cidade)\b/.test(b) ? 'na' : 'no'} ${b}`;
   // área da conta (pedido dele): apartamento = privativa, casa = construída, terreno = terreno; nunca a total
   const area = i.aq || 0;
   const det = [emp ? tipo : '',

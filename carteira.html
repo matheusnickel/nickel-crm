@@ -540,6 +540,10 @@ select:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,193,186,.2)}
 @keyframes vzpulsa{from{transform:scale(1);opacity:.4}to{transform:scale(1.75);opacity:0}}
 @media (prefers-reduced-motion:reduce){.vz-onda::before,.vz-onda::after{animation:none;opacity:0}}
 .vz-fala{font-size:20px;line-height:1.45;min-height:58px;max-height:38vh;overflow:auto;width:100%;text-wrap:balance}.vz-fala.dica{color:var(--muted);font-size:15.5px}.vz-fala b{font-weight:600;color:var(--or2)}
+.vz-fb,.vz-tecb{display:none;flex-direction:column;gap:10px;width:100%;max-width:420px}.vz-fb button,.vz-tecb .link{justify-content:center}
+.vz-ov.falhou .vz-onda,.vz-ov.falhou .vz-card>.vz-bts,.vz-ov.falhou .vz-card>.link,.vz-ov.tec .vz-onda,.vz-ov.tec .vz-card>.vz-bts,.vz-ov.tec .vz-card>.link,.vz-ov.tec .vz-fala{display:none}.vz-ov.falhou .vz-fb,.vz-ov.tec .vz-tecb{display:flex}.vz-ov.falhou .vz-fala{min-height:0}
+.vz-ov.tec{align-items:flex-start}.vz-ov.tec .vz-card{border-radius:0 0 24px 24px;padding:calc(26px + env(safe-area-inset-top,0px)) 24px 24px}.vz-tecb textarea{width:100%;resize:none;font-size:18px;line-height:1.45;min-height:104px}
+@media (min-width:901px){.vz-ov.tec{align-items:center}.vz-ov.tec .vz-card{border-radius:24px}}
 .vz-ov.ligando .vz-onda{opacity:.45}.vz-ov.ligando .vz-onda::before,.vz-ov.ligando .vz-onda::after{animation:none;opacity:0}
 .chip.vzou{border-style:dashed;border-color:var(--orline);color:var(--or2);font-size:13px;padding:4px 12px}
 .vzcad{background:var(--okbg,#e7f4ec);border-radius:12px;padding:13px 15px;font-size:14px;line-height:1.5;margin-top:14px}.sh-b>.vzcad{margin-top:0}.vzcad p{margin:6px 0 0}.vzcad .chips{margin-top:8px}.vzcadt{display:flex;align-items:center;justify-content:space-between;gap:12px}.vzcad s{color:var(--muted);text-decoration-thickness:1px}.vzver{display:none}.vz-bar.mini{align-items:center}.vz-bar.mini textarea,.vz-bar.mini .btn-or,.vz-bar.mini .vzmic{display:none}.vz-bar.mini .vzver{display:inline-block}.vz-bar.hidden{display:none}
@@ -891,7 +895,7 @@ button.pcs:hover{border-color:var(--tq)}
   <button class="fab" data-act="novo" aria-label="Novo cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 </div>
 
-<div id="vz-ov" class="vz-ov hidden" role="dialog" aria-modal="true" aria-label="Gravando a pergunta"><div class="vz-card"><span class="kick">Ouvindo</span><div class="vz-onda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></div><div class="vz-fala dica" id="vz-fala" aria-live="polite"></div><div class="vz-bts"><button class="btn-ghost" data-act="vz-cancela">Cancelar</button><button class="btn-or" data-act="vz-parar">Pronto</button></div><button class="link" data-act="vz-escreve">Prefiro escrever</button></div></div>
+<div id="vz-ov" class="vz-ov hidden" role="dialog" aria-modal="true" aria-label="Gravando a pergunta"><div class="vz-card"><span class="kick">Ouvindo</span><div class="vz-onda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg></div><div class="vz-fala dica" id="vz-fala" aria-live="polite"></div><div class="vz-bts"><button class="btn-ghost" data-act="vz-cancela">Cancelar</button><button class="btn-or" data-act="vz-parar">Pronto</button></div><button class="link" data-act="vz-tec">Falar pelo teclado</button><div class="vz-fb"><button class="btn-or" data-act="vz-tec">Falar pelo teclado</button><button class="btn-ghost" data-act="vz-mic-novo">Tentar o microfone de novo</button><button class="link" data-act="vz-cancela">Fechar</button></div><div class="vz-tecb"><textarea id="vz-tec" rows="3" placeholder="Toque no microfone do teclado e fale" aria-label="Seu pedido"></textarea><div class="vz-bts"><button class="btn-ghost" data-act="vz-cancela">Cancelar</button><button class="btn-or" data-act="vz-tec-ok">Pronto</button></div><button class="link" data-act="vz-mic-novo">Usar o microfone da Carteira</button></div></div></div>
 <div id="ov" class="ov hidden"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div id="toast" class="toast hidden"></div>
 
@@ -1701,7 +1705,7 @@ function fotoDoLink(d) {
   const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
   const tipo = d.rot || 'Imóvel';
   return {
-    titulo: emp || `${tipoDeRua(d) || tipo} ${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`,
+    titulo: emp || `${tipoDeRua(d) || tipo} ${naNo(d.b)} ${d.b}`,
     sub: emp ? `${tipo} · ${d.b}` : `${d.b} · ${d.ci || 'Curitiba'}`,
     texto: descritivoPartes(d)[1] || '', preco: d.p || 0, loc: ehLocacao(d),
     ficha: fichaCompleta(d).map(([r, v]) => ({ r, v: String(v) })), // o Firestore não guarda lista dentro de lista
@@ -1938,7 +1942,7 @@ function capaPDF(doc, d, foto, cl) {
   // coluna da direita
   const emp = d.e ? (/[a-zà-ú]/.test(d.e) ? d.e : d.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : '';
   // título: o empreendimento; sem ele, no padrão do Matheus, "Casa de rua no Portão" / "Apartamento no Batel"
-  const titulo = emp || `${tipoDeRua(d) || tipo} ${/^(Vila|Cidade)\b/.test(d.b) ? 'na' : 'no'} ${d.b}`;
+  const titulo = emp || `${tipoDeRua(d) || tipo} ${naNo(d.b)} ${d.b}`;
   let y = fy + 8;
   // "SELEÇÃO EXCLUSIVA" e, embaixo, para quem é, com o nome completo (12/11, pedido dele)
   doc.setFontSize(8); doc.setTextColor(224, 102, 44);
@@ -2555,7 +2559,7 @@ const P_FAIXAS = [
 const arred5 = v => Math.round(v / 5000) * 5000;
 const reais = v => 'R$ ' + Math.round(v).toLocaleString('pt-BR');
 const hojeExtenso = () => new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-const naNo = b => /^(Vila|Cidade)\b/.test(b) ? 'na' : 'no';
+function naNo(b) { return /^Santa\b/.test(b) ? 'em' : /^(Vila|Cidade)\b/.test(b) ? 'na' : 'no'; } // "em Santa Felicidade", "na Vila Izabel", "no Batel"
 // rótulo da área conforme o tipo: casa = construída, apartamento e cobertura = privativa, terreno = do terreno
 const areaRot = tc => ({ Casa: 'Área construída', Apartamento: 'Área privativa', Cobertura: 'Área privativa', Terreno: 'Área do terreno' }[GRUPO[tc]] || 'Área');
 let pareceres = [], pareceresOk = false, pareceresErr = false, par = null, parSug = 12, parConfDel = false, parPdf = null;
@@ -3219,7 +3223,7 @@ function detalheNickel(c) {
   return Object.assign(nkResumo(n), { cond: n.cond, iptu: 0, bh: n.bh, ap: n.ap, atot: n.atot, ac: n.ac, apa: n.apa, ano: n.ano, mob: n.mo === 's',
     itens: n.itens, condItens: n.condItens, descricao: n.descricao, fotos: n.fotos.map(id => 'nf:' + id) });
 }
-const nkTitulo = n => { const emp = n.e ? (/[a-zà-ú]/.test(n.e) ? n.e : n.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : ''; return emp || `${n.t || 'Imóvel'} ${/^(Vila|Cidade)\b/.test(n.b) ? 'na' : 'no'} ${n.b || '—'}`; };
+const nkTitulo = n => { const emp = n.e ? (/[a-zà-ú]/.test(n.e) ? n.e : n.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : ''; return emp || `${n.t || 'Imóvel'} ${naNo(n.b)} ${n.b || '—'}`; };
 const nkVeE = n => MASTER || n.status === 'ativo' || n.criadoPor === PERFIL_ID;      // o Felipe vê os publicados e os dele
 const nkPodeEditar = n => MASTER || !n.id || n.criadoPor === PERFIL_ID;            // e só mexe nos dele
 const nkNomeDe = p => (PERFIS[p] || {}).nome || p;
@@ -4620,42 +4624,77 @@ function vzMostra(est) {
     f.innerHTML = h; f.classList.remove('dica'); f.scrollTop = f.scrollHeight; est.um = t0; est.pausa = Math.min(900, Math.max(140, (Date.now() - t0) * 4));
   }, Math.max(0, (est.pausa || 0) - (Date.now() - (est.um || 0))));
 }
-function vzOuvir(dica) {
+// 24/11 (no iPhone dele "nem captou minha voz"): aberto pelo ícone da tela de início, o iPhone às vezes liga o reconhecimento e não
+// entrega nada, sem erro. Agora nunca fecha calado: oferece tentar de novo (de outro jeito) ou falar pelo teclado, que funciona sempre.
+const vzIcone = () => navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+let vzVelho = null, vzDica = ''; // gravação anterior que o aparelho ainda não encerrou (duas ao mesmo tempo: a nova sai muda)
+const vzTela = k => { const o = $('#vz-ov'); ['ligando', 'falhou', 'tec'].forEach(x => o.classList.toggle(x, x === k)); o.classList.remove('hidden'); document.body.classList.add('vz-on'); };
+function vzFecha() { $('#vz-ov').classList.add('hidden'); document.body.classList.remove('vz-on'); }
+function vzOuvir(dica, forca) {
   if (vzRec) return;
-  if (!VzSR) { vzSemVoz('Este navegador não grava voz por aqui. Toque no campo e use o microfone do teclado, ou escreva.'); return; }
-  const est = { txt: '', hips: [], erro: '', cancela: false, fim: false, t: 0, pronto: false };
-  let rec; try { rec = new VzSR(); } catch (e) { vzSemVoz('Não consegui ligar o microfone. Use o microfone do teclado, ou escreva.'); return; }
-  rec.lang = 'pt-BR'; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 8;
+  vzDica = dica || '';
+  if (!VzSR || (!forca && lsGet('carteira_voz_mudo', 0) >= 2)) { vzTeclado(); return; } // este aparelho não entrega a voz: vai direto pelo teclado
+  const est = { txt: '', hips: [], erro: '', cancela: false, fim: false, t: 0, pronto: false, ev: [], t0: Date.now(), modo: lsGet('carteira_voz_modo', 'a') };
+  const nota = (e, x) => { if (est.ev.length < 40) est.ev.push((Date.now() - est.t0) + ' ' + e + (x ? ':' + x : '')); };
+  let rec; try { rec = new VzSR(); } catch (e) { vzTeclado(); return; }
+  const velho = vzVelho; if (velho) nota('anterior-aberta');
+  // dois jeitos de ouvir: "a" contínuo, com as 8 hipóteses; "b" simples. O que captar fica guardado neste aparelho
+  rec.lang = 'pt-BR'; rec.interimResults = true; rec.continuous = est.modo === 'a'; rec.maxAlternatives = est.modo === 'a' ? 8 : 1;
   const arma = ms => { clearTimeout(est.t); est.t = setTimeout(() => vzPara(), ms); };
   const termina = () => {
-    if (est.fim) return; est.fim = true; clearTimeout(est.t); clearTimeout(est.m); vzRec = null; $('#vz-ov').classList.add('hidden'); document.body.classList.remove('vz-on');
-    if (est.cancela) { vz.comp = null; return; }
-    if (est.txt.trim()) { vzPergunta(est.txt, est.hips); return; }
-    vz.comp = null;
-    if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(est.erro)) vzSemVoz('O microfone não está liberado para a Carteira. Libere nas permissões do navegador, ou use o microfone do teclado.');
-    else if (est.erro === 'network') vzSemVoz('A voz precisa de internet e não consegui conectar. Escreva o pedido, ou tente de novo.');
-    else toast('Não ouvi nada. Toque no microfone e fale de novo.');
+    if (est.fim) return; est.fim = true; clearTimeout(est.t); clearTimeout(est.m); vzRec = null;
+    if (est.cancela) { vz.comp = null; vzFecha(); return; }
+    if (est.txt.trim()) { vzFecha(); vzPergunta(est.txt, est.hips); return; }
+    vzFalhou(est);
   };
   // só pede para falar quando o microfone está mesmo ligado: quem fala antes perde a primeira palavra
-  const pronto = () => { if (est.pronto || est.fim) return; est.pronto = true; $('#vz-ov .kick').textContent = 'Ouvindo'; $('#vz-ov').classList.remove('ligando'); if (!est.txt) $('#vz-fala').textContent = dica ? dica + '.' : 'Pode falar. Ex.: "casa com 3 quartos no Santo Inácio até 4 milhões" "cadastrar cliente…" ou "arrume o cadastro do…"'; if (navigator.vibrate) navigator.vibrate(12); arma(10000); };
+  const pronto = () => { if (est.pronto || est.fim) return; est.pronto = true; $('#vz-ov .kick').textContent = 'Ouvindo'; $('#vz-ov').classList.remove('ligando'); if (!est.txt) $('#vz-fala').textContent = vzDica ? vzDica + '.' : 'Pode falar. Ex.: "casa com 3 quartos no Santo Inácio até 4 milhões", "cadastrar cliente…" ou "arrume o cadastro do…"'; if (navigator.vibrate) navigator.vibrate(12); arma(10000); };
+  ['start', 'audiostart', 'soundstart', 'speechstart', 'speechend', 'audioend', 'end', 'nomatch'].forEach(k => rec.addEventListener(k, () => nota(k)));
   rec.onstart = () => setTimeout(pronto, 900); rec.onaudiostart = pronto;
-  rec.onresult = e => { pronto(); est.hips = vzHips(e.results); est.txt = est.hips[0] || ''; if (est.txt) vzMostra(est); arma(4000); };
+  rec.onresult = e => { if (!est.txt) { nota('resultado'); lsSet('carteira_voz_mudo', 0); lsSet('carteira_voz_modo', est.modo); } pronto(); est.hips = vzHips(e.results); est.txt = est.hips[0] || ''; if (est.txt) vzMostra(est); arma(4000); };
   // começou a falar e o texto ainda não veio: não encerra no meio da fala
   rec.onspeechstart = () => { if (!est.txt) arma(25000); };
-  rec.onerror = e => { est.erro = e.error || 'erro'; };
-  rec.onend = termina;
-  vzRec = { rec, est, termina };
-  const f = $('#vz-fala'); f.textContent = 'Ligando o microfone…'; f.classList.add('dica'); $('#vz-ov .kick').textContent = 'Um instante';
-  $('#vz-ov').classList.remove('hidden'); $('#vz-ov').classList.add('ligando'); document.body.classList.add('vz-on');
-  try { rec.start(); arma(12000); } catch (e) { est.erro = 'not-allowed'; termina(); }
+  rec.onerror = e => { est.erro = e.error || 'erro'; nota('erro', est.erro); };
+  rec.onend = () => { if (vzVelho === rec) vzVelho = null; termina(); };
+  vzRec = { rec, est, termina }; vzVelho = rec;
+  const f = $('#vz-fala'); f.textContent = 'Ligando o microfone…'; f.classList.add('dica'); $('#vz-ov .kick').textContent = 'Um instante'; vzTela('ligando');
+  let ligou = false; const liga = () => { if (ligou || est.fim) return; ligou = true; try { rec.start(); } catch (e) { est.erro = 'nao-ligou'; nota('excecao', String(e && e.name)); termina(); } };
+  arma(12000);
+  if (velho) { velho.addEventListener('end', liga); try { velho.abort(); } catch (e) {} setTimeout(liga, 400); } else liga(); // espera a anterior soltar o microfone
 }
+// não veio nenhuma palavra: diz o motivo e dá a saída na mesma tela
+function vzFalhou(est) {
+  const proprio = ['not-allowed', 'service-not-allowed', 'audio-capture', 'network'].includes(est.erro);
+  if (est.erro !== 'network') lsSet('carteira_voz_mudo', Math.min(9, lsGet('carteira_voz_mudo', 0) + 1));
+  if (!proprio) lsSet('carteira_voz_modo', est.modo === 'a' ? 'b' : 'a'); // na próxima, tenta do outro jeito
+  $('#vz-ov .kick').textContent = 'Não captei sua voz';
+  $('#vz-fala').textContent = est.erro === 'not-allowed' ? 'O microfone está bloqueado para a Carteira. Libere nos Ajustes do aparelho ou fale pelo teclado.'
+    : est.erro === 'service-not-allowed' ? 'O aparelho não liberou o reconhecimento de voz. Confira se o Ditado está ligado (Ajustes › Geral › Teclado) ou fale pelo teclado.'
+    : est.erro === 'audio-capture' ? 'Outro aplicativo pode estar usando o microfone (ligação, música). Feche e tente de novo, ou fale pelo teclado.'
+    : est.erro === 'network' ? 'A voz precisa de internet e não consegui conectar.'
+    : vzIcone() ? 'Pelo ícone da tela de início, o iPhone às vezes não entrega o áudio. Fale pelo teclado, ou abra a Carteira no Safari.'
+    : 'Não chegou nenhum som. Tente de novo ou fale pelo teclado.';
+  $('#vz-fala').classList.add('dica'); vzTela('falhou');
+  // registro técnico da falha (sem nada do que foi falado), para descobrir o motivo sem depender de print
+  try { fetch(`${FB_ROOT}/carteira_voz_diag${TESTE ? '_TESTE_CLAUDE' : ''}/${PERFIL_ID || 'x'}_${Date.now().toString(36)}?key=${FB_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields({ em: new Date().toISOString(), versao: VERSAO, modo: est.modo, erro: est.erro, icone: vzIcone(), ua: navigator.userAgent, ev: est.ev }) }) }).catch(() => {}); } catch (e) {}
+}
+// falar pelo microfone do teclado: funciona em qualquer iPhone. O texto passa pela mesma correção da voz
+function vzTeclado() {
+  const t = $('#vz-tec'); if (!t) return;
+  $('#vz-ov .kick').textContent = vzDica || 'Fale pelo teclado'; t.value = ''; vzTela('tec'); t.focus();
+}
+function vzTecladoOk() { const t = $('#vz-tec'), v = t.value.trim(); t.blur(); vzFecha(); if (v) vzPergunta(v, [v]); else vz.comp = null; }
 function vzPara() { if (!vzRec) return; const r = vzRec; clearTimeout(r.est.t); try { r.rec.stop(); } catch (e) {} setTimeout(r.termina, 2500); /* se o navegador não avisar o fim, segue com o que ouviu */ }
-function vzCancela() { if (!vzRec) return; const r = vzRec; r.est.cancela = true; try { r.rec.abort(); } catch (e) {} r.termina(); }
-function vzSemVoz(msg) { if (ui.tab !== 'voz') { vz.de = ui.tab; go('voz'); } toast(msg); const t = $('#vz-in'); if (t) { t.focus(); } }
+function vzCancela() { if (!vzRec) { vz.comp = null; vzFecha(); return; } const r = vzRec; r.est.cancela = true; try { r.rec.abort(); } catch (e) {} r.termina(); }
+// saiu para outro aplicativo no meio: não deixa o microfone preso
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && vzRec) { if (vzRec.est.txt) vzPara(); else vzCancela(); } });
 function vzAcao(a, el) {
   const v = el.dataset.v;
   switch (a) {
     case 'vz-mic': vz.comp = null; vzOuvir(); break;
+    case 'vz-mic-novo': vzOuvir(vzDica, true); break;
+    case 'vz-tec': { const d = vzDica, k = vz.comp; if (vzRec) vzCancela(); vz.comp = k; vzDica = d; vzTeclado(); break; }
+    case 'vz-tec-ok': vzTecladoOk(); break;
     case 'vz-mic-falta': vz.comp = { base: vz.txt, falta: vz.cad.falta.slice() }; vzOuvir('Fale ' + listaPt(vz.cad.falta.map(x => x === 'nome' ? 'o nome' : x === 'bairro' ? 'o bairro' : 'a faixa de valor'))); break;
     case 'vz-cad-sim': vz.cad.dup = ''; vzGravaCad(); break;
     case 'vz-cad-undo': vzDesfazCad(); break;
@@ -4663,7 +4702,6 @@ function vzAcao(a, el) {
     case 'vz-cad-tipo': { const c = vz.cad && byId(vz.cad.id), t = { Casas: TIPOS_ANTIGOS.Casa, Apartamentos: TIPOS_ANTIGOS.Apartamento, Coberturas: ['Cobertura'], Terrenos: TIPOS_ANTIGOS.Terreno }[v]; if (c && t) saveClient(Object.assign({}, c, { tipos: t.slice(), tiposV: 2 })); break; }
     case 'vz-parar': vzPara(); break;
     case 'vz-cancela': vzCancela(); break;
-    case 'vz-escreve': vzCancela(); if (ui.tab !== 'voz') { vz.de = ui.tab; go('voz'); } $('#vz-in').focus(); break;
     case 'vz-ex': if (/…/.test(v)) { const t = $('#vz-in'); t.value = v.replace(/…\??$/, ''); t.focus(); vzAltura(); } else vzPergunta(v); break;
     case 'vz-modo': vz.modo = v; vz.n = 20; renderVoz(); break;
     case 'vz-tira': vzTira(v); break;
@@ -4687,8 +4725,9 @@ function vzLiga() {
   const t = $('#vz-in');
   $('#vz-form').addEventListener('submit', e => { e.preventDefault(); t.blur(); vzPergunta(t.value); });
   t.addEventListener('input', vzAltura);
+  $('#vz-tec').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); vzTecladoOk(); } });
   t.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); t.blur(); vzPergunta(t.value); } });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && vzRec) { e.stopImmediatePropagation(); vzCancela(); } }, true);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#vz-ov').classList.contains('hidden')) { e.stopImmediatePropagation(); vzCancela(); } }, true);
 }
 
 function renderAll() {
@@ -5293,7 +5332,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-23h';
+const VERSAO = '2026-11-24a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
