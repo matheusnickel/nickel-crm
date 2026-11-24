@@ -1036,6 +1036,9 @@ const parseMoney = s => Number(String(s || '').replace(/\D/g, '')) || 0;
 function maskMoney(inp) { const d = inp.value.replace(/\D/g, '').replace(/^0+/, ''); inp.value = d ? 'R$ ' + Number(d).toLocaleString('pt-BR') : ''; }
 const digits = s => String(s || '').replace(/\D/g, '');
 function waNumber(p) { let d = digits(p).replace(/^0+/, ''); if (!d) return ''; if (d.length <= 11) d = '55' + d; return d; }
+// o mesmo número com ou sem 55 e com ou sem o 9 (o WhatsApp guarda "41 8888-7777" para "41 98888-7777"): DDD + os 8 últimos
+function chaveFone(p) { const d = waNumber(p); return /^55\d{10,11}$/.test(d) ? d.slice(2, 4) + d.slice(-8) : d; }
+function donoDoFone(p, menos) { const k = digits(p).length >= 10 ? chaveFone(p) : ''; return k ? clientes.find(c => c.id !== menos && digits(c.whats) && chaveFone(c.whats) === k) || null : null; }
 function fmtFone(p) {
   const d = digits(p).replace(/^55(?=\d{10,11}$)/, '');
   if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
@@ -4306,7 +4309,8 @@ function vzMuda(c, Q) {
   if (Q.mo) { n.mobilia = Q.mo.slice(); const m = x => MOBILIAS.filter(y => x.mobilia.includes(y[0])).map(y => y[1]).join(' ou ') || 'tanto faz'; poe('Mobília', m(c), m(n)); }
   if (Q.ob) { n.situacao = [Q.ob]; const m = x => SITUACOES.filter(y => x.situacao.includes(y[0])).map(y => y[1]).join(' ou ') || 'tanto faz'; poe('Situação', m(c), m(n)); }
   if (Q.etapas && ETAPA[Q.etapas[0]] && Q.etapas[0] !== c.etapa) { n.etapa = Q.etapas[0]; n.etapaEm = nowLocal(); poe('Etapa', ETAPA[c.etapa][1], ETAPA[n.etapa][1]); }
-  if (A.fone) { n.whats = A.fone; poe('WhatsApp', fmtFone(c.whats) || 'sem telefone', fmtFone(A.fone)); }
+  const dono = A.fone && donoDoFone(A.fone, c.id);
+  if (dono) mud.aviso = `Esse telefone já é de ${esc(nomeProprio(dono.nome))}, então não mudei.`; else if (A.fone) { n.whats = A.fone; poe('WhatsApp', fmtFone(c.whats) || 'sem telefone', fmtFone(A.fone)); }
   const extra = [Q.s ? Q.s + plural(Q.s, ' suíte', ' suítes') : '', ...Q.itens.map(x => x.rot.toLowerCase()), A.obs].filter(x => x && !norm(c.obs).includes(norm(x)));
   if (extra.length) { const base = Q.s ? String(c.obs || '').split(', ').filter(x => !/^\d+ su[ií]tes?$/i.test(x)).join(', ') : c.obs; n.obs = [base, ...extra].filter(Boolean).join(', '); poe('Observações', c.obs || 'nenhuma', n.obs); }
   return { n, mud };
@@ -4347,8 +4351,8 @@ function vzCadastro(Q) {
     valorMin: p.min || 0, valorMax: p.max || p.perto || 0, quartos: Q.q || 0, vagas: Q.v || 0, areaMin: soTerra ? 0 : a.min || a.perto || 0, areaMax: soTerra ? 0 : a.max || 0, terrenoMin: t.min || t.perto || (soTerra ? a.min || a.perto || 0 : 0),
     mobilia: Q.mo ? Q.mo.slice() : [], situacao: Q.ob ? [Q.ob] : [], etapa: Q.etapas && ETAPA[Q.etapas[0]] ? Q.etapas[0] : 'qual' });
   d.obs = [Q.s ? Q.s + plural(Q.s, ' suíte', ' suítes') : '', ...Q.itens.map(x => x.rot.toLowerCase()), Q.fora.length ? 'menos ' + Q.fora.join(', ') : '', Q.loc ? 'quer alugar' : '', Q.cad.obs].filter(Boolean).join(', ');
-  const w = d.whats ? waNumber(d.whats) : '', dup = clientes.find(c => (w && digits(c.whats) && waNumber(c.whats) === w) || (d.nome && norm(c.nome) === norm(d.nome) && c.criadoEm.length >= 16 && minutosDesde(c.criadoEm) < 30)) || null; // repetido = mesmo WhatsApp (pelo nome ele não quer aviso); o nome só conta se acabou de ser cadastrado (toque dobrado)
-  return { d, falta: [!d.nome && 'nome', !d.valorMin && !d.valorMax && 'faixa de valor', !d.bairros.length && 'bairro'].filter(Boolean), dup: dup ? dup.id : '', semTipo: !Q.tipos.length, foneRuim: Q.cad.foneRuim, sobras: Q.sobras, id: '', desfeito: false };
+  const dono = donoDoFone(d.whats), dup = dono || clientes.find(c => (d.nome && norm(c.nome) === norm(d.nome) && c.criadoEm.length >= 16 && minutosDesde(c.criadoEm) < 30)) || null; // repetido = mesmo WhatsApp (pelo nome ele não quer aviso); o nome só conta se acabou de ser cadastrado (toque dobrado)
+  return { d, falta: [!d.nome && 'nome', !d.valorMin && !d.valorMax && 'faixa de valor', !d.bairros.length && 'bairro'].filter(Boolean), dup: dup ? dup.id : '', fone: !!dono, semTipo: !Q.tipos.length, foneRuim: Q.cad.foneRuim, sobras: Q.sobras, id: '', desfeito: false };
 }
 function vzGravaCad() {
   const k = vz.cad; if (!k || k.id || k.falta.length) return;
@@ -4386,9 +4390,9 @@ function vzRenderCad(res) {
   const dup = k.dup && byId(k.dup), falta = x => k.falta.includes(x), v = (t, x) => t ? esc(t) : x ? '<span class="vzfalta">Falta</span>' : '—';
   const linhas = [['Nome', v(d.nome && nomeProprio(d.nome), falta('nome'))], ['Faixa de valor', v(faixaValor(d, true), falta('faixa de valor'))], ['Bairros', v(d.bairros.join(', '), falta('bairro'))], ['Telefone', d.whats ? esc(fmtFone(d.whats)) : k.foneRuim ? 'Incompleto: ' + esc(k.foneRuim) : 'Sem telefone (opcional)'],
     ['Tipo', k.semTipo ? 'Casas, apartamentos e coberturas' : esc(tiposResumo(d.tipos).join(', '))], d.quartos && ['Quartos', d.quartos + ' ou mais'], d.vagas && ['Vagas', d.vagas + ' ou mais'], (d.areaMin || d.areaMax) && ['Metragem', d.areaMin && d.areaMax ? `${d.areaMin} a ${d.areaMax} m²` : d.areaMin ? `a partir de ${d.areaMin} m²` : `até ${d.areaMax} m²`], d.terrenoMin && ['Terreno', `a partir de ${d.terrenoMin} m²`], d.obs && ['Observações', esc(d.obs)]].filter(Boolean);
-  res.innerHTML = `<div class="vzcad pend"><div class="vzcadt"><b>${k.desfeito ? 'Cadastro desfeito' : dup ? (d.whats && waNumber(dup.whats) === waNumber(d.whats) ? 'Já existe um cliente com esse WhatsApp' : 'Você acabou de cadastrar esse cliente') : 'Falta ' + listaPt(k.falta.map(x => x === 'bairro' ? 'pelo menos um bairro' : 'o nome|a faixa de valor'.split('|')[x === 'nome' ? 0 : 1]))}</b></div>
+  res.innerHTML = `<div class="vzcad pend"><div class="vzcadt"><b>${k.desfeito ? 'Cadastro desfeito' : dup ? (k.fone ? 'Esse WhatsApp já é de um cliente seu. Não cadastrei' : 'Você acabou de cadastrar esse cliente') : 'Falta ' + listaPt(k.falta.map(x => x === 'bairro' ? 'pelo menos um bairro' : 'o nome|a faixa de valor'.split('|')[x === 'nome' ? 0 : 1]))}</b></div>
     ${dup && !k.desfeito ? `<div class="list" style="margin-top:12px">${vzLinhaCliente(dup)}</div>` : ''}
-    <div class="acts" style="margin-top:14px">${k.falta.length ? `<button class="btn-or" data-act="vz-mic-falta">${ICON_MIC.replace('<svg', '<svg width="18" height="18"')}Falar o que falta</button><button class="btn-ghost" data-act="vz-cad-form">Preencher no formulário</button>` : `<button class="btn-or" data-act="vz-cad-sim">${k.desfeito ? 'Cadastrar de novo' : 'Cadastrar mesmo assim'}</button>`}</div>
+    <div class="acts" style="margin-top:14px">${k.fone && dup && !k.desfeito ? `<button class="btn-or" data-act="vz-ficha" data-id="${dup.id}">Abrir ficha</button>` : k.falta.length ? `<button class="btn-or" data-act="vz-mic-falta">${ICON_MIC.replace('<svg', '<svg width="18" height="18"')}Falar o que falta</button><button class="btn-ghost" data-act="vz-cad-form">Preencher no formulário</button>` : `<button class="btn-or" data-act="vz-cad-sim">${k.desfeito ? 'Cadastrar de novo' : 'Cadastrar mesmo assim'}</button>`}</div>
     <dl class="info" style="margin-top:16px">${linhas.map(([n, x]) => `<dt>${n}</dt><dd>${x}</dd>`).join('')}</dl></div>`;
 }
 
@@ -4696,7 +4700,7 @@ function vzAcao(a, el) {
     case 'vz-tec': { const d = vzDica, k = vz.comp; if (vzRec) vzCancela(); vz.comp = k; vzDica = d; vzTeclado(); break; }
     case 'vz-tec-ok': vzTecladoOk(); break;
     case 'vz-mic-falta': vz.comp = { base: vz.txt, falta: vz.cad.falta.slice() }; vzOuvir('Fale ' + listaPt(vz.cad.falta.map(x => x === 'nome' ? 'o nome' : x === 'bairro' ? 'o bairro' : 'a faixa de valor'))); break;
-    case 'vz-cad-sim': vz.cad.dup = ''; vzGravaCad(); break;
+    case 'vz-cad-sim': if (!donoDoFone(vz.cad.d.whats)) { vz.cad.dup = ''; vzGravaCad(); } break;
     case 'vz-cad-undo': vzDesfazCad(); break;
     case 'vz-cad-form': { const d = vz.cad.d; vz.cad = null; vzFechaPagina(); $('#vz-in').value = ''; openForm(null, Object.assign({}, d, { id: undefined })); break; }
     case 'vz-cad-tipo': { const c = vz.cad && byId(vz.cad.id), t = { Casas: TIPOS_ANTIGOS.Casa, Apartamentos: TIPOS_ANTIGOS.Apartamento, Coberturas: ['Cobertura'], Terrenos: TIPOS_ANTIGOS.Terreno }[v]; if (c && t) saveClient(Object.assign({}, c, { tipos: t.slice(), tiposV: 2 })); break; }
@@ -5024,7 +5028,6 @@ let form = null;
 function openForm(id, base) {
   const c = id ? byId(id) : null;
   form = c ? JSON.parse(JSON.stringify(c)) : cleanClient(base || {});
-  form._dupOk = false;
   const f = form;
   openSheet(`
   <div class="sh-h"><div style="min-width:0">${c ? `<div class="kick">Editar ficha</div><h2 class="np">${esc(nomeProprio(c.nome))}</h2>` : '<h2>Novo cliente</h2>'}</div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
@@ -5057,7 +5060,7 @@ function openForm(id, base) {
   $('#f-valor').addEventListener('input', e => maskMoney(e.target));
   $('#f-vmin').addEventListener('input', e => maskMoney(e.target));
   // avisa já enquanto digita o WhatsApp se ele é de outro cliente, sem esperar o salvar
-  $('#f-whats').addEventListener('input', () => { form._dupOk = false; avisaRepetido(); });
+  $('#f-whats').addEventListener('input', () => { avisaRepetido(); });
   avisaRepetido();
   typeahead($('#f-bairro'), $('#f-bairro-dd'), { exclude: () => form.bairros, onPick: b => { addFormBairro(b); return true; } });
   if (matchMedia('(min-width:901px)').matches) setTimeout(() => { const n = $('#f-nome'); if (n) n.focus(); }, 30);
@@ -5082,10 +5085,8 @@ function renderFormChips() {
 // outro cliente com o mesmo WhatsApp (o mesmo número, com ou sem 55, parênteses ou traço)
 function avisaRepetido() {
   if (!form || !$('#e-dup')) return null;
-  const v = $('#f-whats').value, w = digits(v).length >= 10 ? waNumber(v) : '';
-  const dup = w ? clientes.find(c => c.id !== form.id && digits(c.whats) && waNumber(c.whats) === w) : null;
-  const salvar = form.id ? 'salvar' : 'cadastrar';
-  $('#e-dup').innerHTML = dup ? `<div class="dup" style="margin-top:8px">Já existe um cliente com esse WhatsApp: <b class="np">${esc(nomeProprio(dup.nome))}</b>${dup.status === 'arquivado' ? ' (arquivado)' : ''}. <button data-act="ficha" data-id="${dup.id}">Abrir ficha</button> ou toque em ${salvar} de novo para ${salvar} assim mesmo.</div>` : '';
+  const v = $('#f-whats').value, o = form.id && byId(form.id), dup = o && chaveFone(o.whats) === chaveFone(v) ? null : donoDoFone(v, form.id);
+  $('#e-dup').innerHTML = dup ? `<div class="dup" style="margin-top:8px">Já existe um cliente com esse WhatsApp: <b class="np">${esc(nomeProprio(dup.nome))}</b>${dup.status === 'arquivado' ? ' (arquivado)' : ''}. Um número só pode estar em um cliente. <button data-act="ficha" data-id="${dup.id}">Abrir ficha</button></div>` : '';
   return dup;
 }
 function saveForm() {
@@ -5108,14 +5109,13 @@ function saveForm() {
   err('e-valor', !f.id && !f.valorMin && !f.valorMax ? 'Coloque a faixa de valor. Pode ser só o “até”.' : f.valorMin && f.valorMax && f.valorMax < f.valorMin ? 'O valor “até” está menor que o “de”.' : '');
   err('e-area', f.areaMin && f.areaMax && f.areaMax < f.areaMin ? 'A metragem “até” está menor que a “de”.' : '');
   if (bad) { const el = $('#' + bad); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
-  // repetido: o 1º toque em salvar só mostra o aviso (e leva a tela até ele); o 2º salva assim mesmo
-  if (!f._dupOk && avisaRepetido()) {
-    f._dupOk = true;
+  // 24/11 (pedido dele): não cadastra o mesmo número duas vezes
+  if (avisaRepetido()) {
     $('#e-dup').scrollIntoView({ block: 'center', behavior: 'smooth' });
     return;
   }
   const isNew = !f.id;
-  const data = Object.assign({}, f); delete data._dupOk;
+  const data = Object.assign({}, f);
   if (!data.tipos.length) data.tipos = RESIDENCIAL.slice();
   if (isNew) { data.id = newId('c'); data.criadoEm = nowLocal(); data.status = 'ativo'; data.envios = []; }
   else { const orig = byId(f.id); if (orig) { data.envios = orig.envios; data.status = orig.status; data.criadoEm = orig.criadoEm; } }
@@ -5332,7 +5332,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-24a';
+const VERSAO = '2026-11-24b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
