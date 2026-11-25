@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#ffffff">
 <title>Seleção exclusiva</title>
-<meta property="og:title" content="Seleção exclusiva de imóvel">
-<meta property="og:description" content="Fotos, ficha técnica e valor do imóvel selecionado para você.">
+<meta property="og:title" content="Esse imóvel pode ser seu">
+<meta property="og:description" content="Fotos, ficha técnica e valor do imóvel escolhido para você.">
 <link rel="icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -180,8 +180,22 @@ async function carrega() {
     if (!L || !L.titulo) return erro();
     await fotosNickel();
     desenha();
+    enderecoComPrevia();
     anotaAbertura(L.vistos || [], L.aberturas || []);
   } catch (e) { erro(true); }
+}
+// 25/11: quem copia o endereço com a página aberta (o Felipe mandou assim) levava o imovel.html, sem foto nem detalhes no WhatsApp.
+// O endereço da barra volta a ser o do arquivo de prévia (i/<hash>.html), o mesmo do link original, se ele existir.
+async function enderecoComPrevia() {
+  try {
+    if (!L.k || !history.replaceState) return;
+    const str = 'nickel:' + L.k; let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0, ch; i < str.length; i++) { ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507); h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507); h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    const u = new URL(`i/${(4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)}.html`, location.href);
+    if ((await fetch(u, { method: 'HEAD' })).ok) history.replaceState(null, '', u.pathname + location.search);
+  } catch (e) {}
 }
 // 20/11: imóveis Nickel (do próprio Matheus) guardam as fotos no Firebase ("nf:<id>"): m = 720 px (galeria), g = 1600 px
 // (capa e tela cheia). As outras continuam vindo do anúncio pelo serviço de imagens.

@@ -32,21 +32,28 @@ const empDe = e => e ? (/[a-zà-ú]/.test(e) ? e : e.toLowerCase().replace(/(^|\
 // a foto da capa do anúncio em 1200×630 (o tamanho da prévia grande do WhatsApp); na J8 o "_p" é a miniatura de 96 px
 const capa = f => 'https://images.weserv.nl/?url=' + encodeURIComponent(String(f).replace(/_p(\.\w+)$/, '$1').replace(/^https?:\/\//, '')) + '&w=1200&h=630&fit=cover&q=72&output=jpg';
 
+// 25/11 (pedido dele): "Essa casa pode ser sua · Casa em condomínio no Campo Comprido"; o condomínio desce para os detalhes.
+// (o nome do cliente não dá aqui: o arquivo é um por imóvel, público, e o WhatsApp o lê sem rodar nada)
+const semAc = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const GRAFIA = new Map(); // "bigorrilho" -> "Bigorrilho": a escrita mais usada (tem anúncio em maiúsculas e sem acento)
+const bairro = b => semAc(b) === 'cic' ? 'CIC' : GRAFIA.get(semAc(b)) || String(b || '').trim();
+const naNo = b => /^(Santa|Alphaville|Caiobá|Campo Largo|Pinhais|Piraquara|Quatro Barras|Morretes|Guaratuba|Balneário|Bombinhas|Itapoá|Garopaba|Jurerê|Piçarras|Matinhos|Almirante Tamandaré|Campina Grande|Porto das|São José|Curitiba|Contenda|Mariscal|Águas Belas)\b|^(Caiobá|Itapoá|Jurerê|Almirante Tamandaré)/.test(b) ? 'em'
+  : /^(Vila|Cidade|Praia|Meia Praia|Barra|Barreirinha|Fazenda|Fazendinha|Col[oô]nia|Lindóia|Costeira|Cachoeira|Ferraria|Rondinha|Campina do|Roça|Ilha|Planta|Borda|Prainha|Lamenha)(?![\wÀ-ú])/.test(b) ? 'na' : 'no';
 function previa(src, i) {
   const tipo = src.startsWith('j8') ? J8_TIPO[i.t] || '' : i.t;
   if (!tipo) return null;
-  const g = GRUPO(tipo), b = i.b || 'Curitiba', loc = src === 'j8loc';
+  const g = GRUPO(tipo), b = bairro(i.b) || 'Curitiba', loc = src === 'j8loc';
   const deRua = { Casa: 'Casa de rua', Sobrado: 'Casa de rua' }[tipo] || '';
   const emp = empDe(i.e);
-  const titulo = emp ? `${emp}, ${b}` : `${deRua || tipo} ${/^Santa\b/.test(b) ? 'em' : /^(Vila|Cidade)\b/.test(b) ? 'na' : 'no'} ${b}`;
+  const titulo = `${tipo === 'Comercial' ? 'Imóvel comercial' : emp ? tipo : deRua || tipo} ${naNo(b)} ${b}`;
   // área da conta (pedido dele): apartamento = privativa, casa = construída, terreno = terreno; nunca a total
   const area = i.aq || 0;
-  const det = [emp ? tipo : '',
+  const det = [emp,
     area ? (g === 'Apartamento' || g === 'Cobertura' ? `${m2(area)} privativos` : g === 'Casa' ? `${m2(area)} construídos` : g === 'Terreno' ? `${m2(area)} de terreno` : m2(area)) : '',
     g === 'Casa' || g === 'Apartamento' || g === 'Cobertura' ? (i.s && i.s >= i.q ? `${i.s} ${i.s === 1 ? 'suíte' : 'suítes'}` : i.q ? `${i.q} ${i.q === 1 ? 'quarto' : 'quartos'}${i.s ? ` (${i.s} ${i.s === 1 ? 'suíte' : 'suítes'})` : ''}` : '') : '',
     i.v && g !== 'Terreno' ? `${i.v} ${i.v === 1 ? 'vaga' : 'vagas'}` : '',
     i.p ? reais(i.p) + (loc ? '/mês' : '') : ''].filter(Boolean).join(' · ');
-  const t = `Seleção exclusiva · ${titulo}`;
+  const t = `${{ Casa: 'Essa casa pode ser sua', Apartamento: 'Esse apartamento pode ser seu', Cobertura: 'Essa cobertura pode ser sua', Terreno: 'Esse terreno pode ser seu' }[g] || 'Esse imóvel pode ser seu'} · ${titulo}`;
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -64,6 +71,13 @@ ${i.f ? `<meta property="og:image" content="${esc(capa(i.f))}">
 }
 
 await mkdir(DIR, { recursive: true });
+{
+  const q = {};
+  for (const arq of Object.values(ARQ)) try { for (const i of JSON.parse(await readFile(new URL(`../dados/${arq}.json`, import.meta.url), 'utf8')).imoveis) if (i.b) { const o = q[semAc(i.b)] ||= {}; o[i.b.trim()] = (o[i.b.trim()] || 0) + 1; } } catch (e) {}
+  // a mais usada que não seja toda em maiúsculas/minúsculas; com acento ganha de sem acento
+  for (const [k, o] of Object.entries(q)) { const l = Object.keys(o), bom = l.filter(x => x !== x.toUpperCase() && x !== x.toLowerCase()), p = bom.length ? bom : l.map(x => x.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase()));
+    GRAFIA.set(k, p.sort((x, y) => (y !== semAc(y) && /[À-ú]/.test(y)) - /[À-ú]/.test(x) || (o[y] || 0) - (o[x] || 0))[0]); }
+}
 let escritos = 0, iguais = 0, total = 0;
 for (const [src, arq] of Object.entries(ARQ)) {
   let j; try { j = JSON.parse(await readFile(new URL(`../dados/${arq}.json`, import.meta.url), 'utf8')); } catch (e) { continue; }
