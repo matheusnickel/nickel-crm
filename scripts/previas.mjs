@@ -32,7 +32,7 @@ const empDe = e => e ? (/[a-zà-ú]/.test(e) ? e : e.toLowerCase().replace(/(^|\
 // a foto da capa do anúncio em 1200×630 (o tamanho da prévia grande do WhatsApp); na J8 o "_p" é a miniatura de 96 px
 const capa = f => 'https://images.weserv.nl/?url=' + encodeURIComponent(String(f).replace(/_p(\.\w+)$/, '$1').replace(/^https?:\/\//, '')) + '&w=1200&h=630&fit=cover&q=72&output=jpg';
 
-// 25/11 (pedido dele): "Essa casa pode ser sua · Casa em condomínio no Campo Comprido"; o condomínio desce para os detalhes.
+// 25/11 (pedido dele): "ESSA CASA PODE SER SUA · Casa em condomínio no Campo Comprido" (a frase em maiúsculas, pedido dele); o condomínio desce para os detalhes.
 // (o nome do cliente não dá aqui: o arquivo é um por imóvel, público, e o WhatsApp o lê sem rodar nada)
 const semAc = x => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 const GRAFIA = new Map(); // "bigorrilho" -> "Bigorrilho": a escrita mais usada (tem anúncio em maiúsculas e sem acento)
@@ -53,7 +53,7 @@ function previa(src, i) {
     g === 'Casa' || g === 'Apartamento' || g === 'Cobertura' ? (i.s && i.s >= i.q ? `${i.s} ${i.s === 1 ? 'suíte' : 'suítes'}` : i.q ? `${i.q} ${i.q === 1 ? 'quarto' : 'quartos'}${i.s ? ` (${i.s} ${i.s === 1 ? 'suíte' : 'suítes'})` : ''}` : '') : '',
     i.v && g !== 'Terreno' ? `${i.v} ${i.v === 1 ? 'vaga' : 'vagas'}` : '',
     i.p ? reais(i.p) + (loc ? '/mês' : '') : ''].filter(Boolean).join(' · ');
-  const t = `${{ Casa: 'Essa casa pode ser sua', Apartamento: 'Esse apartamento pode ser seu', Cobertura: 'Essa cobertura pode ser sua', Terreno: 'Esse terreno pode ser seu' }[g] || 'Esse imóvel pode ser seu'} · ${titulo}`;
+  const t = `${{ Casa: 'ESSA CASA PODE SER SUA', Apartamento: 'ESSE APARTAMENTO PODE SER SEU', Cobertura: 'ESSA COBERTURA PODE SER SUA', Terreno: 'ESSE TERRENO PODE SER SEU' }[g] || 'ESSE IMÓVEL PODE SER SEU'} · ${titulo}`;
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
