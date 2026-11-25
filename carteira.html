@@ -1358,7 +1358,16 @@ const estoque = {}, estoqueErr = {};
 const ehLocacao = i => !!EST[i.src].loc;
 const naLocacao = () => ui.tab === 'locacao';
 const filtroI = () => naLocacao() ? ui.l : ui.i; // os filtros de cada aba ficam separados
-const prepara = (e, i) => Object.assign(i, { src: e.id, tc: e.tipo(i.t), rot: e.rotulo(i.t), k: e.id + ':' + i.c });
+// anúncio com dado errado na imobiliária, corrigido por ele: campo: [valor errado do anúncio, valor certo]. Vale em tudo (cartão, link, PDF,
+// descritivo) e sobrevive às atualizações; se a imobiliária mudar o dado, a correção deixa de valer e fica o do anúncio.
+const CORRECOES = {
+  'j8:75901': { at: [2612, 990.32] } // Paysage Weekend, casa 83 (24/11)
+};
+function prepara(e, i) {
+  Object.assign(i, { src: e.id, tc: e.tipo(i.t), rot: e.rotulo(i.t), k: e.id + ':' + i.c });
+  const c = CORRECOES[i.k]; if (c) for (const f in c) if (Math.round(i[f]) === c[f][0]) i[f] = c[f][1];
+  return i;
+}
 let carregados = false;
 
 // ── O MESMO IMÓVEL EM MAIS DE UMA IMOBILIÁRIA ──
@@ -5332,7 +5341,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-24b';
+const VERSAO = '2026-11-24c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
