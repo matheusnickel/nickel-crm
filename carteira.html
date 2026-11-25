@@ -970,6 +970,8 @@ const ETAPA = Object.fromEntries(ETAPAS.map(e => [e[0], e]));
 const ETAPAS_QUADRO = ETAPAS.filter(e => e[0] !== 'standby');
 const emStandby = c => c.etapa === 'standby';
 const MOBILIAS = [['s', 'Mobiliado'], ['m', 'Semi-mobiliado']];
+// 25/11 (pedido dele): o que o apartamento tem dentro, lido dos anúncios (dados/opcionais.json). Só vale para apartamento e cobertura
+const OPCIONAIS = [['ch', 'Churrasqueira no apartamento']];
 
 const BAIRROS_CWB = [
   'Abranches','Água Verde','Ahú','Alto Boqueirão','Alto da Glória','Alto da XV','Atuba',
@@ -1122,6 +1124,7 @@ function cleanClient(o) {
     terrenoMin: Number(o.terrenoMin) || 0,
     situacao: Array.isArray(o.situacao) ? o.situacao.filter(x => SITUACOES.some(s => s[0] === x)) : [],
     mobilia: Array.isArray(o.mobilia) ? o.mobilia.filter(x => MOBILIAS.some(s => s[0] === x)) : [],
+    opcionais: Array.isArray(o.opcionais) ? o.opcionais.filter(x => OPCIONAIS.some(s => s[0] === x)) : [],
     obs: String(o.obs || ''),
     origem: String(o.origem || ''),
     // pausado e comprou (de antes) viram arquivado
@@ -1260,8 +1263,8 @@ function updateSync() {
 // ── ESTADO DA TELA ──
 const ui = {
   tab: 'clientes',
-  i: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false, novos: false }, // aba Imóveis (novos = só os que entraram nos últimos 30 dias)
-  l: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false }, // aba Locação
+  i: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false, novos: false, op: [] }, // aba Imóveis (novos = só os que entraram nos últimos 30 dias)
+  l: { q: '', fonte: 'todas', tipo: '', quartos: 0, vmin: 0, vmax: 0, ordem: 'maior', n: 20, mais: false, op: [] }, // aba Locação
   c: { q: '', f: 'ativos', modo: lsGet('carteira_modo', 'quadro') }, // modo: quadro de etapas ou lista (fica salvo neste aparelho)
   m: { p: 30, g: '', e: 'dia' }, // métricas: período em dias, família de imóvel ('' = todas) e envios por dia/semana/mês
   capaDe: null,      // imóvel ("j8:12345") com a grade de fotos aberta para escolher a capa do book
@@ -1363,8 +1366,12 @@ const filtroI = () => naLocacao() ? ui.l : ui.i; // os filtros de cada aba ficam
 const CORRECOES = {
   'j8:75901': { at: [2612, 990.32] } // Paysage Weekend, casa 83 (24/11)
 };
+let OPC = {}; // dados/opcionais.json (scripts/opcionais.mjs, roda a cada atualização)
+const ehApto = i => GRUPO[i.tc] === 'Apartamento' || GRUPO[i.tc] === 'Cobertura';
 function prepara(e, i) {
   Object.assign(i, { src: e.id, tc: e.tipo(i.t), rot: e.rotulo(i.t), k: e.id + ':' + i.c });
+  i.ch = i.src === 'nickel' ? i.ch || '' : OPC.ch ? OPC.ch[i.k] || '' : undefined; // churrasqueira no apartamento: 'c' a carvão, 'x' tem, '' o anúncio não diz
+  const mo = (OPC.mo || {})[i.k]; if (mo) { i.mo = mo; if (mo === 'm' && i.mob) i.mob = false; } // mobília que só o texto do anúncio diz
   const c = CORRECOES[i.k]; if (c) for (const f in c) if (Math.round(i[f]) === c[f][0]) i[f] = c[f][1];
   return i;
 }
@@ -1546,9 +1553,10 @@ function notaHTML(i) {
   return `<div class="nota ${N.rot[2]}" title="Preço ${fmtNota(N.preco)} · liquidez ${fmtNota(N.liq)} · Régua: ${REGUA_NOTA}"><b>${fmtNota(N.nota)}</b><span><em>${N.rot[3]}</em>${esc(notaTxt(N, i.b))}${N.dem ? ` · ${N.dem} ${plural(N.dem, 'cliente seu procura', 'clientes seus procuram')}` : ''}</span></div>`;
 }
 async function loadEstoques() {
+  const opc = fetch('dados/opcionais.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).then(j => { OPC = j; }, () => {});
   await Promise.all(ESTOQUES.concat(LOCACAO).map(async e => {
     if (e.proprio) { await carregaNickel(); return; } // Nickel: Firebase (preenche estoque.nickel)
-    try { const r = await fetch(e.arq, { cache: 'no-cache' }); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); j.imoveis.forEach(i => prepara(e, i)); estoque[e.id] = j; }
+    try { const r = await fetch(e.arq, { cache: 'no-cache' }); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); await opc; j.imoveis.forEach(i => prepara(e, i)); estoque[e.id] = j; }
     catch (er) { estoqueErr[e.id] = true; }
   }));
   await aplicaRepetidos();
@@ -1592,6 +1600,7 @@ function j8Score(c, i) {
   if (usaTerreno && (i.at ? i.at < c.terrenoMin * 0.9 : i.src !== 'gon')) return -1;
   if (c.situacao.length && !c.situacao.includes(i.ob)) return -1;          // pronto / na planta
   if (c.mobilia.length && !c.mobilia.includes(i.mo)) return -1;            // mobiliado / semi
+  if (c.opcionais.includes('ch') && i.ch === '' && ehApto(i)) return -1;   // churrasqueira no apartamento (casa não é filtrada)
   let s = 0;
   if (usaTerreno && i.at) s += Math.min(10, (i.at - c.terrenoMin) / c.terrenoMin * 20); // terreno maior conta a favor
   if (c.valorMax && i.p) { const r = i.p / c.valorMax; s += r >= 0.9 ? 40 : Math.max(0, 40 - (0.9 - r) * 120); }
@@ -1607,7 +1616,7 @@ const j8Cache = new Map();
 // imóveis que servem para o cliente em uma imobiliária ('j8', 'gon') ou em todas, do melhor para o pior
 function j8Match(c, fonte = 'todas') {
   const fontes = fonte === 'todas' ? ESTOQUES.map(e => e.id) : [fonte];
-  const key = JSON.stringify([fontes, c.tipos, c.bairros, c.valorMin, c.valorMax, c.quartos, c.vagas, c.areaMin, c.areaMax, c.terrenoMin, c.situacao, c.mobilia]);
+  const key = JSON.stringify([fontes, c.tipos, c.bairros, c.valorMin, c.valorMax, c.quartos, c.vagas, c.areaMin, c.areaMax, c.terrenoMin, c.situacao, c.mobilia, c.opcionais]);
   if (j8Cache.has(key)) return j8Cache.get(key);
   const all = fontes.flatMap(f => estoque[f] ? estoque[f].imoveis : []).map(i => ({ i, s: j8Score(c, i) })).filter(x => x.s >= 0).sort((a, b) => b.s - a.s);
   const res = { todos: all.map(x => x.i), top: all.slice(0, 5).map(x => x.i), total: all.length };
@@ -2106,7 +2115,7 @@ function j8Card(i, c) {
   const tipo = i.rot || i.t;
   const grupo = GRUPO[i.tc], ehCasa = grupo === 'Casa';
   const spec = [i.a ? i.a + ' m²' + (ehCasa ? ' construídos' : '') : '', ehCasa && i.at > i.a ? `terreno ${i.at.toLocaleString('pt-BR')} m²` : '', grupo === 'Terreno' || grupo === 'Comercial' ? '' : i.q ? i.q + plural(i.q, ' quarto', ' quartos') + (i.s ? ` (${i.s} ${plural(i.s, 'suíte', 'suítes')})` : '') : '', i.v ? i.v + plural(i.v, ' vaga', ' vagas') : ''].filter(Boolean).join(' · ');
-  const selos = [i.ob === 'p' ? 'Na planta' : '', { s: 'Mobiliado', m: 'Semi-mobiliado' }[i.mo] || ''].filter(Boolean);
+  const selos = [i.ob === 'p' ? 'Na planta' : '', { s: 'Mobiliado', m: 'Semi-mobiliado' }[i.mo] || '', ehApto(i) && { c: 'Churrasqueira a carvão', x: 'Churrasqueira' }[i.ch] || ''].filter(Boolean);
   // complemento e bloco copiados exatamente como estão no cadastro (a A. Gonçalves só informa o bloco); o rótulo diz de que é
   const deQue = { Apartamento: 'do apartamento', Cobertura: 'da cobertura', Casa: 'da casa', Terreno: 'do terreno' }[grupo] || 'do imóvel';
   const unid = i.cp ? `<b>${esc(i.cp)}</b>${i.bl ? `<small>Bloco: ${esc(i.bl)}</small>` : ''}` : i.bl ? `<b>Bloco: ${esc(i.bl)}</b>` : '';
@@ -2194,6 +2203,7 @@ function renderImoveis() {
   if ($('#i-q').value !== f.q) $('#i-q').value = f.q;
   $('#i-fil').innerHTML = `${naLocacao() ? '' : `<button class="inovos${f.novos ? ' on' : ''}" data-act="i-novos"><b>Entraram nos últimos ${NOVO_DIAS} dias</b><span id="i-novos-n"></span></button>`}${naLocacao() ? '' : `<div class="chips sm">${[['todas', 'Todas'], ...ESTOQUES.map(e => [e.id, e.nome])].map(([k, l]) => chip('i-fonte', k, l)).join('')}</div>`}
     <div class="chips sm">${['', ...TIPOS].map(t => chip('i-tipo', t, t || 'Todos os tipos')).join('')}</div>
+    <div class="chips sm" id="i-ops">${[['ch', 'Churrasqueira no apto'], ...MOBILIAS].map(([k, l]) => `<button class="chip${f.op.includes(k) ? ' on' : ''}" data-act="i-op" data-v="${k}" aria-pressed="${f.op.includes(k)}">${l}</button>`).join('')}</div>
     <details class="imais"${f.mais ? ' open' : ''}><summary>Mais filtros${f.bairro && bairrosI()[f.bairro] ? ` <span class="imais-on">· ${esc(bairrosI()[f.bairro].nome)}</span>` : ''}</summary><div class="imais-b">
       <div><span class="lbl">Bairro</span><select id="i-bairro" aria-label="Bairro"><option value="">Todos os bairros</option>${Object.entries(bairrosI()).sort((a, b) => a[1].nome.localeCompare(b[1].nome, 'pt-BR')).map(([k, x]) => `<option value="${esc(k)}"${f.bairro === k ? ' selected' : ''}>${esc(x.nome)} (${x.n})</option>`).join('')}</select></div>
       <div><span class="lbl">Valor</span><div class="row-s" style="margin-top:0;flex-wrap:nowrap"><input id="i-vmin" inputmode="numeric" placeholder="De" value="${din(f.vmin)}" aria-label="Valor mínimo"><span class="muted">a</span><input id="i-vmax" inputmode="numeric" placeholder="Até" value="${din(f.vmax)}" aria-label="Valor máximo"></div></div>
@@ -2221,6 +2231,8 @@ function imoveisFiltrados() {
   if (f.tipo) l = l.filter(i => i.tc === f.tipo);
   if (f.bairro) l = l.filter(i => i.b && bkey(i.b) === f.bairro);
   if (f.quartos) l = l.filter(i => i.q >= f.quartos);
+  const mobs = f.op.filter(x => x !== 'ch'); if (mobs.length) l = l.filter(i => mobs.includes(i.mo));
+  if (f.op.includes('ch')) l = l.filter(i => i.ch && ehApto(i));
   if (f.vmin) l = l.filter(i => i.p >= f.vmin);
   if (f.vmax) l = l.filter(i => i.p && i.p <= f.vmax);
   if (palavras.length) l = l.filter(i => { const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, MASTER ? i.cp : '', MASTER ? i.bl : '',EST[i.src].parceiros ? i.ref : ''].join(' ')); return palavras.every(p => t.includes(p)); });
@@ -3228,7 +3240,7 @@ function nkAreaConta(n) {
 function nkResumo(n) {
   const g = GRUPO[n.t] || '', aq = nkAreaConta(n) || 0;
   return { c: n.id, t: n.t, ti: '', b: n.b, ci: n.ci, q: n.q, s: n.s, v: n.v, a: aq || n.atot, at: g === 'Casa' || g === 'Terreno' ? n.at : 0, aq,
-    mo: n.mo, ob: n.ob, p: n.p, f: n.capaMini, e: n.e, cp: n.cp, bl: '', en: n.en, u: '', du: n.atualizadoEm.slice(0, 10), aprov: n.aprovadoEm.slice(0, 10) };
+    mo: n.mo, ch: (g === 'Apartamento' || g === 'Cobertura') && (n.itens || []).some(x => /churrasq/i.test(x)) ? 'x' : '', ob: n.ob, p: n.p, f: n.capaMini, e: n.e, cp: n.cp, bl: '', en: n.en, u: '', du: n.atualizadoEm.slice(0, 10), aprov: n.aprovadoEm.slice(0, 10) };
 }
 function detalheNickel(c) {
   const n = NICKEL.find(x => x.id === c); if (!n) return null;
@@ -4130,6 +4142,8 @@ function vzEntende(texto, ctx, semAlt) {
   if (/\bimove(?:l|is) nov[oa]s?\b|\bnov[oa]s? imove(?:l|is)\b|\b(?:casas|apartamentos|coberturas|terrenos|sobrados) nov[oa]s\b|\bentr(?:ou|aram)\b|\bnovidades?\b|\bde novo (?:pra|para|pro)\b|\balgo novo\b|\balguma coisa nova\b|\bo que tem de novo\b|\bimovel (?:bom )?novo\b|\bmovel novo (?:pra|para|pro)\b|\bnovos? (?:pra|para|pro) (?:mandar|enviar|mostrar)\b/.test(s)) Q.novos = true;
   // "sem piscina", "não precisa ter piscina": não vira exigência
   VZ_ITENS.forEach(([k, rx, rot, busca]) => { const m = s.match(rx); if (m && !/\b(?:sem|nao (?:precisa|quer|quero|faz questao|tenha)(?: (?:de|ter|ser))*)(?: \w+){0,1} $/.test(s.slice(Math.max(0, m.index - 34), m.index))) Q.itens.push({ k, rot, rx: busca || new RegExp(k) }); });
+  // "tira a churrasqueira", "não precisa de churrasqueira" (alterar cadastro)
+  if (/\b(?:tir[aeo]r?|tirou|remov[ae]r?|retir[ae]r?|sem|nao (?:precisa|quer|faz questao|exige)(?: (?:de|ter|mais))*)(?: (?:a|o|mais|de|da|exigencia|opcao))* churrasqueira/.test(s)) { Q.semCh = true; Q.itens = Q.itens.filter(x => x.k !== 'churrasqueira'); }
 
   // 4) cliente citado pelo nome
   const nomes = ctx.clientes, strong = reserva, fraco = [];
@@ -4297,6 +4311,7 @@ function vzFicha(id, Q) {
 
 // ── alterar o cadastro falando (23/11, pedido dele) ──
 // "Arrume o cadastro do Paulo Oliveira: 4 vagas, de 5 a 5,5 milhões": grava e mostra a ficha com o que mudou (e Desfazer).
+const vzChOp = tipos => !tipos.length || tipos.some(t => GRUPO[t] === 'Apartamento' || GRUPO[t] === 'Cobertura');
 function vzMuda(c, Q) {
   const n = JSON.parse(JSON.stringify(c)), A = Q.alt, mud = [], p = Q.preco, a = Q.area, t = Q.terreno, poe = (rot, x, y) => { if (x !== y) mud.push([rot, x, y]); };
   const val = x => faixaValor(x) || 'sem valor', ou = x => x ? x + ' ou mais' : 'tanto faz', met = x => x.areaMin && x.areaMax ? `de ${x.areaMin} a ${x.areaMax} m²` : x.areaMin ? `a partir de ${x.areaMin} m²` : x.areaMax ? `até ${x.areaMax} m²` : 'tanto faz';
@@ -4320,13 +4335,16 @@ function vzMuda(c, Q) {
   if (Q.etapas && ETAPA[Q.etapas[0]] && Q.etapas[0] !== c.etapa) { n.etapa = Q.etapas[0]; n.etapaEm = nowLocal(); poe('Etapa', ETAPA[c.etapa][1], ETAPA[n.etapa][1]); }
   const dono = A.fone && donoDoFone(A.fone, c.id);
   if (dono) mud.aviso = `Esse telefone já é de ${esc(nomeProprio(dono.nome))}, então não mudei.`; else if (A.fone) { n.whats = A.fone; poe('WhatsApp', fmtFone(c.whats) || 'sem telefone', fmtFone(A.fone)); }
-  const extra = [Q.s ? Q.s + plural(Q.s, ' suíte', ' suítes') : '', ...Q.itens.map(x => x.rot.toLowerCase()), A.obs].filter(x => x && !norm(c.obs).includes(norm(x)));
+  // churrasqueira: para quem procura apartamento vira filtro (25/11); para casa continua nas observações
+  const chOp = vzChOp(n.tipos), op = x => OPCIONAIS.filter(y => x.opcionais.includes(y[0])).map(y => y[1]).join(', ') || 'tanto faz', quer = Q.itens.some(x => x.k === 'churrasqueira');
+  if (Q.semCh || chOp && quer) { n.opcionais = n.opcionais.filter(x => x !== 'ch').concat(Q.semCh ? [] : ['ch']); poe('Opcionais', op(c), op(n)); }
+  const extra = [Q.s ? Q.s + plural(Q.s, ' suíte', ' suítes') : '', ...Q.itens.filter(x => !(chOp && x.k === 'churrasqueira')).map(x => x.rot.toLowerCase()), A.obs].filter(x => x && !norm(c.obs).includes(norm(x)));
   if (extra.length) { const base = Q.s ? String(c.obs || '').split(', ').filter(x => !/^\d+ su[ií]tes?$/i.test(x)).join(', ') : c.obs; n.obs = [base, ...extra].filter(Boolean).join(', '); poe('Observações', c.obs || 'nenhuma', n.obs); }
   return { n, mud };
 }
 function vzAltera(c, Q) {
   const { n, mud } = vzMuda(c, Q), antes = {}; Object.keys(n).forEach(k => { if (JSON.stringify(n[k]) !== JSON.stringify(c[k])) antes[k] = c[k]; });
-  const disse = !!(Q.preco || Q.q || Q.v || Q.s || Q.area || Q.terreno || Q.tipos.length || Q.bairros.length || Q.cidades.length || Q.alt.tira.length || Q.fora.length || Q.mo || Q.ob || Q.etapas || Q.alt.fone || Q.alt.obs || Q.itens.length);
+  const disse = !!(Q.preco || Q.q || Q.v || Q.s || Q.area || Q.terreno || Q.tipos.length || Q.bairros.length || Q.cidades.length || Q.alt.tira.length || Q.fora.length || Q.mo || Q.ob || Q.etapas || Q.alt.fone || Q.alt.obs || Q.itens.length || Q.semCh);
   vz.cad = null; vz.alt = { id: c.id, mud, antes, disse, aviso: mud.aviso || '', foneRuim: Q.alt.foneRuim, desfeito: false };
   vzFechaPagina(); if (mud.length) saveClient(n);
   vzFicha(c.id); if (mud.length) toast(`Cadastro de ${nomeProprio(firstName(c.nome))} atualizado.`);
@@ -4359,7 +4377,9 @@ function vzCadastro(Q) {
   Object.assign(d, { nome: Q.cad.nome, whats: Q.cad.fone, tipos: Q.tipos.length ? Q.tipos.slice() : RESIDENCIAL.slice(), bairros: [...new Set(Q.bairros.map(spell).concat(Q.cidades))],
     valorMin: p.min || 0, valorMax: p.max || p.perto || 0, quartos: Q.q || 0, vagas: Q.v || 0, areaMin: soTerra ? 0 : a.min || a.perto || 0, areaMax: soTerra ? 0 : a.max || 0, terrenoMin: t.min || t.perto || (soTerra ? a.min || a.perto || 0 : 0),
     mobilia: Q.mo ? Q.mo.slice() : [], situacao: Q.ob ? [Q.ob] : [], etapa: Q.etapas && ETAPA[Q.etapas[0]] ? Q.etapas[0] : 'qual' });
-  d.obs = [Q.s ? Q.s + plural(Q.s, ' suíte', ' suítes') : '', ...Q.itens.map(x => x.rot.toLowerCase()), Q.fora.length ? 'menos ' + Q.fora.join(', ') : '', Q.loc ? 'quer alugar' : '', Q.cad.obs].filter(Boolean).join(', ');
+  // churrasqueira só vira filtro se ele falou apartamento ou cobertura; sem o tipo, fica nas observações
+  const chOp = Q.tipos.length && vzChOp(Q.tipos) && Q.itens.some(x => x.k === 'churrasqueira'); if (chOp) d.opcionais = ['ch'];
+  d.obs = [Q.s ? Q.s + plural(Q.s, ' suíte', ' suítes') : '', ...Q.itens.filter(x => !(chOp && x.k === 'churrasqueira')).map(x => x.rot.toLowerCase()), Q.fora.length ? 'menos ' + Q.fora.join(', ') : '', Q.loc ? 'quer alugar' : '', Q.cad.obs].filter(Boolean).join(', ');
   const dono = donoDoFone(d.whats), dup = dono || clientes.find(c => (d.nome && norm(c.nome) === norm(d.nome) && c.criadoEm.length >= 16 && minutosDesde(c.criadoEm) < 30)) || null; // repetido = mesmo WhatsApp (pelo nome ele não quer aviso); o nome só conta se acabou de ser cadastrado (toque dobrado)
   return { d, falta: [!d.nome && 'nome', !d.valorMin && !d.valorMax && 'faixa de valor', !d.bairros.length && 'bairro'].filter(Boolean), dup: dup ? dup.id : '', fone: !!dono, semTipo: !Q.tipos.length, foneRuim: Q.cad.foneRuim, sobras: Q.sobras, id: '', desfeito: false };
 }
@@ -4398,7 +4418,7 @@ function vzRenderCad(res) {
   if (c) { res.innerHTML = `<div class="list" style="margin-top:18px">${vzLinhaCliente(c)}</div>${vzAvisosCad(c.id)}<div class="acts" style="margin-top:14px"><button class="btn-or" data-act="vz-ficha" data-id="${c.id}">Abrir ficha</button><button class="btn-ghost" data-act="edit" data-id="${c.id}">Editar</button></div>`; return; }
   const dup = k.dup && byId(k.dup), falta = x => k.falta.includes(x), v = (t, x) => t ? esc(t) : x ? '<span class="vzfalta">Falta</span>' : '—';
   const linhas = [['Nome', v(d.nome && nomeProprio(d.nome), falta('nome'))], ['Faixa de valor', v(faixaValor(d, true), falta('faixa de valor'))], ['Bairros', v(d.bairros.join(', '), falta('bairro'))], ['Telefone', d.whats ? esc(fmtFone(d.whats)) : k.foneRuim ? 'Incompleto: ' + esc(k.foneRuim) : 'Sem telefone (opcional)'],
-    ['Tipo', k.semTipo ? 'Casas, apartamentos e coberturas' : esc(tiposResumo(d.tipos).join(', '))], d.quartos && ['Quartos', d.quartos + ' ou mais'], d.vagas && ['Vagas', d.vagas + ' ou mais'], (d.areaMin || d.areaMax) && ['Metragem', d.areaMin && d.areaMax ? `${d.areaMin} a ${d.areaMax} m²` : d.areaMin ? `a partir de ${d.areaMin} m²` : `até ${d.areaMax} m²`], d.terrenoMin && ['Terreno', `a partir de ${d.terrenoMin} m²`], d.obs && ['Observações', esc(d.obs)]].filter(Boolean);
+    ['Tipo', k.semTipo ? 'Casas, apartamentos e coberturas' : esc(tiposResumo(d.tipos).join(', '))], d.quartos && ['Quartos', d.quartos + ' ou mais'], d.vagas && ['Vagas', d.vagas + ' ou mais'], (d.areaMin || d.areaMax) && ['Metragem', d.areaMin && d.areaMax ? `${d.areaMin} a ${d.areaMax} m²` : d.areaMin ? `a partir de ${d.areaMin} m²` : `até ${d.areaMax} m²`], d.terrenoMin && ['Terreno', `a partir de ${d.terrenoMin} m²`], d.opcionais.length && ['Opcionais', OPCIONAIS.filter(s => d.opcionais.includes(s[0])).map(s => s[1]).join(', ')], d.obs && ['Observações', esc(d.obs)]].filter(Boolean);
   res.innerHTML = `<div class="vzcad pend"><div class="vzcadt"><b>${k.desfeito ? 'Cadastro desfeito' : dup ? (k.fone ? 'Esse WhatsApp já é de um cliente seu. Não cadastrei' : 'Você acabou de cadastrar esse cliente') : 'Falta ' + listaPt(k.falta.map(x => x === 'bairro' ? 'pelo menos um bairro' : 'o nome|a faixa de valor'.split('|')[x === 'nome' ? 0 : 1]))}</b></div>
     ${dup && !k.desfeito ? `<div class="list" style="margin-top:12px">${vzLinhaCliente(dup)}</div>` : ''}
     <div class="acts" style="margin-top:14px">${k.fone && dup && !k.desfeito ? `<button class="btn-or" data-act="vz-ficha" data-id="${dup.id}">Abrir ficha</button>` : k.falta.length ? `<button class="btn-or" data-act="vz-mic-falta">${ICON_MIC.replace('<svg', '<svg width="18" height="18"')}Falar o que falta</button><button class="btn-ghost" data-act="vz-cad-form">Preencher no formulário</button>` : `<button class="btn-or" data-act="vz-cad-sim">${k.desfeito ? 'Cadastrar de novo' : 'Cadastrar mesmo assim'}</button>`}</div>
@@ -4477,10 +4497,13 @@ function vzBusca(Q) {
 }
 // "com piscina": a lista do estoque não traz as características; olha a ficha de cada um (até 160, do melhor para o pior)
 async function vzConfereItens(l) {
-  const marca = vz.txt, alvo = l.slice(0, 160), ok = new Set(); let n = 0;
-  vz.itens = { marca, ok: null, n: 0, de: alvo.length, total: l.length };
+  // a churrasqueira do apartamento já está na lista: não precisa abrir a ficha
+  const pede = i => vz.q.itens.filter(x => !(x.k === 'churrasqueira' && ehApto(i)));
+  const marca = vz.txt, ok = new Set(l.filter(i => !pede(i).length).map(i => i.k)), abre = l.filter(i => pede(i).length), alvo = abre.slice(0, 160); let n = 0;
+  vz.itens = { marca, ok: null, n: 0, de: alvo.length, total: abre.length };
+  if (!alvo.length) { vz.itens.ok = ok; return; }
   await emLotes(alvo, async i => {
-    try { const d = await j8Detalhe(i.k), t = vzNorm([...(d.itens || []), ...(d.condItens || []), d.ti, d.descricao, d.intro, ...[].concat(d.texto || [])].join(' ')); if (vz.q.itens.every(x => x.rx.test(t))) ok.add(i.k); } catch (e) {}
+    try { const d = await j8Detalhe(i.k), t = vzNorm([...(d.itens || []), ...(d.condItens || []), d.ti, d.descricao, d.intro, ...[].concat(d.texto || [])].join(' ')); if (pede(i).every(x => x.rx.test(t))) ok.add(i.k); } catch (e) {}
     if (++n % 12 === 0 && vz.txt === marca && vz.itens) { vz.itens.n = n; const el = $('#vz-prog'); if (el) el.textContent = `Conferindo ${n} de ${alvo.length}…`; }
   }, 10);
   if (vz.txt !== marca || !vz.itens) return;
@@ -4504,6 +4527,7 @@ function vzBuscaClientes(Q) {
   if (Q.q) crit.push(c => [c.quartos === Q.q ? 1 : !c.quartos || Math.abs(c.quartos - Q.q) === 1 ? .5 : 0, c.quartos ? c.quartos + '+ quartos' : 'quartos: tanto faz']);
   if (Q.area) { const alvo = Q.area.perto || Q.area.min || Q.area.max; crit.push(c => { const a = c.areaMin || c.areaMax; return [!a ? .4 : faixa(a / alvo, .8, 1.25) || (c.areaMin && c.areaMax && faixa(alvo, c.areaMin, c.areaMax)) ? 1 : faixa(a / alvo, .65, 1.5) ? .5 : 0, a ? `${c.areaMin ? 'a partir de ' + c.areaMin : 'até ' + c.areaMax} m²` : 'metragem: tanto faz']; }); }
   if (Q.mo) crit.push(c => [c.mobilia.some(m => Q.mo.includes(m)) ? 1 : c.mobilia.length ? 0 : .5, 'mobiliado']);
+  if (Q.itens.some(x => x.k === 'churrasqueira')) crit.push(c => [c.opcionais.includes('ch') || norm(c.obs).includes('churrasq') ? 1 : 0, 'churrasqueira']);
   const r = pool.map(c => { const ns = crit.map(f => f(c)); return { c, n: crit.length ? ns.reduce((t, x) => t + x[0], 0) / crit.length : 1, porque: ns.map(x => [x[0] === 1 ? 'ok' : x[0] ? 'meio' : 'nao', x[1]]) }; });
   const ET = ['cqq', 'proposta', 'visita', 'cq', 'qual', 'standby'], peso = x => (x.c.status === 'arquivado' ? 9 : ET.indexOf(x.c.etapa));
   r.sort((a, b) => b.n - a.n || peso(a) - peso(b) || a.c.nome.localeCompare(b.c.nome, 'pt-BR'));
@@ -4578,6 +4602,7 @@ function vzRenderClientes(Q, res) {
 function vzRenderImoveis(Q, res) {
   let { l, aviso, perto, bairrosPerto } = vzBusca(Q);
   let prog = '';
+  if (Q.itens.some(x => x.k === 'churrasqueira')) { const tem = i => !ehApto(i) || i.ch; l = l.filter(tem); perto = perto.filter(tem); }
   if (Q.itens.length && l.length) {
     if (!vz.itens || vz.itens.marca !== vz.txt) vzConfereItens(l.concat(perto));
     if (!vz.itens.ok) prog = `<p class="muted" id="vz-prog" style="margin-top:16px">Conferindo ${vz.itens.n} de ${vz.itens.de}…</p>`;
@@ -5012,6 +5037,7 @@ function renderFicha(id, confirmDel) {
         <dt>Vagas</dt><dd>${c.vagas ? c.vagas + ' ou mais' : 'Tanto faz'}</dd>
         <dt>Situação</dt><dd>${c.situacao.length ? SITUACOES.filter(s => c.situacao.includes(s[0])).map(s => s[1]).join(' ou ') : 'Tanto faz'}</dd>
         <dt>Mobília</dt><dd>${c.mobilia.length ? MOBILIAS.filter(s => c.mobilia.includes(s[0])).map(s => s[1]).join(' ou ') : 'Tanto faz'}</dd>
+        ${c.opcionais.length ? `<dt>Opcionais</dt><dd>${OPCIONAIS.filter(s => c.opcionais.includes(s[0])).map(s => s[1]).join(', ')}</dd>` : ''}
       </dl>
     </div>
     <div><span class="lbl">Imóveis enviados · ${envios.length}</span>
@@ -5062,7 +5088,7 @@ function openForm(id, base) {
     <div><span class="lbl">Quartos (no mínimo)</span><div class="chips" id="f-quartos"></div></div>
     <div><span class="lbl">Vagas (no mínimo)</span><div class="chips" id="f-vagas"></div></div>
     <div><span class="lbl">Situação<span class="hint">nenhum marcado = tanto faz</span></span><div class="chips" id="f-sit"></div></div>
-    <div><span class="lbl">Mobília<span class="hint">nenhum marcado = tanto faz</span></span><div class="chips" id="f-mob"></div></div>
+    <div><span class="lbl">Mobília e opcionais<span class="hint">nenhum marcado = tanto faz · a churrasqueira vale para apartamento e cobertura</span></span><div class="chips" id="f-mob"></div></div>
   </div>
   <div class="sh-f"><button class="btn-ghost" data-act="close">Cancelar</button><button class="btn-or" data-act="f-save">${c ? 'Salvar alterações' : 'Cadastrar cliente'}</button></div>`, { kind: 'form', id: id || null });
   renderFormChips();
@@ -5087,7 +5113,7 @@ function renderFormChips() {
   $('#f-quartos').innerHTML = [0, 1, 2, 3, 4].map(n => `<button class="chip${f.quartos === n ? ' on' : ''}" data-act="f-quartos" data-v="${n}">${n ? n + '+' : 'Tanto faz'}</button>`).join('');
   $('#f-vagas').innerHTML = [0, 1, 2, 3, 4].map(n => `<button class="chip${f.vagas === n ? ' on' : ''}" data-act="f-vagas" data-v="${n}">${n ? n + '+' : 'Tanto faz'}</button>`).join('');
   $('#f-sit').innerHTML = SITUACOES.map(([k, l]) => `<button class="chip${f.situacao.includes(k) ? ' on' : ''}" data-act="f-sit" data-v="${k}">${l}</button>`).join('');
-  $('#f-mob').innerHTML = MOBILIAS.map(([k, l]) => `<button class="chip${f.mobilia.includes(k) ? ' on' : ''}" data-act="f-mob" data-v="${k}">${l}</button>`).join('');
+  $('#f-mob').innerHTML = MOBILIAS.map(([k, l]) => `<button class="chip${f.mobilia.includes(k) ? ' on' : ''}" data-act="f-mob" data-v="${k}">${l}</button>`).join('') + OPCIONAIS.map(([k, l]) => `<button class="chip${f.opcionais.includes(k) ? ' on' : ''}" data-act="f-op" data-v="${k}">${l}</button>`).join('');
   // terreno só interessa para casa e terreno
   $('#f-terreno-box').classList.toggle('hidden', !f.tipos.some(t => GRUPO[t] === 'Casa' || GRUPO[t] === 'Terreno'));
 }
@@ -5258,6 +5284,7 @@ document.addEventListener('click', e => {
     case 'i-fonte': case 'i-tipo': case 'i-ordem': filtroI()[a.slice(2)] = v; filtroI().n = I_PASSO; renderImoveis(); break;
     case 'i-novos': ui.i.novos = !ui.i.novos; ui.i.entD = ''; ui.i.n = I_PASSO; renderImoveis(); break;
     case 'i-ent': ui.i.entD = v; ui.i.n = I_PASSO; renderImoveisLista(); break;
+    case 'i-op': { const o = filtroI().op, k = o.indexOf(v); if (k >= 0) o.splice(k, 1); else o.push(v); filtroI().n = I_PASSO; renderImoveis(); break; }
     case 'i-quartos': filtroI().quartos = +v; filtroI().n = I_PASSO; renderImoveis(); break;
     case 'i-mais': filtroI().n += I_PASSO; renderImoveisLista(); break;
     case 'tema': $('#menu-tema').classList.toggle('hidden'); break;
@@ -5274,7 +5301,7 @@ document.addEventListener('click', e => {
     case 'f-bairro-rm': form.bairros = form.bairros.filter(b => b !== el.dataset.b); renderFormChips(); break;
     case 'f-quartos': form.quartos = +v; renderFormChips(); break;
     case 'f-vagas': form.vagas = +v; renderFormChips(); break;
-    case 'f-sit': case 'f-mob': { const arr = a === 'f-sit' ? form.situacao : form.mobilia; const k = arr.indexOf(v); if (k >= 0) arr.splice(k, 1); else arr.push(v); renderFormChips(); break; }
+    case 'f-sit': case 'f-mob': case 'f-op': { const arr = a === 'f-sit' ? form.situacao : a === 'f-op' ? form.opcionais : form.mobilia; const k = arr.indexOf(v); if (k >= 0) arr.splice(k, 1); else arr.push(v); renderFormChips(); break; }
     case 'f-save': saveForm(); break;
     case 'j8-pdf': baixarPDF(el, el.dataset.c, el.dataset.cli); break;
     case 'j8-mais': ui.j8Mais[id] = (ui.j8Mais[id] || 5) + 5; renderFicha(id); break;
@@ -5341,7 +5368,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-24c';
+const VERSAO = '2026-11-25a';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

@@ -115,5 +115,7 @@ console.log('sai de quem:', sai);
 
 // depois dos repetidos: grava quando cada imóvel entrou (dados/entradas.json), para o "Entraram nos últimos 30 dias"
 await import('./entradas.mjs');
+// churrasqueira no apartamento e mobília pelo texto do anúncio (dados/opcionais.json), para os filtros
+await import('./opcionais.mjs');
 // e a prévia do link de cada imóvel no WhatsApp (i/<id>.html), para os que entraram agora
 await import('./previas.mjs');
