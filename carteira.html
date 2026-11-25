@@ -705,6 +705,67 @@ button.pcs:hover{border-color:var(--tq)}
 /* login de corretor (16/11): a foto da capa ocupa a linha do complemento */
 .j8c .cpl.capa.so{grid-column:1 / -1}
 
+/* AGENDA (25/11): calendário estilo iPhone — o mês em cima, os compromissos do dia embaixo (no computador, lado a lado) */
+:root{--agm:#e0662c;--agg:#3f8c84;--agf:#7a62c9}
+:root[data-tema="original"]{--agm:#ff7a3d;--agg:#3ddc97;--agf:#b49bff}
+.ag-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.ag-mes{font-size:26px;font-weight:300;letter-spacing:.01em;margin-right:auto;text-transform:capitalize}
+.ag-mes b{font-weight:600}
+.ag-nav{display:flex;gap:6px}
+.ag-nav button{width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;color:var(--text)}
+.ag-nav button svg{width:18px;height:18px}
+.ag-nav .hj{width:auto;border-radius:99px;padding:0 14px;font-weight:600;font-size:13.5px}
+.ag-quem{margin-top:12px}
+.ag-quem .chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.ag-wrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;margin-top:16px;align-items:start}
+.ag-cal{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 10px 14px}
+.ag-sem,.ag-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.ag-sem span{text-align:center;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);padding:4px 0 8px}
+.ag-dia{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 0 8px;min-height:56px;border-top:1px solid var(--line);position:relative}
+.ag-dia .n{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-variant-numeric:tabular-nums;color:var(--text)}
+.ag-dia.fora .n{color:var(--faint)}
+.ag-dia.fds .n{color:var(--muted)}
+.ag-dia.hoje .n{color:var(--or);font-weight:700}
+.ag-dia.sel .n{background:var(--text);color:var(--card);font-weight:700}
+.ag-dia.sel.hoje .n{background:var(--or);color:#fff}
+.ag-dia .pts{display:flex;gap:3px;height:6px}
+.ag-dia .pts i{width:6px;height:6px;border-radius:50%}
+.ag-m{background:var(--agm)}.ag-g{background:var(--agg)}.ag-f{background:var(--agf)}
+.ag-lista{display:flex;flex-direction:column;gap:2px}
+.ag-dt{font-size:18px;font-weight:600;margin:2px 0 10px}
+.ag-dt small{display:block;font-size:12.5px;font-weight:500;color:var(--muted);text-transform:none;margin-top:2px}
+.ag-ev{display:grid;grid-template-columns:54px 4px minmax(0,1fr);gap:12px;align-items:stretch;text-align:left;padding:11px 12px;background:var(--card);border:1px solid var(--line);border-radius:14px;width:100%;margin-bottom:8px}
+.ag-ev:hover{border-color:var(--line2)}
+.ag-ev .h{display:flex;flex-direction:column;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;padding-top:1px}
+.ag-ev .h small{font-size:12px;font-weight:500;color:var(--muted)}
+.ag-ev .bar{display:block;width:4px;height:100%;min-height:38px;border-radius:3px;align-self:stretch}
+.ag-ev .c{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ag-ev .c b{font-size:15px;font-weight:600}
+.ag-ev .c span{font-size:13px;color:var(--text2);overflow-wrap:anywhere}
+.ag-ev .c em{font-style:normal;font-size:12px;font-weight:600;color:var(--muted)}
+.ag-ev.passou{opacity:.62}
+.ag-vazio{font-size:14px;color:var(--muted);padding:18px 4px}
+.ag-tipos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ag-tipos button{padding:12px;border-radius:12px;border:1px solid var(--line2);background:var(--card);font-weight:600;font-size:14px;text-align:left;color:var(--text2)}
+.ag-tipos button.on{border-color:var(--or);background:var(--orbg);color:var(--or2)}
+.ag-hr{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+.ag-hr input{min-width:0}
+.ag-novo{display:flex;flex-direction:column;gap:12px;padding:14px;border:1px dashed var(--line2);border-radius:12px}
+.ag-novo .row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.ag-det{display:flex;flex-direction:column;gap:14px}
+.ag-det .q{display:flex;align-items:center;gap:8px;font-weight:600}
+.ag-det .q i{width:10px;height:10px;border-radius:50%}
+@media (max-width:900px){
+  .ag-wrap{grid-template-columns:1fr;gap:16px}
+  .ag-cal{padding:8px 4px 10px;border-radius:16px}
+  .ag-dia{min-height:50px;padding:5px 0 6px}
+  .ag-mes{font-size:22px}
+  .ag-hr{grid-template-columns:1fr 1fr}.ag-hr .d{grid-column:1 / -1}
+}
+nav.bnav button{min-width:0}
+/* 25/11: com a Agenda são 7 botões; no celular estreito o nome vai sem caixa alta para caber */
+@media (max-width:430px){nav.bnav button{letter-spacing:0;text-transform:none;font-size:10.5px;padding:4px 0}nav.bnav{padding-left:2px;padding-right:2px}nav.bnav svg{width:21px;height:21px}}
+
 /* navegação de baixo (celular) */
 .bnav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:none;background:var(--topbg);backdrop-filter:saturate(1.4) blur(16px);-webkit-backdrop-filter:saturate(1.4) blur(16px);border-top:1px solid var(--line);padding:8px 8px calc(8px + var(--sab))}
 .bnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:4px}
@@ -807,6 +868,7 @@ button.pcs:hover{border-color:var(--tq)}
     <div class="brand"><i></i><b>CARTEIRA</b><span>NICKEL</span></div>
     <nav class="tabs">
       <button data-tab="clientes" class="on">Clientes</button>
+      <button data-tab="agenda">Agenda</button>
       <button data-tab="imoveis">Imóveis</button>
       <button data-tab="locacao">Locação</button>
       <button data-tab="metricas">Métricas</button>
@@ -871,6 +933,14 @@ button.pcs:hover{border-color:var(--tq)}
       <div id="nk-list" class="list" style="margin-top:16px"></div>
     </section>
 
+    <!-- AGENDA (25/11): compromissos da equipe (visitas de angariação e de venda, reuniões) num calendário; todos veem todos -->
+    <section id="v-agenda" class="hidden">
+      <div class="phd"><div class="ttl"><span class="kick">Equipe Nickel</span><h1>Agenda</h1></div><button class="btn-or sm" data-act="ag-novo" style="margin-left:auto">+ Compromisso</button></div>
+      <div class="ag-top"><div class="ag-mes" id="ag-mes"></div><div class="ag-nav"><button data-act="ag-mes" data-v="-1" aria-label="Mês anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><button class="hj" data-act="ag-hoje">Hoje</button><button data-act="ag-mes" data-v="1" aria-label="Próximo mês"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button></div></div>
+      <div class="chips sm ag-quem" id="ag-quem"></div>
+      <div class="ag-wrap"><div class="ag-cal" id="ag-cal"></div><div id="ag-dia"></div></div>
+    </section>
+
     <!-- CLIENTES -->
     <section id="v-clientes">
       <div class="phd"><div class="ttl"><span class="kick" id="c-hoje"></span><h1>Clientes</h1></div><span class="cnt" id="c-title"></span></div>
@@ -886,6 +956,7 @@ button.pcs:hover{border-color:var(--tq)}
 
   <nav class="bnav">
     <button data-tab="clientes" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M16 4.5a4 4 0 0 1 0 7M22 21v-1a6 6 0 0 0-4-5.6"/></svg>Clientes</button>
+    <button data-tab="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</button>
     <button data-tab="imoveis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V21H3z"/><path d="M9.5 21v-6h5v6"/></svg>Imóveis</button>
     <button data-tab="locacao"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8L20 3M16 7l3 3M13.5 9.5l2 2"/></svg>Locação</button>
     <button data-tab="metricas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Métricas</button>
@@ -4830,12 +4901,13 @@ function renderAll() {
 function go(tab) {
   if (tab === 'voz' && !MASTER) tab = 'clientes'; // perguntar por voz: só Matheus e Gabriel (23/11, pedido do Matheus)
   ui.tab = tab;
-  ['clientes', 'imoveis', 'metricas', 'pareceres', 'nickel', 'voz'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== (tab === 'locacao' ? 'imoveis' : tab)));
+  ['clientes', 'agenda', 'imoveis', 'metricas', 'pareceres', 'nickel', 'voz'].forEach(t => $('#v-' + t).classList.toggle('hidden', t !== (tab === 'locacao' ? 'imoveis' : tab)));
   if (tab === 'metricas') renderMetricas();
+  if (tab === 'agenda') { renderAgenda(); agCarrega(ag.mes); }
   if (tab === 'voz') renderVoz();
   if (tab === 'nickel') { renderNickel(); carregaNickel().then(ok => { if (ok && ui.tab === 'nickel') nkAtualizaTudo(); }); }
   // o "+" flutuante do celular: na aba Nickel cadastra imóvel; nas outras, cliente
-  const fab = $('.fab'); if (fab) { fab.dataset.act = tab === 'nickel' ? 'nk-novo' : 'novo'; fab.setAttribute('aria-label', tab === 'nickel' ? 'Novo imóvel' : 'Novo cliente'); }
+  const fab = $('.fab'); if (fab) { fab.dataset.act = tab === 'nickel' ? 'nk-novo' : tab === 'agenda' ? 'ag-novo' : 'novo'; fab.setAttribute('aria-label', tab === 'nickel' ? 'Novo imóvel' : tab === 'agenda' ? 'Novo compromisso' : 'Novo cliente'); }
   if (tab === 'pareceres') { renderPareceres(); carregaPareceres(); }
   if (tab === 'imoveis' || tab === 'locacao') renderImoveis();
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
@@ -4860,7 +4932,7 @@ function openSheet(html, state) {
   encaixa();
 }
 function closeSheet() {
-  ui.vis = null; ui.stF = null; ui.tri = null; nk = null; // visita/standby começados e não salvos somem ao fechar
+  ui.vis = null; ui.stF = null; ui.tri = null; nk = null; ag.f = null; // visita/standby começados e não salvos somem ao fechar
   // parecer fechado sem salvar: fica como rascunho neste aparelho (aviso na aba Parecer)
   if (ui.sheet && ui.sheet.kind === 'parecer') {
     if (par && par.dirty) { guardaRascunho(); toast('O parecer não foi salvo. Ficou como rascunho na aba Parecer.'); }
@@ -5251,6 +5323,180 @@ function typeahead(input, dd, opts) {
   dd.addEventListener('mousedown', e => { const o = e.target.closest('.opt'); if (!o) return; e.preventDefault(); pick(o.dataset.b); });
 }
 
+// ── AGENDA (25/11, pedido dele) ──
+// Compromissos de todos (Matheus, Gabriel e Felipe), num calendário estilo iPhone: todos veem a agenda de todos; cada um
+// cadastra e mexe nos seus (Matheus e Gabriel também podem mexer nos dos outros). Quatro tipos:
+//  - Visita de angariação e Visita de venda: data, horário e o imóvel (achado no estoque pelo nome, rua ou código, ou
+//    cadastrado na hora: prédio/condomínio, endereço, nº do apto/casa e valor);
+//  - Reunião particular e Reunião Nickel Imóveis: data, horário e local, sem assunto nem com quem (pedido dele).
+// Observação opcional em todos. Firebase: carteira_agenda (um documento por compromisso); lê só o mês que está na tela.
+const AG_COL = 'carteira_agenda' + (TESTE ? '_TESTE_CLAUDE' : '');
+const AG_TIPOS = { capt: 'Visita de angariação', venda: 'Visita de venda', rp: 'Reunião particular', rn: 'Reunião Nickel Imóveis' };
+const AG_COR = { matheus: 'ag-m', gabriel: 'ag-g', felipe: 'ag-f' };
+const AG_MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const AG_SEM = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+const ag = { mes: hojeISO().slice(0, 7), dia: hojeISO(), quem: '', ev: new Map(lsGet('carteira_agenda_cache' + (TESTE ? '_t' : ''), []).map(e => [e.id, e])), lidos: new Set(), f: null };
+const agVisitaTipo = t => t === 'capt' || t === 'venda';
+const agPode = e => MASTER || e.dono === PERFIL_ID;
+const agNome = p => firstName((PERFIS[p] || {}).nome || p);
+const agDataTxt = iso => { const [y, m, d] = iso.split('-').map(Number), w = new Date(y, m - 1, d).getDay(); return `${AG_SEM[w].replace(/^./, x => x.toUpperCase())}, ${d} de ${AG_MESES[m - 1]}`; };
+function agLimpo(o) {
+  o = o || {}; const im = o.im && typeof o.im === 'object' ? o.im : null;
+  return { id: String(o.id || ''), tipo: AG_TIPOS[o.tipo] ? o.tipo : 'capt', dono: PERFIS[o.dono] ? o.dono : 'matheus', data: /^\d{4}-\d{2}-\d{2}$/.test(o.data || '') ? o.data : '',
+    ini: /^\d{2}:\d{2}$/.test(o.ini || '') ? o.ini : '', fim: /^\d{2}:\d{2}$/.test(o.fim || '') ? o.fim : '', local: String(o.local || ''), obs: String(o.obs || ''),
+    im: im ? { k: String(im.k || ''), nome: String(im.nome || ''), en: String(im.en || ''), cp: String(im.cp || ''), p: Number(im.p) || 0, tit: String(im.tit || '') } : null,
+    criadoEm: String(o.criadoEm || ''), atualizadoEm: String(o.atualizadoEm || '') };
+}
+const agGuarda = () => lsSet('carteira_agenda_cache' + (TESTE ? '_t' : ''), [...ag.ev.values()].filter(e => e.data >= hojeISO().slice(0, 7) + '-01' || e.data >= ag.mes + '-01').slice(-400));
+// os compromissos de um mês (com uma semana antes e depois, que aparecem na grade): 1 leitura por compromisso
+async function agCarrega(mes) {
+  const [y, m] = mes.split('-').map(Number), de = new Date(y, m - 1, 1 - 7), ate = new Date(y, m, 7), iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const q = { structuredQuery: { from: [{ collectionId: AG_COL }], where: { compositeFilter: { op: 'AND', filters: [
+    { fieldFilter: { field: { fieldPath: 'data' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: iso(de) } } },
+    { fieldFilter: { field: { fieldPath: 'data' }, op: 'LESS_THAN_OR_EQUAL', value: { stringValue: iso(ate) } } }] } } } };
+  try {
+    const r = await fetch(`${FB_ROOT}:runQuery?key=${FB_KEY}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(q) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const l = (await r.json()).filter(x => x.document).map(x => agLimpo(Object.assign(fromFs({ mapValue: { fields: x.document.fields || {} } }), { id: x.document.name.split('/').pop() })));
+    [...ag.ev.values()].filter(e => e.data >= iso(de) && e.data <= iso(ate)).forEach(e => ag.ev.delete(e.id)); // apagados por outro aparelho somem
+    l.forEach(e => ag.ev.set(e.id, e)); ag.lidos.add(mes); agGuarda(); ag.erro = false;
+  } catch (e) { ag.erro = true; }
+  if (ui.tab === 'agenda') renderAgenda();
+}
+function agDoDia(d) {
+  return [...ag.ev.values()].filter(e => e.data === d && (!ag.quem || e.dono === ag.quem)).sort((a, b) => (a.ini || '99').localeCompare(b.ini || '99') || a.dono.localeCompare(b.dono));
+}
+// o que aparece de cada compromisso (Felipe não vê o complemento dos imóveis do estoque, como no resto da Carteira)
+function agResumo(e) {
+  const i = e.im, sub = [];
+  if (agVisitaTipo(e.tipo) && i) { const est = i.k && IMOVEL.get(i.k); sub.push([i.nome || i.tit, i.en, (!i.k || MASTER) && i.cp ? (/^d/.test(i.cp) ? 'nº ' : '') + i.cp : '', i.p ? fmtValor(i.p) : ''].filter(Boolean).join(' · ') || (est ? tituloImovel(est) : '')); }
+  if (e.local) sub.push(e.local);
+  return sub.filter(Boolean);
+}
+function renderAgenda() {
+  const el = $('#ag-cal'); if (!el) return;
+  const [y, m] = ag.mes.split('-').map(Number), hoje = hojeISO();
+  $('#ag-mes').innerHTML = `<b>${AG_MESES[m - 1]}</b> ${y}`;
+  $('#ag-quem').innerHTML = [['', 'Todos'], ...Object.keys(PERFIS).map(p => [p, agNome(p)])].map(([k, l]) => `<button class="chip${ag.quem === k ? ' on' : ''}" data-act="ag-quem" data-v="${k}">${k ? `<i class="${AG_COR[k]}"></i>` : ''}${esc(l)}</button>`).join('');
+  const ini = new Date(y, m - 1, 1), comeco = new Date(y, m - 1, 1 - ini.getDay()), ultimo = new Date(y, m, 0), semanas = Math.ceil((ini.getDay() + ultimo.getDate()) / 7);
+  let g = '';
+  for (let k = 0; k < semanas * 7; k++) {
+    const d = new Date(comeco.getFullYear(), comeco.getMonth(), comeco.getDate() + k), iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const quem = [...new Set(agDoDia(iso).map(e => e.dono))];
+    g += `<button class="ag-dia${d.getMonth() !== m - 1 ? ' fora' : ''}${d.getDay() % 6 === 0 ? ' fds' : ''}${iso === hoje ? ' hoje' : ''}${iso === ag.dia ? ' sel' : ''}" data-act="ag-dia" data-v="${iso}" aria-label="${agDataTxt(iso)}${quem.length ? ', ' + agDoDia(iso).length + ' compromisso(s)' : ''}"><span class="n">${d.getDate()}</span><span class="pts">${quem.map(p => `<i class="${AG_COR[p]}"></i>`).join('')}</span></button>`;
+  }
+  el.innerHTML = `<div class="ag-sem">${['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map(x => `<span>${x}</span>`).join('')}</div><div class="ag-grid">${g}</div>`;
+  const l = agDoDia(ag.dia), agora = nowLocal();
+  $('#ag-dia').innerHTML = `<div class="ag-dt">${ag.dia === hoje ? 'Hoje · ' : ''}${agDataTxt(ag.dia)}<small>${l.length ? l.length + plural(l.length, ' compromisso', ' compromissos') : 'Nenhum compromisso'}${ag.erro ? ' · sem conexão agora, mostrando o que já estava salvo' : ''}</small></div>
+    <div class="ag-lista">${l.map(e => `<button class="ag-ev${e.data + 'T' + (e.fim || e.ini || '23:59') < agora ? ' passou' : ''}" data-act="ag-ver" data-id="${esc(e.id)}"><span class="h">${e.ini || '—'}${e.fim ? `<small>${e.fim}</small>` : ''}</span><i class="bar ${AG_COR[e.dono]}"></i><span class="c"><b>${AG_TIPOS[e.tipo]}</b>${agResumo(e).map(x => `<span>${esc(x)}</span>`).join('')}<em>${esc(agNome(e.dono))}</em></span></button>`).join('')
+      || `<p class="ag-vazio">Nada marcado${ag.quem ? ' para ' + esc(agNome(ag.quem)) : ''} neste dia.</p>`}</div>
+    <button class="btn-ghost" data-act="ag-novo" style="margin-top:6px;width:100%">+ Compromisso ${ag.dia === hoje ? 'hoje' : 'em ' + fmtShort(ag.dia)}</button>`;
+}
+function agVaiMes(mes) { ag.mes = mes; renderAgenda(); if (!ag.lidos.has(mes)) agCarrega(mes); }
+// ── cadastro ──
+function agAbre(id) {
+  const e = id ? ag.ev.get(id) : null;
+  ag.f = e ? JSON.parse(JSON.stringify(e)) : agLimpo({ dono: PERFIL_ID || 'matheus', data: ag.dia, tipo: '' });
+  if (!e) ag.f.tipo = '';
+  ag.f.q = ''; ag.f.cria = !!(e && e.im && !e.im.k); ag.f.novo = !e;
+  agForm();
+}
+function agLe() {
+  const f = ag.f, v = id => { const x = $('#' + id); return x ? x.value.trim() : null; };
+  [['data', 'ag-data'], ['ini', 'ag-ini'], ['fim', 'ag-fim'], ['local', 'ag-local'], ['obs', 'ag-obs']].forEach(([k, id]) => { const x = v(id); if (x !== null) f[k] = x; });
+  if (f.cria) { f.im = f.im && !f.im.k ? f.im : { k: '', nome: '', en: '', cp: '', p: 0, tit: '' }; [['nome', 'ag-in'], ['en', 'ag-ie'], ['cp', 'ag-ic']].forEach(([k, id]) => { const x = v(id); if (x !== null) f.im[k] = x; }); const p = v('ag-ip'); if (p !== null) f.im.p = parseMoney(p); }
+  else if (f.im && f.im.k) { const p = v('ag-ip'); if (p !== null) f.im.p = parseMoney(p); }
+}
+function agResultados() {
+  const q = (ag.f.q || '').trim(); if (!q) return '<p class="vis-h">Digite o nome do prédio ou condomínio, a rua ou o código.</p>';
+  if (!carregados) return '<p class="vis-h">Carregando os estoques…</p>';
+  const palavras = norm(q).split(/\s+/).filter(Boolean);
+  const r = ESTOQUES.flatMap(e => estoque[e.id] ? estoque[e.id].imoveis : []).filter(i => { const t = norm([i.b, bLabel(i.b), i.e, i.en, i.c, i.ti, i.rot, MASTER ? i.cp : '', EST[i.src].nome].join(' ')); return palavras.every(p => t.includes(p)); }).sort((a, b) => (b.p || 0) - (a.p || 0)).slice(0, 8);
+  return (r.length ? r.map(i => `<button class="vis-r" data-act="ag-pega" data-k="${esc(i.k)}"><i style="background-image:url('${esc(miniatura(capas[i.k] || i.f))}')"></i><span><b>${esc(i.e || tituloImovel(i))}</b><small>${[i.e ? tituloImovel(i) : '', i.en, i.p ? fmtValor(i.p) : '', EST[i.src].nome].filter(Boolean).map(esc).join(' · ')}</small></span></button>`).join('') : '<p class="vis-h">Nenhum imóvel da base com isso.</p>')
+    + `<button class="vis-txt" data-act="ag-cria">Não está na base? Cadastrar o imóvel${q ? ` “${esc(q)}”` : ''}</button>`;
+}
+function agForm() {
+  const f = ag.f, e = !f.novo && ag.ev.get(f.id), visita = agVisitaTipo(f.tipo), reuniao = f.tipo === 'rp' || f.tipo === 'rn', i = f.im;
+  const imovel = !visita ? '' : `<div><span class="lbl">Imóvel *</span>${i && i.k ? (() => { const x = IMOVEL.get(i.k); return `<div class="vis-sel">${x ? `<i style="background-image:url('${esc(miniatura(capas[x.k] || x.f))}')"></i>` : ''}<span><b>${esc(i.nome || i.tit)}</b><small>${[i.nome ? i.tit : '', i.en, x ? EST[x.src].nome : ''].filter(Boolean).map(esc).join(' · ')}</small></span><button class="link" data-act="ag-troca">Trocar</button></div>`; })()
+    : f.cria ? `<div class="ag-novo"><div class="vis-top" style="margin:0"><span class="lbl" style="margin:0">Imóvel fora da base</span><button class="link" data-act="ag-troca">Procurar na base</button></div>
+        <div class="fl"><label class="lbl" for="ag-in">Prédio ou condomínio</label><input id="ag-in" value="${esc(i ? i.nome : f.q)}" autocomplete="off" placeholder="Ex.: Landscape"></div>
+        <div class="fl"><label class="lbl" for="ag-ie">Endereço</label><input id="ag-ie" value="${esc(i ? i.en : '')}" autocomplete="off" placeholder="Rua e número"></div>
+        <div class="fl"><label class="lbl" for="ag-ic">Nº do apartamento ou da casa</label><input id="ag-ic" value="${esc(i ? i.cp : '')}" autocomplete="off" placeholder="Ex.: apto 1201"></div></div>`
+    : `<input id="ag-q" type="search" autocomplete="off" placeholder="Ex.: Landscape, Rua Nestor Victor, 78322" value="${esc(f.q)}"><div id="ag-res" class="vis-res">${agResultados()}</div>`}</div>
+    ${i && (i.k || f.cria) ? `<div class="fl"><label class="lbl" for="ag-ip">Valor</label><input id="ag-ip" inputmode="numeric" value="${i.p ? 'R$ ' + i.p.toLocaleString('pt-BR') : ''}" autocomplete="off" placeholder="R$"></div>` : ''}`;
+  openSheet(`
+  <div class="sh-h"><div style="min-width:0"><div class="kick">Agenda${e && e.dono !== PERFIL_ID ? ' de ' + esc(agNome(e.dono)) : ''}</div><h2>${f.novo ? 'Novo compromisso' : 'Editar compromisso'}</h2></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="sh-b">
+    <div><span class="lbl">O que é *</span><div class="ag-tipos">${Object.entries(AG_TIPOS).map(([k, l]) => `<button class="${f.tipo === k ? 'on' : ''}" data-act="ag-tipo" data-v="${k}">${l}</button>`).join('')}</div></div>
+    ${f.tipo ? `<div class="ag-hr"><div class="fl d"><label class="lbl" for="ag-data">Data *</label><input id="ag-data" type="date" value="${esc(f.data)}"></div><div class="fl"><label class="lbl" for="ag-ini">Início *</label><input id="ag-ini" type="time" value="${esc(f.ini)}"></div><div class="fl"><label class="lbl" for="ag-fim">Término</label><input id="ag-fim" type="time" value="${esc(f.fim)}"></div></div>
+    ${reuniao ? `<div class="fl"><label class="lbl" for="ag-local">Local *</label><input id="ag-local" value="${esc(f.local)}" autocomplete="off" placeholder="Ex.: escritório, café, endereço"></div>` : ''}
+    ${imovel}
+    <div class="fl"><label class="lbl" for="ag-obs">Observação<span class="hint">opcional</span></label><textarea id="ag-obs" rows="2">${esc(f.obs)}</textarea></div>
+    <p class="vis-err" id="ag-err"></p>` : ''}
+  </div>
+  <div class="sh-f">${!f.novo ? '<button class="link" data-act="ag-apaga" style="margin-right:auto;color:var(--red)">Apagar</button>' : ''}<button class="btn-ghost" data-act="close">Cancelar</button><button class="btn-or" data-act="ag-salva">${f.novo ? 'Salvar na agenda' : 'Salvar'}</button></div>`, { kind: 'agenda' });
+  const ip = $('#ag-ip'); if (ip) ip.addEventListener('input', () => maskMoney(ip));
+}
+async function agSalva() {
+  const f = ag.f; if (!f) return; agLe();
+  const err = m => { const x = $('#ag-err'); if (x) x.textContent = m; else toast(m); };
+  if (!f.tipo) return err('Escolha o que é.');
+  if (!f.data) return err('Escolha a data.'); if (!f.ini) return err('Escolha o horário.');
+  if (f.fim && f.fim <= f.ini) return err('O término precisa ser depois do início.');
+  if ((f.tipo === 'rp' || f.tipo === 'rn') && !f.local) return err('Escreva o local da reunião.');
+  if (agVisitaTipo(f.tipo) && !(f.im && (f.im.k || f.im.nome || f.im.en))) return err('Escolha o imóvel na base ou cadastre o prédio ou o endereço.');
+  const agora = new Date().toISOString(), antes = !f.novo ? ag.ev.get(f.id) : null;
+  const e = agLimpo(Object.assign({}, f, { id: f.id || newId('a'), im: agVisitaTipo(f.tipo) ? f.im : null, local: f.tipo === 'rp' || f.tipo === 'rn' ? f.local : '', criadoEm: f.criadoEm || agora, atualizadoEm: agora }));
+  const btn = document.querySelector('[data-act="ag-salva"]'); if (btn) { btn.disabled = true; btn.textContent = 'Salvando…'; }
+  try {
+    const r = await fetch(`${FB_ROOT}/${AG_COL}/${e.id}?key=${FB_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(e) }) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  } catch (x) { if (btn) { btn.disabled = false; btn.textContent = f.novo ? 'Salvar na agenda' : 'Salvar'; } return err('Não consegui salvar agora. Confira a internet e tente de novo.'); }
+  ag.ev.set(e.id, e); agGuarda(); ag.f = null; closeSheet();
+  ag.dia = e.data; if (ag.mes !== e.data.slice(0, 7)) agVaiMes(e.data.slice(0, 7)); else renderAgenda();
+  toast(antes ? 'Compromisso atualizado.' : `Na agenda: ${AG_TIPOS[e.tipo].toLowerCase()}, ${fmtShort(e.data)} às ${e.ini}.`);
+}
+async function agApaga(id) {
+  const e = ag.ev.get(id); if (!e || !agPode(e)) return;
+  try { const r = await fetch(`${FB_ROOT}/${AG_COL}/${id}?key=${FB_KEY}`, { method: 'DELETE' }); if (!r.ok && r.status !== 404) throw new Error('HTTP ' + r.status); }
+  catch (x) { toast('Não consegui apagar agora. Tente de novo.'); return; }
+  ag.ev.delete(id); agGuarda(); ag.f = null; closeSheet(); renderAgenda();
+  toast('Compromisso apagado.', { label: 'Desfazer', fn: async () => { try { const r = await fetch(`${FB_ROOT}/${AG_COL}/${id}?key=${FB_KEY}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fields: docFields(e) }) }); if (!r.ok) throw 0; ag.ev.set(id, e); agGuarda(); renderAgenda(); } catch (x) { toast('Não consegui desfazer.'); } } });
+}
+// detalhe (todos veem; quem pode mexer tem Editar e Apagar)
+function agVer(id) {
+  const e = ag.ev.get(id); if (!e) return;
+  const i = e.im, x = i && i.k ? IMOVEL.get(i.k) : null;
+  openSheet(`
+  <div class="sh-h"><div style="min-width:0"><div class="kick">${esc(agDataTxt(e.data))} · ${e.ini}${e.fim ? '–' + e.fim : ''}</div><h2>${AG_TIPOS[e.tipo]}</h2></div><button class="x" data-act="close" aria-label="Fechar">×</button></div>
+  <div class="sh-b ag-det">
+    <div class="q"><i class="${AG_COR[e.dono]}"></i>${esc((PERFIS[e.dono] || {}).nome || e.dono)}</div>
+    ${e.local ? `<dl class="info"><dt>Local</dt><dd>${esc(e.local)}</dd></dl>` : ''}
+    ${i ? `<div><span class="lbl">Imóvel</span>${x ? j8Card(x) : `<dl class="info">${[['Prédio ou condomínio', i.nome], ['Endereço', i.en], [i.k ? 'Complemento' : 'Nº do apto ou da casa', (!i.k || MASTER) ? i.cp : ''], ['Valor', i.p ? 'R$ ' + i.p.toLocaleString('pt-BR') : '']].filter(r => r[1]).map(([a, b]) => `<dt>${a}</dt><dd>${esc(b)}</dd>`).join('')}</dl>`}${x && i.p && i.p !== x.p ? `<p class="muted" style="font-size:13.5px;margin:8px 0 0">Valor na agenda: R$ ${i.p.toLocaleString('pt-BR')}</p>` : ''}</div>` : ''}
+    ${e.obs ? `<dl class="info"><dt>Observação</dt><dd style="white-space:pre-wrap">${esc(e.obs)}</dd></dl>` : ''}
+  </div>
+  ${agPode(e) ? `<div class="sh-f"><button class="link" data-act="ag-apaga" data-id="${esc(e.id)}" style="margin-right:auto;color:var(--red)">Apagar</button><button class="btn-or" data-act="ag-edita" data-id="${esc(e.id)}">Editar</button></div>` : ''}`, { kind: 'agenda-ver', id });
+}
+function agAcao(a, el) {
+  const v = el.dataset.v;
+  switch (a) {
+    case 'ag-mes': { const [y, m] = ag.mes.split('-').map(Number), d = new Date(y, m - 1 + Number(v), 1); agVaiMes(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`); break; }
+    case 'ag-hoje': ag.dia = hojeISO(); agVaiMes(ag.dia.slice(0, 7)); break;
+    case 'ag-dia': ag.dia = v; if (v.slice(0, 7) !== ag.mes) agVaiMes(v.slice(0, 7)); else renderAgenda(); break;
+    case 'ag-quem': ag.quem = v; renderAgenda(); break;
+    case 'ag-novo': agAbre(); break;
+    case 'ag-ver': agVer(el.dataset.id); break;
+    case 'ag-edita': agAbre(el.dataset.id); break;
+    case 'ag-apaga': agApaga(el.dataset.id || (ag.f && ag.f.id)); break;
+    case 'ag-salva': agSalva(); break;
+    case 'ag-tipo': if (ag.f) { agLe(); ag.f.tipo = v; agForm(); } break;
+    case 'ag-pega': if (ag.f) { agLe(); const i = IMOVEL.get(el.dataset.k); if (i) { ag.f.im = { k: i.k, nome: i.e || '', en: i.en || '', cp: i.cp || '', p: i.p || 0, tit: tituloImovel(i) }; ag.f.cria = false; agForm(); } } break;
+    case 'ag-cria': if (ag.f) { agLe(); ag.f.cria = true; ag.f.im = { k: '', nome: ag.f.q || '', en: '', cp: '', p: 0, tit: '' }; agForm(); setTimeout(() => { const x = $('#ag-ie'); if (x) x.focus(); }, 30); } break;
+    case 'ag-troca': if (ag.f) { agLe(); ag.f.im = null; ag.f.cria = false; agForm(); setTimeout(() => { const x = $('#ag-q'); if (x) x.focus(); }, 30); } break;
+  }
+}
+document.addEventListener('input', e => { if (e.target.id === 'ag-q' && ag.f) { ag.f.q = e.target.value; const r = $('#ag-res'); if (r) r.innerHTML = agResultados(); } });
+
 // ── TOAST ──
 let toastT;
 function toast(msg, action) {
@@ -5271,6 +5517,7 @@ document.addEventListener('click', e => {
   const a = el.dataset.act, id = el.dataset.id, v = el.dataset.v;
   if (a.startsWith('pm-')) { if (par) parAcao(a, el); return; }
   if (a.startsWith('nk-')) { nkAcao(a, el); return; }
+  if (a.startsWith('ag-')) { agAcao(a, el); return; }
   if (a.startsWith('vz-')) { if (MASTER) vzAcao(a, el); return; }
   switch (a) {
     case 'p-novo': editaParecer(limpaParecer({})); break;
@@ -5417,7 +5664,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-25b';
+const VERSAO = '2026-11-25c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
