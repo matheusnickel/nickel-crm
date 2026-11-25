@@ -229,7 +229,8 @@ input:focus,textarea:focus{border-color:var(--tq);box-shadow:0 0 0 4px rgba(124,
 .j8c .bk.ghost{background:var(--card);border:1px solid var(--line2);color:var(--text)}
 .j8c .bk.ghost:hover{border-color:var(--tq);color:var(--tq2)}
 .j8c .bk.ready{background:var(--tq2)}
-.j8c .go{color:var(--tq2);grid-column:1 / -1;justify-self:end;padding:6px 8px}
+.j8c .bk.ghost.ready,.j8c .bk.ghost.ready:hover{color:#fff;border-color:transparent;background:var(--tq2)}
+.j8c .go{color:var(--tq2);justify-self:end;padding:6px 8px}
 .j8c .go:hover{background:var(--tqbg)}
 .j8c .go svg,.j8c .bk svg{width:15px;height:15px}
 .j8c .src{display:inline-block;white-space:nowrap;margin-left:8px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;vertical-align:2px;background:var(--orbg);color:var(--or2)}
@@ -2000,6 +2001,52 @@ function capaPDF(doc, d, foto, cl) {
     doc.setFontSize(10); doc.setTextColor(90, 90, 90); doc.text(doc.splitTextToSize(cond.join(' · '), rw).slice(0, 2), rx, y, { lineHeightFactor: 1.5 });
   }
 }
+// Baixar fotos (voltou em 25/11, pedido dele; tinha saído em 30/10 para dar lugar ao complemento). Celular: as fotos ficam prontas e o
+// 2º toque abre "Salvar imagens"; computador: baixa uma por uma. O images.weserv.nl entrega a foto liberada (os sites não deixam baixar direto).
+const ICON_DL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
+const slugify = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const fotoLiberada = async u => {
+  if (/^nf:/.test(u)) return fotoNickel(u, 'g');
+  return 'https://images.weserv.nl/?url=' + encodeURIComponent(u.replace(/^https?:\/\//, '')) + '&w=2400&h=2400&fit=inside&we&output=jpg&q=92';
+};
+const fotosProntas = new Map(), fotosBaixando = new Set();
+async function baixarFotos(btn, c) {
+  if (fotosBaixando.has(c)) return;
+  const prontas = fotosProntas.get(c);
+  if (prontas) {
+    try { await navigator.share({ files: prontas }); }
+    catch (e) { if (e.name !== 'AbortError') salvarArquivos(prontas); }
+    return;
+  }
+  fotosBaixando.add(c);
+  const original = btn.innerHTML;
+  try {
+    btn.innerHTML = 'Preparando…';
+    const d = await j8Detalhe(c), fotos = fotosDoBook(d);
+    if (!fotos.length) throw new Error('sem fotos');
+    const base = slugify([d.e || d.rot, d.b].filter(Boolean).join(' ')) || 'imovel'; // sem o código da imobiliária no nome do arquivo
+    let n = 0;
+    btn.innerHTML = `Baixando 0/${fotos.length}…`;
+    const pega = async u => { const r = await fetch(await fotoLiberada(u)); if (!r.ok) throw new Error('HTTP ' + r.status); return r.blob(); };
+    const res = await emLotes(fotos, async (u, k) => {
+      const b = await pega(u).catch(() => pega(u)); btn.innerHTML = `Baixando ${++n}/${fotos.length}…`; // falhou: tenta mais uma vez
+      return new File([b], `${base}-${String(k + 1).padStart(2, '0')}.jpg`, { type: 'image/jpeg' });
+    });
+    const files = res.filter(r => r.status === 'fulfilled').map(r => r.value), falta = fotos.length - files.length;
+    if (!files.length) throw new Error('nenhuma foto');
+    const faltou = falta ? ` ${falta} não ${plural(falta, 'veio', 'vieram')}.` : '';
+    if (telaDeToque && navigator.canShare && navigator.canShare({ files })) {
+      fotosProntas.clear(); fotosProntas.set(c, files); // só as últimas ficam na memória do celular
+      btn.classList.add('ready'); btn.innerHTML = `${ICON_DL}Salvar ${files.length} ${plural(files.length, 'foto', 'fotos')}`;
+      toast('Fotos prontas. Toque em “Salvar” e escolha “Salvar imagens”.' + faltou);
+    } else {
+      salvarArquivos(files); btn.innerHTML = original;
+      toast(`${files.length} ${plural(files.length, 'foto baixada', 'fotos baixadas')}.${faltou}`);
+    }
+  } catch (e) { btn.innerHTML = original; toast('Não consegui baixar as fotos agora. Tente de novo.'); }
+  fotosBaixando.delete(c);
+  if (!btn.isConnected) redesenhaCartoes(); // a lista foi redesenhada no meio
+}
 async function baixarPDF(btn, c, cli) {
   if (btn.dataset.busy) return;
   const pronto = pdfsProntos.get(c);
@@ -2145,6 +2192,7 @@ function j8Card(i, c) {
       <button class="bk ghost desc" data-act="j8-desc" data-c="${esc(i.k)}">${ICON_MSG}Descritivo PDF</button>
       <button class="bk lnk" data-act="j8-link" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_LINK}Link para cliente</button>
       <button class="bk ghost msgl" data-act="j8-msgl" data-c="${esc(i.k)}" data-cli="${c ? esc(c.id) : ''}">${ICON_MSG}Descritivo link</button>
+      <button class="bk ghost fts${fotosProntas.has(i.k) ? ' ready' : ''}" data-act="j8-fotos" data-c="${esc(i.k)}">${ICON_DL}${fotosProntas.has(i.k) ? `Salvar ${fotosProntas.get(i.k).length} fotos` : 'Baixar fotos'}</button>
       ${EST[i.src].proprio ? `<button class="go" data-act="nk-abrir" data-id="${esc(i.c)}">Ver cadastro</button>` : `<a class="go" href="${esc(i.u)}" target="_blank" rel="noopener">Acessar imóvel <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17L17 7M9 7h8v8"/></svg></a>`}
     </div>${!c && ehNovo(i) ? paraQuem(i) : ''}${ui.capaDe === i.k ? escolheCapa(i) : ''}</div>`;
 }
@@ -5303,6 +5351,7 @@ document.addEventListener('click', e => {
     case 'f-vagas': form.vagas = +v; renderFormChips(); break;
     case 'f-sit': case 'f-mob': case 'f-op': { const arr = a === 'f-sit' ? form.situacao : a === 'f-op' ? form.opcionais : form.mobilia; const k = arr.indexOf(v); if (k >= 0) arr.splice(k, 1); else arr.push(v); renderFormChips(); break; }
     case 'f-save': saveForm(); break;
+    case 'j8-fotos': baixarFotos(el, el.dataset.c); break;
     case 'j8-pdf': baixarPDF(el, el.dataset.c, el.dataset.cli); break;
     case 'j8-mais': ui.j8Mais[id] = (ui.j8Mais[id] || 5) + 5; renderFicha(id); break;
     case 'fonte': ui.fonte = v; lsSet('carteira_fonte', v); ui.j8Mais[id] = 5; renderFicha(id); break;
@@ -5368,7 +5417,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-25a';
+const VERSAO = '2026-11-25b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
