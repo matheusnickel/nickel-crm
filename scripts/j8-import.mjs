@@ -114,6 +114,21 @@ async function importa(M) {
     };
   });
 
+  // 26/11: a J8 parou de mandar o complemento, o bloco e o número da rua. Imóvel que já estava aqui guarda o que veio antes
+  // (o mesmo código e a mesma rua); imóvel novo fica sem (o card mostra "Não informado").
+  let antes = new Map();
+  try { antes = new Map(JSON.parse(await readFile(OUT, 'utf8')).imoveis.map(i => [i.c, i])); } catch {}
+  let guardados = 0;
+  for (const i of imoveis) {
+    const a = antes.get(i.c); if (!a) continue; let g = false;
+    if (!i.cp && a.cp) { i.cp = a.cp; g = true; }
+    if (!i.bl && a.bl) { i.bl = a.bl; g = true; }
+    // a rua agora vem sem o tipo ("Rua", "Avenida") e sem o número: vale a de antes se for a mesma rua
+    if (a.en && a.en !== i.en && !/,\s*\S+$/.test(i.en) && /,\s*\S+$/.test(a.en) && (!i.en || a.en.toLowerCase().includes(i.en.toLowerCase()))) { i.en = a.en; g = true; }
+    if (g) guardados++;
+  }
+  if (guardados) console.log(`${M.nome}: complemento/número guardados da atualização anterior em ${guardados} imóveis.`);
+
   // segurança: se vier muito menos do que o site diz ter, não sobrescreve o que já está bom
   if (imoveis.length < Math.max(20, total * 0.8)) throw new Error(`Importação incompleta: ${imoveis.length} de ${total}`);
 
@@ -123,6 +138,7 @@ async function importa(M) {
     let atual = null;
     try { atual = JSON.parse(await readFile(new URL(i.c + '.json', DIR), 'utf8')); } catch {}
     if (!atual || atual.nf !== FOTOS || atual.du !== i.du || atual.p !== i.p) fila.push(i);
+    else if (atual.cp !== i.cp || atual.bl !== i.bl || atual.en !== i.en) await writeFile(new URL(i.c + '.json', DIR), JSON.stringify(Object.assign(atual, { cp: i.cp, bl: i.bl, en: i.en })));
   }
   let feitos = 0, falhas = 0;
   async function trabalhador() {
