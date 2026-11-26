@@ -2046,6 +2046,9 @@ function capaPDF(doc, d, foto, cl) {
   doc.setFontSize(10.5); doc.setTextColor(135, 135, 135); doc.text(emp ? `${tipo} · ${d.b}` : (d.ci || 'Curitiba'), rx, y);
   // endereço do anúncio, quando ele mostra (rua e número; o complemento não entra)
   if (enDe(d)) { const el = doc.splitTextToSize(enDe(d), rw).slice(0, 2); y += 15; doc.text(el, rx, y, { lineHeightFactor: 1.35 }); y += (el.length - 1) * 14; }
+  // 26/11: a frase de apresentação do link ("Um apartamento por andar, com 320 m² privativos…")
+  const frase = descritivoPartes(d)[1] || '';
+  if (frase) { y += 24; doc.setFontSize(10.5); doc.setTextColor(70, 70, 70); const fl = doc.splitTextToSize(frase, rw).slice(0, 4); doc.text(fl, rx, y, { lineHeightFactor: 1.45 }); y += (fl.length - 1) * 15.2; }
   // 26/11 (pedido dele: o PDF com as mesmas informações do link): o valor e o condomínio
   if (d.p) {
     y += 26; doc.setFontSize(7); doc.setTextColor(150, 150, 150); doc.text((ehLocacao(d) ? 'VALOR DO ALUGUEL' : 'VALOR DE VENDA'), rx, y, { charSpace: 1 });
@@ -2063,20 +2066,7 @@ function capaPDF(doc, d, foto, cl) {
     doc.setFontSize(16); doc.setTextColor(44, 46, 51); doc.text(String(val), cx, cy + 20);
   });
   y += lin * 52 + 18;
-  // diferenciais do imóvel: até 8, em duas colunas, com um ponto laranja
-  const dif = diferenciais(d.itens, DIF_IMOVEL, 8);
-  if (dif.length && y < pe - 70) {
-    doc.setFontSize(7.5); doc.setTextColor(224, 102, 44); doc.text('DIFERENCIAIS', rx, y, { charSpace: 1.2 }); y += 20;
-    doc.setFontSize(10.5); doc.setTextColor(56, 56, 56); doc.setFillColor(224, 102, 44);
-    dif.forEach((t, i) => { const cx = rx + (i % 2) * (cw + 20), cy = y + Math.floor(i / 2) * 21; doc.setFillColor(224, 102, 44); doc.circle(cx + 1.5, cy - 3.4, 1.6, 'F'); doc.text(t, cx + 9, cy); });
-    y += Math.ceil(dif.length / 2) * 21 + 18;
-  }
-  // o que o condomínio oferece, em uma ou duas linhas
-  const cond = diferenciais(d.condItens, DIF_COND, 6);
-  if (cond.length && y < pe - 40) {
-    doc.setFontSize(7.5); doc.setTextColor(224, 102, 44); doc.text('NO CONDOMÍNIO', rx, y, { charSpace: 1.2 }); y += 18;
-    doc.setFontSize(10); doc.setTextColor(90, 90, 90); doc.text(doc.splitTextToSize(cond.join(' · '), rw).slice(0, 2), rx, y, { lineHeightFactor: 1.5 });
-  }
+  // 26/11: diferenciais e condomínio ficam completos na 2ª página (Características), para não repetir
 }
 // 26/11 (pedido dele: "o PDF com as mesmas informações do link"): a 2ª página traz tudo o que o link mostra, tirado da mesma
 // função (fotoDoLink): título, endereço, valor e condomínio, o texto de apresentação, a ficha completa, TODAS as características
@@ -2085,43 +2075,31 @@ function infoPDF(doc, d) {
   const L = fotoDoLink(d), PW = 920, PH = 660, X = 34, W = PW - 68, FIM = PH - 72;
   const pagina = () => { doc.addPage([PW, PH], 'landscape'); doc.setFillColor(255, 255, 255); doc.rect(0, 0, PW, PH, 'F'); rodapePDF(doc, PW, PH); doc.setFont('helvetica', 'normal'); return 58; };
   const kick = (t, x, y) => { doc.setFontSize(7.5); doc.setTextColor(224, 102, 44); doc.text(t, x, y, { charSpace: 1.2 }); };
+  // o que a capa já mostra (título, endereço, valor, condomínio, frase e a ficha principal) não se repete aqui
+  const naCapa = new Set(fichaPDF(d).map(x => x[0])), extra = L.ficha.filter(x => !naCapa.has(x.r));
+  if (!L.dif.length && !L.cond.length && !L.descricao) return; // sem características nem descrição (ex.: terreno): a capa basta, não sai página quase vazia
   let y = pagina();
-  kick('INFORMAÇÕES DO IMÓVEL', X, y);
-  // à direita, o valor e o condomínio
-  const vx = X + W; let vy = y;
-  if (L.preco) {
-    doc.setFontSize(7); doc.setTextColor(150, 150, 150); { const t = L.loc ? 'VALOR DO ALUGUEL' : 'VALOR DE VENDA'; doc.text(t, vx - doc.getTextWidth(t) - t.length, vy, { charSpace: 1 }); } // alinhado à direita com o espaçamento das letras
-    vy += 26; doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(44, 46, 51); doc.text('R$ ' + Math.round(L.preco).toLocaleString('pt-BR') + (L.loc ? '/mês' : ''), vx, vy, { align: 'right' }); doc.setFont('helvetica', 'normal');
-  } else { vy += 26; doc.setFontSize(14); doc.setTextColor(44, 46, 51); doc.text('Valor sob consulta', vx, vy, { align: 'right' }); }
-  if (L.valCond) { vy += 17; doc.setFontSize(10); doc.setTextColor(120, 120, 120); doc.text('Condomínio R$ ' + Math.round(L.valCond).toLocaleString('pt-BR') + '/mês', vx, vy, { align: 'right' }); }
-  // à esquerda, o título, tipo e bairro, e o endereço
-  const tw = W - 290;
-  y += 32; doc.setFontSize(24); doc.setTextColor(44, 46, 51);
-  const tl = doc.splitTextToSize(L.titulo, tw).slice(0, 2); doc.text(tl, X, y, { lineHeightFactor: 1.15 }); y += (tl.length - 1) * 27.6;
-  y += 20; doc.setFontSize(10.5); doc.setTextColor(135, 135, 135); doc.text(L.sub, X, y);
-  if (L.endereco) { y += 15; doc.text(doc.splitTextToSize(L.endereco + (L.bairro && !L.sub.includes(L.bairro) ? ' · ' + L.bairro : ''), tw)[0], X, y); }
-  y = Math.max(y, vy);
-  if (L.texto) { y += 26; doc.setFontSize(11.5); doc.setTextColor(70, 70, 70); const t = doc.splitTextToSize(L.texto, W); doc.text(t, X, y, { lineHeightFactor: 1.45 }); y += (t.length - 1) * 16.7; }
-  y += 22; doc.setDrawColor(224, 102, 44); doc.setLineWidth(1); doc.line(X, y, X + 36, y); y += 28;
-  // ficha técnica completa: 4 colunas
-  const cols = 4, gap = 24, cw = (W - gap * (cols - 1)) / cols;
-  doc.setDrawColor(236, 236, 236); doc.setLineWidth(.6);
-  L.ficha.forEach(({ r, v }, i) => {
-    const cx = X + (i % cols) * (cw + gap), cy = y + Math.floor(i / cols) * 50;
-    doc.setFontSize(7); doc.setTextColor(150, 150, 150); doc.text(r.toLocaleUpperCase('pt-BR'), cx, cy, { charSpace: 1 });
-    doc.setFontSize(15); doc.setTextColor(44, 46, 51); doc.text(doc.splitTextToSize(String(v), cw)[0], cx, cy + 19);
-    doc.line(cx, cy + 29, cx + cw, cy + 29);
-  });
-  y += Math.ceil(L.ficha.length / cols) * 50 + 14;
+  doc.setFontSize(9); doc.setTextColor(150, 150, 150); doc.text(L.titulo, X + W, y, { align: 'right' }); // só para saber de qual imóvel é a página
+  if (extra.length) {
+    kick('MAIS DETALHES', X, y); y += 28;
+    const cols = 4, gap = 24, cw = (W - gap * (cols - 1)) / cols;
+    doc.setDrawColor(236, 236, 236); doc.setLineWidth(.6);
+    extra.forEach(({ r, v }, i) => {
+      const cx = X + (i % cols) * (cw + gap), cy = y + Math.floor(i / cols) * 50;
+      doc.setFontSize(7); doc.setTextColor(150, 150, 150); doc.text(r.toLocaleUpperCase('pt-BR'), cx, cy, { charSpace: 1 });
+      doc.setFontSize(15); doc.setTextColor(44, 46, 51); doc.text(doc.splitTextToSize(String(v), cw)[0], cx, cy + 19);
+      doc.line(cx, cy + 29, cx + cw, cy + 29);
+    });
+    y += Math.ceil(extra.length / cols) * 50 + 16;
+  }
   // características do imóvel e do condomínio, lado a lado, cada lista em 2 colunas; o que não couber vai para a próxima página
   const metade = (W - 40) / 2, sub = (metade - 16) / 2, LH = 19;
   const listas = [['CARACTERÍSTICAS DO IMÓVEL', L.dif, X], ['CARACTERÍSTICAS DO CONDOMÍNIO', L.cond, X + metade + 40]].filter(l => l[1].length);
   if (listas.length) {
     const linhas = Math.max(...listas.map(l => Math.ceil(l[1].length / 2)));
     if (y + 22 + Math.min(linhas, 6) * LH > FIM) y = pagina();
-    let yy = y; const ini = y;
+    let yy = y;
     const desenha = (it, cx, cy) => { doc.setFillColor(224, 102, 44); doc.circle(cx + 1.5, cy - 3.4, 1.6, 'F'); doc.setFontSize(10.5); doc.setTextColor(56, 56, 56); doc.text(doc.splitTextToSize(it, sub - 12)[0], cx + 9, cy); };
-    // as duas listas andam juntas, linha a linha (2 itens por lista por linha)
     listas.forEach(([t, , cx]) => kick(t, cx, yy)); yy += 22;
     for (let r = 0; r < linhas; r++) {
       if (yy > FIM) { yy = pagina(); listas.forEach(([t, , cx]) => kick(t + ' (continuação)', cx, yy)); yy += 22; }
@@ -5733,7 +5711,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-26a';
+const VERSAO = '2026-11-26b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
