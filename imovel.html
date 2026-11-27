@@ -265,7 +265,7 @@ function desenha() {
       <h1>${esc(L.titulo)}</h1>
       <p class="sub">${esc(L.sub)}</p>
       <div class="preco"><small>${L.loc ? 'Valor do aluguel' : 'Valor de venda'}</small><b>${L.preco ? reais(L.preco) + (L.loc ? '/mês' : '') : 'Sob consulta'}</b></div>
-      ${L.valCond ? `<div class="vals"><span><small>Condomínio</small>${reais(L.valCond)}/mês</span></div>` : ''}
+      ${L.valCond ? `<div class="vals"><span><small>Taxa de condomínio</small>${reais(L.valCond)}/mês</span></div>` : ''}
       ${L.texto ? `<p class="texto">${esc(L.texto)}</p>` : ''}
     </div>
     ${(L.ficha || []).length ? `<section class="sec"><h2>Ficha técnica</h2><div class="ficha">${L.ficha.map(x => `<div><span>${esc(x.r)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></section>` : ''}

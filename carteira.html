@@ -2074,7 +2074,7 @@ function capaPDF(doc, d, foto, cl) {
   if (d.p) {
     y += 26; doc.setFontSize(7); doc.setTextColor(150, 150, 150); doc.text((ehLocacao(d) ? 'VALOR DO ALUGUEL' : 'VALOR DE VENDA'), rx, y, { charSpace: 1 });
     y += 21; doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(44, 46, 51); doc.text('R$ ' + Math.round(d.p).toLocaleString('pt-BR') + (ehLocacao(d) ? '/mês' : ''), rx, y); doc.setFont('helvetica', 'normal');
-    if (d.cond) { y += 15; doc.setFontSize(9.5); doc.setTextColor(120, 120, 120); doc.text('Condomínio R$ ' + Math.round(d.cond).toLocaleString('pt-BR') + '/mês', rx, y); }
+    if (d.cond) { y += 15; doc.setFontSize(9.5); doc.setTextColor(120, 120, 120); doc.text('Taxa de condomínio R$ ' + Math.round(d.cond).toLocaleString('pt-BR') + '/mês', rx, y); }
   }
   y += 22; doc.setDrawColor(224, 102, 44); doc.setLineWidth(1); doc.line(rx, y, rx + 36, y); y += 30;
   // ficha técnica em duas colunas: rótulo pequeno em maiúsculas e o número grande
@@ -5734,7 +5734,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-27c';
+const VERSAO = '2026-11-27d';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
