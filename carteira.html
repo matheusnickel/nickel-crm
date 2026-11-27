@@ -1831,7 +1831,9 @@ function fotoDoLink(d) {
     // imobiliária) e SEM IPTU — pedidos dele no mesmo dia.
     valCond: d.cond || 0, endereco: enDe(d), bairro: d.b || '', cidade: d.ci || 'Curitiba',
     // 20/11: nos imóveis Nickel a descrição é dele (escrita no cadastro), então entra; das imobiliárias, nunca
-    descricao: EST[d.src] && EST[d.src].proprio ? String(d.descricao || '').trim() : ''
+    descricao: EST[d.src] && EST[d.src].proprio ? String(d.descricao || '').trim() : '',
+    // 27/11: destaques do imóvel Nickel (ex.: "Condomínio com apenas 14 casas", "A 3 minutos do Bosque do Alemão"), logo abaixo da apresentação
+    destaques: EST[d.src] && EST[d.src].proprio ? String(d.destaques || '').split(/\n+/).map(x => x.replace(/^[\s•\-*·]+/, '').trim()).filter(Boolean) : []
   };
 }
 // lista inteira, sem cortar: primeiro na ordem de força do book (piscina aquecida, elevador privativo…), depois o resto
@@ -1854,11 +1856,11 @@ function fichaCompleta(d) {
     if (d.bh) l.push(['Banheiros', d.bh]);
   }
   if (d.v) l.push(['Vagas', d.v]);
-  if (d.ano > 1900) l.push(['Ano de construção', d.ano]);
+  if (d.ano > 1900) l.push((EST[d.src] && EST[d.src].proprio ? ['Idade do imóvel', (new Date().getFullYear() - d.ano) <= 0 ? 'Novo' : (new Date().getFullYear() - d.ano) + plural(new Date().getFullYear() - d.ano, ' ano', ' anos')] : ['Ano de construção', d.ano]));
   if (ehApto && d.apa > 0) l.push(['Por andar', d.apa === 1 ? '1 apartamento' : d.apa + ' apartamentos']);
   const mob = d.mob ? 'Mobiliado' : { s: 'Mobiliado', m: 'Semi-mobiliado' }[d.mo];
   if (mob) l.push(['Mobília', mob]);
-  l.push(['Situação', d.ob === 'p' ? 'Na planta' : 'Pronto para morar']);
+  l.push(['Situação', d.ob === 'p' ? 'Na planta' : d.reforma ? 'Precisa de reforma' : 'Pronto para morar']);
   return l;
 }
 // 1º toque prepara o imóvel (se ainda não carregou); com ele pronto, copia o link no mesmo toque e grava em seguida
@@ -2002,12 +2004,12 @@ function fichaPDF(d) {
     if (d.s) l.push(['Suítes', d.s]);
     if (d.v) l.push(['Vagas', d.v]);
   }
-  if (d.ano > 1900) l.push(['Ano de construção', d.ano]);
+  if (d.ano > 1900) l.push((EST[d.src] && EST[d.src].proprio ? ['Idade do imóvel', (new Date().getFullYear() - d.ano) <= 0 ? 'Novo' : (new Date().getFullYear() - d.ano) + plural(new Date().getFullYear() - d.ano, ' ano', ' anos')] : ['Ano de construção', d.ano]));
   if (ehApto && d.apa > 0) l.push(['Por andar', d.apa === 1 ? '1 apartamento' : d.apa + ' apartamentos']);
   const mob = d.mob ? 'Mobiliado' : { s: 'Mobiliado', m: 'Semi-mobiliado' }[d.mo];
   if (mob) l.push(['Mobília', mob]);
   // cabem 8: o que é menos decisivo sai primeiro
-  for (const sai of ['Área total', 'Por andar', 'Ano de construção']) if (l.length > 8) { const i = l.findIndex(x => x[0] === sai); if (i >= 0) l.splice(i, 1); }
+  for (const sai of ['Área total', 'Por andar', 'Ano de construção', 'Idade do imóvel']) if (l.length > 8) { const i = l.findIndex(x => x[0] === sai); if (i >= 0) l.splice(i, 1); }
   return l.slice(0, 8);
 }
 // diferenciais do imóvel e do condomínio, do mais marcante para o mais comum
@@ -2098,9 +2100,14 @@ function infoPDF(doc, d) {
   const kick = (t, x, y) => { doc.setFontSize(7.5); doc.setTextColor(224, 102, 44); doc.text(t, x, y, { charSpace: 1.2 }); };
   // o que a capa já mostra (título, endereço, valor, condomínio, frase e a ficha principal) não se repete aqui
   const naCapa = new Set(fichaPDF(d).map(x => x[0])), extra = L.ficha.filter(x => !naCapa.has(x.r));
-  if (!L.dif.length && !L.cond.length && !L.descricao) return; // sem características nem descrição (ex.: terreno): a capa basta, não sai página quase vazia
+  if (!L.dif.length && !L.cond.length && !L.descricao && !L.destaques.length) return; // sem características nem descrição (ex.: terreno): a capa basta, não sai página quase vazia
   let y = pagina();
   doc.setFontSize(9); doc.setTextColor(150, 150, 150); doc.text(L.titulo, X + W, y, { align: 'right' }); // só para saber de qual imóvel é a página
+  if (L.destaques.length) {
+    kick('DESTAQUES', X, y); y += 22; doc.setFontSize(11.5); doc.setTextColor(56, 56, 56);
+    L.destaques.forEach(t => { doc.setFillColor(224, 102, 44); doc.circle(X + 1.6, y - 3.8, 1.8, 'F'); doc.text(doc.splitTextToSize(t, W - 20)[0], X + 11, y); y += 20; });
+    y += 16;
+  }
   if (extra.length) {
     kick('MAIS DETALHES', X, y); y += 28;
     const cols = 4, gap = 24, cw = (W - gap * (cols - 1)) / cols;
@@ -3415,6 +3422,7 @@ function nkLimpo(o) {
     ap: nkNum(o.ap), ac: nkNum(o.ac), atot: nkNum(o.atot), at: nkNum(o.at), q: nkNum(o.q), s: nkNum(o.s), bh: nkNum(o.bh), v: nkNum(o.v), apa: nkNum(o.apa), ano: nkNum(o.ano),
     mo: ['s', 'm', 'n'].includes(o.mo) ? o.mo : 'n', ob: o.ob === 'p' ? 'p' : 'r', p: nkNum(o.p), cond: nkNum(o.cond),
     itens: arr(o.itens), condItens: arr(o.condItens), descricao: String(o.descricao || ''), fotos: arr(o.fotos), capaMini: String(o.capaMini || ''),
+    destaques: String(o.destaques || ''), reforma: !!o.reforma, // 27/11: destaques da localização etc. (link e PDF) e situação "Precisa de reforma"
     igual: Array.isArray(o.igual) ? o.igual.filter(k => /^[a-z0-9]+:\S+$/i.test(k)) : [], // anúncios das imobiliárias que são este imóvel (27/11)
     autOk: !!o.autOk, autAte: /^\d{4}-\d{2}-\d{2}$/.test(o.autAte || '') ? o.autAte : ''
   };
@@ -3433,7 +3441,7 @@ function nkResumo(n) {
 function detalheNickel(c) {
   const n = NICKEL.find(x => x.id === c); if (!n) return null;
   return Object.assign(nkResumo(n), { cond: n.cond, iptu: 0, bh: n.bh, ap: n.ap, atot: n.atot, ac: n.ac, apa: n.apa, ano: n.ano, mob: n.mo === 's',
-    itens: n.itens, condItens: n.condItens, descricao: n.descricao, fotos: n.fotos.map(id => 'nf:' + id) });
+    itens: n.itens, condItens: n.condItens, descricao: n.descricao, destaques: n.destaques, reforma: n.reforma, fotos: n.fotos.map(id => 'nf:' + id) });
 }
 const nkTitulo = n => { const emp = n.e ? (/[a-zà-ú]/.test(n.e) ? n.e : n.e.toLowerCase().replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase())) : ''; return emp || `${n.t || 'Imóvel'} ${naNo(n.b)} ${n.b || '—'}`; };
 const nkVeE = n => MASTER || n.status === 'ativo' || n.criadoPor === PERFIL_ID;      // o Felipe vê os publicados e os dele
@@ -3594,6 +3602,7 @@ function renderNkForm() {
     <div><span class="lbl">Mobília</span><div class="chips sm" id="nk-mo"></div></div>
     <div><span class="lbl">Características do imóvel</span><div class="chips sm" id="nk-itens"></div>${ed ? '<div class="nkoutro"><input id="nk-item-add" placeholder="Outra característica (Enter para incluir)" autocomplete="off"></div>' : ''}</div>
     <div><span class="lbl">Características do condomínio</span><div class="chips sm" id="nk-cond-itens"></div>${ed ? '<div class="nkoutro"><input id="nk-cond-add" placeholder="Outra característica (Enter para incluir)" autocomplete="off"></div>' : ''}</div>
+    <div class="fl"><label class="lbl" for="nk-dest">Destaques<span class="hint">um por linha; aparecem no link e no PDF (ex.: Condomínio com apenas 14 casas)</span></label><textarea id="nk-dest" rows="4" placeholder="Opcional"${so}>${esc(d.destaques)}</textarea></div>
     <div class="fl"><label class="lbl" for="nk-desc">Descrição<span class="hint">o seu texto; aparece na página do link</span></label><textarea id="nk-desc" rows="5" placeholder="Opcional"${so}>${esc(d.descricao)}</textarea></div>
     ${MASTER || d.criadoPor === PERFIL_ID ? `<div><span class="lbl">Autorização de venda</span><div class="nkaut"><label class="nkchk"><input type="checkbox" id="nk-aut"${d.autOk ? ' checked' : ''}${so}> Assinada pelo proprietário</label><label class="nkchk">válida até <input type="date" id="nk-autv" value="${esc(d.autAte)}"${so}></label></div></div>` : ''}
     ${!nk.novo && MASTER ? `<div class="nkacoes"><span class="lbl">Status</span><div class="chips sm">
@@ -3632,7 +3641,7 @@ function renderNkFotos() {
 function renderNkChips() {
   const d = nk.doc, ed = nk.edita ? '' : ' disabled';
   $('#nk-tipo').innerHTML = TIPOS.map(t => `<button class="chip${d.t === t ? ' on' : ''}" data-act="nk-tipo" data-v="${t}"${ed}>${t}</button>`).join('');
-  $('#nk-ob').innerHTML = [['r', 'Pronto para morar'], ['p', 'Na planta']].map(([k, l]) => `<button class="chip${d.ob === k ? ' on' : ''}" data-act="nk-ob" data-v="${k}"${ed}>${l}</button>`).join('');
+  $('#nk-ob').innerHTML = [['r', 'Pronto para morar'], ['f', 'Precisa de reforma'], ['p', 'Na planta']].map(([k, l]) => `<button class="chip${(k === 'f' ? d.reforma : d.ob === k && !(k === 'r' && d.reforma)) ? ' on' : ''}" data-act="nk-ob" data-v="${k}"${ed}>${l}</button>`).join('');
   $('#nk-mo').innerHTML = [['n', 'Sem mobília'], ['m', 'Semi-mobiliado'], ['s', 'Mobiliado']].map(([k, l]) => `<button class="chip${d.mo === k ? ' on' : ''}" data-act="nk-mo" data-v="${k}"${ed}>${l}</button>`).join('');
   const lista = (base, marcados) => base.concat(marcados.filter(x => !base.includes(x)));
   $('#nk-itens').innerHTML = lista(NK_ITENS, d.itens).map(x => `<button class="chip${d.itens.includes(x) ? ' on' : ''}" data-act="nk-item" data-v="${esc(x)}"${ed}>${esc(x)}</button>`).join('');
@@ -3650,7 +3659,7 @@ function nkLeCampos() {
   const d = nk.doc, val = id => { const x = $('#' + id); return x ? x.value : undefined; };
   const txt = (id, campo) => { const v = val(id); if (v !== undefined) d[campo] = v.trim(); };
   const num = (id, campo) => { const v = val(id); if (v !== undefined) d[campo] = nkNum(v); };
-  txt('nk-e', 'e'); txt('nk-b', 'b'); txt('nk-en', 'en'); txt('nk-cp', 'cp'); txt('nk-desc', 'descricao');
+  txt('nk-e', 'e'); txt('nk-b', 'b'); txt('nk-en', 'en'); txt('nk-cp', 'cp'); txt('nk-desc', 'descricao'); txt('nk-dest', 'destaques');
   ['ap', 'ac', 'atot', 'at', 'q', 's', 'bh', 'v', 'apa', 'ano'].forEach(k => num('nk-' + k, k));
   if (val('nk-p') !== undefined) d.p = parseMoney(val('nk-p'));
   if (val('nk-cond') !== undefined) d.cond = parseMoney(val('nk-cond'));
@@ -3742,7 +3751,7 @@ function nkAcao(a, el) {
     case 'nk-del-nao': nk.del = false; nkLeCampos(); renderNkForm(); break;
     case 'nk-del-sim': nkExcluir(); break;
     case 'nk-tipo': if (!nk.edita) break; nkLeCampos(); d.t = v; renderNkChips(); break;
-    case 'nk-ob': if (nk.edita) { d.ob = v; renderNkChips(); } break;
+    case 'nk-ob': if (nk.edita) { d.ob = v === 'f' ? 'r' : v; d.reforma = v === 'f'; renderNkChips(); } break;
     case 'nk-mo': if (nk.edita) { d.mo = v; renderNkChips(); } break;
     case 'nk-item': case 'nk-citem': { if (!nk.edita) break; const l = d[a === 'nk-item' ? 'itens' : 'condItens'], i = l.indexOf(v); if (i >= 0) l.splice(i, 1); else l.push(v); renderNkChips(); break; }
     case 'nk-foto-capa': { const i = +v; nk.fotos.unshift(nk.fotos.splice(i, 1)[0]); renderNkFotos(); break; }
@@ -5734,7 +5743,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-27d';
+const VERSAO = '2026-11-27e';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

@@ -67,6 +67,9 @@ h1{font-size:clamp(30px,7vw,44px);line-height:1.12;font-weight:300;letter-spacin
 .loc .mapa{display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:99px;border:1px solid var(--line2);font-size:14px;font-weight:600;white-space:nowrap}
 .loc .mapa:hover{border-color:var(--or);color:var(--or2)}
 .loc .mapa svg{width:17px;height:17px}
+.dest{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;max-width:62ch}
+.dest li{position:relative;padding-left:18px;font-size:16px;line-height:1.5;color:var(--text)}
+.dest li::before{content:'';position:absolute;left:2px;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--or)}
 .texto{margin-top:20px;font-size:17px;line-height:1.65;color:var(--text2);max-width:62ch}
 
 .sec{padding:34px 0 0}
@@ -267,6 +270,7 @@ function desenha() {
       <div class="preco"><small>${L.loc ? 'Valor do aluguel' : 'Valor de venda'}</small><b>${L.preco ? reais(L.preco) + (L.loc ? '/mês' : '') : 'Sob consulta'}</b></div>
       ${L.valCond ? `<div class="vals"><span><small>Taxa de condomínio</small>${reais(L.valCond)}/mês</span></div>` : ''}
       ${L.texto ? `<p class="texto">${esc(L.texto)}</p>` : ''}
+      ${(L.destaques || []).length ? `<ul class="dest">${L.destaques.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
     </div>
     ${(L.ficha || []).length ? `<section class="sec"><h2>Ficha técnica</h2><div class="ficha">${L.ficha.map(x => `<div><span>${esc(x.r)}</span><b>${esc(x.v)}</b></div>`).join('')}</div></section>` : ''}
     ${L.descricao ? `<section class="sec"><h2>Sobre o imóvel</h2><div class="desc">${L.descricao.split(/\n+/).map(p => `<p>${esc(p)}</p>`).join('')}</div></section>` : ''}
