@@ -1473,8 +1473,12 @@ async function aplicaRepetidos() {
 // 27/11 (pedido dele: "o meu é sempre o principal"): imóvel Nickel com o campo "igual" (os anúncios das imobiliárias que são o
 // mesmo imóvel, e os repetidos deles) esconde esses anúncios em todo lugar e mostra "Também anunciado na J8". Pausado ou
 // vendido devolve os anúncios. O envio por qualquer um deles conta como envio do mesmo imóvel.
+// 27/11 (pedido dele): anúncios das imobiliárias tirados do ar na Carteira (não aparecem em lugar nenhum; os links já enviados
+// dizem "Este link não está mais disponível"). O Weekend da J8 vai virar anúncio Nickel.
+const FORA_DO_AR = new Set(['j8:75901']);
 function aplicaNickelPrincipal() {
   const esconde = new Map(); // "src:código" -> chave do Nickel
+  FORA_DO_AR.forEach(k => esconde.set(k, ''));
   (estoque.nickel ? estoque.nickel.imoveis : []).forEach(n => {
     const nk = NICKEL.find(x => x.id === n.c), ks = new Set();
     (nk && nk.igual || []).forEach(k => { const x = IMOVEL.get(k); if (!x) return; ks.add(k); (x.irmaos || []).forEach(o => ks.add(o)); });
@@ -1482,7 +1486,7 @@ function aplicaNickelPrincipal() {
     n.irmaos = [...ks].filter(k => IMOVEL.has(k));
   });
   IMOVEL.forEach(i => { if (i.src !== 'nickel' && i.repNk) i.repNk = ''; });
-  esconde.forEach((nk, k) => { const x = IMOVEL.get(k); if (x) { x.repNk = nk; if (!(x.irmaos || []).includes(nk)) x.irmaos = (x.irmaos || []).concat(nk); } });
+  esconde.forEach((nk, k) => { const x = IMOVEL.get(k); if (x && nk) { x.repNk = nk; if (!(x.irmaos || []).includes(nk)) x.irmaos = (x.irmaos || []).concat(nk); } });
   ESTOQUES.forEach(e => { if (estoque[e.id] && estoque[e.id].base) estoque[e.id].imoveis = estoque[e.id].base.filter(i => !esconde.has(i.k)); });
   j8Cache.clear();
 }
@@ -5730,7 +5734,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-27a';
+const VERSAO = '2026-11-27b';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });

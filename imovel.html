@@ -178,6 +178,7 @@ async function carrega() {
     const d = await r.json();
     L = fromFs({ mapValue: { fields: d.fields || {} } });
     if (!L || !L.titulo) return erro();
+    if (L.fora) return erro(); // 27/11: link tirado do ar pelo corretor (ex.: o anúncio da J8 do Weekend, que virou anúncio Nickel)
     await fotosNickel();
     desenha();
     enderecoComPrevia();
