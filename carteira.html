@@ -2532,8 +2532,8 @@ function renderClientes() {
   // 16/11: o aviso "Revisar temperatura" saiu a pedido dele (classifica à mão, pelo quadro e pela ficha); 19/11 voltou (abaixo)
   // o aviso dos standby a retomar virou cartão do painel (16/11)
   // 19/11 (pedido dele): a triagem voltou, como botão, para organizar os leads em Quente, Fria e Standby; some quando a fila acaba
-  const fTri = filaTriagem(), nTri = fTri.length, nTriNv = carregados ? fTri.filter(c => novosUltima(c).length).length : 0;
-  $('#c-avisos').innerHTML = nTri ? `<button class="aviso tri" data-act="tri-abrir"><b>Triagem dos leads</b><span>${nTri} ${plural(nTri, 'cliente', 'clientes')} para classificar em Quente, Fria ou Standby${nTriNv ? ` · ${nTriNv} com imóvel novo da última atualização para enviar antes` : ''}</span></button>` : '';
+  // 27/11 (pedido dele: "tire essa triagem, não precisa"): o aviso saiu de novo; a classificação fica pelo quadro e pela ficha
+  $('#c-avisos').innerHTML = '';
   const fn = (FILTROS.find(f => f[0] === ui.c.f) || FILTROS[0])[2];
   let rows = clientes.filter(c => fn(c) && matchQ(c, q));
   if (quadro && clientes.length) { $('#c-list').innerHTML = quadroClientes(rows); return; }
@@ -5734,7 +5734,7 @@ function aplicaTema(t) {
 aplicaTema(lsGet('carteira_tema', 'claro'));
 
 // versão nova publicada: recarrega sozinho (o iPhone guarda a página antiga, principalmente o atalho da tela inicial)
-const VERSAO = '2026-11-27b';
+const VERSAO = '2026-11-27c';
 async function confereVersao() {
   try {
     const r = await fetch(location.pathname + '?nv=' + Date.now(), { cache: 'no-store' });
